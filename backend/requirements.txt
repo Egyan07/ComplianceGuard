@@ -1,0 +1,42 @@
+# FastAPI and ASGI server
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# Database and ORM
+sqlalchemy==2.0.23
+alembic==1.12.1
+psycopg2-binary==2.9.9
+
+# Authentication and security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+
+# Environment and configuration
+pydantic==2.5.0
+pydantic-settings==2.0.3
+python-dotenv==1.0.0
+
+# HTTP and API clients
+httpx==0.25.2
+requests==2.31.0
+
+# Utilities
+email-validator==2.1.0
+python-dateutil==2.8.2
+pytz==2023.3
+
+# Development and testing (can be moved to dev-requirements.txt)
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+factory-boy==3.3.0
+
+# Code quality
+black==23.11.0
+isort==5.12.0
+flake8==6.1.0
+
+# AWS Integration
+boto3==1.34.0
+botocore==1.34.0

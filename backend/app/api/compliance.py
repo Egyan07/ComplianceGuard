@@ -1,0 +1,454 @@
+"""
+Compliance API endpoints for SOC 2 framework management and evaluation.
+
+This module provides FastAPI endpoints for:
+- SOC 2 framework management
+- Control assessment and evaluation
+- Compliance reporting
+"""
+
+from fastapi import APIRouter, HTTPException, Depends, Query
+from typing import Dict, List, Optional, Any
+from pydantic import BaseModel, Field
+from datetime import datetime
+
+from app.core.soc2_controls import SOC2Framework, SOC2Control, ControlCategory, create_soc2_framework
+from app.services.compliance_service import ComplianceService, ComplianceEvaluation, ComplianceStatus, create_compliance_service
+
+
+router = APIRouter(prefix="/api/v1/compliance", tags=["compliance"])
+
+# Initialize framework and service
+soc2_framework = create_soc2_framework()
+compliance_service = create_compliance_service(soc2_framework)
+
+
+# Pydantic models for API requests/responses
+
+class ControlEvidenceRequest(BaseModel):
+    """Request model for control evidence submission."""
+    evidence_provided: List[str] = Field(..., description="List of evidence IDs provided")
+    status: str = Field(..., description="Control status")
+    score: float = Field(..., ge=0.0, le=1.0, description="Compliance score (0.0-1.0)")
+    comments: Optional[str] = Field(None, description="Additional comments")
+
+
+class ComplianceEvaluationRequest(BaseModel):
+    """Request model for compliance evaluation."""
+    scope: Optional[List[str]] = Field(None, description="List of control categories to evaluate")
+    evidence_data: Dict[str, ControlEvidenceRequest] = Field(..., description="Evidence data by control ID")
+    evaluated_by: str = Field("system", description="Evaluator identifier")
+
+
+class ControlResponse(BaseModel):
+    """Response model for SOC 2 control."""
+    id: str
+    title: str
+    description: str
+    category: str
+    control_objective: str
+    implementation_guidance: str
+    evidence_mapping: List[Dict[str, str]]
+    related_controls: List[str]
+    risk_level: str
+
+
+class FrameworkSummaryResponse(BaseModel):
+    """Response model for framework summary."""
+    total_controls: int
+    categories: Dict[str, int]
+    risk_distribution: Dict[str, int]
+
+
+class ComplianceEvaluationResponse(BaseModel):
+    """Response model for compliance evaluation results."""
+    framework_id: str
+    overall_score: float
+    compliance_status: str
+    compliance_level: str
+    evaluation_date: datetime
+    evaluated_by: str
+    scope: List[str]
+    evidence_summary: Dict[str, Any]
+    risk_assessment: Dict[str, Any]
+    recommendations: List[str]
+    next_review_date: Optional[datetime]
+    control_count: int
+    compliant_controls: int
+
+
+class ControlAssessmentResponse(BaseModel):
+    """Response model for individual control assessment."""
+    control_id: str
+    status: str
+    score: float
+    evidence_provided: List[str]
+    evidence_required: List[str]
+    gaps: List[str]
+    recommendations: List[str]
+    assessed_date: datetime
+    assessed_by: str
+
+
+class ComplianceReportResponse(BaseModel):
+    """Response model for comprehensive compliance report."""
+    evaluation_metadata: Dict[str, Any]
+    summary: Dict[str, Any]
+    control_details: Dict[str, Any]
+    risk_assessment: Dict[str, Any]
+    evidence_summary: Dict[str, Any]
+    recommendations: List[str]
+    next_review: Optional[str]
+
+
+@router.get("/framework/summary", response_model=FrameworkSummaryResponse)
+async def get_framework_summary():
+    """
+    Get summary of the SOC 2 control framework.
+
+    Returns:
+        Framework summary including control counts by category and risk distribution
+    """
+    summary = soc2_framework.get_framework_summary()
+    return summary
+
+
+@router.get("/framework/controls", response_model=List[ControlResponse])
+async def get_all_controls():
+    """
+    Get all SOC 2 controls from the framework.
+
+    Returns:
+        List of all SOC 2 controls with their details
+    """
+    controls = soc2_framework.get_all_controls()
+
+    return [
+        ControlResponse(
+            id=control.id,
+            title=control.title,
+            description=control.description,
+            category=control.category.value,
+            control_objective=control.control_objective,
+            implementation_guidance=control.implementation_guidance,
+            evidence_mapping=[
+                {
+                    "id": evidence.id,
+                    "name": evidence.name,
+                    "description": evidence.description,
+                    "type": evidence.type,
+                    "frequency": evidence.frequency,
+                    "retention_period": evidence.retention_period
+                }
+                for evidence in control.evidence_mapping
+            ],
+            related_controls=control.related_controls,
+            risk_level=control.risk_level
+        )
+        for control in controls
+    ]
+
+
+@router.get("/framework/controls/{control_id}", response_model=ControlResponse)
+async def get_control(control_id: str):
+    """
+    Get a specific SOC 2 control by ID.
+
+    Args:
+        control_id: The ID of the control to retrieve
+
+    Returns:
+        Detailed information about the specified control
+
+    Raises:
+        HTTPException: If control is not found
+    """
+    control = soc2_framework.get_control(control_id)
+    if not control:
+        raise HTTPException(status_code=404, detail=f"Control {control_id} not found")
+
+    return ControlResponse(
+        id=control.id,
+        title=control.title,
+        description=control.description,
+        category=control.category.value,
+        control_objective=control.control_objective,
+        implementation_guidance=control.implementation_guidance,
+        evidence_mapping=[
+            {
+                "id": evidence.id,
+                "name": evidence.name,
+                "description": evidence.description,
+                "type": evidence.type,
+                "frequency": evidence.frequency,
+                "retention_period": evidence.retention_period
+            }
+            for evidence in control.evidence_mapping
+        ],
+        related_controls=control.related_controls,
+        risk_level=control.risk_level
+    )
+
+
+@router.get("/framework/controls/by-category/{category}", response_model=List[ControlResponse])
+async def get_controls_by_category(category: str):
+    """
+    Get all controls for a specific SOC 2 category.
+
+    Args:
+        category: The control category (CC, A, C, PI, CA)
+
+    Returns:
+        List of controls in the specified category
+
+    Raises:
+        HTTPException: If category is invalid
+    """
+    # Validate category
+    valid_categories = ["CC", "A", "C", "PI", "CA"]
+    if category not in valid_categories:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid category. Must be one of: {', '.join(valid_categories)}"
+        )
+
+    controls = soc2_framework.get_controls_by_category(category)
+
+    return [
+        ControlResponse(
+            id=control.id,
+            title=control.title,
+            description=control.description,
+            category=control.category.value,
+            control_objective=control.control_objective,
+            implementation_guidance=control.implementation_guidance,
+            evidence_mapping=[
+                {
+                    "id": evidence.id,
+                    "name": evidence.name,
+                    "description": evidence.description,
+                    "type": evidence.type,
+                    "frequency": evidence.frequency,
+                    "retention_period": evidence.retention_period
+                }
+                for evidence in control.evidence_mapping
+            ],
+            related_controls=control.related_controls,
+            risk_level=control.risk_level
+        )
+        for control in controls
+    ]
+
+
+@router.get("/framework/controls/search", response_model=List[ControlResponse])
+async def search_controls(q: str = Query(..., min_length=2)):
+    """
+    Search controls by title, description, or objective.
+
+    Args:
+        q: Search query string
+
+    Returns:
+        List of controls matching the search criteria
+    """
+    controls = soc2_framework.search_controls(q)
+
+    return [
+        ControlResponse(
+            id=control.id,
+            title=control.title,
+            description=control.description,
+            category=control.category.value,
+            control_objective=control.control_objective,
+            implementation_guidance=control.implementation_guidance,
+            evidence_mapping=[
+                {
+                    "id": evidence.id,
+                    "name": evidence.name,
+                    "description": evidence.description,
+                    "type": evidence.type,
+                    "frequency": evidence.frequency,
+                    "retention_period": evidence.retention_period
+                }
+                for evidence in control.evidence_mapping
+            ],
+            related_controls=control.related_controls,
+            risk_level=control.risk_level
+        )
+        for control in controls
+    ]
+
+
+@router.post("/evaluate", response_model=ComplianceEvaluationResponse)
+async def evaluate_compliance(request: ComplianceEvaluationRequest):
+    """
+    Evaluate compliance for the specified scope and evidence.
+
+    Args:
+        request: Compliance evaluation request with evidence data
+
+    Returns:
+        Compliance evaluation results
+    """
+    try:
+        # Convert request data to internal format
+        evidence_data = {
+            control_id: {
+                "evidence_provided": evidence.evidence_provided,
+                "status": evidence.status,
+                "score": evidence.score,
+                "comments": evidence.comments
+            }
+            for control_id, evidence in request.evidence_data.items()
+        }
+
+        # Perform evaluation
+        evaluation = compliance_service.evaluate_compliance(
+            evidence_data=evidence_data,
+            scope=request.scope,
+            evaluated_by=request.evaluated_by
+        )
+
+        return ComplianceEvaluationResponse(
+            framework_id=evaluation.framework_id,
+            overall_score=evaluation.overall_score,
+            compliance_status=evaluation.compliance_status.value,
+            compliance_level=evaluation.compliance_level.value,
+            evaluation_date=evaluation.evaluation_date,
+            evaluated_by=evaluation.evaluated_by,
+            scope=evaluation.scope,
+            evidence_summary=evaluation.evidence_summary,
+            risk_assessment=evaluation.risk_assessment,
+            recommendations=evaluation.recommendations,
+            next_review_date=evaluation.next_review_date,
+            control_count=len(evaluation.control_assessments),
+            compliant_controls=sum(1 for a in evaluation.control_assessments.values()
+                                if a.status == ComplianceStatus.COMPLIANT)
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Evaluation failed: {str(e)}")
+
+
+@router.get("/evaluations/history", response_model=List[ComplianceEvaluationResponse])
+async def get_evaluation_history():
+    """
+    Get history of all compliance evaluations.
+
+    Returns:
+        List of all previous compliance evaluations
+    """
+    evaluations = compliance_service.get_evaluation_history()
+
+    return [
+        ComplianceEvaluationResponse(
+            framework_id=evaluation.framework_id,
+            overall_score=evaluation.overall_score,
+            compliance_status=evaluation.compliance_status.value,
+            compliance_level=evaluation.compliance_level.value,
+            evaluation_date=evaluation.evaluation_date,
+            evaluated_by=evaluation.evaluated_by,
+            scope=evaluation.scope,
+            evidence_summary=evaluation.evidence_summary,
+            risk_assessment=evaluation.risk_assessment,
+            recommendations=evaluation.recommendations,
+            next_review_date=evaluation.next_review_date,
+            control_count=len(evaluation.control_assessments),
+            compliant_controls=sum(1 for a in evaluation.control_assessments.values()
+                                if a.status == ComplianceStatus.COMPLIANT)
+        )
+        for evaluation in evaluations
+    ]
+
+
+@router.get("/evaluations/{evaluation_id}/control-assessments", response_model=Dict[str, ControlAssessmentResponse])
+async def get_control_assessments(evaluation_id: str):
+    """
+    Get detailed control assessments for a specific evaluation.
+
+    Args:
+        evaluation_id: The ID of the evaluation
+
+    Returns:
+        Dictionary of control assessments
+
+    Raises:
+        HTTPException: If evaluation is not found
+    """
+    evaluation = compliance_service.get_evaluation_by_id(evaluation_id)
+    if not evaluation:
+        raise HTTPException(status_code=404, detail=f"Evaluation {evaluation_id} not found")
+
+    return {
+        control_id: ControlAssessmentResponse(
+            control_id=assessment.control_id,
+            status=assessment.status.value,
+            score=assessment.score,
+            evidence_provided=assessment.evidence_provided,
+            evidence_required=assessment.evidence_required,
+            gaps=assessment.gaps,
+            recommendations=assessment.recommendations,
+            assessed_date=assessment.assessed_date,
+            assessed_by=assessment.assessed_by
+        )
+        for control_id, assessment in evaluation.control_assessments.items()
+    }
+
+
+@router.get("/controls/{control_id}/trend", response_model=List[Dict[str, Any]])
+async def get_control_compliance_trend(control_id: str):
+    """
+    Get compliance trend for a specific control across evaluations.
+
+    Args:
+        control_id: The ID of the control
+
+    Returns:
+        List of compliance scores and status over time
+    """
+    # Validate control exists
+    control = soc2_framework.get_control(control_id)
+    if not control:
+        raise HTTPException(status_code=404, detail=f"Control {control_id} not found")
+
+    trend = compliance_service.get_control_compliance_trend(control_id)
+    return trend
+
+
+@router.get("/evaluations/{evaluation_id}/report", response_model=ComplianceReportResponse)
+async def get_compliance_report(evaluation_id: str):
+    """
+    Get comprehensive compliance report for an evaluation.
+
+    Args:
+        evaluation_id: The ID of the evaluation
+
+    Returns:
+        Comprehensive compliance report
+
+    Raises:
+        HTTPException: If evaluation is not found
+    """
+    evaluation = compliance_service.get_evaluation_by_id(evaluation_id)
+    if not evaluation:
+        raise HTTPException(status_code=404, detail=f"Evaluation {evaluation_id} not found")
+
+    report = compliance_service.export_evaluation_report(evaluation)
+    return report
+
+
+@router.get("/health")
+async def compliance_health_check():
+    """
+    Health check for compliance endpoints.
+
+    Returns:
+        Service health status
+    """
+    return {
+        "status": "healthy",
+        "service": "compliance-api",
+        "framework_controls": soc2_framework.get_control_count(),
+        "evaluations_performed": len(compliance_service.evaluations),
+        "timestamp": datetime.now().isoformat()
+    }
