@@ -309,6 +309,37 @@ We welcome contributions to ComplianceGuard Desktop! Please read our [Contributi
 - Document all public APIs and interfaces
 - Follow TypeScript best practices for type safety
 
+n## 💼 Business Model
+
+### Open Source Beta (Current)
+
+ComplianceGuard Desktop is currently **free and open source** during our beta phase. This allows organizations to:
+
+- **Test and Evaluate**: Full functionality for SOC 2 compliance automation
+- **Contribute**: Help shape the future of the platform
+- **Deploy**: Use in production environments without licensing costs
+- **Customize**: Modify the codebase for specific organizational needs
+
+### Future Commercial Version
+
+After the beta period, ComplianceGuard Desktop will transition to a **commercial product** with:
+
+- **Professional Licensing**: Per-user or per-organization pricing
+- **Enterprise Features**: Advanced multi-user management and deployment
+- **Priority Support**: SLA-backed technical support and maintenance
+- **Cloud Integration**: Optional secure cloud backup and sync
+- **Custom Development**: Tailored solutions for enterprise requirements
+
+### Beta Benefits
+
+During the beta period, you get:
+- **Free Access**: All current features at no cost
+- **Early Adopter Pricing**: Special rates when commercial version launches
+- **Influence Development**: Direct input on feature priorities
+- **Community Support**: Access to community forums and discussions
+
+*Note: The core SOC 2 compliance automation features will remain available in a free tier. Advanced enterprise features will be part of the commercial offering.*
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
