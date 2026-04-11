@@ -1,0 +1,67 @@
+{
+  "appId": "com.complianceguard.desktop",
+  "productName": "ComplianceGuard",
+  "copyright": "Copyright © 2024 Egyan07",
+  "directories": {
+    "output": "dist",
+    "buildResources": "../resources"
+  },
+  "files": [
+    "!**/*.map",
+    "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+    "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+    "!**/node_modules/*.d.ts",
+    "!**/node_modules/.bin",
+    "!src/",
+    "!**/{.gitignore,.eslintignore,.prettierignore}",
+    "!**/{.eslintrc,.prettierrc,.stylelintrc}",
+    "!**/{.npmignore,.npmrc,.dockerignore}"
+  ],
+  "extraResources": [
+    {
+      "from": "../electron",
+      "to": "electron",
+      "filter": ["**/*"]
+    },
+    {
+      "from": "../resources",
+      "to": "resources",
+      "filter": ["**/*"]
+    }
+  ],
+  "win": {
+    "target": [
+      "msi",
+      "nsis"
+    ],
+    "icon": "../resources/icons/icon.ico",
+    "legalTrademark": "ComplianceGuard",
+    "publisherName": "ComplianceGuard LLC",
+    "verifyUpdateCodeSignature": false,
+    "artifactName": "${productName}-Setup-${version}.${ext}",
+    "requestedExecutionLevel": "asInvoker"
+  },
+  "msi": {
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "ComplianceGuard"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "ComplianceGuard",
+    "include": "../installer/nsis-include.nsh",
+    "menuCategory": true,
+    "perMachine": true
+  },
+  "publish": {
+    "provider": "github",
+    "owner": "Egyan07",
+    "repo": "complianceguard"
+  },
+  "extraMetadata": {
+    "main": "electron/main.js"
+  }
+}
