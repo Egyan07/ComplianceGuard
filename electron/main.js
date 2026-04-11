@@ -2,9 +2,20 @@ const { app, BrowserWindow, Tray, Menu, Notification, ipcMain } = require('elect
 const path = require('path');
 const url = require('url');
 
+// Local processing modules
+const ComplianceGuardDatabase = require('./database/sqlite');
+const LocalEvidenceProcessor = require('./processing/evidence-processor');
+const LocalComplianceEngine = require('./processing/compliance-engine');
+const { collectWindowsEvidence } = require('./system/windows');
+
 // Keep a global reference of the window object
 let mainWindow = null;
 let tray = null;
+
+// Local processing instances
+let database = null;
+let evidenceProcessor = null;
+let complianceEngine = null;
 
 // Development mode flag
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
@@ -140,29 +151,164 @@ ipcMain.handle('get-system-info', () => {
   };
 });
 
-// Windows-specific evidence collection
-ipcMain.handle('collect-windows-evidence', async () => {
+// Windows-specific evidence collection with local processing
+ipcMain.handle('collect-windows-evidence', async (event, frameworkId = 1) => {
   try {
-    const { collectWindowsEvidence } = require('./system/windows');
-    return await collectWindowsEvidence();
+    console.log('Starting Windows evidence collection...');
+    const windowsEvidence = await collectWindowsEvidence();
+
+    // Process evidence locally
+    const processedEvidence = await evidenceProcessor.processWindowsEvidence(windowsEvidence, frameworkId);
+
+    showNotification(
+      'Evidence Collection Complete',
+      `Collected ${processedEvidence.length} evidence items`
+    );
+
+    return {
+      success: true,
+      evidence_count: processedEvidence.length,
+      windows_evidence: windowsEvidence
+    };
   } catch (error) {
     console.error('Windows evidence collection failed:', error);
+    showNotification(
+      'Evidence Collection Failed',
+      error.message
+    );
+    return { error: error.message };
+  }
+});
+
+// Local evidence processing
+ipcMain.handle('process-manual-evidence', async (event, evidenceData, frameworkId = 1) => {
+  try {
+    const processedEvidence = await evidenceProcessor.processManualEvidence(evidenceData, frameworkId);
+    return { success: true, evidence_id: processedEvidence };
+  } catch (error) {
+    console.error('Manual evidence processing failed:', error);
+    return { error: error.message };
+  }
+});
+
+// Compliance evaluation
+ipcMain.handle('evaluate-compliance', async (event, frameworkId = 1) => {
+  try {
+    console.log('Starting compliance evaluation...');
+    const evaluation = await complianceEngine.evaluateCompliance(frameworkId);
+
+    showNotification(
+      'Compliance Evaluation Complete',
+      `Overall Score: ${evaluation.overall_score.toFixed(1)}% - Status: ${evaluation.status}`
+    );
+
+    return evaluation;
+  } catch (error) {
+    console.error('Compliance evaluation failed:', error);
+    return { error: error.message };
+  }
+});
+
+// Evidence summary
+ipcMain.handle('get-evidence-summary', async (event, frameworkId = 1) => {
+  try {
+    const summary = await evidenceProcessor.getEvidenceSummary(frameworkId);
+    return summary;
+  } catch (error) {
+    console.error('Evidence summary failed:', error);
+    return { error: error.message };
+  }
+});
+
+// Compliance report generation
+ipcMain.handle('generate-compliance-report', async (event, frameworkId = 1, format = 'detailed') => {
+  try {
+    const report = await complianceEngine.generateComplianceReport(frameworkId, format);
+    return report;
+  } catch (error) {
+    console.error('Report generation failed:', error);
+    return { error: error.message };
+  }
+});
+
+// Evidence search
+ipcMain.handle('search-evidence', async (event, frameworkId = 1, searchTerm, filters = {}) => {
+  try {
+    const results = await evidenceProcessor.searchEvidence(frameworkId, searchTerm, filters);
+    return results;
+  } catch (error) {
+    console.error('Evidence search failed:', error);
+    return { error: error.message };
+  }
+});
+
+// User settings
+ipcMain.handle('get-user-setting', async (event, key, defaultValue = null) => {
+  try {
+    const value = await database.getUserSetting(key, defaultValue);
+    return value;
+  } catch (error) {
+    console.error('Get user setting failed:', error);
+    return defaultValue;
+  }
+});
+
+ipcMain.handle('set-user-setting', async (event, key, value, type = 'string') => {
+  try {
+    await database.setUserSetting(key, value, type);
+    return { success: true };
+  } catch (error) {
+    console.error('Set user setting failed:', error);
+    return { error: error.message };
+  }
+});
+
+// Database maintenance
+ipcMain.handle('create-database-backup', async () => {
+  try {
+    const backupPath = await database.backup();
+    showNotification(
+      'Database Backup Created',
+      `Backup saved to: ${backupPath}`
+    );
+    return { success: true, backup_path: backupPath };
+  } catch (error) {
+    console.error('Database backup failed:', error);
     return { error: error.message };
   }
 });
 
 // App event handlers
-app.whenReady().then(() => {
-  createWindow();
-  createTray();
+app.whenReady().then(async () => {
+  try {
+    // Initialize local database and processing engines
+    console.log('Initializing ComplianceGuard database...');
+    database = new ComplianceGuardDatabase();
+    await database.initialize();
 
-  // Show welcome notification
-  setTimeout(() => {
+    evidenceProcessor = new LocalEvidenceProcessor(database);
+    complianceEngine = new LocalComplianceEngine(database);
+
+    console.log('Database and processing engines initialized successfully');
+
+    createWindow();
+    createTray();
+
+    // Show welcome notification
+    setTimeout(() => {
+      showNotification(
+        'ComplianceGuard Started',
+        'SOC 2 automation is now running in the background'
+      );
+    }, 2000);
+
+  } catch (error) {
+    console.error('Failed to initialize ComplianceGuard:', error);
     showNotification(
-      'ComplianceGuard Started',
-      'SOC 2 automation is now running in the background'
+      'ComplianceGuard Error',
+      'Failed to initialize local database. Please restart the application.'
     );
-  }, 2000);
+  }
 });
 
 app.on('window-all-closed', () => {
