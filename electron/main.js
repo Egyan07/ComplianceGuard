@@ -1,6 +1,6 @@
-const { app, BrowserWindow, Tray, Menu, Notification, ipcMain } = require('electron');
+const { app, BrowserWindow, Tray, Menu, Notification, ipcMain, dialog } = require('electron');
 const path = require('path');
-const url = require('url');
+const fs = require('fs');
 
 // Local processing modules
 const ComplianceGuardDatabase = require('./database/sqlite');
@@ -21,7 +21,6 @@ let complianceEngine = null;
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
 function createWindow() {
-  // Create the browser window
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -31,43 +30,32 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
-      nodeIntegration: false,
-      enableRemoteModule: false,
-      worldSafeExecuteJavaScript: true
+      nodeIntegration: false
     },
     icon: path.join(__dirname, '../resources/icons/icon.ico')
   });
 
-  // Load the app
   if (isDev) {
-    // In development, load from React dev server
-    mainWindow.loadURL('http://localhost:3000');
+    // Match the vite.config.ts port (5173)
+    mainWindow.loadURL('http://localhost:5173');
     mainWindow.webContents.openDevTools();
   } else {
-    // In production, load built React app
-    mainWindow.loadURL(
-      url.format({
-        pathname: path.join(__dirname, '../frontend/build/index.html'),
-        protocol: 'file:',
-        slashes: true
-      })
-    );
+    mainWindow.loadFile(path.join(__dirname, '../frontend/dist/index.html'));
   }
 
-  // Handle window events
   mainWindow.on('closed', () => {
     mainWindow = null;
-  });
-
-  mainWindow.on('minimize', (event) => {
-    // Option to minimize to tray instead of taskbar
-    // event.preventDefault();
-    // mainWindow.hide();
   });
 }
 
 function createTray() {
   const iconPath = path.join(__dirname, '../resources/icons/tray-icon.png');
+
+  // Only create tray if icon exists
+  if (!fs.existsSync(iconPath)) {
+    console.warn('Tray icon not found at:', iconPath, '- skipping tray creation');
+    return;
+  }
 
   tray = new Tray(iconPath);
 
@@ -89,16 +77,7 @@ function createTray() {
         }
       }
     },
-    {
-      type: 'separator'
-    },
-    {
-      label: 'Compliance Status: Good',
-      enabled: false
-    },
-    {
-      type: 'separator'
-    },
+    { type: 'separator' },
     {
       label: 'Exit',
       click: () => {
@@ -110,7 +89,6 @@ function createTray() {
   tray.setToolTip('ComplianceGuard - SOC 2 Automation');
   tray.setContextMenu(contextMenu);
 
-  // Show window on tray icon click
   tray.on('click', () => {
     if (mainWindow) {
       if (mainWindow.isVisible()) {
@@ -124,16 +102,17 @@ function createTray() {
 }
 
 function showNotification(title, body) {
+  if (!Notification.isSupported()) return;
+
   const notification = new Notification({
     title: title,
-    body: body,
-    icon: path.join(__dirname, '../resources/icons/notification-icon.png')
+    body: body
   });
-
   notification.show();
 }
 
-// IPC handlers for communication between renderer and main processes
+// ---- IPC Handlers ----
+
 ipcMain.handle('get-app-version', () => {
   return app.getVersion();
 });
@@ -151,13 +130,38 @@ ipcMain.handle('get-system-info', () => {
   };
 });
 
-// Windows-specific evidence collection with local processing
+// File dialog for selecting a folder
+ipcMain.handle('select-folder', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openDirectory']
+  });
+  if (result.canceled) return null;
+  return result.filePaths[0];
+});
+
+// Save report to file
+ipcMain.handle('save-report', async (event, data, filename) => {
+  const result = await dialog.showSaveDialog(mainWindow, {
+    defaultPath: filename || 'compliance-report.json',
+    filters: [
+      { name: 'JSON Files', extensions: ['json'] },
+      { name: 'All Files', extensions: ['*'] }
+    ]
+  });
+
+  if (result.canceled || !result.filePath) return null;
+
+  const content = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+  fs.writeFileSync(result.filePath, content, 'utf8');
+  return result.filePath;
+});
+
+// Windows evidence collection
 ipcMain.handle('collect-windows-evidence', async (event, frameworkId = 1) => {
   try {
     console.log('Starting Windows evidence collection...');
     const windowsEvidence = await collectWindowsEvidence();
 
-    // Process evidence locally
     const processedEvidence = await evidenceProcessor.processWindowsEvidence(windowsEvidence, frameworkId);
 
     showNotification(
@@ -172,19 +176,16 @@ ipcMain.handle('collect-windows-evidence', async (event, frameworkId = 1) => {
     };
   } catch (error) {
     console.error('Windows evidence collection failed:', error);
-    showNotification(
-      'Evidence Collection Failed',
-      error.message
-    );
+    showNotification('Evidence Collection Failed', error.message);
     return { error: error.message };
   }
 });
 
-// Local evidence processing
+// Manual evidence processing
 ipcMain.handle('process-manual-evidence', async (event, evidenceData, frameworkId = 1) => {
   try {
-    const processedEvidence = await evidenceProcessor.processManualEvidence(evidenceData, frameworkId);
-    return { success: true, evidence_id: processedEvidence };
+    const evidenceId = await evidenceProcessor.processManualEvidence(evidenceData, frameworkId);
+    return { success: true, evidence_id: evidenceId };
   } catch (error) {
     console.error('Manual evidence processing failed:', error);
     return { error: error.message };
@@ -212,10 +213,19 @@ ipcMain.handle('evaluate-compliance', async (event, frameworkId = 1) => {
 // Evidence summary
 ipcMain.handle('get-evidence-summary', async (event, frameworkId = 1) => {
   try {
-    const summary = await evidenceProcessor.getEvidenceSummary(frameworkId);
-    return summary;
+    return await evidenceProcessor.getEvidenceSummary(frameworkId);
   } catch (error) {
     console.error('Evidence summary failed:', error);
+    return { error: error.message };
+  }
+});
+
+// Get all evidence for a framework
+ipcMain.handle('get-evidence-list', async (event, frameworkId = 1) => {
+  try {
+    return await database.getEvidenceByFramework(frameworkId);
+  } catch (error) {
+    console.error('Get evidence list failed:', error);
     return { error: error.message };
   }
 });
@@ -223,10 +233,19 @@ ipcMain.handle('get-evidence-summary', async (event, frameworkId = 1) => {
 // Compliance report generation
 ipcMain.handle('generate-compliance-report', async (event, frameworkId = 1, format = 'detailed') => {
   try {
-    const report = await complianceEngine.generateComplianceReport(frameworkId, format);
-    return report;
+    return await complianceEngine.generateComplianceReport(frameworkId, format);
   } catch (error) {
     console.error('Report generation failed:', error);
+    return { error: error.message };
+  }
+});
+
+// Evaluation history
+ipcMain.handle('get-evaluation-history', async (event, frameworkId = 1) => {
+  try {
+    return await database.getEvaluationHistory(frameworkId);
+  } catch (error) {
+    console.error('Get evaluation history failed:', error);
     return { error: error.message };
   }
 });
@@ -234,8 +253,7 @@ ipcMain.handle('generate-compliance-report', async (event, frameworkId = 1, form
 // Evidence search
 ipcMain.handle('search-evidence', async (event, frameworkId = 1, searchTerm, filters = {}) => {
   try {
-    const results = await evidenceProcessor.searchEvidence(frameworkId, searchTerm, filters);
-    return results;
+    return await evidenceProcessor.searchEvidence(frameworkId, searchTerm, filters);
   } catch (error) {
     console.error('Evidence search failed:', error);
     return { error: error.message };
@@ -245,8 +263,7 @@ ipcMain.handle('search-evidence', async (event, frameworkId = 1, searchTerm, fil
 // User settings
 ipcMain.handle('get-user-setting', async (event, key, defaultValue = null) => {
   try {
-    const value = await database.getUserSetting(key, defaultValue);
-    return value;
+    return await database.getUserSetting(key, defaultValue);
   } catch (error) {
     console.error('Get user setting failed:', error);
     return defaultValue;
@@ -263,14 +280,11 @@ ipcMain.handle('set-user-setting', async (event, key, value, type = 'string') =>
   }
 });
 
-// Database maintenance
+// Database backup
 ipcMain.handle('create-database-backup', async () => {
   try {
     const backupPath = await database.backup();
-    showNotification(
-      'Database Backup Created',
-      `Backup saved to: ${backupPath}`
-    );
+    showNotification('Database Backup Created', `Backup saved to: ${backupPath}`);
     return { success: true, backup_path: backupPath };
   } catch (error) {
     console.error('Database backup failed:', error);
@@ -278,27 +292,27 @@ ipcMain.handle('create-database-backup', async () => {
   }
 });
 
-// App event handlers
+// ---- App Lifecycle ----
+
 app.whenReady().then(async () => {
   try {
-    // Initialize local database and processing engines
-    console.log('Initializing ComplianceGuard database...');
-    database = new ComplianceGuardDatabase();
-    await database.initialize();
+    console.log('Initializing ComplianceGuard...');
 
-    evidenceProcessor = new LocalEvidenceProcessor(database);
+    database = new ComplianceGuardDatabase();
+    await database.initialize(app.getPath('userData'));
+
+    evidenceProcessor = new LocalEvidenceProcessor(database, app.getPath('userData'));
     complianceEngine = new LocalComplianceEngine(database);
 
-    console.log('Database and processing engines initialized successfully');
+    console.log('Database and processing engines initialized');
 
     createWindow();
     createTray();
 
-    // Show welcome notification
     setTimeout(() => {
       showNotification(
         'ComplianceGuard Started',
-        'SOC 2 automation is now running in the background'
+        'SOC 2 automation is now running'
       );
     }, 2000);
 
@@ -306,7 +320,7 @@ app.whenReady().then(async () => {
     console.error('Failed to initialize ComplianceGuard:', error);
     showNotification(
       'ComplianceGuard Error',
-      'Failed to initialize local database. Please restart the application.'
+      'Failed to initialize. Please restart the application.'
     );
   }
 });
@@ -323,34 +337,27 @@ app.on('activate', () => {
   }
 });
 
+app.on('before-quit', async () => {
+  if (database) {
+    try {
+      await database.close();
+    } catch (error) {
+      console.error('Error closing database:', error);
+    }
+  }
+});
+
 // Security: Prevent navigation to external sites
 app.on('web-contents-created', (event, contents) => {
-  contents.on('will-navigate', (event, navigationUrl) => {
+  contents.on('will-navigate', (navEvent, navigationUrl) => {
     const parsedUrl = new URL(navigationUrl);
-    if (parsedUrl.origin !== 'http://localhost:3000' && !app.isPackaged) {
-      event.preventDefault();
+    const allowedOrigins = ['http://localhost:5173', 'file://'];
+    if (!allowedOrigins.some(origin => parsedUrl.href.startsWith(origin))) {
+      navEvent.preventDefault();
     }
   });
 
-  contents.on('new-window', (event, navigationUrl) => {
-    event.preventDefault();
+  contents.setWindowOpenHandler(() => {
+    return { action: 'deny' };
   });
 });
-
-// Auto-updater setup (for production)
-if (!isDev) {
-  const { autoUpdater } = require('electron-updater');
-
-  autoUpdater.on('update-available', () => {
-    showNotification('Update Available', 'A new version of ComplianceGuard is available');
-  });
-
-  autoUpdater.on('update-downloaded', () => {
-    showNotification('Update Ready', 'Restart ComplianceGuard to apply the update');
-  });
-
-  // Check for updates periodically
-  setInterval(() => {
-    autoUpdater.checkForUpdates();
-  }, 3600000); // Check every hour
-}

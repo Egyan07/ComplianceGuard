@@ -171,119 +171,99 @@ class LocalComplianceEngine {
   }
 
   async evaluateCompliance(frameworkId) {
-    try {
-      // Get framework details
-      const framework = await this.getFrameworkById(frameworkId);
-      if (!framework) {
-        throw new Error(`Framework not found: ${frameworkId}`);
-      }
+    // Query framework from DB instead of hardcoding
+    const framework = await this.db.getFrameworkById(frameworkId);
+    if (!framework) {
+      throw new Error(`Framework not found: ${frameworkId}`);
+    }
 
-      // Get all evidence for this framework
-      const evidence = await this.db.getEvidenceByFramework(frameworkId);
+    const evidence = await this.db.getEvidenceByFramework(frameworkId);
 
-      // Evaluate each control
-      const evaluationResults = {
-        framework_id: frameworkId,
-        framework_name: framework.name,
-        evaluation_date: new Date().toISOString(),
-        overall_score: 0,
-        total_controls: 0,
-        compliant_controls: 0,
-        non_compliant_controls: 0,
-        partial_controls: 0,
-        not_assessed_controls: 0,
-        category_scores: {},
-        control_results: {},
-        recommendations: []
-      };
+    const evaluationResults = {
+      framework_id: frameworkId,
+      framework_name: framework.name,
+      evaluation_date: new Date().toISOString(),
+      overall_score: 0,
+      total_controls: 0,
+      compliant_controls: 0,
+      non_compliant_controls: 0,
+      partial_controls: 0,
+      not_assessed_controls: 0,
+      category_scores: {},
+      control_results: {},
+      recommendations: []
+    };
 
-      let totalWeight = 0;
-      let weightedScore = 0;
+    let totalWeight = 0;
+    let weightedScore = 0;
 
-      // Process each category
-      for (const category of this.soc2Framework.criteria) {
-        let categoryScore = 0;
-        let categoryWeight = 0;
-        const categoryResults = {};
+    for (const category of this.soc2Framework.criteria) {
+      let categoryScore = 0;
+      let categoryWeight = 0;
 
-        // Process each control in the category
-        for (const control of category.controls) {
-          const controlResult = await this.evaluateControl(control, evidence);
-          categoryResults[control.id] = controlResult;
+      for (const control of category.controls) {
+        const controlResult = this.evaluateControl(control, evidence);
+        evaluationResults.control_results[control.id] = controlResult;
+        evaluationResults.total_controls++;
 
-          categoryScore += controlResult.score * control.weight;
-          categoryWeight += control.weight;
+        categoryScore += controlResult.score * control.weight;
+        categoryWeight += control.weight;
 
-          // Add to overall results
-          evaluationResults.control_results[control.id] = controlResult;
-          evaluationResults.total_controls++;
-
-          // Count control statuses
-          switch (controlResult.status) {
-            case 'compliant':
-              evaluationResults.compliant_controls++;
-              break;
-            case 'non_compliant':
-              evaluationResults.non_compliant_controls++;
-              break;
-            case 'partial':
-              evaluationResults.partial_controls++;
-              break;
-            default:
-              evaluationResults.not_assessed_controls++;
-          }
-
-          // Add recommendations for non-compliant controls
-          if (controlResult.status !== 'compliant') {
-            evaluationResults.recommendations.push({
-              control_id: control.id,
-              priority: controlResult.status === 'non_compliant' ? 'high' : 'medium',
-              recommendation: this.generateRecommendation(control, controlResult),
-              evidence_needed: control.evidenceTypes.filter(type =>
-                !controlResult.available_evidence.includes(type)
-              )
-            });
-          }
+        switch (controlResult.status) {
+          case 'compliant':
+            evaluationResults.compliant_controls++;
+            break;
+          case 'non_compliant':
+            evaluationResults.non_compliant_controls++;
+            break;
+          case 'partial':
+            evaluationResults.partial_controls++;
+            break;
+          default:
+            evaluationResults.not_assessed_controls++;
         }
 
-        // Calculate category score
-        const normalizedCategoryScore = categoryWeight > 0 ? (categoryScore / categoryWeight) : 0;
-        evaluationResults.category_scores[category.category] = {
-          score: normalizedCategoryScore,
-          weight: categoryWeight,
-          control_count: category.controls.length
-        };
-
-        // Add to overall weighted score
-        weightedScore += normalizedCategoryScore * categoryWeight;
-        totalWeight += categoryWeight;
+        if (controlResult.status !== 'compliant') {
+          evaluationResults.recommendations.push({
+            control_id: control.id,
+            priority: controlResult.status === 'non_compliant' ? 'high' : 'medium',
+            recommendation: this.generateRecommendation(control, controlResult),
+            evidence_needed: control.evidenceTypes.filter(type =>
+              !controlResult.available_evidence.includes(type)
+            )
+          });
+        }
       }
 
-      // Calculate overall score
-      evaluationResults.overall_score = totalWeight > 0 ? (weightedScore / totalWeight) : 0;
+      const normalizedCategoryScore = categoryWeight > 0 ? (categoryScore / categoryWeight) : 0;
+      evaluationResults.category_scores[category.category] = {
+        score: normalizedCategoryScore,
+        weight: categoryWeight,
+        control_count: category.controls.length
+      };
 
-      // Determine overall status
-      if (evaluationResults.overall_score >= 90) {
-        evaluationResults.status = 'compliant';
-      } else if (evaluationResults.overall_score >= 70) {
-        evaluationResults.status = 'partial';
-      } else {
-        evaluationResults.status = 'non_compliant';
-      }
-
-      // Save evaluation results
-      const evaluationId = await this.db.createEvaluation(frameworkId, evaluationResults);
-      evaluationResults.id = evaluationId;
-
-      return evaluationResults;
-
-    } catch (error) {
-      console.error('Error evaluating compliance:', error);
-      throw error;
+      weightedScore += normalizedCategoryScore * categoryWeight;
+      totalWeight += categoryWeight;
     }
+
+    evaluationResults.overall_score = totalWeight > 0 ? (weightedScore / totalWeight) : 0;
+
+    if (evaluationResults.overall_score >= 90) {
+      evaluationResults.status = 'compliant';
+    } else if (evaluationResults.overall_score >= 70) {
+      evaluationResults.status = 'partial';
+    } else {
+      evaluationResults.status = 'non_compliant';
+    }
+
+    // Persist evaluation to database
+    const evaluationId = await this.db.createEvaluation(frameworkId, evaluationResults);
+    evaluationResults.id = evaluationId;
+
+    return evaluationResults;
   }
 
-  async evaluateControl(control, evidence) {
+  evaluateControl(control, evidence) {
     const controlEvidence = evidence.filter(item => item.control_id === control.id);
 
     const result = {
@@ -299,7 +279,6 @@ class LocalComplianceEngine {
       evidence_details: []
     };
 
-    // Map available evidence types
     controlEvidence.forEach(item => {
       if (control.evidenceTypes.includes(item.evidence_type)) {
         result.available_evidence.push(item.evidence_type);
@@ -313,14 +292,12 @@ class LocalComplianceEngine {
       }
     });
 
-    // Remove duplicates
+    // Deduplicate
     result.available_evidence = [...new Set(result.available_evidence)];
 
-    // Calculate score based on evidence coverage
     const coverageRatio = result.available_evidence.length / control.evidenceTypes.length;
     result.score = Math.round(coverageRatio * 100);
 
-    // Determine status
     if (result.available_evidence.length === 0) {
       result.status = 'not_assessed';
     } else if (coverageRatio >= 0.9) {
@@ -331,7 +308,6 @@ class LocalComplianceEngine {
       result.status = 'non_compliant';
     }
 
-    // Identify gaps
     result.gaps = control.evidenceTypes.filter(type =>
       !result.available_evidence.includes(type)
     );
@@ -362,71 +338,62 @@ class LocalComplianceEngine {
   }
 
   async generateComplianceReport(frameworkId, format = 'detailed') {
-    try {
-      const evaluation = await this.db.getLatestEvaluation(frameworkId);
-      if (!evaluation) {
-        throw new Error('No evaluation found for this framework');
-      }
-
-      const framework = await this.getFrameworkById(frameworkId);
-      const evidence = await this.db.getEvidenceByFramework(frameworkId);
-
-      const report = {
-        report_info: {
-          title: `${framework.name} Compliance Report`,
-          generated_at: new Date().toISOString(),
-          framework_id: frameworkId,
-          framework_version: framework.version
-        },
-        executive_summary: {
-          overall_score: evaluation.overall_score,
-          status: evaluation.status,
-          total_controls: evaluation.total_controls,
-          compliant_controls: evaluation.compliant_controls,
-          non_compliant_controls: evaluation.non_compliant_controls,
-          partial_controls: evaluation.partial_controls
-        },
-        category_breakdown: evaluation.category_scores,
-        control_details: evaluation.control_results,
-        recommendations: evaluation.recommendations,
-        evidence_summary: await this.generateEvidenceSummary(evidence)
-      };
-
-      if (format === 'summary') {
-        return {
-          report_info: report.report_info,
-          executive_summary: report.executive_summary,
-          top_recommendations: evaluation.recommendations
-            .filter(rec => rec.priority === 'high')
-            .slice(0, 5)
-        };
-      }
-
-      return report;
-
-    } catch (error) {
-      console.error('Error generating compliance report:', error);
-      throw error;
+    const evaluation = await this.db.getLatestEvaluation(frameworkId);
+    if (!evaluation) {
+      throw new Error('No evaluation found. Run an evaluation first.');
     }
+
+    const framework = await this.db.getFrameworkById(frameworkId);
+    const evidence = await this.db.getEvidenceByFramework(frameworkId);
+    const findings = evaluation.findings || {};
+
+    const report = {
+      report_info: {
+        title: `${framework.name} Compliance Report`,
+        generated_at: new Date().toISOString(),
+        framework_id: frameworkId,
+        framework_version: framework.version
+      },
+      executive_summary: {
+        overall_score: findings.overall_score || evaluation.overall_score || 0,
+        status: findings.status || evaluation.status,
+        total_controls: findings.total_controls || 0,
+        compliant_controls: findings.compliant_controls || 0,
+        non_compliant_controls: findings.non_compliant_controls || 0,
+        partial_controls: findings.partial_controls || 0
+      },
+      category_breakdown: findings.category_scores || {},
+      control_details: findings.control_results || {},
+      recommendations: findings.recommendations || [],
+      evidence_summary: this.generateEvidenceSummary(evidence)
+    };
+
+    if (format === 'summary') {
+      return {
+        report_info: report.report_info,
+        executive_summary: report.executive_summary,
+        top_recommendations: (findings.recommendations || [])
+          .filter(rec => rec.priority === 'high')
+          .slice(0, 5)
+      };
+    }
+
+    return report;
   }
 
-  async generateEvidenceSummary(evidence) {
+  generateEvidenceSummary(evidence) {
     const summary = {
       total_evidence: evidence.length,
       evidence_types: {},
-      collection_period: {
-        earliest: null,
-        latest: null
-      },
+      collection_period: { earliest: null, latest: null },
       file_evidence: 0,
       metadata_evidence: 0
     };
 
     evidence.forEach(item => {
-      // Count by type
-      summary.evidence_types[item.evidence_type] = (summary.evidence_types[item.evidence_type] || 0) + 1;
+      summary.evidence_types[item.evidence_type] =
+        (summary.evidence_types[item.evidence_type] || 0) + 1;
 
-      // Track collection period
       const collectedAt = new Date(item.collected_at);
       if (!summary.collection_period.earliest || collectedAt < new Date(summary.collection_period.earliest)) {
         summary.collection_period.earliest = item.collected_at;
@@ -435,7 +402,6 @@ class LocalComplianceEngine {
         summary.collection_period.latest = item.collected_at;
       }
 
-      // Count file vs metadata
       if (item.file_path) {
         summary.file_evidence++;
       } else {
@@ -444,20 +410,6 @@ class LocalComplianceEngine {
     });
 
     return summary;
-  }
-
-  async getFrameworkById(frameworkId) {
-    // This would typically query the database
-    // For now, return the default SOC 2 framework
-    if (frameworkId === 1) {
-      return {
-        id: 1,
-        name: 'SOC 2 Type II',
-        version: '2017',
-        description: 'AICPA SOC 2 Type II Trust Services Criteria'
-      };
-    }
-    return null;
   }
 }
 

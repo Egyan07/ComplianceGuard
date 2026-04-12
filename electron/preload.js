@@ -1,117 +1,109 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
-// Expose protected methods that allow the renderer process to use
-// the ipcRenderer without exposing the entire object
+// Expose protected methods to the renderer process
 contextBridge.exposeInMainWorld('electronAPI', {
   // App information
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   getSystemInfo: () => ipcRenderer.invoke('get-system-info'),
 
   // Notifications
-  showNotification: (title, body) => ipcRenderer.invoke('show-notification', title, body),
+  showNotification: (title, body) => {
+    if (typeof title !== 'string' || typeof body !== 'string') return;
+    ipcRenderer.invoke('show-notification', title, body);
+  },
 
   // Evidence collection
-  collectWindowsEvidence: () => ipcRenderer.invoke('collect-windows-evidence'),
+  collectWindowsEvidence: (frameworkId = 1) => {
+    if (typeof frameworkId !== 'number' || frameworkId < 1) frameworkId = 1;
+    return ipcRenderer.invoke('collect-windows-evidence', frameworkId);
+  },
+
+  processManualEvidence: (evidenceData, frameworkId = 1) => {
+    if (!evidenceData || typeof evidenceData !== 'object') {
+      return Promise.reject(new Error('Invalid evidence data'));
+    }
+    return ipcRenderer.invoke('process-manual-evidence', evidenceData, frameworkId);
+  },
+
+  // Evidence queries
+  getEvidenceSummary: (frameworkId = 1) => {
+    return ipcRenderer.invoke('get-evidence-summary', frameworkId);
+  },
+
+  getEvidenceList: (frameworkId = 1) => {
+    return ipcRenderer.invoke('get-evidence-list', frameworkId);
+  },
+
+  searchEvidence: (frameworkId, searchTerm, filters = {}) => {
+    if (typeof searchTerm !== 'string') searchTerm = '';
+    return ipcRenderer.invoke('search-evidence', frameworkId, searchTerm, filters);
+  },
+
+  // Compliance evaluation
+  evaluateCompliance: (frameworkId = 1) => {
+    return ipcRenderer.invoke('evaluate-compliance', frameworkId);
+  },
+
+  getEvaluationHistory: (frameworkId = 1) => {
+    return ipcRenderer.invoke('get-evaluation-history', frameworkId);
+  },
+
+  generateComplianceReport: (frameworkId = 1, format = 'detailed') => {
+    const allowedFormats = ['detailed', 'summary'];
+    if (!allowedFormats.includes(format)) format = 'detailed';
+    return ipcRenderer.invoke('generate-compliance-report', frameworkId, format);
+  },
 
   // File system operations
   selectFolder: () => ipcRenderer.invoke('select-folder'),
   saveReport: (data, filename) => ipcRenderer.invoke('save-report', data, filename),
 
-  // System monitoring
-  startSystemMonitoring: () => ipcRenderer.send('start-system-monitoring'),
-  stopSystemMonitoring: () => ipcRenderer.send('stop-system-monitoring'),
+  // User settings
+  getUserSetting: (key, defaultValue = null) => {
+    if (typeof key !== 'string') return Promise.resolve(defaultValue);
+    return ipcRenderer.invoke('get-user-setting', key, defaultValue);
+  },
+  setUserSetting: (key, value, type = 'string') => {
+    if (typeof key !== 'string') return Promise.reject(new Error('Invalid key'));
+    return ipcRenderer.invoke('set-user-setting', key, value, type);
+  },
 
-  // Event listeners
+  // Database maintenance
+  createBackup: () => ipcRenderer.invoke('create-database-backup'),
+
+  // Event listeners (from main process)
   onCollectEvidence: (callback) => {
-    ipcRenderer.on('collect-evidence', callback);
-    return () => {
-      ipcRenderer.removeListener('collect-evidence', callback);
-    };
+    const handler = (event, ...args) => callback(...args);
+    ipcRenderer.on('collect-evidence', handler);
+    return () => ipcRenderer.removeListener('collect-evidence', handler);
   },
 
   onSystemAlert: (callback) => {
-    ipcRenderer.on('system-alert', (event, data) => callback(data));
-    return () => {
-      ipcRenderer.removeListener('system-alert', callback);
-    };
+    const handler = (event, data) => callback(data);
+    ipcRenderer.on('system-alert', handler);
+    return () => ipcRenderer.removeListener('system-alert', handler);
   },
 
   onComplianceUpdate: (callback) => {
-    ipcRenderer.on('compliance-update', (event, data) => callback(data));
-    return () => {
-      ipcRenderer.removeListener('compliance-update', callback);
-    };
+    const handler = (event, data) => callback(data);
+    ipcRenderer.on('compliance-update', handler);
+    return () => ipcRenderer.removeListener('compliance-update', handler);
   }
 });
 
-// Additional Windows-specific APIs
+// Windows-specific APIs (only exposed on Windows)
 if (process.platform === 'win32') {
   contextBridge.exposeInMainWorld('windowsAPI', {
-    // Windows registry access
-    readRegistryKey: (keyPath) => ipcRenderer.invoke('read-registry-key', keyPath),
+    getEventLogs: (logName, limit = 100) => {
+      const allowedLogs = ['Security', 'System', 'Application'];
+      if (!allowedLogs.includes(logName)) {
+        return Promise.reject(new Error(`Invalid log name. Allowed: ${allowedLogs.join(', ')}`));
+      }
+      if (typeof limit !== 'number' || limit < 1 || limit > 1000) limit = 100;
+      return ipcRenderer.invoke('get-event-logs', logName, limit);
+    },
 
-    // Windows event logs
-    getEventLogs: (logName, limit = 100) => ipcRenderer.invoke('get-event-logs', logName, limit),
-
-    // Windows services
     getServices: () => ipcRenderer.invoke('get-services'),
-
-    // Windows firewall status
-    getFirewallStatus: () => ipcRenderer.invoke('get-firewall-status'),
-
-    // Windows update status
-    getUpdateStatus: () => ipcRenderer.invoke('get-update-status')
+    getFirewallStatus: () => ipcRenderer.invoke('get-firewall-status')
   });
 }
-
-// Error handling
-process.on('uncaughtException', (error) => {
-  console.error('Uncaught Exception:', error);
-  ipcRenderer.send('error', {
-    type: 'uncaughtException',
-    message: error.message,
-    stack: error.stack
-  });
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  ipcRenderer.send('error', {
-    type: 'unhandledRejection',
-    reason: reason?.toString()
-  });
-});
-
-// Performance monitoring
-let performanceMetrics = {
-  memoryUsage: [],
-  cpuUsage: [],
-  startTime: Date.now()
-};
-
-// Collect performance metrics every 30 seconds
-setInterval(() => {
-  const memoryUsage = process.memoryUsage();
-  performanceMetrics.memoryUsage.push({
-    timestamp: Date.now(),
-    heapUsed: memoryUsage.heapUsed,
-    heapTotal: memoryUsage.heapTotal,
-    external: memoryUsage.external
-  });
-
-  // Keep only last 100 measurements
-  if (performanceMetrics.memoryUsage.length > 100) {
-    performanceMetrics.memoryUsage.shift();
-  }
-
-  // Send metrics to main process periodically
-  if (performanceMetrics.memoryUsage.length % 10 === 0) {
-    ipcRenderer.send('performance-metrics', performanceMetrics);
-  }
-}, 30000);
-
-// Expose performance API
-contextBridge.exposeInMainWorld('performanceAPI', {
-  getMetrics: () => performanceMetrics,
-  getUptime: () => Date.now() - performanceMetrics.startTime
-});

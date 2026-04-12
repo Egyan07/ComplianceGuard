@@ -2,7 +2,7 @@
 Main Dashboard Component
 
 Integrates ComplianceScore and EvidenceList components with a responsive
-grid layout using Material-UI. Handles data fetching and state management.
+grid layout using Material-UI. Works in both Electron and web modes.
 */
 
 import React, { useState, useEffect } from 'react';
@@ -18,22 +18,28 @@ import {
 } from '@mui/material';
 import {
   Refresh,
-  CloudUpload
+  CloudUpload,
+  Assessment
 } from '@mui/icons-material';
 import ComplianceScore from './ComplianceScore';
 import EvidenceList from './EvidenceList';
 import {
   getEvidenceSummary,
+  getEvidenceItems,
   getMockEvidenceSummary,
-  getMockEvidenceItems,
   collectEvidence,
+  evaluateCompliance,
   EvidenceSummary,
-  EvidenceItem
+  EvidenceItem,
+  ComplianceEvaluation
 } from '../services/api';
+
+const isElectron = !!(window as any).electronAPI;
 
 interface DashboardState {
   summary: EvidenceSummary | null;
   evidenceItems: EvidenceItem[];
+  evaluation: ComplianceEvaluation | null;
   loading: boolean;
   error: string | null;
   successMessage: string | null;
@@ -43,28 +49,41 @@ const Dashboard: React.FC = () => {
   const [state, setState] = useState<DashboardState>({
     summary: null,
     evidenceItems: [],
+    evaluation: null,
     loading: true,
     error: null,
     successMessage: null
   });
 
   const [collectingEvidence, setCollectingEvidence] = useState(false);
+  const [evaluating, setEvaluating] = useState(false);
 
   const fetchDashboardData = async () => {
     setState(prev => ({ ...prev, loading: true, error: null }));
 
     try {
-      // Try to fetch from real API, fallback to mock data if it fails
       let summary: EvidenceSummary;
+      let evidenceItems: EvidenceItem[];
 
       try {
         summary = await getEvidenceSummary();
       } catch (apiError) {
-        console.warn('API not available, using mock data:', apiError);
+        console.warn('Could not fetch summary, using defaults:', apiError);
         summary = getMockEvidenceSummary();
       }
 
-      const evidenceItems = getMockEvidenceItems();
+      try {
+        evidenceItems = await getEvidenceItems();
+      } catch (apiError) {
+        console.warn('Could not fetch evidence items:', apiError);
+        evidenceItems = [];
+      }
+
+      // Update compliance metrics from evaluation if we have one
+      if (state.evaluation) {
+        summary.compliance_metrics.overall_compliance_score =
+          Math.round(state.evaluation.overall_score);
+      }
 
       setState(prev => ({
         ...prev,
@@ -88,27 +107,24 @@ const Dashboard: React.FC = () => {
     setState(prev => ({ ...prev, error: null }));
 
     try {
-      // Mock evidence collection request
-      const request = {
-        collection_types: ['s3_encryption', 'iam_policy']
-      };
+      const result = await collectEvidence();
 
-      await collectEvidence(request);
+      if (result.error) {
+        setState(prev => ({ ...prev, error: `Evidence collection failed: ${result.error}` }));
+      } else {
+        setState(prev => ({
+          ...prev,
+          successMessage: `Evidence collection complete! ${result.evidence_count || 0} items collected.`
+        }));
 
+        // Refresh dashboard after collection
+        setTimeout(fetchDashboardData, 1000);
+      }
+
+    } catch (error: any) {
       setState(prev => ({
         ...prev,
-        successMessage: 'Evidence collection initiated successfully!'
-      }));
-
-      // Refresh dashboard data after collection
-      setTimeout(() => {
-        fetchDashboardData();
-      }, 2000);
-
-    } catch (error) {
-      setState(prev => ({
-        ...prev,
-        error: 'Failed to collect evidence. Please check your configuration.'
+        error: error.message || 'Failed to collect evidence. Please check your configuration.'
       }));
       console.error('Evidence collection error:', error);
     } finally {
@@ -116,10 +132,36 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const handleEvaluateCompliance = async () => {
+    if (!isElectron) return;
+
+    setEvaluating(true);
+    setState(prev => ({ ...prev, error: null }));
+
+    try {
+      const evaluation = await evaluateCompliance();
+
+      setState(prev => ({
+        ...prev,
+        evaluation,
+        successMessage: `Compliance evaluation complete! Score: ${evaluation.overall_score.toFixed(1)}%`
+      }));
+
+      // Refresh to update metrics
+      setTimeout(fetchDashboardData, 500);
+
+    } catch (error: any) {
+      setState(prev => ({
+        ...prev,
+        error: error.message || 'Failed to evaluate compliance.'
+      }));
+    } finally {
+      setEvaluating(false);
+    }
+  };
+
   const handleEvidenceItemClick = (item: EvidenceItem) => {
     console.log('Evidence item clicked:', item);
-    // In a real implementation, this might open a detailed view
-    // or trigger additional actions based on the evidence item
   };
 
   const handleCloseSnackbar = () => {
@@ -157,7 +199,9 @@ const Dashboard: React.FC = () => {
               ComplianceGuard Dashboard
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              Monitor your SOC 2 compliance status and evidence collection
+              {isElectron
+                ? 'Monitor your SOC 2 compliance status - Desktop Mode'
+                : 'Monitor your SOC 2 compliance status'}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', gap: 2 }}>
@@ -169,6 +213,17 @@ const Dashboard: React.FC = () => {
             >
               Refresh
             </Button>
+            {isElectron && (
+              <Button
+                variant="outlined"
+                color="secondary"
+                startIcon={<Assessment />}
+                onClick={handleEvaluateCompliance}
+                disabled={evaluating}
+              >
+                {evaluating ? 'Evaluating...' : 'Evaluate Compliance'}
+              </Button>
+            )}
             <Button
               variant="contained"
               startIcon={<CloudUpload />}
@@ -181,7 +236,7 @@ const Dashboard: React.FC = () => {
         </Box>
       </Box>
 
-      {/* Error/Success Alerts */}
+      {/* Error Alert */}
       {state.error && (
         <Alert
           severity="error"
@@ -207,6 +262,7 @@ const Dashboard: React.FC = () => {
                 iam_policy_compliance: 0,
                 overall_compliance_score: 0
               }}
+              evaluation={state.evaluation}
               loading={state.loading}
             />
           </Box>
@@ -214,7 +270,7 @@ const Dashboard: React.FC = () => {
           <Box sx={{ flex: 1 }}>
             <Paper sx={{ p: 3, height: '100%', minHeight: 400 }}>
               <Typography variant="h6" gutterBottom>
-                Collection Summary
+                {isElectron ? 'Local Collection Summary' : 'Collection Summary'}
               </Typography>
               {state.summary ? (
                 <Box sx={{ mt: 2 }}>
@@ -224,30 +280,28 @@ const Dashboard: React.FC = () => {
                         {state.summary.total_collections}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Total Collections
+                        Total Evidence Items
                       </Typography>
                     </Box>
                     <Box sx={{ textAlign: 'center' }}>
                       <Typography variant="h4" sx={{ color: 'success.main', fontWeight: 'bold' }}>
-                        {state.evidenceItems.filter(item => item.status === 'compliant').length}
+                        {state.evaluation?.compliant_controls || 0}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Compliant Items
+                        Compliant Controls
                       </Typography>
                     </Box>
                     <Box sx={{ textAlign: 'center' }}>
                       <Typography variant="h4" sx={{ color: 'warning.main', fontWeight: 'bold' }}>
-                        {state.evidenceItems.filter(item => item.status === 'warning').length}
+                        {state.evaluation?.partial_controls || 0}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Warnings
+                        Partial Controls
                       </Typography>
                     </Box>
                     <Box sx={{ textAlign: 'center' }}>
                       <Typography variant="h4" sx={{ color: 'error.main', fontWeight: 'bold' }}>
-                        {state.evidenceItems.filter(item =>
-                          item.status === 'non_compliant' || item.status === 'non-compliant'
-                        ).length}
+                        {state.evaluation?.non_compliant_controls || 0}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Non-Compliant
@@ -259,6 +313,15 @@ const Dashboard: React.FC = () => {
                     <Box sx={{ mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
                       <Typography variant="body2" color="text.secondary">
                         Last Collection: {new Date(state.summary.last_collection).toLocaleDateString()}
+                      </Typography>
+                    </Box>
+                  )}
+
+                  {state.evaluation && (
+                    <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Total Controls: {state.evaluation.total_controls} |
+                        Not Assessed: {state.evaluation.not_assessed_controls}
                       </Typography>
                     </Box>
                   )}

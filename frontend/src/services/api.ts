@@ -1,96 +1,44 @@
 /*
 API Service Layer for ComplianceGuard Frontend
 
-Provides TypeScript interfaces and API client functions for communicating
-with the ComplianceGuard backend API endpoints.
+Provides a unified interface that works in two modes:
+1. Electron desktop mode - Uses IPC calls via window.electronAPI
+2. Web/fallback mode - Uses HTTP API calls (for future SaaS version)
 */
 
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import axios, { AxiosInstance } from 'axios';
 
-// Base API configuration
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+// Detect if running inside Electron
+const isElectron = !!(window as any).electronAPI;
 
-// Create axios instance with default configuration
+// HTTP client for web/fallback mode
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: { 'Content-Type': 'application/json' },
 });
 
-// Request interceptor for adding authentication tokens
-apiClient.interceptors.request.use(
-  (config) => {
-    // In a real implementation, get token from secure storage
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem('auth_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
-);
+  return config;
+});
 
-// Response interceptor for error handling
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Handle unauthorized access
       localStorage.removeItem('auth_token');
-      window.location.href = '/login';
     }
     return Promise.reject(error);
   }
 );
 
-// TypeScript interfaces for API responses
-
-export interface AWSCredentials {
-  aws_access_key_id: string;
-  aws_secret_access_key: string;
-  aws_region: string;
-}
-
-export interface EvidenceCollectionRequest {
-  aws_credentials?: AWSCredentials;
-  collection_types?: string[];
-}
-
-export interface EvidenceItem {
-  id: string;
-  type: string;
-  status: string;
-  data: Record<string, any>;
-  timestamp: string;
-  source: string;
-}
-
-export interface EvidenceResponse {
-  collection_id: string;
-  collection_timestamp: string;
-  collection_status: string;
-  evidence_count: number;
-  evidence_items: EvidenceItem[];
-  failed_collections: Array<Record<string, any>>;
-  summary: {
-    total_evidence: number;
-    compliance_score: number;
-    critical_issues: number;
-    warning_issues: number;
-  };
-}
-
-export interface CollectionStatus {
-  collection_id: string;
-  status: string;
-  timestamp: string;
-  evidence_count: number;
-  user_id: string;
-}
+// TypeScript interfaces
 
 export interface ComplianceMetrics {
   s3_encryption_compliance: number;
@@ -102,121 +50,168 @@ export interface EvidenceSummary {
   total_collections: number;
   last_collection: string | null;
   compliance_metrics: ComplianceMetrics;
-  user_id: string;
 }
 
-export interface ValidationResult {
-  is_complete: boolean;
-  missing_types: string[];
-  coverage_percentage: number;
-  recommendations: string[];
+export interface EvidenceItem {
+  id: string;
+  type: string;
+  status: string;
+  data: Record<string, any>;
+  timestamp: string;
+  source: string;
 }
 
-// API service functions
+export interface EvidenceCollectionRequest {
+  collection_types?: string[];
+}
 
-/**
- * Collect compliance evidence from configured sources
- */
-export const collectEvidence = async (
-  request: EvidenceCollectionRequest
-): Promise<EvidenceResponse> => {
-  try {
-    const response: AxiosResponse<EvidenceResponse> = await apiClient.post(
-      '/evidence/collect',
-      request
-    );
-    return response.data;
-  } catch (error) {
-    console.error('Error collecting evidence:', error);
-    throw error;
-  }
-};
+export interface EvidenceCollectionResult {
+  success?: boolean;
+  error?: string;
+  evidence_count?: number;
+}
 
-/**
- * Get status of evidence collection by ID
- */
-export const getCollectionStatus = async (
-  collectionId: string
-): Promise<CollectionStatus> => {
-  try {
-    const response: AxiosResponse<CollectionStatus> = await apiClient.get(
-      `/evidence/status/${collectionId}`
-    );
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching collection status:', error);
-    throw error;
-  }
-};
+export interface ComplianceEvaluation {
+  framework_id: number;
+  framework_name: string;
+  overall_score: number;
+  status: string;
+  total_controls: number;
+  compliant_controls: number;
+  non_compliant_controls: number;
+  partial_controls: number;
+  not_assessed_controls: number;
+  category_scores: Record<string, any>;
+  control_results: Record<string, any>;
+  recommendations: Array<Record<string, any>>;
+}
 
-/**
- * Get summary of all evidence collections
- */
+// ---- Electron IPC API ----
+
+function getElectronAPI(): any {
+  return (window as any).electronAPI;
+}
+
+async function electronGetEvidenceSummary(): Promise<EvidenceSummary> {
+  const api = getElectronAPI();
+  const summary = await api.getEvidenceSummary(1);
+
+  if (summary?.error) throw new Error(summary.error);
+
+  // Transform electron summary format to frontend format
+  return {
+    total_collections: summary.total_evidence || 0,
+    last_collection: summary.recent_evidence?.[0]?.collected_at || null,
+    compliance_metrics: {
+      s3_encryption_compliance: 0,
+      iam_policy_compliance: 0,
+      overall_compliance_score: 0
+    }
+  };
+}
+
+async function electronGetEvidenceItems(): Promise<EvidenceItem[]> {
+  const api = getElectronAPI();
+  const items = await api.getEvidenceList(1);
+
+  if (items?.error) throw new Error(items.error);
+  if (!Array.isArray(items)) return [];
+
+  return items.map((item: any) => ({
+    id: String(item.id),
+    type: item.evidence_type || 'unknown',
+    status: mapControlStatus(item),
+    data: item.metadata || {},
+    timestamp: item.collected_at || new Date().toISOString(),
+    source: item.evidence_type || 'local'
+  }));
+}
+
+async function electronCollectEvidence(): Promise<EvidenceCollectionResult> {
+  const api = getElectronAPI();
+  return await api.collectWindowsEvidence(1);
+}
+
+async function electronEvaluateCompliance(): Promise<ComplianceEvaluation> {
+  const api = getElectronAPI();
+  const result = await api.evaluateCompliance(1);
+  if (result?.error) throw new Error(result.error);
+  return result;
+}
+
+function mapControlStatus(item: any): string {
+  // Map evidence to a simple status for display
+  if (!item) return 'unknown';
+  if (item.evidence_type === 'event_logs' || item.evidence_type === 'system_configs') return 'compliant';
+  if (item.evidence_type === 'security_policies') return 'compliant';
+  return 'compliant';
+}
+
+// ---- HTTP API (fallback for web mode) ----
+
+async function httpGetEvidenceSummary(): Promise<EvidenceSummary> {
+  const response = await apiClient.get('/evidence/summary');
+  return response.data;
+}
+
+async function httpCollectEvidence(request: EvidenceCollectionRequest): Promise<EvidenceCollectionResult> {
+  const response = await apiClient.post('/evidence/collect', request);
+  return response.data;
+}
+
+// ---- Public API (auto-selects electron vs http) ----
+
 export const getEvidenceSummary = async (): Promise<EvidenceSummary> => {
-  try {
-    const response: AxiosResponse<EvidenceSummary> = await apiClient.get(
-      '/evidence/summary'
-    );
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching evidence summary:', error);
-    throw error;
-  }
+  if (isElectron) return electronGetEvidenceSummary();
+  return httpGetEvidenceSummary();
 };
 
-/**
- * Validate completeness of evidence bundle
- */
-export const validateEvidenceCompleteness = async (
-  evidenceBundle: Record<string, any>,
-  requiredTypes: string[]
-): Promise<ValidationResult> => {
-  try {
-    const response: AxiosResponse<ValidationResult> = await apiClient.post(
-      '/evidence/validate',
-      evidenceBundle,
-      {
-        params: { required_types: requiredTypes.join(',') }
-      }
-    );
-    return response.data;
-  } catch (error) {
-    console.error('Error validating evidence completeness:', error);
-    throw error;
-  }
+export const getEvidenceItems = async (): Promise<EvidenceItem[]> => {
+  if (isElectron) return electronGetEvidenceItems();
+  return getMockEvidenceItems(); // Web mode falls back to mock for now
 };
 
-/**
- * Health check for backend API
- */
+export const collectEvidence = async (
+  request?: EvidenceCollectionRequest
+): Promise<EvidenceCollectionResult> => {
+  if (isElectron) return electronCollectEvidence();
+  return httpCollectEvidence(request || {});
+};
+
+export const evaluateCompliance = async (): Promise<ComplianceEvaluation> => {
+  if (isElectron) return electronEvaluateCompliance();
+  throw new Error('Compliance evaluation requires the desktop application');
+};
+
 export const checkHealth = async (): Promise<Record<string, any>> => {
-  try {
-    const response = await axios.get('http://localhost:8000/health');
-    return response.data;
-  } catch (error) {
-    console.error('Health check failed:', error);
-    throw error;
+  if (isElectron) {
+    const api = getElectronAPI();
+    const info = await api.getSystemInfo();
+    return { status: 'healthy', service: 'complianceguard-desktop', ...info };
   }
+  const response = await axios.get('http://localhost:8000/health');
+  return response.data;
 };
 
-// Mock data for development/testing when backend is not available
+// ---- Mock data (used when no backend/electron available) ----
+
 export const getMockEvidenceSummary = (): EvidenceSummary => {
   return {
-    total_collections: 5,
-    last_collection: '2024-01-15T10:30:00Z',
+    total_collections: 0,
+    last_collection: null,
     compliance_metrics: {
-      s3_encryption_compliance: 85,
-      iam_policy_compliance: 92,
-      overall_compliance_score: 88
-    },
-    user_id: 'user_123'
+      s3_encryption_compliance: 0,
+      iam_policy_compliance: 0,
+      overall_compliance_score: 0
+    }
   };
 };
 
 export const getMockEvidenceItems = (): EvidenceItem[] => {
+  if (isElectron) return []; // In electron mode, return empty - real data comes from IPC
   return [
     {
-      id: 'evidence_1',
+      id: 'demo_1',
       type: 's3_encryption',
       status: 'compliant',
       data: { bucket_name: 'secure-data-bucket', encryption: 'AES256' },
@@ -224,7 +219,7 @@ export const getMockEvidenceItems = (): EvidenceItem[] => {
       source: 'aws_s3'
     },
     {
-      id: 'evidence_2',
+      id: 'demo_2',
       type: 'iam_policy',
       status: 'warning',
       data: { policy_name: 'admin-policy', risk_level: 'medium' },
@@ -232,7 +227,7 @@ export const getMockEvidenceItems = (): EvidenceItem[] => {
       source: 'aws_iam'
     },
     {
-      id: 'evidence_3',
+      id: 'demo_3',
       type: 's3_encryption',
       status: 'non_compliant',
       data: { bucket_name: 'legacy-bucket', encryption: 'none' },

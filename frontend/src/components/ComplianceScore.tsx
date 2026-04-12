@@ -21,10 +21,11 @@ import {
   Error,
   Info
 } from '@mui/icons-material';
-import { ComplianceMetrics } from '../services/api';
+import { ComplianceMetrics, ComplianceEvaluation } from '../services/api';
 
 interface ComplianceScoreProps {
   metrics: ComplianceMetrics;
+  evaluation?: ComplianceEvaluation | null;
   loading?: boolean;
 }
 
@@ -91,6 +92,7 @@ const ScoreIndicator: React.FC<ScoreIndicatorProps> = ({
 
 const ComplianceScore: React.FC<ComplianceScoreProps> = ({
   metrics,
+  evaluation,
   loading = false
 }) => {
   if (loading) {
@@ -115,7 +117,10 @@ const ComplianceScore: React.FC<ComplianceScoreProps> = ({
     return { label: 'Poor', color: 'error' };
   };
 
-  const overallStatus = getOverallStatus(metrics.overall_compliance_score);
+  const displayScore = evaluation
+    ? Math.round(evaluation.overall_score)
+    : metrics.overall_compliance_score;
+  const overallStatus = getOverallStatus(displayScore);
 
   return (
     <Card sx={{ height: '100%', minHeight: 400 }}>
@@ -132,7 +137,7 @@ const ComplianceScore: React.FC<ComplianceScoreProps> = ({
             Compliance Score
           </Typography>
           <Chip
-            label={overallStatus.label}
+            label={evaluation ? evaluation.status.replace('_', ' ').toUpperCase() : overallStatus.label}
             color={overallStatus.color as 'success' | 'primary' | 'warning' | 'error'}
             variant="filled"
           />
@@ -151,7 +156,7 @@ const ComplianceScore: React.FC<ComplianceScoreProps> = ({
         >
           <Box sx={{ textAlign: 'center' }}>
             <Typography variant="h2" sx={{ fontWeight: 'bold' }} color="primary">
-              {metrics.overall_compliance_score}%
+              {displayScore}%
             </Typography>
             <Typography variant="body2" color="text.secondary">
               Overall Compliance
@@ -160,27 +165,44 @@ const ComplianceScore: React.FC<ComplianceScoreProps> = ({
         </Box>
 
         <Box>
-          <ScoreIndicator
-            score={metrics.s3_encryption_compliance}
-            label="S3 Encryption Compliance"
-            description="Percentage of S3 buckets with proper encryption enabled"
-          />
-          <ScoreIndicator
-            score={metrics.iam_policy_compliance}
-            label="IAM Policy Compliance"
-            description="Percentage of IAM policies following security best practices"
-          />
+          {evaluation && evaluation.category_scores ? (
+            // Show real category scores from evaluation
+            Object.entries(evaluation.category_scores).map(([category, data]: [string, any]) => (
+              <ScoreIndicator
+                key={category}
+                score={Math.round(data.score || 0)}
+                label={category}
+                description={`${data.control_count || 0} controls evaluated`}
+              />
+            ))
+          ) : (
+            // Show placeholder metrics when no evaluation
+            <>
+              <ScoreIndicator
+                score={metrics.s3_encryption_compliance}
+                label="S3 Encryption Compliance"
+                description="Percentage of S3 buckets with proper encryption enabled"
+              />
+              <ScoreIndicator
+                score={metrics.iam_policy_compliance}
+                label="IAM Policy Compliance"
+                description="Percentage of IAM policies following security best practices"
+              />
+            </>
+          )}
         </Box>
 
         <Box sx={{ mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
             <Info color="info" fontSize="small" />
             <Typography variant="body2" color="text.secondary">
-              Last Updated: {new Date().toLocaleDateString()}
+              {evaluation
+                ? `Last Evaluated: ${new Date(evaluation.evaluation_date || Date.now()).toLocaleDateString()}`
+                : 'No evaluation yet. Collect evidence and run an evaluation.'}
             </Typography>
           </Box>
           <Typography variant="body2" color="text.secondary">
-            Scores are calculated based on automated evidence collection and analysis.
+            Scores are calculated based on evidence coverage against SOC 2 controls.
           </Typography>
         </Box>
       </CardContent>
