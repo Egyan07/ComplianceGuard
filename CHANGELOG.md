@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [2.3.0] - 2026-04-12
+
+### Added
+- **Email verification** — Registration generates a verification token; `/verify-email` endpoint validates it; `/verification-status` checks current state
+- **Password reset flow** — `/forgot-password` generates a 1-hour reset token; `/reset-password` validates token, expiry, and password complexity; returns 200 on nonexistent email to prevent user enumeration
+- **Playwright e2e tests** — 5 tests covering login page rendering, tab switching, invalid login error display, tagline, and logo; `npm run test:e2e` script
+- **Alembic migration** — New migration for `is_verified`, `verification_token`, `reset_token`, `reset_token_expires` on users table
+
+### Fixed
+- **datetime deprecation** — Replaced all `datetime.utcnow()` with `datetime.now(timezone.utc)` across backend (auth, evidence collector, AWS integration); eliminates Python 3.12 deprecation warnings
+
+### Changed
+- Total test count: **34 backend + 37 frontend + 5 e2e = 76 tests**
+
+---
+
 ## [2.2.0] - 2026-04-12
 
 ### Added
