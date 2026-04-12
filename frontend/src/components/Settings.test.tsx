@@ -23,7 +23,7 @@ describe('Settings', () => {
   it('shows version info', () => {
     renderWithTheme(<Settings />);
     expect(screen.getByText('Version')).toBeInTheDocument();
-    expect(screen.getByText('2.0.0')).toBeInTheDocument();
+    expect(screen.getByText('2.3.0')).toBeInTheDocument();
   });
 
   it('shows database section', () => {
