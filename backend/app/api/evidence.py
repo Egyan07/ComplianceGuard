@@ -5,241 +5,278 @@ REST API endpoints for managing and collecting compliance evidence.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from typing import Dict, Any, Optional
+from sqlalchemy.orm import Session
+from typing import Dict, Any, Optional, List
 from pydantic import BaseModel
+from datetime import datetime
 import logging
 
 logger = logging.getLogger(__name__)
 
-from app.services.evidence_collector import EvidenceCollectionService
 from app.api.deps import get_current_user
+from app.core.database import get_db
 from app.models.user import User
+from app.models.evidence import EvidenceCollection, EvidenceItem
+from app.services.evidence_collector import EvidenceCollectionService
 
 router = APIRouter(prefix="/evidence", tags=["evidence"])
 
 
+# --- Request / Response models ---
+
 class AWSCredentials(BaseModel):
-    """AWS credentials for evidence collection"""
     aws_access_key_id: str
     aws_secret_access_key: str
     aws_region: str = "us-east-1"
 
 
 class EvidenceCollectionRequest(BaseModel):
-    """Request model for evidence collection"""
     aws_credentials: Optional[AWSCredentials] = None
     collection_types: Optional[list[str]] = None
 
 
-class EvidenceResponse(BaseModel):
-    """Response model for evidence collection"""
+class EvidenceItemResponse(BaseModel):
+    id: int
+    evidence_type: str
+    source: str
+    status: str
+    data: Optional[Dict[str, Any]] = None
+    created_at: str
+
+    class Config:
+        from_attributes = True
+
+
+class EvidenceCollectionResponse(BaseModel):
     collection_id: str
-    collection_timestamp: str
-    collection_status: str
+    status: str
     evidence_count: int
-    evidence_items: list[Dict[str, Any]]
-    failed_collections: list[Dict[str, Any]]
-    summary: Dict[str, Any]
+    failed_count: int
+    summary: Optional[Dict[str, Any]] = None
+    created_at: str
+    items: List[EvidenceItemResponse] = []
+
+    class Config:
+        from_attributes = True
 
 
-@router.post("/collect", response_model=EvidenceResponse, status_code=status.HTTP_200_OK)
+class EvidenceSummaryResponse(BaseModel):
+    total_collections: int
+    total_evidence_items: int
+    last_collection: Optional[str] = None
+    compliance_metrics: Dict[str, Any]
+
+
+# --- Endpoints ---
+
+@router.post("/collect", response_model=EvidenceCollectionResponse)
 async def collect_evidence(
     request: EvidenceCollectionRequest,
-    current_user: User = Depends(get_current_user)
-) -> Dict[str, Any]:
-    """
-    Collect compliance evidence from configured sources
-
-    This endpoint orchestrates evidence collection from multiple sources including
-    AWS services (S3 encryption, IAM policies), and other configured sources.
-
-    Args:
-        request: Evidence collection request containing source configurations
-        current_user: Authenticated user identifier
-
-    Returns:
-        Dict containing collected evidence bundle
-
-    Raises:
-        HTTPException: If evidence collection fails or authentication fails
-
-    Example:
-        POST /api/v1/evidence/collect
-        {
-            "aws_credentials": {
-                "aws_access_key_id": "AKIA...",
-                "aws_secret_access_key": "secret...",
-                "aws_region": "us-east-1"
-            },
-            "collection_types": ["s3_encryption", "iam_policy"]
-        }
-    """
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Collect compliance evidence from configured sources and persist results."""
     try:
         logger.info(f"Starting evidence collection for user: {current_user.email}")
 
-        # Initialize evidence collection service
         evidence_service = EvidenceCollectionService()
 
-        # Extract AWS credentials if provided
-        aws_credentials = None
         if request.aws_credentials:
-            aws_credentials = {
-                'aws_access_key_id': request.aws_credentials.aws_access_key_id,
-                'aws_secret_access_key': request.aws_credentials.aws_secret_access_key,
-                'region_name': request.aws_credentials.aws_region
+            aws_creds = {
+                "aws_access_key_id": request.aws_credentials.aws_access_key_id,
+                "aws_secret_access_key": request.aws_credentials.aws_secret_access_key,
+                "region_name": request.aws_credentials.aws_region,
             }
-
-        # Collect evidence from all sources
-        if aws_credentials:
-            evidence_bundle = evidence_service.collect_all_evidence(**aws_credentials)
+            bundle = evidence_service.collect_all_evidence(**aws_creds)
         else:
-            evidence_bundle = evidence_service.collect_all_evidence()
+            bundle = evidence_service.collect_all_evidence()
 
-        # Generate summary if requested
-        summary = evidence_service.get_evidence_summary(evidence_bundle)
-        evidence_bundle['summary'] = summary
+        # Persist the collection run
+        collection = EvidenceCollection(
+            collection_id=bundle["collection_id"],
+            user_id=current_user.id,
+            status=bundle["collection_status"],
+            evidence_count=bundle["evidence_count"],
+            failed_count=len(bundle["failed_collections"]),
+            summary=bundle.get("summary"),
+        )
+        db.add(collection)
+        db.flush()  # get collection.id
 
-        # Validate completeness if specific types requested
-        if request.collection_types:
-            validation = evidence_service.validate_evidence_completeness(
-                evidence_bundle, request.collection_types
+        # Persist individual evidence items
+        for item in bundle["evidence_items"]:
+            db_item = EvidenceItem(
+                collection_id=collection.id,
+                evidence_type=item.get("evidence_type", "unknown"),
+                source=item.get("source", "aws"),
+                status="compliant",
+                data=item,
             )
-            evidence_bundle['validation'] = validation
+            db.add(db_item)
 
-        logger.info(f"Evidence collection completed: {evidence_bundle['collection_status']}")
-        return evidence_bundle
+        db.commit()
+        db.refresh(collection)
+
+        return EvidenceCollectionResponse(
+            collection_id=collection.collection_id,
+            status=collection.status,
+            evidence_count=collection.evidence_count,
+            failed_count=collection.failed_count,
+            summary=collection.summary,
+            created_at=collection.created_at.isoformat(),
+            items=[
+                EvidenceItemResponse(
+                    id=i.id,
+                    evidence_type=i.evidence_type,
+                    source=i.source,
+                    status=i.status,
+                    data=i.data,
+                    created_at=i.created_at.isoformat(),
+                )
+                for i in collection.items
+            ],
+        )
 
     except Exception as e:
+        db.rollback()
         error_msg = f"Evidence collection failed: {str(e)}"
         logger.error(error_msg)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=error_msg
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=error_msg)
 
 
-@router.get("/status/{collection_id}", response_model=Dict[str, Any])
+@router.get("/status/{collection_id}", response_model=EvidenceCollectionResponse)
 async def get_collection_status(
     collection_id: str,
-    current_user: User = Depends(get_current_user)
-) -> Dict[str, Any]:
-    """
-    Get status of evidence collection by ID
-
-    Args:
-        collection_id: Unique identifier for the evidence collection
-        current_user: Authenticated user identifier
-
-    Returns:
-        Dict containing collection status information
-
-    Raises:
-        HTTPException: If collection not found or authentication fails
-    """
-    try:
-        logger.info(f"Retrieving collection status for ID: {collection_id}")
-
-        # Placeholder for actual status retrieval logic
-        # In a real implementation, this would query a database or cache
-        status_response = {
-            'collection_id': collection_id,
-            'status': 'completed',
-            'timestamp': '2024-01-15T10:00:00Z',
-            'evidence_count': 0,
-            'user_id': current_user.email
-        }
-
-        return status_response
-
-    except Exception as e:
-        error_msg = f"Failed to retrieve collection status: {str(e)}"
-        logger.error(error_msg)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=error_msg
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Get status of an evidence collection by its collection_id."""
+    collection = (
+        db.query(EvidenceCollection)
+        .filter(
+            EvidenceCollection.collection_id == collection_id,
+            EvidenceCollection.user_id == current_user.id,
         )
+        .first()
+    )
+    if not collection:
+        raise HTTPException(status_code=404, detail="Collection not found")
+
+    return EvidenceCollectionResponse(
+        collection_id=collection.collection_id,
+        status=collection.status,
+        evidence_count=collection.evidence_count,
+        failed_count=collection.failed_count,
+        summary=collection.summary,
+        created_at=collection.created_at.isoformat(),
+        items=[
+            EvidenceItemResponse(
+                id=i.id,
+                evidence_type=i.evidence_type,
+                source=i.source,
+                status=i.status,
+                data=i.data,
+                created_at=i.created_at.isoformat(),
+            )
+            for i in collection.items
+        ],
+    )
 
 
-@router.get("/summary", response_model=Dict[str, Any])
+@router.get("/summary", response_model=EvidenceSummaryResponse)
 async def get_evidence_summary(
-    current_user: User = Depends(get_current_user)
-) -> Dict[str, Any]:
-    """
-    Get summary of all evidence collections
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Get summary of all evidence collections for the current user."""
+    collections = (
+        db.query(EvidenceCollection)
+        .filter(EvidenceCollection.user_id == current_user.id)
+        .order_by(EvidenceCollection.created_at.desc())
+        .all()
+    )
 
-    Args:
-        current_user: Authenticated user identifier
+    total_items = sum(c.evidence_count for c in collections)
+    last_collection = collections[0].created_at.isoformat() if collections else None
 
-    Returns:
-        Dict containing summary of evidence collections
+    # Aggregate compliance metrics from most recent collection
+    metrics: Dict[str, Any] = {
+        "s3_encryption_compliance": 0,
+        "iam_policy_compliance": 0,
+        "overall_compliance_score": 0,
+    }
+    if collections and collections[0].summary:
+        cm = collections[0].summary.get("compliance_metrics", {})
+        metrics["s3_encryption_compliance"] = cm.get("s3_encryption_compliance_rate", 0)
+        metrics["iam_policy_compliance"] = cm.get("iam_compliance_rate", 0)
+        # Simple average for overall
+        scores = [v for v in [metrics["s3_encryption_compliance"], metrics["iam_policy_compliance"]] if v > 0]
+        metrics["overall_compliance_score"] = round(sum(scores) / len(scores), 1) if scores else 0
 
-    Raises:
-        HTTPException: If summary retrieval fails or authentication fails
-    """
-    try:
-        logger.info(f"Retrieving evidence summary for user: {current_user.email}")
+    return EvidenceSummaryResponse(
+        total_collections=len(collections),
+        total_evidence_items=total_items,
+        last_collection=last_collection,
+        compliance_metrics=metrics,
+    )
 
-        # Placeholder for actual summary logic
-        # In a real implementation, this would aggregate data from database
-        summary_response = {
-            'total_collections': 0,
-            'last_collection': None,
-            'compliance_metrics': {
-                's3_encryption_compliance': 0,
-                'iam_policy_compliance': 0,
-                'overall_compliance_score': 0
-            },
-            'user_id': current_user.email
-        }
 
-        return summary_response
+@router.get("/items", response_model=List[EvidenceItemResponse])
+async def get_evidence_items(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    limit: int = 50,
+    offset: int = 0,
+):
+    """Get all evidence items for the current user."""
+    items = (
+        db.query(EvidenceItem)
+        .join(EvidenceCollection)
+        .filter(EvidenceCollection.user_id == current_user.id)
+        .order_by(EvidenceItem.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
 
-    except Exception as e:
-        error_msg = f"Failed to retrieve evidence summary: {str(e)}"
-        logger.error(error_msg)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=error_msg
+    return [
+        EvidenceItemResponse(
+            id=i.id,
+            evidence_type=i.evidence_type,
+            source=i.source,
+            status=i.status,
+            data=i.data,
+            created_at=i.created_at.isoformat(),
         )
+        for i in items
+    ]
 
 
-@router.post("/validate", response_model=Dict[str, Any])
-async def validate_evidence_completeness(
-    evidence_bundle: Dict[str, Any],
-    required_types: list[str],
-    current_user: User = Depends(get_current_user)
-) -> Dict[str, Any]:
-    """
-    Validate completeness of evidence bundle
+@router.get("/collections", response_model=List[EvidenceCollectionResponse])
+async def get_all_collections(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    limit: int = 20,
+    offset: int = 0,
+):
+    """Get all evidence collection runs for the current user."""
+    collections = (
+        db.query(EvidenceCollection)
+        .filter(EvidenceCollection.user_id == current_user.id)
+        .order_by(EvidenceCollection.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
 
-    Args:
-        evidence_bundle: Evidence bundle to validate
-        required_types: List of required evidence types
-        current_user: Authenticated user identifier
-
-    Returns:
-        Dict containing validation results
-
-    Raises:
-        HTTPException: If validation fails or authentication fails
-    """
-    try:
-        logger.info(f"Validating evidence completeness for user: {current_user.email}")
-
-        # Initialize evidence collection service
-        evidence_service = EvidenceCollectionService()
-
-        # Validate evidence completeness
-        validation_result = evidence_service.validate_evidence_completeness(
-            evidence_bundle, required_types
+    return [
+        EvidenceCollectionResponse(
+            collection_id=c.collection_id,
+            status=c.status,
+            evidence_count=c.evidence_count,
+            failed_count=c.failed_count,
+            summary=c.summary,
+            created_at=c.created_at.isoformat(),
         )
-
-        return validation_result
-
-    except Exception as e:
-        error_msg = f"Evidence validation failed: {str(e)}"
-        logger.error(error_msg)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=error_msg
-        )
+        for c in collections
+    ]

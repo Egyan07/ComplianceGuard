@@ -13,9 +13,12 @@ This module contains SQLAlchemy models for:
 from .user import User
 from .company import Company
 from .compliance import ComplianceFramework
+from .evidence import EvidenceCollection, EvidenceItem
 
 __all__ = [
     "User",
     "Company",
-    "ComplianceFramework"
+    "ComplianceFramework",
+    "EvidenceCollection",
+    "EvidenceItem",
 ]

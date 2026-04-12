@@ -8,22 +8,30 @@ and SOC 2 audit workflows.
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Dict, Any
+from datetime import datetime, timezone
 import uvicorn
 
 from app.api.auth import router as auth_router
 from app.api.evidence import router as evidence_router
 from app.api.compliance import router as compliance_router
+from app.core.database import engine, Base
+
+# Import all models so Base.metadata knows about them
+import app.models  # noqa: F401
 
 app = FastAPI(
     title="ComplianceGuard SOC 2 API",
     description="Backend API for SOC 2 compliance automation platform",
-    version="0.1.0"
+    version="2.0.0"
 )
+
+# Create tables on startup (replaced by Alembic in production)
+Base.metadata.create_all(bind=engine)
 
 # Configure CORS for frontend communication
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # React dev server
+    allow_origins=["http://localhost:5173", "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -49,8 +57,8 @@ async def health_check() -> Dict[str, Any]:
     return {
         "status": "healthy",
         "service": "complianceguard-api",
-        "version": "0.1.0",
-        "timestamp": "2024-01-15T10:00:00Z"
+        "version": "2.0.0",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
 @app.get("/")
