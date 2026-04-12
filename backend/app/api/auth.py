@@ -4,17 +4,16 @@ Authentication API endpoints for ComplianceGuard.
 This module provides JWT-based authentication endpoints including login and registration.
 """
 
-from datetime import timedelta
+from datetime import timedelta, datetime, timezone
 from typing import Annotated
 import secrets
+import re
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core.rate_limit import limiter
 from pydantic import BaseModel, EmailStr
-
-import re
 
 from app.core.auth import (
     authenticate_user,
@@ -31,6 +30,22 @@ from sqlalchemy.orm import Session
 
 
 router = APIRouter(prefix="/api/auth", tags=["authentication"])
+
+
+def validate_password_strength(password: str) -> list[str]:
+    """Return list of unmet password requirements. Empty list means password is valid."""
+    errors = []
+    if len(password) < settings.password_min_length:
+        errors.append(f"at least {settings.password_min_length} characters")
+    if settings.password_require_uppercase and not re.search(r"[A-Z]", password):
+        errors.append("an uppercase letter")
+    if settings.password_require_lowercase and not re.search(r"[a-z]", password):
+        errors.append("a lowercase letter")
+    if settings.password_require_digits and not re.search(r"\d", password):
+        errors.append("a digit")
+    if settings.password_require_special and not re.search(r"[^A-Za-z0-9]", password):
+        errors.append("a special character")
+    return errors
 
 
 class UserCreate(BaseModel):
@@ -134,19 +149,7 @@ async def register(
     Raises:
         HTTPException: If user with email already exists
     """
-    # Validate password strength
-    pwd = user_data.password
-    errors = []
-    if len(pwd) < settings.password_min_length:
-        errors.append(f"at least {settings.password_min_length} characters")
-    if settings.password_require_uppercase and not re.search(r"[A-Z]", pwd):
-        errors.append("an uppercase letter")
-    if settings.password_require_lowercase and not re.search(r"[a-z]", pwd):
-        errors.append("a lowercase letter")
-    if settings.password_require_digits and not re.search(r"\d", pwd):
-        errors.append("a digit")
-    if settings.password_require_special and not re.search(r"[^A-Za-z0-9]", pwd):
-        errors.append("a special character")
+    errors = validate_password_strength(user_data.password)
     if errors:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -179,7 +182,6 @@ async def register(
     db.commit()
     db.refresh(new_user)
 
-    # Create access token
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": new_user.email}, expires_delta=access_token_expires
@@ -254,7 +256,6 @@ async def forgot_password(
     In production, this token would be sent via email.
     Always returns 200 to avoid leaking whether the email exists.
     """
-    from datetime import datetime, timezone
     user = db.query(User).filter(User.email == request_data.email).first()
     if user:
         user.reset_token = secrets.token_urlsafe(32)
@@ -271,7 +272,6 @@ async def reset_password(
     db: Session = Depends(get_db),
 ):
     """Reset password using a valid reset token."""
-    from datetime import datetime, timezone
     user = db.query(User).filter(User.reset_token == request_data.token).first()
 
     if not user or not user.reset_token_expires:
@@ -289,19 +289,7 @@ async def reset_password(
             detail="Invalid or expired reset token",
         )
 
-    # Validate new password
-    pwd = request_data.new_password
-    errors = []
-    if len(pwd) < settings.password_min_length:
-        errors.append(f"at least {settings.password_min_length} characters")
-    if settings.password_require_uppercase and not re.search(r"[A-Z]", pwd):
-        errors.append("an uppercase letter")
-    if settings.password_require_lowercase and not re.search(r"[a-z]", pwd):
-        errors.append("a lowercase letter")
-    if settings.password_require_digits and not re.search(r"\d", pwd):
-        errors.append("a digit")
-    if settings.password_require_special and not re.search(r"[^A-Za-z0-9]", pwd):
-        errors.append("a special character")
+    errors = validate_password_strength(request_data.new_password)
     if errors:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

@@ -11,7 +11,7 @@ from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.orm import Session
 from typing import Dict, List, Optional, Any
 from pydantic import BaseModel, Field
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 
 from app.core.soc2_controls import SOC2Framework, SOC2Control, ControlCategory, create_soc2_framework
@@ -210,7 +210,6 @@ async def get_controls_by_category(category: str):
     Raises:
         HTTPException: If category is invalid
     """
-    # Validate category
     valid_categories = ["CC", "A", "C", "PI", "CA"]
     if category not in valid_categories:
         raise HTTPException(
@@ -447,7 +446,6 @@ async def get_control_compliance_trend(control_id: str):
     Returns:
         List of compliance scores and status over time
     """
-    # Validate control exists
     control = soc2_framework.get_control(control_id)
     if not control:
         raise HTTPException(status_code=404, detail=f"Control {control_id} not found")
@@ -491,5 +489,5 @@ async def compliance_health_check():
         "service": "compliance-api",
         "framework_controls": soc2_framework.get_control_count(),
         "evaluations_performed": len(compliance_service.evaluations),
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }

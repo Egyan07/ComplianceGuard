@@ -1,7 +1,10 @@
-const { exec, execSync } = require('child_process');
+const { exec } = require('child_process');
+const { promisify } = require('util');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+
+const execAsync = promisify(exec);
 
 class WindowsEvidenceCollector {
   constructor() {
@@ -24,34 +27,15 @@ class WindowsEvidenceCollector {
     try {
       console.log('Starting Windows evidence collection...');
 
-      // Collect system information
       await this.collectSystemInfo();
-
-      // Collect security settings
       await this.collectSecuritySettings();
-
-      // Collect event logs
       await this.collectEventLogs();
-
-      // Collect services information
       await this.collectServices();
-
-      // Collect firewall status
       await this.collectFirewallStatus();
-
-      // Collect Windows update status
       await this.collectUpdateStatus();
-
-      // Collect user accounts
       await this.collectUserAccounts();
-
-      // Collect network configuration
       await this.collectNetworkInfo();
-
-      // Collect installed software
       await this.collectInstalledSoftware();
-
-      // Collect critical file permissions
       await this.collectFilePermissions();
 
       console.log('Windows evidence collection completed');
@@ -65,7 +49,6 @@ class WindowsEvidenceCollector {
 
   async collectSystemInfo() {
     try {
-      // Basic system information
       this.evidence.systemInfo = {
         hostname: os.hostname(),
         platform: os.platform(),
@@ -76,8 +59,7 @@ class WindowsEvidenceCollector {
         uptime: os.uptime()
       };
 
-      // Windows-specific information using WMI
-      const systemInfo = execSync('systeminfo', { encoding: 'utf8' });
+      const { stdout: systemInfo } = await execAsync('systeminfo', { encoding: 'utf8' });
       const lines = systemInfo.split('\n');
 
       lines.forEach(line => {
@@ -108,19 +90,15 @@ class WindowsEvidenceCollector {
 
   async collectSecuritySettings() {
     try {
-      // Password policy
-      const passwordPolicy = execSync('net accounts', { encoding: 'utf8' });
+      const { stdout: passwordPolicy } = await execAsync('net accounts', { encoding: 'utf8' });
       this.evidence.securitySettings.passwordPolicy = this.parseNetAccounts(passwordPolicy);
 
-      // Audit policy
-      const auditPolicy = execSync('auditpol /get /category:*', { encoding: 'utf8' });
+      const { stdout: auditPolicy } = await execAsync('auditpol /get /category:*', { encoding: 'utf8' });
       this.evidence.securitySettings.auditPolicy = this.parseAuditPolicy(auditPolicy);
 
-      // User rights assignment
-      const userRights = execSync('whoami /priv', { encoding: 'utf8' });
+      const { stdout: userRights } = await execAsync('whoami /priv', { encoding: 'utf8' });
       this.evidence.securitySettings.userRights = userRights;
 
-      // Security options from registry
       const securityOptions = await this.getRegistryValue(
         'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System'
       );
@@ -140,7 +118,7 @@ class WindowsEvidenceCollector {
       for (const log of logs) {
         try {
           const command = `wevtutil qe ${log} /c:${maxEvents} /f:text /rd:true`;
-          const result = execSync(command, { encoding: 'utf8', timeout: 30000 });
+          const { stdout: result } = await execAsync(command, { encoding: 'utf8', timeout: 30000 });
           this.evidence.eventLogs[log.toLowerCase()] = result;
         } catch (logError) {
           console.error(`Failed to collect ${log} logs:`, logError);
@@ -156,23 +134,22 @@ class WindowsEvidenceCollector {
 
   async collectServices() {
     try {
-      const services = execSync('sc query state= all', { encoding: 'utf8' });
+      const { stdout: services } = await execAsync('sc query state= all', { encoding: 'utf8' });
       this.evidence.services.list = services;
 
-      // Get critical service status
       const criticalServices = [
-        'WinDefend', // Windows Defender
-        'wuauserv', // Windows Update
-        'BFE', // Base Filtering Engine
-        'Dnscache', // DNS Client
-        'EventLog' // Windows Event Log
+        'WinDefend',
+        'wuauserv',
+        'BFE',
+        'Dnscache',
+        'EventLog'
       ];
 
       this.evidence.services.critical = {};
       for (const service of criticalServices) {
         try {
-          const status = execSync(`sc query ${service}`, { encoding: 'utf8' });
-          this.evidence.services.critical[service] = status.includes('RUNNING');
+          const { stdout: serviceStatus } = await execAsync(`sc query ${service}`, { encoding: 'utf8' });
+          this.evidence.services.critical[service] = serviceStatus.includes('RUNNING');
         } catch (serviceError) {
           this.evidence.services.critical[service] = false;
         }
@@ -186,10 +163,9 @@ class WindowsEvidenceCollector {
 
   async collectFirewallStatus() {
     try {
-      const firewallStatus = execSync('netsh advfirewall show allprofiles', { encoding: 'utf8' });
+      const { stdout: firewallStatus } = await execAsync('netsh advfirewall show allprofiles', { encoding: 'utf8' });
       this.evidence.firewall.status = firewallStatus;
 
-      // Parse firewall profiles
       this.evidence.firewall.profiles = {
         domain: firewallStatus.includes('Domain Profile') && firewallStatus.includes('State ON'),
         private: firewallStatus.includes('Private Profile') && firewallStatus.includes('State ON'),
@@ -204,11 +180,9 @@ class WindowsEvidenceCollector {
 
   async collectUpdateStatus() {
     try {
-      // Check Windows Update service
-      const updateService = execSync('sc query wuauserv', { encoding: 'utf8' });
+      const { stdout: updateService } = await execAsync('sc query wuauserv', { encoding: 'utf8' });
       this.evidence.updates.serviceRunning = updateService.includes('RUNNING');
 
-      // Get last update time from registry
       const lastUpdateKey = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\WindowsUpdate\\Auto Update\\Results\\Install';
       const lastUpdate = await this.getRegistryValue(lastUpdateKey);
       this.evidence.updates.lastInstallTime = lastUpdate?.LastSuccessTime || 'Unknown';
@@ -221,11 +195,10 @@ class WindowsEvidenceCollector {
 
   async collectUserAccounts() {
     try {
-      const users = execSync('net user', { encoding: 'utf8' });
+      const { stdout: users } = await execAsync('net user', { encoding: 'utf8' });
       this.evidence.users.list = users;
 
-      // Get administrator accounts
-      const admins = execSync('net localgroup administrators', { encoding: 'utf8' });
+      const { stdout: admins } = await execAsync('net localgroup administrators', { encoding: 'utf8' });
       this.evidence.users.administrators = admins;
 
     } catch (error) {
@@ -236,16 +209,13 @@ class WindowsEvidenceCollector {
 
   async collectNetworkInfo() {
     try {
-      // Network interfaces
-      const interfaces = execSync('ipconfig /all', { encoding: 'utf8' });
+      const { stdout: interfaces } = await execAsync('ipconfig /all', { encoding: 'utf8' });
       this.evidence.network.interfaces = interfaces;
 
-      // Open ports
-      const ports = execSync('netstat -an', { encoding: 'utf8' });
+      const { stdout: ports } = await execAsync('netstat -an', { encoding: 'utf8' });
       this.evidence.network.openPorts = ports;
 
-      // Routing table
-      const routes = execSync('route print', { encoding: 'utf8' });
+      const { stdout: routes } = await execAsync('route print', { encoding: 'utf8' });
       this.evidence.network.routes = routes;
 
     } catch (error) {
@@ -256,13 +226,11 @@ class WindowsEvidenceCollector {
 
   async collectInstalledSoftware() {
     try {
-      // Get installed programs from registry
       const uninstallKey = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall';
       const software = await this.getRegistrySubKeys(uninstallKey);
       this.evidence.software.installed = software;
 
-      // Get running processes
-      const processes = execSync('tasklist', { encoding: 'utf8' });
+      const { stdout: processes } = await execAsync('tasklist', { encoding: 'utf8' });
       this.evidence.software.running = processes;
 
     } catch (error) {
@@ -330,8 +298,7 @@ class WindowsEvidenceCollector {
 
   async getRegistryValue(keyPath) {
     try {
-      const command = `reg query "${keyPath}"`;
-      const result = execSync(command, { encoding: 'utf8' });
+      const { stdout: result } = await execAsync(`reg query "${keyPath}"`, { encoding: 'utf8' });
       return result;
     } catch (error) {
       return null;
@@ -340,8 +307,7 @@ class WindowsEvidenceCollector {
 
   async getRegistrySubKeys(keyPath) {
     try {
-      const command = `reg query "${keyPath}"`;
-      const result = execSync(command, { encoding: 'utf8' });
+      const { stdout: result } = await execAsync(`reg query "${keyPath}"`, { encoding: 'utf8' });
       const subKeys = [];
 
       const lines = result.split('\n');
@@ -351,7 +317,7 @@ class WindowsEvidenceCollector {
         }
       });
 
-      return subKeys.slice(0, 50); // Limit to first 50 for performance
+      return subKeys.slice(0, 50);
     } catch (error) {
       return [];
     }
@@ -370,7 +336,6 @@ class WindowsEvidenceCollector {
   }
 }
 
-// Export function for use in main process
 async function collectWindowsEvidence() {
   const collector = new WindowsEvidenceCollector();
   return await collector.collectAllEvidence();

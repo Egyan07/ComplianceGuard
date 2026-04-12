@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [2.3.1] - 2026-04-13
+
+### Fixed
+- **Password validation deduplication** — Extracted shared `validate_password_strength()` helper in `auth.py`; removes duplicated 10-line validation block from both `register` and `reset_password` endpoints
+- **timezone.utc in compliance health** — `compliance_health_check()` now uses `datetime.now(timezone.utc)` consistently with the rest of the backend; eliminates naive datetime in the one place it was missed
+- **execSync → async** — All `execSync` calls in `electron/system/windows.js` replaced with `promisify(exec)`; evidence collection no longer blocks the Electron main thread during collection
+
+### Changed
+- **e2e tests wired into CI** — `tests/e2e/` now runs in the `backend-tests` CI job via `--run-e2e` flag
+
+---
+
 ## [2.3.0] - 2026-04-12
 
 ### Added

@@ -33,6 +33,9 @@ jobs:
       - name: Run integration tests
         run: python -m pytest tests/integration/test_api_integration.py -v --tb=short
 
+      - name: Run e2e tests
+        run: python -m pytest tests/e2e/ -v --tb=short --run-e2e
+
   lint-and-test:
     name: Lint & Test
     runs-on: ubuntu-latest
