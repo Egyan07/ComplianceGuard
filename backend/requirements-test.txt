@@ -1,0 +1,20 @@
+# Core dependencies needed for unit tests
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+sqlalchemy==2.0.23
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+pydantic==2.5.0
+pydantic-settings==2.0.3
+python-dotenv==1.0.0
+httpx==0.25.2
+email-validator==2.1.0
+python-dateutil==2.8.2
+pytz==2023.3
+boto3==1.34.0
+botocore==1.34.0
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
