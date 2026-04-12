@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [2.0.1] - 2026-04-12
+
+### Fixed
+- **CI pipeline** — Added missing `vite-env.d.ts` type reference that caused `import.meta.env` TypeScript error on CI
+- **TypeScript errors** — Fixed `Page` type mismatch on `onNavigate` props in App.tsx, removed unused `tier` variable in ComplianceScore
+- **Test alignment** — Updated ComplianceScore test to match free-tier gating behavior (upgrade prompt instead of category breakdown)
+
+### Changed
+- README rewritten to reflect dual-mode architecture (Desktop + Web/Docker), updated file tree, architecture diagram, and roadmap
+
+---
+
 ## [2.0.0] - 2026-04-12
 
 ### Added

@@ -6,20 +6,20 @@
   <a href="#quick-start"><img src="https://img.shields.io/badge/version-2.0.0-2563EB" alt="Version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/Egyan07/complianceguard" alt="License"></a>
   <a href="#soc-2-controls"><img src="https://img.shields.io/badge/SOC%202-29%20controls-10B981" alt="Controls"></a>
-  <img src="https://img.shields.io/badge/platform-Windows%2010%2F11-6B7280?logo=windows&logoColor=white" alt="Platform">
-  <img src="https://img.shields.io/badge/CI-passing-10B981?logo=githubactions&logoColor=white" alt="CI">
+  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
+  <a href="https://github.com/Egyan07/complianceguard/actions"><img src="https://img.shields.io/github/actions/workflow/status/Egyan07/complianceguard/ci.yml?label=CI&logo=githubactions&logoColor=white" alt="CI"></a>
 </p>
 
 ---
 
 Compliance tools like Vanta, Drata, and Sprinto scan your cloud infrastructure. That's useful — but they can't see what's happening **on the machines themselves**. Password policies, firewall rules, event logs, running services, local user accounts — that evidence lives on the endpoint, not in AWS.
 
-ComplianceGuard lives on the endpoint too. It collects evidence directly from Windows, scores it against 29 SOC 2 Type II controls, and tells you exactly where the gaps are. Everything stays local. No cloud account, no subscription, no data leaving your machine.
+ComplianceGuard lives on the endpoint too. It collects evidence directly from Windows, scores it against 29 SOC 2 Type II controls, and tells you exactly where the gaps are. Run it as a desktop app or deploy the web version with Docker — everything stays under your control.
 
 ```
                     ┌─────────────┐
-  Windows OS ──────>│ Collect     │──────> SQLite DB
-  Event logs        │ Evidence    │        (local, hashed)
+  Windows OS ──────>│ Collect     │──────> SQLite / PostgreSQL
+  Event logs        │ Evidence    │        (local or hosted)
   Registry          └──────┬──────┘
   Services                 │
   Firewall                 ▼
@@ -36,6 +36,8 @@ ComplianceGuard lives on the endpoint too. It collects evidence directly from Wi
 
 ## Quick Start
 
+### Desktop (Electron)
+
 ```bash
 git clone https://github.com/Egyan07/complianceguard.git
 cd complianceguard
@@ -45,21 +47,32 @@ npm run dev
 
 > Requires Windows 10/11, Node.js 18+. The app opens in Electron. Click **Collect Evidence** → **Evaluate Compliance** → see your score.
 
-To build a standalone installer:
+### Web (Docker)
 
 ```bash
-npm run package    # outputs to dist/
+git clone https://github.com/Egyan07/complianceguard.git
+cd complianceguard
+cp .env.example .env          # configure your settings
+docker-compose up -d
+```
+
+> Frontend at `http://localhost:3000`, API at `http://localhost:8000`. Uses PostgreSQL for storage and FastAPI for the backend.
+
+### Build Installer
+
+```bash
+npm run package    # Windows installer → dist/
 ```
 
 ## What Makes This Different
 
 | | ComplianceGuard | Vanta / Drata / Sprinto |
 |---|---|---|
-| **Where it runs** | On your machine | In the cloud |
+| **Where it runs** | On your machine or self-hosted | In the cloud |
 | **What it scans** | OS-level: event logs, registry, services, firewall, users | Cloud infra: AWS, GCP, Azure |
-| **Data residency** | Never leaves your device | Stored on vendor servers |
-| **Air-gapped networks** | Works completely offline | Requires internet |
-| **Cost** | Free and open source | $8k–$10k/year |
+| **Data residency** | Never leaves your control | Stored on vendor servers |
+| **Air-gapped networks** | Desktop works completely offline | Requires internet |
+| **Cost** | Free tier available, Pro from $49/mo | $8k–$10k/year |
 | **SOC 2 controls** | 29 implemented | Varies |
 
 They scan the cloud. We scan the machine. Use both and you've covered the full stack.
@@ -79,7 +92,7 @@ ComplianceGuard pulls 8 categories of evidence from Windows:
 | Software | Registry-based inventory of installed programs | CC7.2, CC8.1 |
 | File Permissions | ACLs on critical system paths | CC6.1, CC6.3 |
 
-Each evidence item is SHA-256 hashed for integrity and stored in a local SQLite database with full audit logging.
+Each evidence item is SHA-256 hashed for integrity and stored with full audit logging.
 
 ## SOC 2 Controls
 
@@ -151,86 +164,97 @@ Each evidence item is SHA-256 hashed for integrity and stored in a local SQLite 
 <details>
 <summary><strong>Click to expand</strong></summary>
 
+ComplianceGuard runs in two modes: **Desktop** (Electron + SQLite) for offline use, and **Web** (FastAPI + PostgreSQL + React) for hosted deployments. The frontend auto-detects which mode it's in.
+
 ```
-┌──────────────────────────────────────────────────────────┐
-│  ELECTRON MAIN PROCESS                                    │
-│                                                           │
-│  ┌─────────────────┐  ┌──────────────────────────────┐   │
-│  │ Evidence        │  │ Compliance Engine             │   │
-│  │ Processor       │  │ 29 controls · weighted scoring│   │
-│  │ Collect · Store │  │ gap analysis · recommendations│   │
-│  └────────┬────────┘  └──────────────┬───────────────┘   │
-│           └──────────┬───────────────┘                    │
-│                      ▼                                    │
-│           ┌─────────────────────┐                         │
-│           │  SQLite + Audit Log │                         │
-│           └─────────────────────┘                         │
-│                      ▲                                    │
-│           ┌──────────┴──────────┐                         │
-│           │ Windows Collector   │                         │
-│           │ PowerShell + WMI    │                         │
-│           └─────────────────────┘                         │
-└──────────────────────┬────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│  DESKTOP MODE (Electron)                                      │
+│                                                               │
+│  ┌─────────────────┐  ┌───────────────────────────────────┐  │
+│  │ Evidence        │  │ Compliance Engine                  │  │
+│  │ Processor       │  │ 29 controls · weighted scoring     │  │
+│  │ Collect · Store │  │ gap analysis · recommendations     │  │
+│  └────────┬────────┘  └───────────────┬───────────────────┘  │
+│           └──────────┬────────────────┘                       │
+│                      ▼                                        │
+│           ┌─────────────────────┐                             │
+│           │  SQLite + Audit Log │                             │
+│           └─────────────────────┘                             │
+│                      ▲                                        │
+│           ┌──────────┴──────────┐  ┌────────────────────┐    │
+│           │ Windows Collector   │  │ License Manager     │    │
+│           │ PowerShell + WMI    │  │ Ed25519 · Offline   │    │
+│           └─────────────────────┘  └────────────────────┘    │
+└──────────────────────┬────────────────────────────────────────┘
                        │ IPC (context-isolated, validated)
                        ▼
-┌──────────────────────────────────────────────────────────┐
-│  REACT FRONTEND                                           │
-│  Dashboard · Score · Evidence List · History · Settings   │
-│  Auto-detects Electron (IPC) vs Web (HTTP) mode           │
-└──────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│  REACT FRONTEND                                               │
+│  Dashboard · Score · Evidence · History · Settings · License  │
+│  Auto-detects Electron (IPC) vs Web (HTTP) mode               │
+└──────────────────────────────────────────────────────────────┘
+                       ▲
+                       │ HTTP / REST API
+                       ▼
+┌──────────────────────────────────────────────────────────────┐
+│  WEB MODE (Docker / Self-Hosted)                              │
+│                                                               │
+│  ┌─────────────────┐  ┌───────────────────────────────────┐  │
+│  │ FastAPI Backend  │  │ PostgreSQL                        │  │
+│  │ Auth · Evidence  │  │ Users · Companies · Compliance    │  │
+│  │ Compliance API   │  │ Evidence · Frameworks             │  │
+│  └─────────────────┘  └───────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 **Key files:**
 
 ```
 complianceguard/
+├── backend/
+│   ├── app/
+│   │   ├── main.py                     # FastAPI app, CORS, routes
+│   │   ├── api/                        # Auth, evidence, compliance endpoints
+│   │   ├── core/                       # Config, database, SOC 2 controls, auth
+│   │   ├── models/                     # SQLAlchemy models (user, company, compliance)
+│   │   ├── services/                   # Compliance service, evidence collector
+│   │   └── integrations/aws.py         # AWS evidence collection
+│   ├── tests/                          # Unit, integration, e2e tests
+│   ├── requirements.txt
+│   └── Dockerfile
 ├── electron/
-│   ├── main.js                     # Window mgmt, IPC handlers, tray
-│   ├── preload.js                  # Secure IPC bridge with validation
-│   ├── database/sqlite.js          # SQLite operations, backup
+│   ├── main.js                         # Window mgmt, IPC handlers, tray
+│   ├── preload.js                      # Secure IPC bridge with validation
+│   ├── database/sqlite.js              # SQLite operations, backup
+│   ├── licensing/
+│   │   ├── generate-key.js             # Ed25519 keypair + license key generator
+│   │   ├── license-crypto.js           # Signature verification (public key only)
+│   │   ├── license-manager.js          # License state, feature gates, persistence
+│   │   └── tier-constants.js           # Free vs Pro feature definitions
 │   ├── processing/
-│   │   ├── compliance-engine.js    # SOC 2 scoring engine
-│   │   ├── evidence-processor.js   # Evidence collection + storage
-│   │   └── report-generator.js     # HTML → PDF report generation
-│   └── system/windows.js           # Windows evidence collector
-├── frontend/src/
-│   ├── App.tsx                     # Theme, nav, error boundary
-│   ├── components/                 # Dashboard, Score, Evidence, History, Settings
-│   ├── services/api.ts             # Unified API (IPC or HTTP)
-│   └── test/                       # Vitest test suite
-├── .github/workflows/ci.yml       # Lint, test, build pipeline
-└── package.json                    # Electron + build config
+│   │   ├── compliance-engine.js        # SOC 2 scoring engine (tier-aware)
+│   │   ├── evidence-processor.js       # Evidence collection + storage
+│   │   └── report-generator.js         # HTML → PDF report generation
+│   └── system/windows.js               # Windows evidence collector
+├── frontend/
+│   ├── src/
+│   │   ├── App.tsx                     # Theme, nav, error boundary
+│   │   ├── components/                 # Dashboard, Score, Evidence, History, Settings
+│   │   ├── contexts/LicenseContext.tsx  # React context for tier state + feature checks
+│   │   ├── components/UpgradePrompt.tsx # Upgrade dialog for gated features
+│   │   ├── services/api.ts             # Unified API (IPC or HTTP)
+│   │   └── test/                       # Vitest test suite (31 tests)
+│   ├── .eslintrc.cjs
+│   ├── .prettierrc
+│   └── Dockerfile
+├── resources/icons/                    # App icons (ico, png, svg, tray)
+├── .github/workflows/ci.yml           # Lint → Type check → Test → Build
+├── docker-compose.yml                  # PostgreSQL + Backend + Frontend
+├── .env.example                        # Environment config template
+└── package.json                        # Electron + build config
 ```
 
 </details>
-
-## Security Model
-
-All data stays local. Zero external API calls. Zero telemetry.
-
-| Layer | How |
-|-------|-----|
-| IPC | Context isolation. Every exposed method validates input types and uses allowlists. |
-| Evidence | SHA-256 hashing on all stored files. Full audit trail with timestamps. |
-| Database | Parameterized queries. Foreign key constraints. |
-| Navigation | External URLs blocked. `window.open` denied. |
-
-## Development
-
-```bash
-npm run dev              # Electron + React dev server
-npm run build            # Build frontend
-npm run package          # Windows installer (.msi + .nsis)
-```
-
-```bash
-cd frontend
-npm test                 # Run Vitest test suite
-npm run lint             # ESLint
-npm run format:check     # Prettier
-```
-
-CI runs automatically on every push via GitHub Actions.
 
 ## Pricing
 
@@ -258,6 +282,55 @@ Free gets you hooked. Pro makes you audit-ready.
 
 > **Free tier** collects evidence and shows your overall score — enough to know where you stand. **Pro** unlocks the full 29-control breakdown, tells you exactly what to fix, and generates the PDF reports your auditor will ask for. That's the difference between knowing your score and passing the audit.
 
+License keys use Ed25519 cryptographic signatures — verified offline, no license server required.
+
+## Security Model
+
+All data stays under your control. Zero telemetry.
+
+| Layer | How |
+|-------|-----|
+| IPC | Context isolation. Every exposed method validates input types and uses allowlists. |
+| Evidence | SHA-256 hashing on all stored files. Full audit trail with timestamps. |
+| Database | Parameterized queries. Foreign key constraints. |
+| Navigation | External URLs blocked. `window.open` denied. |
+| Licensing | Ed25519 signed keys. Only the public key ships with the app. |
+| Auth (Web) | JWT tokens with configurable expiry. Bcrypt password hashing. |
+
+## Development
+
+### Desktop
+
+```bash
+npm run dev              # Electron + React dev server
+npm run build            # Build frontend
+npm run package          # Windows installer (.msi + .nsis)
+```
+
+### Web / Backend
+
+```bash
+docker-compose up -d     # Start all services
+docker-compose down      # Stop all services
+```
+
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn app.main:app --reload    # Run backend locally
+```
+
+### Frontend Tests & Linting
+
+```bash
+cd frontend
+npm test                 # Vitest (31 tests)
+npm run lint             # ESLint
+npm run format:check     # Prettier
+```
+
+CI runs lint, type check, tests, and build on every push via GitHub Actions.
+
 ## Roadmap
 
 - [x] Evidence collection from Windows OS
@@ -265,6 +338,10 @@ Free gets you hooked. Pro makes you audit-ready.
 - [x] Evidence upload UI (manual documents)
 - [x] PDF compliance reports
 - [x] Evaluation history with trend tracking
+- [x] Free / Pro tier licensing with Ed25519 keys
+- [x] CI/CD pipeline (GitHub Actions)
+- [x] Docker Compose deployment
+- [x] FastAPI backend with PostgreSQL
 - [ ] Scheduled automatic collection
 - [ ] ISO 27001 framework
 - [ ] HIPAA framework
