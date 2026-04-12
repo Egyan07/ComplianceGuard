@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import type { ReactElement } from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material';
 import EvidenceList from './EvidenceList';
@@ -33,7 +34,7 @@ const mockItems: EvidenceItem[] = [
   },
 ];
 
-const renderWithTheme = (ui: React.ReactElement) =>
+const renderWithTheme = (ui: ReactElement) =>
   render(<ThemeProvider theme={theme}>{ui}</ThemeProvider>);
 
 describe('EvidenceList', () => {

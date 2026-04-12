@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest';
+import type { ReactElement } from 'react';
 import { render, screen } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material';
 import Settings from './Settings';
 
 const theme = createTheme();
 
-const renderWithTheme = (ui: React.ReactElement) =>
+const renderWithTheme = (ui: ReactElement) =>
   render(<ThemeProvider theme={theme}>{ui}</ThemeProvider>);
 
 describe('Settings', () => {
