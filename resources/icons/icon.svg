@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Main shield gradient - deep blue to teal -->
+    <linearGradient id="shieldGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1565C0"/>
+      <stop offset="50%" stop-color="#0D47A1"/>
+      <stop offset="100%" stop-color="#00695C"/>
+    </linearGradient>
+    <!-- Inner glow -->
+    <linearGradient id="innerGlow" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#42A5F5" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#26A69A" stop-opacity="0.1"/>
+    </linearGradient>
+    <!-- Checkmark gradient -->
+    <linearGradient id="checkGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#E8F5E9"/>
+      <stop offset="100%" stop-color="#FFFFFF"/>
+    </linearGradient>
+    <!-- Shadow filter -->
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.25"/>
+    </filter>
+    <!-- Inner shadow for depth -->
+    <filter id="innerShadow">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3" result="blur"/>
+      <feOffset dx="0" dy="2" result="offset"/>
+      <feComposite in="SourceGraphic" in2="offset" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Background circle (optional, for rounded icon contexts) -->
+
+  <!-- Shield body with shadow -->
+  <g filter="url(#shadow)">
+    <!-- Main shield shape -->
+    <path d="M256 42 L440 120 C440 120 450 310 256 472 C62 310 72 120 72 120 Z"
+          fill="url(#shieldGrad)"
+          stroke="none"/>
+  </g>
+
+  <!-- Shield inner highlight -->
+  <path d="M256 62 L420 132 C420 132 428 300 256 448 C84 300 92 132 92 132 Z"
+        fill="url(#innerGlow)"
+        stroke="none"/>
+
+  <!-- Shield border line (subtle) -->
+  <path d="M256 62 L420 132 C420 132 428 300 256 448 C84 300 92 132 92 132 Z"
+        fill="none"
+        stroke="#64B5F6"
+        stroke-width="2"
+        stroke-opacity="0.4"/>
+
+  <!-- Checkmark -->
+  <g transform="translate(256, 255) scale(1.1)">
+    <path d="M-80 10 L-30 65 L85 -60"
+          fill="none"
+          stroke="url(#checkGrad)"
+          stroke-width="38"
+          stroke-linecap="round"
+          stroke-linejoin="round"/>
+  </g>
+
+  <!-- Small lock keyhole at top of shield for security feel -->
+  <circle cx="256" cy="150" r="14" fill="none" stroke="#B3E5FC" stroke-width="3" stroke-opacity="0.5"/>
+  <rect x="251" y="152" width="10" height="14" rx="2" fill="#B3E5FC" fill-opacity="0.5"/>
+</svg>
