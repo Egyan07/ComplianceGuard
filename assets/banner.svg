@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" width="1200" height="300">
+  <defs>
+    <!-- Background gradient -->
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0D1B2A"/>
+      <stop offset="40%" stop-color="#1B2838"/>
+      <stop offset="100%" stop-color="#0A2540"/>
+    </linearGradient>
+    <!-- Shield gradient -->
+    <linearGradient id="shieldGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1565C0"/>
+      <stop offset="50%" stop-color="#0D47A1"/>
+      <stop offset="100%" stop-color="#00695C"/>
+    </linearGradient>
+    <!-- Accent line gradient -->
+    <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#1565C0" stop-opacity="0"/>
+      <stop offset="20%" stop-color="#1565C0"/>
+      <stop offset="80%" stop-color="#00897B"/>
+      <stop offset="100%" stop-color="#00897B" stop-opacity="0"/>
+    </linearGradient>
+    <!-- Subtle grid pattern -->
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#ffffff" stroke-width="0.3" stroke-opacity="0.05"/>
+    </pattern>
+    <!-- Glow effect -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="300" fill="url(#bgGrad)"/>
+  <rect width="1200" height="300" fill="url(#grid)"/>
+
+  <!-- Decorative corner accents -->
+  <path d="M0 0 L80 0 L0 80 Z" fill="#1565C0" fill-opacity="0.08"/>
+  <path d="M1200 300 L1120 300 L1200 220 Z" fill="#00897B" fill-opacity="0.08"/>
+
+  <!-- Top accent line -->
+  <rect x="0" y="0" width="1200" height="3" fill="url(#lineGrad)"/>
+
+  <!-- Shield icon -->
+  <g transform="translate(160, 150) scale(0.85)">
+    <path d="M0 -80 L70 -50 C70 -50 74 30 0 90 C-74 30 -70 -50 -70 -50 Z"
+          fill="url(#shieldGrad)" filter="url(#glow)"/>
+    <path d="M0 -68 L58 -42 C58 -42 62 24 0 76 C-62 24 -58 -42 -58 -42 Z"
+          fill="none" stroke="#64B5F6" stroke-width="1" stroke-opacity="0.3"/>
+    <!-- Checkmark -->
+    <path d="M-28 5 L-10 26 L30 -22"
+          fill="none" stroke="#FFFFFF" stroke-width="10"
+          stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Lock detail -->
+    <circle cx="0" cy="-38" r="6" fill="none" stroke="#B3E5FC" stroke-width="1.5" stroke-opacity="0.5"/>
+    <rect x="-2" y="-37" width="4" height="6" rx="1" fill="#B3E5FC" fill-opacity="0.5"/>
+  </g>
+
+  <!-- Title text -->
+  <text x="280" y="120" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="56" font-weight="700" fill="#FFFFFF" letter-spacing="-1">
+    ComplianceGuard
+  </text>
+
+  <!-- Tagline -->
+  <text x="280" y="165" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="20" fill="#90CAF9" font-weight="400" letter-spacing="3">
+    COLLECT. EVALUATE. COMPLY.
+  </text>
+
+  <!-- Description -->
+  <text x="280" y="205" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="16" fill="#B0BEC5" font-weight="300">
+    Desktop-first SOC 2 compliance automation for Windows.
+  </text>
+  <text x="280" y="228" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="16" fill="#B0BEC5" font-weight="300">
+    No cloud. No subscriptions. Your data stays on your machine.
+  </text>
+
+  <!-- Bottom accent line -->
+  <rect x="0" y="297" width="1200" height="3" fill="url(#lineGrad)"/>
+
+  <!-- Version badge -->
+  <g transform="translate(1040, 40)">
+    <rect x="0" y="0" width="100" height="26" rx="13" fill="#1565C0" fill-opacity="0.3"/>
+    <rect x="0" y="0" width="100" height="26" rx="13" fill="none" stroke="#1565C0" stroke-width="1" stroke-opacity="0.5"/>
+    <text x="50" y="17" font-family="'Segoe UI', monospace" font-size="12" fill="#90CAF9"
+          text-anchor="middle" font-weight="500">v0.1.0-beta</text>
+  </g>
+</svg>
