@@ -1,95 +1,124 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" width="1200" height="300">
   <defs>
-    <!-- Background gradient -->
-    <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#0D1B2A"/>
-      <stop offset="40%" stop-color="#1B2838"/>
-      <stop offset="100%" stop-color="#0A2540"/>
+    <linearGradient id="bbg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0A0E1A"/>
+      <stop offset="40%" stop-color="#0D1B2A"/>
+      <stop offset="100%" stop-color="#0A1628"/>
     </linearGradient>
-    <!-- Shield gradient -->
-    <linearGradient id="shieldGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#1565C0"/>
-      <stop offset="50%" stop-color="#0D47A1"/>
-      <stop offset="100%" stop-color="#00695C"/>
+    <linearGradient id="bsg" x1="0" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#00E5FF"/>
+      <stop offset="40%" stop-color="#0091EA"/>
+      <stop offset="100%" stop-color="#1A237E"/>
     </linearGradient>
-    <!-- Accent line gradient -->
-    <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#1565C0" stop-opacity="0"/>
-      <stop offset="20%" stop-color="#1565C0"/>
-      <stop offset="80%" stop-color="#00897B"/>
-      <stop offset="100%" stop-color="#00897B" stop-opacity="0"/>
+    <linearGradient id="bline" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#00E5FF" stop-opacity="0"/>
+      <stop offset="20%" stop-color="#00E5FF"/>
+      <stop offset="80%" stop-color="#0091EA"/>
+      <stop offset="100%" stop-color="#1A237E" stop-opacity="0"/>
     </linearGradient>
-    <!-- Subtle grid pattern -->
-    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#ffffff" stroke-width="0.3" stroke-opacity="0.05"/>
+    <pattern id="bgrid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#00E5FF" stroke-width="0.2" stroke-opacity="0.08"/>
     </pattern>
-    <!-- Glow effect -->
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-      <feMerge>
-        <feMergeNode in="coloredBlur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
+    <filter id="bglow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="txtglow">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>
 
   <!-- Background -->
-  <rect width="1200" height="300" fill="url(#bgGrad)"/>
-  <rect width="1200" height="300" fill="url(#grid)"/>
+  <rect width="1200" height="300" fill="url(#bbg)"/>
+  <rect width="1200" height="300" fill="url(#bgrid)"/>
 
-  <!-- Decorative corner accents -->
-  <path d="M0 0 L80 0 L0 80 Z" fill="#1565C0" fill-opacity="0.08"/>
-  <path d="M1200 300 L1120 300 L1200 220 Z" fill="#00897B" fill-opacity="0.08"/>
+  <!-- Animated-look circuit traces in background -->
+  <g stroke="#00E5FF" stroke-width="0.5" opacity="0.12">
+    <line x1="0" y1="60" x2="200" y2="60"/>
+    <line x1="200" y1="60" x2="200" y2="120"/>
+    <line x1="200" y1="120" x2="350" y2="120"/>
+    <circle cx="350" cy="120" r="2" fill="#00E5FF"/>
 
-  <!-- Top accent line -->
-  <rect x="0" y="0" width="1200" height="3" fill="url(#lineGrad)"/>
+    <line x1="900" y1="200" x2="1100" y2="200"/>
+    <line x1="1100" y1="200" x2="1100" y2="240"/>
+    <line x1="1100" y1="240" x2="1200" y2="240"/>
+    <circle cx="900" cy="200" r="2" fill="#00E5FF"/>
 
-  <!-- Shield icon -->
-  <g transform="translate(160, 150) scale(0.85)">
-    <path d="M0 -80 L70 -50 C70 -50 74 30 0 90 C-74 30 -70 -50 -70 -50 Z"
-          fill="url(#shieldGrad)" filter="url(#glow)"/>
-    <path d="M0 -68 L58 -42 C58 -42 62 24 0 76 C-62 24 -58 -42 -58 -42 Z"
-          fill="none" stroke="#64B5F6" stroke-width="1" stroke-opacity="0.3"/>
-    <!-- Checkmark -->
-    <path d="M-28 5 L-10 26 L30 -22"
-          fill="none" stroke="#FFFFFF" stroke-width="10"
-          stroke-linecap="round" stroke-linejoin="round"/>
-    <!-- Lock detail -->
-    <circle cx="0" cy="-38" r="6" fill="none" stroke="#B3E5FC" stroke-width="1.5" stroke-opacity="0.5"/>
-    <rect x="-2" y="-37" width="4" height="6" rx="1" fill="#B3E5FC" fill-opacity="0.5"/>
+    <line x1="50" y1="220" x2="120" y2="220"/>
+    <line x1="120" y1="220" x2="120" y2="260"/>
+    <circle cx="120" cy="260" r="2" fill="#00E5FF"/>
+
+    <line x1="1000" y1="50" x2="1000" y2="100"/>
+    <line x1="1000" y1="100" x2="1150" y2="100"/>
+    <circle cx="1150" cy="100" r="2" fill="#00E5FF"/>
   </g>
 
-  <!-- Title text -->
-  <text x="280" y="120" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
-        font-size="56" font-weight="700" fill="#FFFFFF" letter-spacing="-1">
+  <!-- Top accent line -->
+  <rect x="0" y="0" width="1200" height="2" fill="url(#bline)"/>
+
+  <!-- Shield icon -->
+  <g transform="translate(155, 150) scale(0.72)">
+    <!-- Outer -->
+    <path d="M0 -90 L78 -54 C78 -54 82 32 0 100 C-82 32 -78 -54 -78 -54 Z"
+          fill="url(#bsg)" filter="url(#bglow)"/>
+    <!-- Inner dark -->
+    <path d="M0 -72 L64 -42 C64 -42 68 26 0 84 C-68 26 -64 -42 -64 -42 Z"
+          fill="#0A1628"/>
+    <!-- Circuit dots -->
+    <g fill="#00E5FF" opacity="0.4">
+      <circle cx="-40" cy="-20" r="2"/><circle cx="40" cy="-20" r="2"/>
+      <circle cx="-35" cy="15" r="2"/><circle cx="35" cy="15" r="2"/>
+      <circle cx="-25" cy="45" r="1.5"/><circle cx="25" cy="45" r="1.5"/>
+    </g>
+    <!-- Circuit lines -->
+    <g stroke="#00E5FF" stroke-width="0.8" opacity="0.3">
+      <line x1="-55" y1="-20" x2="-40" y2="-20"/>
+      <line x1="55" y1="-20" x2="40" y2="-20"/>
+      <line x1="-50" y1="15" x2="-35" y2="15"/>
+      <line x1="50" y1="15" x2="35" y2="15"/>
+    </g>
+    <!-- Checkmark -->
+    <path d="M-32 5 L-12 28 L35 -25"
+          fill="none" stroke="#00E5FF" stroke-width="9"
+          stroke-linecap="round" stroke-linejoin="round"
+          filter="url(#bglow)"/>
+    <!-- Inner border -->
+    <path d="M0 -72 L64 -42 C64 -42 68 26 0 84 C-68 26 -64 -42 -64 -42 Z"
+          fill="none" stroke="#00E5FF" stroke-width="1" stroke-opacity="0.3"/>
+  </g>
+
+  <!-- Title -->
+  <text x="280" y="118" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="54" font-weight="700" fill="#FFFFFF" letter-spacing="-1" filter="url(#txtglow)">
     ComplianceGuard
   </text>
 
   <!-- Tagline -->
-  <text x="280" y="165" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
-        font-size="20" fill="#90CAF9" font-weight="400" letter-spacing="3">
+  <text x="282" y="160" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="17" fill="#00E5FF" font-weight="500" letter-spacing="4">
     COLLECT. EVALUATE. COMPLY.
   </text>
 
   <!-- Description -->
-  <text x="280" y="205" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
-        font-size="16" fill="#B0BEC5" font-weight="300">
-    Desktop-first SOC 2 compliance automation for Windows.
+  <text x="282" y="200" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="15" fill="#5C7A99" font-weight="300">
+    Desktop-first SOC 2 compliance automation.
   </text>
-  <text x="280" y="228" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
-        font-size="16" fill="#B0BEC5" font-weight="300">
+  <text x="282" y="222" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="15" fill="#5C7A99" font-weight="300">
     No cloud. No subscriptions. Your data stays on your machine.
   </text>
 
   <!-- Bottom accent line -->
-  <rect x="0" y="297" width="1200" height="3" fill="url(#lineGrad)"/>
+  <rect x="0" y="298" width="1200" height="2" fill="url(#bline)"/>
 
   <!-- Version badge -->
-  <g transform="translate(1040, 40)">
-    <rect x="0" y="0" width="100" height="26" rx="13" fill="#1565C0" fill-opacity="0.3"/>
-    <rect x="0" y="0" width="100" height="26" rx="13" fill="none" stroke="#1565C0" stroke-width="1" stroke-opacity="0.5"/>
-    <text x="50" y="17" font-family="'Segoe UI', monospace" font-size="12" fill="#90CAF9"
+  <g transform="translate(1030, 38)">
+    <rect x="0" y="0" width="110" height="26" rx="13" fill="rgba(0,229,255,0.08)"/>
+    <rect x="0" y="0" width="110" height="26" rx="13" fill="none" stroke="#00E5FF" stroke-width="1" stroke-opacity="0.3"/>
+    <text x="55" y="17" font-family="'Segoe UI', monospace" font-size="12" fill="#00E5FF"
           text-anchor="middle" font-weight="500">v0.1.0-beta</text>
   </g>
 </svg>

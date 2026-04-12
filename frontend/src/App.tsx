@@ -33,11 +33,12 @@ type Page = 'dashboard' | 'settings';
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#1565C0',
-      dark: '#0D47A1',
+      main: '#0091EA',
+      dark: '#1A237E',
+      light: '#00E5FF',
     },
     secondary: {
-      main: '#00897B',
+      main: '#00E5FF',
     },
     background: {
       default: '#F5F7FA',
@@ -94,9 +95,9 @@ function App() {
       <CssBaseline />
       <Box sx={{ flexGrow: 1, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         {/* App Bar */}
-        <AppBar position="static" elevation={0} sx={{ background: 'linear-gradient(135deg, #0D47A1 0%, #1565C0 50%, #00695C 100%)' }}>
+        <AppBar position="static" elevation={0} sx={{ background: 'linear-gradient(135deg, #0A0E1A 0%, #0D1B2A 50%, #0A1628 100%)' }}>
           <Toolbar>
-            <Shield sx={{ mr: 1.5, fontSize: 28 }} />
+            <Shield sx={{ mr: 1.5, fontSize: 28, color: '#00E5FF' }} />
             <Typography variant="h6" component="div" sx={{ fontWeight: 'bold', letterSpacing: '-0.5px' }}>
               ComplianceGuard
             </Typography>
@@ -150,7 +151,7 @@ function App() {
         </Box>
 
         {/* Footer */}
-        <Paper square elevation={0} sx={{ py: 1.5, px: 3, backgroundColor: '#0D1B2A' }}>
+        <Paper square elevation={0} sx={{ py: 1.5, px: 3, backgroundColor: '#0A0E1A' }}>
           <Container maxWidth="xl">
             <Typography variant="body2" align="center" sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem' }}>
               ComplianceGuard v0.1.0-beta — Collect. Evaluate. Comply.

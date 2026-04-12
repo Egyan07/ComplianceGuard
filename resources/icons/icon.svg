@@ -1,67 +1,113 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <!-- Main shield gradient - deep blue to teal -->
-    <linearGradient id="shieldGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#1565C0"/>
-      <stop offset="50%" stop-color="#0D47A1"/>
-      <stop offset="100%" stop-color="#00695C"/>
+    <linearGradient id="shieldGrad" x1="0" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#00E5FF"/>
+      <stop offset="40%" stop-color="#0091EA"/>
+      <stop offset="100%" stop-color="#1A237E"/>
     </linearGradient>
-    <!-- Inner glow -->
-    <linearGradient id="innerGlow" x1="0.5" y1="0" x2="0.5" y2="1">
-      <stop offset="0%" stop-color="#42A5F5" stop-opacity="0.3"/>
-      <stop offset="100%" stop-color="#26A69A" stop-opacity="0.1"/>
+    <linearGradient id="innerGrad" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#0A1628"/>
+      <stop offset="100%" stop-color="#0D2137"/>
     </linearGradient>
-    <!-- Checkmark gradient -->
+    <linearGradient id="circuitGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#00E5FF" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#00B0FF" stop-opacity="0.3"/>
+    </linearGradient>
     <linearGradient id="checkGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#E8F5E9"/>
-      <stop offset="100%" stop-color="#FFFFFF"/>
+      <stop offset="0%" stop-color="#00E5FF"/>
+      <stop offset="100%" stop-color="#00B8D4"/>
     </linearGradient>
-    <!-- Shadow filter -->
-    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
-      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.25"/>
+    <filter id="outerGlow">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
     </filter>
-    <!-- Inner shadow for depth -->
-    <filter id="innerShadow">
-      <feGaussianBlur in="SourceAlpha" stdDeviation="3" result="blur"/>
-      <feOffset dx="0" dy="2" result="offset"/>
-      <feComposite in="SourceGraphic" in2="offset" operator="over"/>
+    <filter id="neonGlow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
     </filter>
   </defs>
 
-  <!-- Background circle (optional, for rounded icon contexts) -->
+  <!-- Outer shield shape - angular/geometric -->
+  <path d="M256 28 L452 118 C452 118 462 320 256 484 C50 320 60 118 60 118 Z"
+        fill="url(#shieldGrad)" filter="url(#outerGlow)"/>
 
-  <!-- Shield body with shadow -->
-  <g filter="url(#shadow)">
-    <!-- Main shield shape -->
-    <path d="M256 42 L440 120 C440 120 450 310 256 472 C62 310 72 120 72 120 Z"
-          fill="url(#shieldGrad)"
-          stroke="none"/>
+  <!-- Inner dark shield -->
+  <path d="M256 52 L430 132 C430 132 438 306 256 456 C74 306 82 132 82 132 Z"
+        fill="url(#innerGrad)"/>
+
+  <!-- Circuit line patterns on left side -->
+  <g stroke="url(#circuitGrad)" stroke-width="1.5" fill="none" opacity="0.6">
+    <!-- Horizontal circuit lines -->
+    <line x1="110" y1="180" x2="200" y2="180"/>
+    <circle cx="200" cy="180" r="3" fill="#00E5FF" fill-opacity="0.6"/>
+    <line x1="200" y1="180" x2="200" y2="220"/>
+    <circle cx="200" cy="220" r="3" fill="#00E5FF" fill-opacity="0.6"/>
+
+    <line x1="120" y1="240" x2="180" y2="240"/>
+    <circle cx="180" cy="240" r="3" fill="#00E5FF" fill-opacity="0.6"/>
+    <line x1="180" y1="240" x2="180" y2="280"/>
+
+    <line x1="130" y1="300" x2="190" y2="300"/>
+    <circle cx="190" cy="300" r="3" fill="#00E5FF" fill-opacity="0.6"/>
+    <line x1="190" y1="300" x2="190" y2="330"/>
+    <circle cx="190" cy="330" r="3" fill="#00E5FF" fill-opacity="0.6"/>
+
+    <line x1="150" y1="360" x2="200" y2="360"/>
+    <circle cx="200" cy="360" r="2.5" fill="#00E5FF" fill-opacity="0.5"/>
   </g>
 
-  <!-- Shield inner highlight -->
-  <path d="M256 62 L420 132 C420 132 428 300 256 448 C84 300 92 132 92 132 Z"
-        fill="url(#innerGlow)"
-        stroke="none"/>
+  <!-- Circuit line patterns on right side -->
+  <g stroke="url(#circuitGrad)" stroke-width="1.5" fill="none" opacity="0.6">
+    <line x1="402" y1="180" x2="312" y2="180"/>
+    <circle cx="312" cy="180" r="3" fill="#00E5FF" fill-opacity="0.6"/>
+    <line x1="312" y1="180" x2="312" y2="220"/>
+    <circle cx="312" cy="220" r="3" fill="#00E5FF" fill-opacity="0.6"/>
 
-  <!-- Shield border line (subtle) -->
-  <path d="M256 62 L420 132 C420 132 428 300 256 448 C84 300 92 132 92 132 Z"
-        fill="none"
-        stroke="#64B5F6"
-        stroke-width="2"
-        stroke-opacity="0.4"/>
+    <line x1="392" y1="240" x2="332" y2="240"/>
+    <circle cx="332" cy="240" r="3" fill="#00E5FF" fill-opacity="0.6"/>
+    <line x1="332" y1="240" x2="332" y2="280"/>
 
-  <!-- Checkmark -->
-  <g transform="translate(256, 255) scale(1.1)">
-    <path d="M-80 10 L-30 65 L85 -60"
+    <line x1="382" y1="300" x2="322" y2="300"/>
+    <circle cx="322" cy="300" r="3" fill="#00E5FF" fill-opacity="0.6"/>
+    <line x1="322" y1="300" x2="322" y2="330"/>
+    <circle cx="322" cy="330" r="3" fill="#00E5FF" fill-opacity="0.6"/>
+
+    <line x1="362" y1="360" x2="312" y2="360"/>
+    <circle cx="312" cy="360" r="2.5" fill="#00E5FF" fill-opacity="0.5"/>
+  </g>
+
+  <!-- Hexagonal nodes pattern (center area) -->
+  <g fill="none" stroke="#00E5FF" stroke-width="1" opacity="0.25">
+    <polygon points="256,140 280,154 280,182 256,196 232,182 232,154"/>
+    <polygon points="220,200 244,214 244,242 220,256 196,242 196,214"/>
+    <polygon points="292,200 316,214 316,242 292,256 268,242 268,214"/>
+  </g>
+
+  <!-- Center checkmark with glow -->
+  <g transform="translate(256, 290)" filter="url(#neonGlow)">
+    <path d="M-65 -10 L-25 35 L70 -55"
           fill="none"
           stroke="url(#checkGrad)"
-          stroke-width="38"
+          stroke-width="32"
           stroke-linecap="round"
           stroke-linejoin="round"/>
   </g>
 
-  <!-- Small lock keyhole at top of shield for security feel -->
-  <circle cx="256" cy="150" r="14" fill="none" stroke="#B3E5FC" stroke-width="3" stroke-opacity="0.5"/>
-  <rect x="251" y="152" width="10" height="14" rx="2" fill="#B3E5FC" fill-opacity="0.5"/>
+  <!-- Inner border glow -->
+  <path d="M256 52 L430 132 C430 132 438 306 256 456 C74 306 82 132 82 132 Z"
+        fill="none"
+        stroke="#00E5FF"
+        stroke-width="1.5"
+        stroke-opacity="0.3"/>
+
+  <!-- Top keyhole/lock accent -->
+  <g transform="translate(256, 120)" opacity="0.5">
+    <circle cx="0" cy="0" r="10" fill="none" stroke="#00E5FF" stroke-width="2"/>
+    <rect x="-3" y="2" width="6" height="10" rx="1.5" fill="#00E5FF"/>
+  </g>
 </svg>
