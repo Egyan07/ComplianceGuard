@@ -3,10 +3,10 @@
 </p>
 
 <p align="center">
-  <a href="#quick-start"><img src="https://img.shields.io/badge/version-2.2.0-2563EB" alt="Version"></a>
+  <a href="#quick-start"><img src="https://img.shields.io/badge/version-2.3.0-2563EB" alt="Version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/Egyan07/complianceguard" alt="License"></a>
   <a href="#soc-2-controls"><img src="https://img.shields.io/badge/SOC%202-29%20controls-10B981" alt="Controls"></a>
-  <img src="https://img.shields.io/badge/tests-66%20passing-10B981?logo=vitest&logoColor=white" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-76%20passing-10B981?logo=vitest&logoColor=white" alt="Tests">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
   <a href="https://github.com/Egyan07/complianceguard/actions"><img src="https://img.shields.io/github/actions/workflow/status/Egyan07/complianceguard/ci.yml?label=CI&logo=githubactions&logoColor=white" alt="CI"></a>
 </p>
@@ -241,7 +241,7 @@ complianceguard/
 │   │   ├── services/                   # Compliance service, evidence collector
 │   │   └── integrations/aws.py         # AWS evidence collection
 │   ├── migrations/                     # Alembic database migrations
-│   ├── tests/                          # Unit (14) + integration (15) tests
+│   ├── tests/                          # Unit (14) + integration (20) tests
 │   ├── requirements.txt
 │   └── Dockerfile
 ├── electron/
@@ -266,6 +266,7 @@ complianceguard/
 │   │   ├── contexts/LicenseContext.tsx  # React context for tier state + feature checks
 │   │   ├── services/api.ts             # Unified API (IPC or HTTP)
 │   │   └── test/                       # Vitest test suite (37 tests)
+│   ├── e2e/                            # Playwright e2e tests (5 tests)
 │   ├── .eslintrc.cjs
 │   ├── .prettierrc
 │   └── Dockerfile
@@ -319,7 +320,7 @@ All data stays under your control. Zero telemetry.
 | Database | Parameterized queries. Foreign key constraints. Alembic-managed migrations. |
 | Navigation | External URLs blocked. `window.open` denied. |
 | Licensing | Ed25519 signed keys. Only the public key ships with the app. |
-| Auth (Web) | JWT tokens with configurable expiry. Bcrypt hashing. Password complexity enforced. |
+| Auth (Web) | JWT tokens with configurable expiry. Bcrypt hashing. Password complexity enforced. Email verification. Password reset with expiring tokens. |
 | Rate Limiting | 5 requests/min on login, 3/min on register. Nginx rate limiting at proxy layer. |
 | Proxy | Nginx reverse proxy with security headers (X-Frame-Options, X-Content-Type-Options, XSS protection). |
 
@@ -350,19 +351,20 @@ uvicorn app.main:app --reload        # Run backend locally
 ### Tests
 
 ```bash
-# Frontend (37 tests)
+# Frontend (37 unit + 5 e2e)
 cd frontend
-npm test                 # Vitest
+npm test                 # Vitest unit tests
+npm run test:e2e         # Playwright e2e tests
 npm run lint             # ESLint
 npm run format:check     # Prettier
 
-# Backend (29 tests)
+# Backend (34 tests)
 cd backend
 python -m pytest tests/unit/ -v              # Unit tests (14)
-python -m pytest tests/integration/ -v       # Integration tests (15)
+python -m pytest tests/integration/ -v       # Integration tests (20)
 ```
 
-CI runs backend tests, frontend lint + type check + tests, and build on every push via GitHub Actions. Total: **66 tests**.
+CI runs backend tests (unit + integration), frontend lint + type check + tests, and build on every push via GitHub Actions. Total: **76 tests**.
 
 ## Roadmap
 
@@ -374,7 +376,8 @@ CI runs backend tests, frontend lint + type check + tests, and build on every pu
 | Free / Pro licensing (Ed25519) | Cloud sync + multi-machine dashboard |
 | JWT auth + login UI | macOS and Linux support |
 | FastAPI + PostgreSQL + Docker + Nginx | |
-| CI/CD with 66 tests | |
+| Email verification + password reset | |
+| CI/CD with 76 tests (unit + integration + e2e) | |
 | Alembic migrations + rate limiting | |
 
 ## License
