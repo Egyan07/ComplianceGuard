@@ -7,8 +7,10 @@ This module provides JWT-based authentication endpoints including login and regi
 from datetime import timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
+
+from app.core.rate_limit import limiter
 from pydantic import BaseModel, EmailStr
 
 import re
@@ -64,7 +66,9 @@ class LoginResponse(BaseModel):
 
 
 @router.post("/login", response_model=LoginResponse)
+@limiter.limit("5/minute")
 async def login(
+    request: Request,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Session = Depends(get_db)
 ):
@@ -109,7 +113,9 @@ async def login(
 
 
 @router.post("/register", response_model=LoginResponse)
+@limiter.limit("3/minute")
 async def register(
+    request: Request,
     user_data: UserCreate,
     db: Session = Depends(get_db)
 ):

@@ -22,6 +22,9 @@ python-dotenv==1.0.0
 httpx==0.25.2
 requests==2.31.0
 
+# Rate limiting
+slowapi==0.1.9
+
 # Utilities
 email-validator==2.1.0
 python-dateutil==2.8.2

@@ -5,16 +5,20 @@ FastAPI backend for managing compliance frameworks, evidence collection,
 and SOC 2 audit workflows.
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from typing import Dict, Any
 from datetime import datetime, timezone
 import uvicorn
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from app.api.auth import router as auth_router
 from app.api.evidence import router as evidence_router
 from app.api.compliance import router as compliance_router
 from app.core.database import engine, Base
+from app.core.rate_limit import limiter
 
 # Import all models so Base.metadata knows about them
 import app.models  # noqa: F401
@@ -22,8 +26,11 @@ import app.models  # noqa: F401
 app = FastAPI(
     title="ComplianceGuard SOC 2 API",
     description="Backend API for SOC 2 compliance automation platform",
-    version="2.0.0"
+    version="2.1.0"
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Create tables on startup (replaced by Alembic in production)
 Base.metadata.create_all(bind=engine)
