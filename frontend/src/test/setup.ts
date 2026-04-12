@@ -1,6 +1,4 @@
-/// <reference types="vitest" />
-/// <reference types="@testing-library/jest-dom" />
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/vitest';
 
 // Mock window.electronAPI for tests (simulates web mode)
 Object.defineProperty(window, 'electronAPI', {
