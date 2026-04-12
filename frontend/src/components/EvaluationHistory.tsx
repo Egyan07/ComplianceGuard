@@ -29,7 +29,7 @@ import {
   CheckCircle,
   Warning,
   Error as ErrorIcon,
-  HelpOutline
+  HelpOutlined
 } from '@mui/icons-material';
 
 const isElectron = !!(window as any).electronAPI;
@@ -41,6 +41,8 @@ interface EvaluationRecord {
   overall_score: number;
   status: string;
   findings: {
+    overall_score?: number;
+    status?: string;
     total_controls?: number;
     compliant_controls?: number;
     partial_controls?: number;
@@ -90,7 +92,7 @@ const EvaluationHistory: React.FC = () => {
       case 'compliant': return <CheckCircle sx={{ color: '#66BB6A' }} />;
       case 'partial': return <Warning sx={{ color: '#FFA726' }} />;
       case 'non_compliant': return <ErrorIcon sx={{ color: '#EF5350' }} />;
-      default: return <HelpOutline sx={{ color: '#9E9E9E' }} />;
+      default: return <HelpOutlined sx={{ color: '#9E9E9E' }} />;
     }
   };
 

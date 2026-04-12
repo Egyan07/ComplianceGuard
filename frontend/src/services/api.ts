@@ -74,6 +74,7 @@ export interface EvidenceCollectionResult {
 export interface ComplianceEvaluation {
   framework_id: number;
   framework_name: string;
+  evaluation_date: string;
   overall_score: number;
   status: string;
   total_controls: number;
