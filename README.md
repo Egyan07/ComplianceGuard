@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.1.0--beta-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-1.1.0-blue" alt="Version">
   <img src="https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey?logo=windows&logoColor=white" alt="Platform">
   <img src="https://img.shields.io/badge/SOC%202-Type%20II-orange?logo=shield&logoColor=white" alt="SOC 2">
   <img src="https://img.shields.io/badge/controls-29%20implemented-brightgreen" alt="Controls">

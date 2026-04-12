@@ -1,124 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" width="1200" height="300">
-  <defs>
-    <linearGradient id="bbg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#0A0E1A"/>
-      <stop offset="40%" stop-color="#0D1B2A"/>
-      <stop offset="100%" stop-color="#0A1628"/>
-    </linearGradient>
-    <linearGradient id="bsg" x1="0" y1="0" x2="0.5" y2="1">
-      <stop offset="0%" stop-color="#00E5FF"/>
-      <stop offset="40%" stop-color="#0091EA"/>
-      <stop offset="100%" stop-color="#1A237E"/>
-    </linearGradient>
-    <linearGradient id="bline" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#00E5FF" stop-opacity="0"/>
-      <stop offset="20%" stop-color="#00E5FF"/>
-      <stop offset="80%" stop-color="#0091EA"/>
-      <stop offset="100%" stop-color="#1A237E" stop-opacity="0"/>
-    </linearGradient>
-    <pattern id="bgrid" width="40" height="40" patternUnits="userSpaceOnUse">
-      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#00E5FF" stroke-width="0.2" stroke-opacity="0.08"/>
-    </pattern>
-    <filter id="bglow">
-      <feGaussianBlur stdDeviation="3" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-    <filter id="txtglow">
-      <feGaussianBlur stdDeviation="2" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-  </defs>
-
   <!-- Background -->
-  <rect width="1200" height="300" fill="url(#bbg)"/>
-  <rect width="1200" height="300" fill="url(#bgrid)"/>
+  <rect width="1200" height="300" fill="#FFFFFF"/>
 
-  <!-- Animated-look circuit traces in background -->
-  <g stroke="#00E5FF" stroke-width="0.5" opacity="0.12">
-    <line x1="0" y1="60" x2="200" y2="60"/>
-    <line x1="200" y1="60" x2="200" y2="120"/>
-    <line x1="200" y1="120" x2="350" y2="120"/>
-    <circle cx="350" cy="120" r="2" fill="#00E5FF"/>
+  <!-- Top accent -->
+  <rect width="1200" height="3" fill="#2563EB"/>
 
-    <line x1="900" y1="200" x2="1100" y2="200"/>
-    <line x1="1100" y1="200" x2="1100" y2="240"/>
-    <line x1="1100" y1="240" x2="1200" y2="240"/>
-    <circle cx="900" cy="200" r="2" fill="#00E5FF"/>
-
-    <line x1="50" y1="220" x2="120" y2="220"/>
-    <line x1="120" y1="220" x2="120" y2="260"/>
-    <circle cx="120" cy="260" r="2" fill="#00E5FF"/>
-
-    <line x1="1000" y1="50" x2="1000" y2="100"/>
-    <line x1="1000" y1="100" x2="1150" y2="100"/>
-    <circle cx="1150" cy="100" r="2" fill="#00E5FF"/>
-  </g>
-
-  <!-- Top accent line -->
-  <rect x="0" y="0" width="1200" height="2" fill="url(#bline)"/>
-
-  <!-- Shield icon -->
-  <g transform="translate(155, 150) scale(0.72)">
-    <!-- Outer -->
-    <path d="M0 -90 L78 -54 C78 -54 82 32 0 100 C-82 32 -78 -54 -78 -54 Z"
-          fill="url(#bsg)" filter="url(#bglow)"/>
-    <!-- Inner dark -->
-    <path d="M0 -72 L64 -42 C64 -42 68 26 0 84 C-68 26 -64 -42 -64 -42 Z"
-          fill="#0A1628"/>
-    <!-- Circuit dots -->
-    <g fill="#00E5FF" opacity="0.4">
-      <circle cx="-40" cy="-20" r="2"/><circle cx="40" cy="-20" r="2"/>
-      <circle cx="-35" cy="15" r="2"/><circle cx="35" cy="15" r="2"/>
-      <circle cx="-25" cy="45" r="1.5"/><circle cx="25" cy="45" r="1.5"/>
-    </g>
-    <!-- Circuit lines -->
-    <g stroke="#00E5FF" stroke-width="0.8" opacity="0.3">
-      <line x1="-55" y1="-20" x2="-40" y2="-20"/>
-      <line x1="55" y1="-20" x2="40" y2="-20"/>
-      <line x1="-50" y1="15" x2="-35" y2="15"/>
-      <line x1="50" y1="15" x2="35" y2="15"/>
-    </g>
-    <!-- Checkmark -->
-    <path d="M-32 5 L-12 28 L35 -25"
-          fill="none" stroke="#00E5FF" stroke-width="9"
-          stroke-linecap="round" stroke-linejoin="round"
-          filter="url(#bglow)"/>
-    <!-- Inner border -->
-    <path d="M0 -72 L64 -42 C64 -42 68 26 0 84 C-68 26 -64 -42 -64 -42 Z"
-          fill="none" stroke="#00E5FF" stroke-width="1" stroke-opacity="0.3"/>
+  <!-- Logo mark -->
+  <g transform="translate(88, 150)">
+    <rect x="-28" y="-28" width="56" height="56" rx="13" fill="#2563EB"/>
+    <text font-family="Arial, 'Helvetica Neue', Helvetica, sans-serif"
+          font-size="26" font-weight="700" fill="#FFFFFF"
+          x="0" y="0" dy="0.35em" text-anchor="middle" letter-spacing="-1">CG</text>
   </g>
 
   <!-- Title -->
-  <text x="280" y="118" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
-        font-size="54" font-weight="700" fill="#FFFFFF" letter-spacing="-1" filter="url(#txtglow)">
+  <text x="140" y="130"
+        font-family="Arial, 'Helvetica Neue', Helvetica, sans-serif"
+        font-size="46" font-weight="700" fill="#111827" letter-spacing="-1">
     ComplianceGuard
   </text>
 
+  <!-- Accent underline -->
+  <rect x="142" y="142" width="42" height="3" rx="1.5" fill="#2563EB" opacity="0.7"/>
+
+  <!-- Subtitle -->
+  <text x="142" y="172"
+        font-family="Arial, 'Helvetica Neue', Helvetica, sans-serif"
+        font-size="15" fill="#6B7280" font-weight="400">
+    SOC 2 Type II · Desktop Compliance Automation
+  </text>
+
   <!-- Tagline -->
-  <text x="282" y="160" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
-        font-size="17" fill="#00E5FF" font-weight="500" letter-spacing="4">
-    COLLECT. EVALUATE. COMPLY.
+  <text x="142" y="202"
+        font-family="Arial, 'Helvetica Neue', Helvetica, sans-serif"
+        font-size="12" fill="#2563EB" font-weight="600" letter-spacing="3">
+    COLLECT · EVALUATE · COMPLY
   </text>
-
-  <!-- Description -->
-  <text x="282" y="200" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
-        font-size="15" fill="#5C7A99" font-weight="300">
-    Desktop-first SOC 2 compliance automation.
-  </text>
-  <text x="282" y="222" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
-        font-size="15" fill="#5C7A99" font-weight="300">
-    No cloud. No subscriptions. Your data stays on your machine.
-  </text>
-
-  <!-- Bottom accent line -->
-  <rect x="0" y="298" width="1200" height="2" fill="url(#bline)"/>
 
   <!-- Version badge -->
-  <g transform="translate(1030, 38)">
-    <rect x="0" y="0" width="110" height="26" rx="13" fill="rgba(0,229,255,0.08)"/>
-    <rect x="0" y="0" width="110" height="26" rx="13" fill="none" stroke="#00E5FF" stroke-width="1" stroke-opacity="0.3"/>
-    <text x="55" y="17" font-family="'Segoe UI', monospace" font-size="12" fill="#00E5FF"
-          text-anchor="middle" font-weight="500">v0.1.0-beta</text>
+  <g transform="translate(1060, 16)">
+    <rect width="85" height="22" rx="11" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1"/>
+    <text x="42.5" y="15" font-family="'Courier New', Courier, monospace"
+          font-size="11" fill="#2563EB" text-anchor="middle" font-weight="600">v1.1.0</text>
   </g>
+
+  <!-- Bottom accent -->
+  <rect y="297" width="1200" height="3" fill="#2563EB"/>
 </svg>

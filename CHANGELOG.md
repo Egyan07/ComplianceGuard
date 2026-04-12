@@ -6,13 +6,53 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.1.0] - 2026-04-12
+
+### Added
+- **React ErrorBoundary** — Wraps all page content to prevent white-screen crashes, shows recovery UI
+- **Frontend test suite** — 25+ Vitest tests covering ComplianceScore, EvidenceList, Settings, ErrorBoundary, and API service layer using @testing-library/react
+- **CI/CD pipeline** — GitHub Actions workflow (`ci.yml`) runs lint, format check, type check, tests, and build on every push/PR
+- **Prettier config** — `.prettierrc` with `format` and `format:check` scripts for consistent code style
+- **Vitest configuration** — Added test config to `vite.config.ts` with jsdom environment and test setup file
+
+### Changed
+- **Complete brand redesign** — Replaced AI-generated dark/glow/shield/circuit aesthetic with clean, flat SaaS brand identity
+  - New logo: Blue (#2563EB) rounded square with white "CG" lettermark (like Notion, Linear, Slack)
+  - New banner: White background, clean typography, blue accent lines — no glow, no circuits, no dark backgrounds
+  - New favicon: Blue square with white "C" — readable at 16x16
+  - Tray icons: Clean blue (normal) and green (active) variants
+  - All raster icons regenerated (ICO, PNG at all sizes)
+- **App theme overhaul** — Updated Material UI theme to match new brand
+  - Primary color: `#0091EA` → `#2563EB` (professional blue)
+  - Secondary color: `#00E5FF` → `#10B981` (emerald green)
+  - AppBar: Dark navy gradient → clean white with subtle border
+  - Footer: Dark `#0A0E1A` → light `#F8FAFC` with border
+  - Navigation buttons: Cyan highlights → blue highlights on light blue
+  - BETA badge: White-on-dark → blue-on-light-blue
+- **Version bump** — `0.1.0-beta` → `1.1.0` across package.json, README, Settings, banner, and footer
+
+### Removed
+- Shield + checkmark icon (replaced by CG lettermark)
+- Dark gradient backgrounds from AppBar and footer
+- Neon cyan accent color (`#00E5FF`)
+- Circuit trace patterns, hexagonal nodes, glow filters from all SVGs
+- `Shield` icon import from App.tsx
+
+---
+
 ## [0.1.0-beta] - 2026-04-12
 
 ### Added
 - **Evidence Upload UI** — Dialog form to manually upload policy documents, screenshots, and text evidence mapped to SOC 2 controls
 - **File picker** — Native OS file dialog for selecting evidence files (PDF, DOC, images, etc.)
-- **Professional app icons** — Shield + checkmark design (ICO multi-size, PNG, SVG, tray, notification, favicon)
+- **Evaluation History** — Timeline view with score trend chart, status indicators, and control breakdowns for all past evaluations
+- **Settings page** — App info, database backup, dark mode toggle (placeholder), compliance framework list
+- **PDF report export** — Styled HTML-to-PDF compliance reports via Electron's printToPDF (cover page, score breakdown, recommendations)
+- **29 SOC 2 controls** — Expanded from 21 to 29 with Confidentiality (C1.1–C1.4) and Processing Integrity (PI1.1–PI1.4) categories
+- **App navigation** — Dashboard, Evaluation History, and Settings pages with icon buttons in AppBar
 - **Premium README** — Banner, badges, comparison table, architecture diagram, business model, roadmap
+- **CHANGELOG.md** — This file
+- **LICENSE** — MIT License
 
 ### Fixed
 - **Electron main process** — Fixed dev server port mismatch (3000 → 5173), production build path (build → dist), added missing IPC handlers
@@ -25,6 +65,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Removed
 - Tracked `.pyc`, `__pycache__`, and `.db` files from git
 - Placeholder icon README
+- Deprecated Electron APIs (`enableRemoteModule`, `worldSafeExecuteJavaScript`)
+- Dangerous unvalidated `readRegistryKey` IPC exposure
 
 ### Security
 - Added root `.gitignore` (Python, Node, IDE, .env, .db files)

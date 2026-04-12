@@ -23,27 +23,27 @@ import {
 import {
   Dashboard as DashboardIcon,
   Settings as SettingsIcon,
-  Shield,
   History
 } from '@mui/icons-material';
 import Dashboard from './components/Dashboard';
 import Settings from './components/Settings';
 import EvaluationHistory from './components/EvaluationHistory';
+import ErrorBoundary from './components/ErrorBoundary';
 
 type Page = 'dashboard' | 'history' | 'settings';
 
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#0091EA',
-      dark: '#1A237E',
-      light: '#00E5FF',
+      main: '#2563EB',
+      dark: '#1E40AF',
+      light: '#3B82F6',
     },
     secondary: {
-      main: '#00E5FF',
+      main: '#10B981',
     },
     background: {
-      default: '#F5F7FA',
+      default: '#F8FAFC',
     },
   },
   typography: {
@@ -97,10 +97,44 @@ function App() {
       <CssBaseline />
       <Box sx={{ flexGrow: 1, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         {/* App Bar */}
-        <AppBar position="static" elevation={0} sx={{ background: 'linear-gradient(135deg, #0A0E1A 0%, #0D1B2A 50%, #0A1628 100%)' }}>
+        <AppBar
+          position="static"
+          elevation={0}
+          sx={{
+            backgroundColor: '#FFFFFF',
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
           <Toolbar>
-            <Shield sx={{ mr: 1.5, fontSize: 28, color: '#00E5FF' }} />
-            <Typography variant="h6" component="div" sx={{ fontWeight: 'bold', letterSpacing: '-0.5px' }}>
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: '8px',
+                backgroundColor: '#2563EB',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mr: 1.5,
+              }}
+            >
+              <Typography
+                sx={{
+                  color: '#FFFFFF',
+                  fontWeight: 700,
+                  fontSize: '0.75rem',
+                  letterSpacing: '-0.5px',
+                }}
+              >
+                CG
+              </Typography>
+            </Box>
+            <Typography
+              variant="h6"
+              component="div"
+              sx={{ fontWeight: 'bold', letterSpacing: '-0.5px', color: '#111827' }}
+            >
               ComplianceGuard
             </Typography>
             <Chip
@@ -111,9 +145,9 @@ function App() {
                 height: 20,
                 fontSize: '0.65rem',
                 fontWeight: 600,
-                backgroundColor: 'rgba(255,255,255,0.15)',
-                color: 'rgba(255,255,255,0.9)',
-                letterSpacing: '1px'
+                backgroundColor: '#EFF6FF',
+                color: '#2563EB',
+                letterSpacing: '1px',
               }}
             />
 
@@ -122,11 +156,11 @@ function App() {
             {/* Navigation */}
             <Tooltip title="Dashboard">
               <IconButton
-                color="inherit"
                 onClick={() => setCurrentPage('dashboard')}
                 sx={{
-                  backgroundColor: currentPage === 'dashboard' ? 'rgba(0,229,255,0.15)' : 'transparent',
-                  mr: 0.5
+                  color: currentPage === 'dashboard' ? '#2563EB' : '#6B7280',
+                  backgroundColor: currentPage === 'dashboard' ? '#EFF6FF' : 'transparent',
+                  mr: 0.5,
                 }}
               >
                 <DashboardIcon />
@@ -134,11 +168,11 @@ function App() {
             </Tooltip>
             <Tooltip title="Evaluation History">
               <IconButton
-                color="inherit"
                 onClick={() => setCurrentPage('history')}
                 sx={{
-                  backgroundColor: currentPage === 'history' ? 'rgba(0,229,255,0.15)' : 'transparent',
-                  mr: 0.5
+                  color: currentPage === 'history' ? '#2563EB' : '#6B7280',
+                  backgroundColor: currentPage === 'history' ? '#EFF6FF' : 'transparent',
+                  mr: 0.5,
                 }}
               >
                 <History />
@@ -146,10 +180,10 @@ function App() {
             </Tooltip>
             <Tooltip title="Settings">
               <IconButton
-                color="inherit"
                 onClick={() => setCurrentPage('settings')}
                 sx={{
-                  backgroundColor: currentPage === 'settings' ? 'rgba(0,229,255,0.15)' : 'transparent'
+                  color: currentPage === 'settings' ? '#2563EB' : '#6B7280',
+                  backgroundColor: currentPage === 'settings' ? '#EFF6FF' : 'transparent',
                 }}
               >
                 <SettingsIcon />
@@ -160,16 +194,32 @@ function App() {
 
         {/* Main Content */}
         <Box component="main" sx={{ flexGrow: 1, backgroundColor: 'background.default' }}>
-          {currentPage === 'dashboard' && <Dashboard />}
-          {currentPage === 'history' && <EvaluationHistory />}
-          {currentPage === 'settings' && <Settings />}
+          <ErrorBoundary>
+            {currentPage === 'dashboard' && <Dashboard />}
+            {currentPage === 'history' && <EvaluationHistory />}
+            {currentPage === 'settings' && <Settings />}
+          </ErrorBoundary>
         </Box>
 
         {/* Footer */}
-        <Paper square elevation={0} sx={{ py: 1.5, px: 3, backgroundColor: '#0A0E1A' }}>
+        <Paper
+          square
+          elevation={0}
+          sx={{
+            py: 1.5,
+            px: 3,
+            backgroundColor: '#F8FAFC',
+            borderTop: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
           <Container maxWidth="xl">
-            <Typography variant="body2" align="center" sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem' }}>
-              ComplianceGuard v0.1.0-beta — Collect. Evaluate. Comply.
+            <Typography
+              variant="body2"
+              align="center"
+              sx={{ color: '#9CA3AF', fontSize: '0.75rem' }}
+            >
+              ComplianceGuard v1.1.0 — Collect. Evaluate. Comply.
             </Typography>
           </Container>
         </Paper>

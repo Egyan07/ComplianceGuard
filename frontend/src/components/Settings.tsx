@@ -37,7 +37,7 @@ import {
 const isElectron = !!(window as any).electronAPI;
 
 const Settings: React.FC = () => {
-  const [appVersion, setAppVersion] = useState('0.1.0');
+  const [appVersion, setAppVersion] = useState('1.1.0');
   const [systemInfo, setSystemInfo] = useState<any>(null);
   const [backingUp, setBackingUp] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);

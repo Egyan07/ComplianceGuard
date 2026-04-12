@@ -1,6 +1,6 @@
 {
   "name": "complianceguard-desktop",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "ComplianceGuard - SOC 2 Automation Desktop Application",
   "main": "electron/main.js",
   "author": "Egyan07",
@@ -29,7 +29,7 @@
   "build": {
     "appId": "com.complianceguard.desktop",
     "productName": "ComplianceGuard",
-    "copyright": "Copyright © 2024 Egyan07",
+    "copyright": "Copyright © 2026 Egyan07",
     "directories": {
       "output": "dist",
       "buildResources": "resources"
