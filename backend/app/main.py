@@ -26,7 +26,7 @@ import app.models  # noqa: F401
 app = FastAPI(
     title="ComplianceGuard SOC 2 API",
     description="Backend API for SOC 2 compliance automation platform",
-    version="2.1.0"
+    version="2.3.0"
 )
 
 app.state.limiter = limiter
@@ -79,7 +79,7 @@ async def health_check() -> Dict[str, Any]:
     return {
         "status": "healthy",
         "service": "complianceguard-api",
-        "version": "2.0.0",
+        "version": "2.3.0",
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 

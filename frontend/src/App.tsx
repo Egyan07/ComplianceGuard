@@ -245,7 +245,7 @@ function AppContent() {
               align="center"
               sx={{ color: '#9CA3AF', fontSize: '0.75rem' }}
             >
-              ComplianceGuard v2.0.0 — Collect. Evaluate. Comply.
+              ComplianceGuard v2.3.0 — Collect. Evaluate. Comply.
             </Typography>
           </Container>
         </Paper>

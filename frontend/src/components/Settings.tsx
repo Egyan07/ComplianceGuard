@@ -39,7 +39,7 @@ import { useLicense } from '../contexts/LicenseContext';
 const isElectron = !!(window as any).electronAPI;
 
 const Settings: React.FC = () => {
-  const [appVersion, setAppVersion] = useState('2.0.0');
+  const [appVersion, setAppVersion] = useState('2.3.0');
   const [systemInfo, setSystemInfo] = useState<any>(null);
   const [backingUp, setBackingUp] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
