@@ -234,15 +234,19 @@ CI runs automatically on every push via GitHub Actions.
 
 ## Pricing
 
-The desktop app is free forever. Paid tiers unlock multi-machine management and additional frameworks.
+Free gets you hooked. Pro makes you audit-ready.
 
 | | **Free** | **Pro** | **Enterprise** |
 |---|---|---|---|
-| **Price** | $0 | $49–99/mo | $299/mo + $15/machine |
-| SOC 2 Type II (29 controls) | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| Local evidence collection | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| Compliance scoring + gap analysis | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| PDF reports | — | :white_check_mark: | :white_check_mark: |
+| **Price** | $0 forever | $49–99/mo | $299/mo + $15/machine |
+| Evidence collection (all 8 categories) | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| SOC 2 controls | 12 core controls | All 29 controls | All 29 controls |
+| Overall compliance score | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| Per-control scoring + gap details | — | :white_check_mark: | :white_check_mark: |
+| Remediation recommendations | — | :white_check_mark: | :white_check_mark: |
+| Upload manual evidence (policies, docs) | — | :white_check_mark: | :white_check_mark: |
+| Evaluation history + trends | — | :white_check_mark: | :white_check_mark: |
+| PDF audit-ready reports | — | :white_check_mark: | :white_check_mark: |
 | Machines | 1 | Up to 10 | Unlimited |
 | ISO 27001, HIPAA, PCI DSS | — | :white_check_mark: | :white_check_mark: |
 | Cloud dashboard (multi-machine) | — | :white_check_mark: | :white_check_mark: |
@@ -252,7 +256,7 @@ The desktop app is free forever. Paid tiers unlock multi-machine management and 
 | Central policy deployment | — | — | :white_check_mark: |
 | Support | Community | Email | Dedicated |
 
-> **Free tier is not a trial.** One machine, full SOC 2 coverage, no expiration. Paid tiers are for teams that need multi-machine visibility, extra frameworks, or audit-ready PDF exports.
+> **Free tier** collects evidence and shows your overall score — enough to know where you stand. **Pro** unlocks the full 29-control breakdown, tells you exactly what to fix, and generates the PDF reports your auditor will ask for. That's the difference between knowing your score and passing the audit.
 
 ## Roadmap
 
