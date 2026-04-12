@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="#quick-start"><img src="https://img.shields.io/badge/version-2.3.0-2563EB" alt="Version"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/Egyan07/ComplianceGuard" alt="License"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-BSL%201.1-orange" alt="License">
   <a href="#soc-2-controls"><img src="https://img.shields.io/badge/SOC%202-29%20controls-10B981" alt="Controls"></a>
   <img src="https://img.shields.io/badge/tests-76%20passing-10B981?logo=vitest&logoColor=white" alt="Tests">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
