@@ -51,7 +51,7 @@ def auth_token(client):
     """Register a user and return an auth token."""
     res = client.post("/api/auth/register", json={
         "email": "integration@test.com",
-        "password": "testpass123",
+        "password": "Test@pass1",
         "first_name": "Integration",
         "last_name": "Test",
     })
@@ -64,7 +64,7 @@ class TestAuthFlow:
         # Register
         res = client.post("/api/auth/register", json={
             "email": "newuser@test.com",
-            "password": "securepass",
+            "password": "Secure@1pass",
             "first_name": "New",
             "last_name": "User",
         })
@@ -76,7 +76,7 @@ class TestAuthFlow:
         # Login with same credentials
         res = client.post("/api/auth/login", data={
             "username": "newuser@test.com",
-            "password": "securepass",
+            "password": "Secure@1pass",
         })
         assert res.status_code == 200
         assert "access_token" in res.json()
@@ -88,10 +88,20 @@ class TestAuthFlow:
         })
         assert res.status_code == 401
 
+    def test_weak_password_rejected(self, client):
+        res = client.post("/api/auth/register", json={
+            "email": "weak@test.com",
+            "password": "short",
+            "first_name": "Weak",
+            "last_name": "Pass",
+        })
+        assert res.status_code == 400
+        assert "Password must contain" in res.json()["detail"]
+
     def test_duplicate_registration(self, client, auth_token):
         res = client.post("/api/auth/register", json={
             "email": "integration@test.com",
-            "password": "anotherpass",
+            "password": "Another@1pass",
             "first_name": "Dup",
             "last_name": "User",
         })

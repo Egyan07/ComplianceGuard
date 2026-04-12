@@ -11,6 +11,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr
 
+import re
+
 from app.core.auth import (
     authenticate_user,
     create_access_token,
@@ -18,6 +20,7 @@ from app.core.auth import (
     Token,
     ACCESS_TOKEN_EXPIRE_MINUTES
 )
+from app.core.config import settings
 from app.models.user import User
 from app.core.database import get_db
 from sqlalchemy.orm import Session
@@ -123,6 +126,25 @@ async def register(
     Raises:
         HTTPException: If user with email already exists
     """
+    # Validate password strength
+    pwd = user_data.password
+    errors = []
+    if len(pwd) < settings.password_min_length:
+        errors.append(f"at least {settings.password_min_length} characters")
+    if settings.password_require_uppercase and not re.search(r"[A-Z]", pwd):
+        errors.append("an uppercase letter")
+    if settings.password_require_lowercase and not re.search(r"[a-z]", pwd):
+        errors.append("a lowercase letter")
+    if settings.password_require_digits and not re.search(r"\d", pwd):
+        errors.append("a digit")
+    if settings.password_require_special and not re.search(r"[^A-Za-z0-9]", pwd):
+        errors.append("a special character")
+    if errors:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Password must contain {', '.join(errors)}",
+        )
+
     # Check if user already exists
     existing_user = db.query(User).filter(User.email == user_data.email).first()
     if existing_user:

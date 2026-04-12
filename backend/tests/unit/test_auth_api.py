@@ -57,7 +57,7 @@ def seeded_user():
     db = TestSessionLocal()
     user = User(
         email="test@example.com",
-        hashed_password=get_password_hash("testpass123"),
+        hashed_password=get_password_hash("Test@pass1"),
         first_name="Test",
         last_name="User",
         is_active=True,
@@ -74,7 +74,7 @@ def test_login_success(client, seeded_user):
     """Test successful login with valid credentials."""
     response = client.post("/api/auth/login", data={
         "username": "test@example.com",
-        "password": "testpass123",
+        "password": "Test@pass1",
     })
     assert response.status_code == 200
     data = response.json()
@@ -97,7 +97,7 @@ def test_register_success(client):
     """Test successful user registration."""
     response = client.post("/api/auth/register", json={
         "email": "newuser@example.com",
-        "password": "newpass456",
+        "password": "New@pass456",
         "first_name": "New",
         "last_name": "User",
     })
@@ -112,7 +112,7 @@ def test_register_existing_user(client, seeded_user):
     """Test registration with existing email."""
     response = client.post("/api/auth/register", json={
         "email": "test@example.com",
-        "password": "anotherpass",
+        "password": "Another@1pass",
         "first_name": "Test",
         "last_name": "User",
     })
