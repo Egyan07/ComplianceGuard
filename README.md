@@ -43,7 +43,7 @@ ComplianceGuard lives on the endpoint too. It collects evidence directly from Wi
 git clone https://github.com/Egyan07/complianceguard.git
 ```
 
-1. Double-click **`install.bat`** — installs all dependencies and sets up the database
+1. Double-click **`install.bat`** — installs all dependencies, sets up the database, and creates `start.bat`
 2. Double-click **`start.bat`** — choose Desktop or Web mode and you're running
 
 > **Prerequisites:** Windows 10/11, [Node.js 18+](https://nodejs.org/), [Python 3.10+](https://www.python.org/downloads/)
@@ -270,8 +270,7 @@ complianceguard/
 │   ├── .prettierrc
 │   └── Dockerfile
 ├── resources/icons/                    # App icons (ico, png, svg, tray)
-├── install.bat                         # One-click Windows setup (checks prereqs, installs deps)
-├── start.bat                           # One-click launcher (Desktop / Web mode menu)
+├── install.bat                         # One-click setup (installs deps, creates start.bat)
 ├── .github/workflows/ci.yml           # Backend Tests → Lint & Test → Build
 ├── docker-compose.yml                  # PostgreSQL + Backend + Frontend + Nginx
 ├── nginx.conf                          # Reverse proxy, rate limiting, security headers
