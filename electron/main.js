@@ -6,6 +6,7 @@ const fs = require('fs');
 const ComplianceGuardDatabase = require('./database/sqlite');
 const LocalEvidenceProcessor = require('./processing/evidence-processor');
 const LocalComplianceEngine = require('./processing/compliance-engine');
+const ReportGenerator = require('./processing/report-generator');
 const { collectWindowsEvidence } = require('./system/windows');
 
 // Keep a global reference of the window object
@@ -16,6 +17,7 @@ let tray = null;
 let database = null;
 let evidenceProcessor = null;
 let complianceEngine = null;
+let reportGenerator = null;
 
 // Development mode flag
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
@@ -265,6 +267,56 @@ ipcMain.handle('generate-compliance-report', async (event, frameworkId = 1, form
   }
 });
 
+// Export compliance report as PDF
+ipcMain.handle('export-pdf-report', async (event, frameworkId = 1) => {
+  try {
+    // Generate HTML report
+    const html = await reportGenerator.generateHTMLReport(frameworkId);
+
+    // Create a hidden window to render the HTML
+    const reportWindow = new BrowserWindow({
+      show: false,
+      width: 900,
+      height: 1200,
+      webPreferences: { contextIsolation: true, nodeIntegration: false }
+    });
+
+    await reportWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html));
+
+    // Wait for rendering
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Generate PDF
+    const pdfBuffer = await reportWindow.webContents.printToPDF({
+      printBackground: true,
+      paperWidth: 8.5,
+      paperHeight: 11,
+      margins: { top: 0, bottom: 0, left: 0, right: 0 }
+    });
+
+    reportWindow.close();
+
+    // Ask user where to save
+    const result = await dialog.showSaveDialog(mainWindow, {
+      defaultPath: `ComplianceGuard-Report-${new Date().toISOString().split('T')[0]}.pdf`,
+      filters: [{ name: 'PDF Files', extensions: ['pdf'] }]
+    });
+
+    if (result.canceled || !result.filePath) {
+      return { success: false, cancelled: true };
+    }
+
+    fs.writeFileSync(result.filePath, pdfBuffer);
+
+    showNotification('Report Exported', `PDF saved to ${path.basename(result.filePath)}`);
+
+    return { success: true, filePath: result.filePath };
+  } catch (error) {
+    console.error('PDF export failed:', error);
+    return { error: error.message };
+  }
+});
+
 // Evaluation history
 ipcMain.handle('get-evaluation-history', async (event, frameworkId = 1) => {
   try {
@@ -328,6 +380,7 @@ app.whenReady().then(async () => {
 
     evidenceProcessor = new LocalEvidenceProcessor(database, app.getPath('userData'));
     complianceEngine = new LocalComplianceEngine(database);
+    reportGenerator = new ReportGenerator(database);
 
     console.log('Database and processing engines initialized');
 

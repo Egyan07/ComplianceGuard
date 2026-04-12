@@ -1,10 +1,11 @@
 /*
 ComplianceGuard SOC 2 Platform - Main Application Component
 
-Root component that sets up Material-UI theming and renders the dashboard.
-Provides consistent styling and layout across the application.
+Root component with Material-UI theming and navigation between
+Dashboard and Settings views.
 */
 
+import { useState } from 'react';
 import {
   ThemeProvider,
   createTheme,
@@ -14,25 +15,36 @@ import {
   Toolbar,
   Typography,
   Container,
-  Paper
+  Paper,
+  IconButton,
+  Tooltip,
+  Chip
 } from '@mui/material';
+import {
+  Dashboard as DashboardIcon,
+  Settings as SettingsIcon,
+  Shield
+} from '@mui/icons-material';
 import Dashboard from './components/Dashboard';
+import Settings from './components/Settings';
 
-// Create Material-UI theme for consistent styling
+type Page = 'dashboard' | 'settings';
+
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#1976d2',
+      main: '#1565C0',
+      dark: '#0D47A1',
     },
     secondary: {
-      main: '#dc004e',
+      main: '#00897B',
     },
     background: {
-      default: '#f5f5f5',
+      default: '#F5F7FA',
     },
   },
   typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: '"Segoe UI", "Roboto", "Helvetica", "Arial", sans-serif',
     h4: {
       fontWeight: 600,
     },
@@ -44,7 +56,8 @@ const theme = createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          borderRadius: 8,
         },
       },
     },
@@ -63,39 +76,84 @@ const theme = createTheme({
         },
       },
     },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+        },
+      },
+    },
   },
 });
 
 function App() {
+  const [currentPage, setCurrentPage] = useState<Page>('dashboard');
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Box sx={{ flexGrow: 1, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         {/* App Bar */}
-        <AppBar position="static" elevation={0}>
+        <AppBar position="static" elevation={0} sx={{ background: 'linear-gradient(135deg, #0D47A1 0%, #1565C0 50%, #00695C 100%)' }}>
           <Toolbar>
-            <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
-              ComplianceGuard SOC 2 Platform
+            <Shield sx={{ mr: 1.5, fontSize: 28 }} />
+            <Typography variant="h6" component="div" sx={{ fontWeight: 'bold', letterSpacing: '-0.5px' }}>
+              ComplianceGuard
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              v0.1.0
-            </Typography>
+            <Chip
+              label="BETA"
+              size="small"
+              sx={{
+                ml: 1.5,
+                height: 20,
+                fontSize: '0.65rem',
+                fontWeight: 600,
+                backgroundColor: 'rgba(255,255,255,0.15)',
+                color: 'rgba(255,255,255,0.9)',
+                letterSpacing: '1px'
+              }}
+            />
+
+            <Box sx={{ flexGrow: 1 }} />
+
+            {/* Navigation */}
+            <Tooltip title="Dashboard">
+              <IconButton
+                color="inherit"
+                onClick={() => setCurrentPage('dashboard')}
+                sx={{
+                  backgroundColor: currentPage === 'dashboard' ? 'rgba(255,255,255,0.15)' : 'transparent',
+                  mr: 0.5
+                }}
+              >
+                <DashboardIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Settings">
+              <IconButton
+                color="inherit"
+                onClick={() => setCurrentPage('settings')}
+                sx={{
+                  backgroundColor: currentPage === 'settings' ? 'rgba(255,255,255,0.15)' : 'transparent'
+                }}
+              >
+                <SettingsIcon />
+              </IconButton>
+            </Tooltip>
           </Toolbar>
         </AppBar>
 
         {/* Main Content */}
-        <Box component="main" sx={{ flexGrow: 1, py: 3, backgroundColor: 'background.default' }}>
-          <Container maxWidth="xl">
-            <Dashboard />
-          </Container>
+        <Box component="main" sx={{ flexGrow: 1, backgroundColor: 'background.default' }}>
+          {currentPage === 'dashboard' && <Dashboard />}
+          {currentPage === 'settings' && <Settings />}
         </Box>
 
         {/* Footer */}
-        <Paper square sx={{ py: 2, px: 3, backgroundColor: 'grey.100' }}>
+        <Paper square elevation={0} sx={{ py: 1.5, px: 3, backgroundColor: '#0D1B2A' }}>
           <Container maxWidth="xl">
-            <Typography variant="body2" color="text.secondary" align="center">
-              ComplianceGuard SOC 2 Automation Platform v0.1.0 •
-              Built with React, TypeScript, and Material-UI
+            <Typography variant="body2" align="center" sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem' }}>
+              ComplianceGuard v0.1.0-beta — Collect. Evaluate. Comply.
             </Typography>
           </Container>
         </Paper>

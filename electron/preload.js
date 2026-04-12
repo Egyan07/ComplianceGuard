@@ -54,6 +54,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return ipcRenderer.invoke('generate-compliance-report', frameworkId, format);
   },
 
+  exportPDFReport: (frameworkId = 1) => {
+    return ipcRenderer.invoke('export-pdf-report', frameworkId);
+  },
+
   // File system operations
   selectFolder: () => ipcRenderer.invoke('select-folder'),
   selectEvidenceFile: () => ipcRenderer.invoke('select-evidence-file'),

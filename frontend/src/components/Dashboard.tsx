@@ -20,7 +20,8 @@ import {
   Refresh,
   CloudUpload,
   Assessment,
-  Upload
+  Upload,
+  PictureAsPdf
 } from '@mui/icons-material';
 import ComplianceScore from './ComplianceScore';
 import EvidenceList from './EvidenceList';
@@ -59,6 +60,7 @@ const Dashboard: React.FC = () => {
 
   const [collectingEvidence, setCollectingEvidence] = useState(false);
   const [evaluating, setEvaluating] = useState(false);
+  const [exportingPDF, setExportingPDF] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
   const fetchDashboardData = async () => {
@@ -163,6 +165,32 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const handleExportPDF = async () => {
+    if (!isElectron) return;
+    setExportingPDF(true);
+    setState(prev => ({ ...prev, error: null }));
+
+    try {
+      const api = (window as any).electronAPI;
+      const result = await api.exportPDFReport(1);
+
+      if (result.error) {
+        setState(prev => ({ ...prev, error: result.error }));
+      } else if (result.cancelled) {
+        // User cancelled save dialog, do nothing
+      } else {
+        setState(prev => ({
+          ...prev,
+          successMessage: `PDF report exported successfully!`
+        }));
+      }
+    } catch (error: any) {
+      setState(prev => ({ ...prev, error: error.message || 'Failed to export PDF.' }));
+    } finally {
+      setExportingPDF(false);
+    }
+  };
+
   const handleEvidenceItemClick = (item: EvidenceItem) => {
     console.log('Evidence item clicked:', item);
   };
@@ -233,6 +261,15 @@ const Dashboard: React.FC = () => {
                   disabled={evaluating}
                 >
                   {evaluating ? 'Evaluating...' : 'Evaluate Compliance'}
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={exportingPDF ? <CircularProgress size={16} /> : <PictureAsPdf />}
+                  onClick={handleExportPDF}
+                  disabled={exportingPDF || !state.evaluation}
+                  title={!state.evaluation ? 'Run an evaluation first' : 'Export PDF report'}
+                >
+                  {exportingPDF ? 'Exporting...' : 'Export PDF'}
                 </Button>
               </>
             )}
