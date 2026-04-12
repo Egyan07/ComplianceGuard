@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [2.2.0] - 2026-04-12
+
+### Added
+- **Password complexity enforcement** — Register endpoint validates min 8 chars, uppercase, lowercase, digit, and special character per app config
+- **Rate limiting** — Login capped at 5 req/min, register at 3 req/min per IP via slowapi; auto-disabled in test environment
+- **Compliance evaluation persistence** — New `ComplianceEvaluationRecord` and `ControlAssessmentRecord` models; evaluate and history endpoints now read/write to DB instead of in-memory dict
+- **Nginx reverse proxy** — `nginx.conf` with security headers (X-Frame-Options, X-Content-Type-Options, XSS), rate limiting zone, and SSL-ready config; uncommented in docker-compose
+- **LoginPage tests** — 6 Vitest tests covering form rendering, tab switching, error display, and tagline
+- **Weak password test** — Integration test verifying short/simple passwords are rejected
+- **Alembic evaluation migration** — Auto-generated migration for compliance_evaluations and control_assessments tables
+
+### Changed
+- App startup runs `alembic upgrade head` instead of `Base.metadata.create_all` (fallback for tests without alembic.ini)
+- Compliance evaluate and history endpoints now require JWT auth
+- App version bumped to `2.1.0` in FastAPI metadata
+- Total test count: **29 backend + 37 frontend = 66 tests**
+
+---
+
 ## [2.1.0] - 2026-04-12
 
 ### Added
@@ -29,7 +48,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **bcrypt compatibility** — Pinned `bcrypt==4.0.1` to fix `passlib` AttributeError on CI
 
 ### Changed
-- Backend CI now runs both unit tests (14) and integration tests (14) — **28 backend + 31 frontend = 59 total**
+- Backend CI now runs both unit tests and integration tests
 - Evidence summary endpoint returns real aggregated data from user's collections
 - Health endpoint returns real timestamp and version `2.0.0`
 - CORS origins include `localhost:3000` for Docker mode

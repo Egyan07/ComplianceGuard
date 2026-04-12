@@ -3,9 +3,10 @@
 </p>
 
 <p align="center">
-  <a href="#quick-start"><img src="https://img.shields.io/badge/version-2.1.0-2563EB" alt="Version"></a>
+  <a href="#quick-start"><img src="https://img.shields.io/badge/version-2.2.0-2563EB" alt="Version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/Egyan07/complianceguard" alt="License"></a>
   <a href="#soc-2-controls"><img src="https://img.shields.io/badge/SOC%202-29%20controls-10B981" alt="Controls"></a>
+  <img src="https://img.shields.io/badge/tests-66%20passing-10B981?logo=vitest&logoColor=white" alt="Tests">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
   <a href="https://github.com/Egyan07/complianceguard/actions"><img src="https://img.shields.io/github/actions/workflow/status/Egyan07/complianceguard/ci.yml?label=CI&logo=githubactions&logoColor=white" alt="CI"></a>
 </p>
@@ -56,7 +57,7 @@ cp .env.example .env          # configure your settings
 docker-compose up -d
 ```
 
-> Frontend at `http://localhost:3000`, API at `http://localhost:8000`. Uses PostgreSQL for storage and FastAPI for the backend. Create an account on the login page to get started.
+> App at `http://localhost` (nginx proxy), API at `http://localhost:8000`. Uses PostgreSQL + FastAPI. Create an account on the login page to get started.
 
 ### Build Installer
 
@@ -220,7 +221,7 @@ complianceguard/
 │   │   ├── services/                   # Compliance service, evidence collector
 │   │   └── integrations/aws.py         # AWS evidence collection
 │   ├── migrations/                     # Alembic database migrations
-│   ├── tests/                          # Unit (14) + integration (14) tests
+│   ├── tests/                          # Unit (14) + integration (15) tests
 │   ├── requirements.txt
 │   └── Dockerfile
 ├── electron/
@@ -244,13 +245,14 @@ complianceguard/
 │   │   ├── contexts/AuthContext.tsx     # JWT auth state, login/register/logout
 │   │   ├── contexts/LicenseContext.tsx  # React context for tier state + feature checks
 │   │   ├── services/api.ts             # Unified API (IPC or HTTP)
-│   │   └── test/                       # Vitest test suite (31 tests)
+│   │   └── test/                       # Vitest test suite (37 tests)
 │   ├── .eslintrc.cjs
 │   ├── .prettierrc
 │   └── Dockerfile
 ├── resources/icons/                    # App icons (ico, png, svg, tray)
 ├── .github/workflows/ci.yml           # Backend Tests → Lint & Test → Build
-├── docker-compose.yml                  # PostgreSQL + Backend + Frontend
+├── docker-compose.yml                  # PostgreSQL + Backend + Frontend + Nginx
+├── nginx.conf                          # Reverse proxy, rate limiting, security headers
 ├── .env.example                        # Environment config template
 └── package.json                        # Electron + build config
 ```
@@ -293,10 +295,12 @@ All data stays under your control. Zero telemetry.
 |-------|-----|
 | IPC | Context isolation. Every exposed method validates input types and uses allowlists. |
 | Evidence | SHA-256 hashing on all stored files. Full audit trail with timestamps. |
-| Database | Parameterized queries. Foreign key constraints. |
+| Database | Parameterized queries. Foreign key constraints. Alembic-managed migrations. |
 | Navigation | External URLs blocked. `window.open` denied. |
 | Licensing | Ed25519 signed keys. Only the public key ships with the app. |
-| Auth (Web) | JWT tokens with configurable expiry. Bcrypt password hashing. Login required for web mode. |
+| Auth (Web) | JWT tokens with configurable expiry. Bcrypt hashing. Password complexity enforced. |
+| Rate Limiting | 5 requests/min on login, 3/min on register. Nginx rate limiting at proxy layer. |
+| Proxy | Nginx reverse proxy with security headers (X-Frame-Options, X-Content-Type-Options, XSS protection). |
 
 ## Development
 
@@ -325,19 +329,19 @@ uvicorn app.main:app --reload        # Run backend locally
 ### Tests
 
 ```bash
-# Frontend (31 tests)
+# Frontend (37 tests)
 cd frontend
 npm test                 # Vitest
 npm run lint             # ESLint
 npm run format:check     # Prettier
 
-# Backend (28 tests)
+# Backend (29 tests)
 cd backend
 python -m pytest tests/unit/ -v              # Unit tests (14)
-python -m pytest tests/integration/ -v       # Integration tests (14)
+python -m pytest tests/integration/ -v       # Integration tests (15)
 ```
 
-CI runs backend tests, frontend lint + type check + tests, and build on every push via GitHub Actions. Total: **59 tests**.
+CI runs backend tests, frontend lint + type check + tests, and build on every push via GitHub Actions. Total: **66 tests**.
 
 ## Roadmap
 
@@ -347,11 +351,13 @@ CI runs backend tests, frontend lint + type check + tests, and build on every pu
 - [x] PDF compliance reports
 - [x] Evaluation history with trend tracking
 - [x] Free / Pro tier licensing with Ed25519 keys
-- [x] CI/CD pipeline (GitHub Actions — 59 tests)
-- [x] Docker Compose deployment
+- [x] CI/CD pipeline (GitHub Actions — 66 tests)
+- [x] Docker Compose deployment with nginx reverse proxy
 - [x] FastAPI backend with PostgreSQL
 - [x] JWT authentication with login/register UI
-- [x] Alembic database migrations
+- [x] Password complexity enforcement + rate limiting
+- [x] Alembic database migrations (auto-run on startup)
+- [x] Compliance evaluations persisted to database
 - [x] API integration tests (auth, evidence, compliance)
 - [ ] Scheduled automatic collection
 - [ ] ISO 27001 framework
