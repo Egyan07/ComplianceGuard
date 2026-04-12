@@ -5,7 +5,7 @@ Orchestrates evidence collection from multiple sources for SOC 2 compliance moni
 """
 
 from typing import Dict, List, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 from app.integrations.aws import AWSEvidenceCollector
 
@@ -24,7 +24,7 @@ class EvidenceCollectionService:
 
     def __init__(self):
         """Initialize the Evidence Collection Service"""
-        self.collection_timestamp = datetime.utcnow()
+        self.collection_timestamp = datetime.now(timezone.utc)
         logger.info("Evidence Collection Service initialized")
 
     def collect_all_evidence(self,

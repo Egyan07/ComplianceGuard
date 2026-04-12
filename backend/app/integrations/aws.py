@@ -6,7 +6,7 @@ Provides AWS S3 encryption and IAM policy monitoring for SOC 2 compliance eviden
 
 import boto3
 from typing import Dict, List, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from botocore.exceptions import ClientError, NoCredentialsError, PartialCredentialsError
 import logging
 
@@ -135,7 +135,7 @@ class AWSEvidenceCollector:
 
             evidence = {
                 'evidence_type': 's3_encryption',
-                'collection_timestamp': datetime.utcnow().isoformat() + 'Z',
+                'collection_timestamp': datetime.now(timezone.utc).isoformat() + 'Z',
                 'total_buckets': total_buckets,
                 'encrypted_buckets': encrypted_count,
                 'bucket_encryption_status': bucket_encryption_status,
@@ -257,7 +257,7 @@ class AWSEvidenceCollector:
 
             evidence = {
                 'evidence_type': 'iam_policy',
-                'collection_timestamp': datetime.utcnow().isoformat() + 'Z',
+                'collection_timestamp': datetime.now(timezone.utc).isoformat() + 'Z',
                 'total_policies': total_policies,
                 'over_privileged_policies': over_privileged_count,
                 'policy_analysis': policies,
