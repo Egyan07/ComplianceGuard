@@ -14,6 +14,7 @@ from .user import User
 from .company import Company
 from .compliance import ComplianceFramework
 from .evidence import EvidenceCollection, EvidenceItem
+from .evaluation import ComplianceEvaluationRecord, ControlAssessmentRecord
 
 __all__ = [
     "User",
@@ -21,4 +22,6 @@ __all__ = [
     "ComplianceFramework",
     "EvidenceCollection",
     "EvidenceItem",
+    "ComplianceEvaluationRecord",
+    "ControlAssessmentRecord",
 ]

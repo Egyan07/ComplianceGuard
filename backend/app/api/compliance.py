@@ -8,12 +8,18 @@ This module provides FastAPI endpoints for:
 """
 
 from fastapi import APIRouter, HTTPException, Depends, Query
+from sqlalchemy.orm import Session
 from typing import Dict, List, Optional, Any
 from pydantic import BaseModel, Field
 from datetime import datetime
+import uuid
 
 from app.core.soc2_controls import SOC2Framework, SOC2Control, ControlCategory, create_soc2_framework
 from app.services.compliance_service import ComplianceService, ComplianceEvaluation, ComplianceStatus, create_compliance_service
+from app.core.database import get_db
+from app.api.deps import get_current_user
+from app.models.user import User
+from app.models.evaluation import ComplianceEvaluationRecord, ControlAssessmentRecord
 
 
 router = APIRouter(prefix="/api/v1/compliance", tags=["compliance"])
@@ -280,18 +286,13 @@ async def search_controls(q: str = Query(..., min_length=2)):
 
 
 @router.post("/evaluate", response_model=ComplianceEvaluationResponse)
-async def evaluate_compliance(request: ComplianceEvaluationRequest):
-    """
-    Evaluate compliance for the specified scope and evidence.
-
-    Args:
-        request: Compliance evaluation request with evidence data
-
-    Returns:
-        Compliance evaluation results
-    """
+async def evaluate_compliance(
+    request: ComplianceEvaluationRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Evaluate compliance and persist results to database."""
     try:
-        # Convert request data to internal format
         evidence_data = {
             control_id: {
                 "evidence_provided": evidence.evidence_provided,
@@ -302,62 +303,102 @@ async def evaluate_compliance(request: ComplianceEvaluationRequest):
             for control_id, evidence in request.evidence_data.items()
         }
 
-        # Perform evaluation
         evaluation = compliance_service.evaluate_compliance(
             evidence_data=evidence_data,
             scope=request.scope,
             evaluated_by=request.evaluated_by
         )
 
-        return ComplianceEvaluationResponse(
+        compliant_count = sum(
+            1 for a in evaluation.control_assessments.values()
+            if a.status == ComplianceStatus.COMPLIANT
+        )
+
+        # Persist to DB
+        record = ComplianceEvaluationRecord(
+            evaluation_id=f"eval-{uuid.uuid4().hex[:12]}",
             framework_id=evaluation.framework_id,
+            user_id=current_user.id,
             overall_score=evaluation.overall_score,
             compliance_status=evaluation.compliance_status.value,
             compliance_level=evaluation.compliance_level.value,
-            evaluation_date=evaluation.evaluation_date,
             evaluated_by=evaluation.evaluated_by,
             scope=evaluation.scope,
             evidence_summary=evaluation.evidence_summary,
             risk_assessment=evaluation.risk_assessment,
             recommendations=evaluation.recommendations,
-            next_review_date=evaluation.next_review_date,
             control_count=len(evaluation.control_assessments),
-            compliant_controls=sum(1 for a in evaluation.control_assessments.values()
-                                if a.status == ComplianceStatus.COMPLIANT)
+            compliant_controls=compliant_count,
+        )
+        db.add(record)
+        db.flush()
+
+        for ctrl_id, assessment in evaluation.control_assessments.items():
+            db.add(ControlAssessmentRecord(
+                evaluation_id=record.id,
+                control_id=ctrl_id,
+                status=assessment.status.value,
+                score=assessment.score,
+                evidence_provided=assessment.evidence_provided,
+                gaps=assessment.gaps,
+                recommendations=assessment.recommendations,
+            ))
+
+        db.commit()
+        db.refresh(record)
+
+        return ComplianceEvaluationResponse(
+            framework_id=record.framework_id,
+            overall_score=record.overall_score,
+            compliance_status=record.compliance_status,
+            compliance_level=record.compliance_level,
+            evaluation_date=record.created_at,
+            evaluated_by=record.evaluated_by,
+            scope=record.scope or [],
+            evidence_summary=record.evidence_summary or {},
+            risk_assessment=record.risk_assessment or {},
+            recommendations=record.recommendations or [],
+            next_review_date=None,
+            control_count=record.control_count,
+            compliant_controls=record.compliant_controls,
         )
 
     except Exception as e:
+        db.rollback()
         raise HTTPException(status_code=500, detail=f"Evaluation failed: {str(e)}")
 
 
 @router.get("/evaluations/history", response_model=List[ComplianceEvaluationResponse])
-async def get_evaluation_history():
-    """
-    Get history of all compliance evaluations.
-
-    Returns:
-        List of all previous compliance evaluations
-    """
-    evaluations = compliance_service.get_evaluation_history()
+async def get_evaluation_history(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Get persisted evaluation history for the current user."""
+    records = (
+        db.query(ComplianceEvaluationRecord)
+        .filter(ComplianceEvaluationRecord.user_id == current_user.id)
+        .order_by(ComplianceEvaluationRecord.created_at.desc())
+        .limit(50)
+        .all()
+    )
 
     return [
         ComplianceEvaluationResponse(
-            framework_id=evaluation.framework_id,
-            overall_score=evaluation.overall_score,
-            compliance_status=evaluation.compliance_status.value,
-            compliance_level=evaluation.compliance_level.value,
-            evaluation_date=evaluation.evaluation_date,
-            evaluated_by=evaluation.evaluated_by,
-            scope=evaluation.scope,
-            evidence_summary=evaluation.evidence_summary,
-            risk_assessment=evaluation.risk_assessment,
-            recommendations=evaluation.recommendations,
-            next_review_date=evaluation.next_review_date,
-            control_count=len(evaluation.control_assessments),
-            compliant_controls=sum(1 for a in evaluation.control_assessments.values()
-                                if a.status == ComplianceStatus.COMPLIANT)
+            framework_id=r.framework_id,
+            overall_score=r.overall_score,
+            compliance_status=r.compliance_status,
+            compliance_level=r.compliance_level,
+            evaluation_date=r.created_at,
+            evaluated_by=r.evaluated_by,
+            scope=r.scope or [],
+            evidence_summary=r.evidence_summary or {},
+            risk_assessment=r.risk_assessment or {},
+            recommendations=r.recommendations or [],
+            next_review_date=None,
+            control_count=r.control_count,
+            compliant_controls=r.compliant_controls,
         )
-        for evaluation in evaluations
+        for r in records
     ]
 
 
