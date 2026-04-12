@@ -23,12 +23,14 @@ import {
 import {
   Dashboard as DashboardIcon,
   Settings as SettingsIcon,
-  Shield
+  Shield,
+  History
 } from '@mui/icons-material';
 import Dashboard from './components/Dashboard';
 import Settings from './components/Settings';
+import EvaluationHistory from './components/EvaluationHistory';
 
-type Page = 'dashboard' | 'settings';
+type Page = 'dashboard' | 'history' | 'settings';
 
 const theme = createTheme({
   palette: {
@@ -123,11 +125,23 @@ function App() {
                 color="inherit"
                 onClick={() => setCurrentPage('dashboard')}
                 sx={{
-                  backgroundColor: currentPage === 'dashboard' ? 'rgba(255,255,255,0.15)' : 'transparent',
+                  backgroundColor: currentPage === 'dashboard' ? 'rgba(0,229,255,0.15)' : 'transparent',
                   mr: 0.5
                 }}
               >
                 <DashboardIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Evaluation History">
+              <IconButton
+                color="inherit"
+                onClick={() => setCurrentPage('history')}
+                sx={{
+                  backgroundColor: currentPage === 'history' ? 'rgba(0,229,255,0.15)' : 'transparent',
+                  mr: 0.5
+                }}
+              >
+                <History />
               </IconButton>
             </Tooltip>
             <Tooltip title="Settings">
@@ -135,7 +149,7 @@ function App() {
                 color="inherit"
                 onClick={() => setCurrentPage('settings')}
                 sx={{
-                  backgroundColor: currentPage === 'settings' ? 'rgba(255,255,255,0.15)' : 'transparent'
+                  backgroundColor: currentPage === 'settings' ? 'rgba(0,229,255,0.15)' : 'transparent'
                 }}
               >
                 <SettingsIcon />
@@ -147,6 +161,7 @@ function App() {
         {/* Main Content */}
         <Box component="main" sx={{ flexGrow: 1, backgroundColor: 'background.default' }}>
           {currentPage === 'dashboard' && <Dashboard />}
+          {currentPage === 'history' && <EvaluationHistory />}
           {currentPage === 'settings' && <Settings />}
         </Box>
 

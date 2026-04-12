@@ -165,6 +165,72 @@ class LocalComplianceEngine {
               weight: 0.35
             }
           ]
+        },
+        {
+          category: 'Confidentiality (C)',
+          controls: [
+            {
+              id: 'C1.1',
+              title: 'Confidentiality - Data Classification',
+              description: 'The entity identifies and classifies confidential information',
+              evidenceTypes: ['data_classification_policy', 'data_inventory', 'handling_procedures'],
+              weight: 0.25
+            },
+            {
+              id: 'C1.2',
+              title: 'Confidentiality - Data Protection',
+              description: 'The entity protects confidential information during collection, storage, and use',
+              evidenceTypes: ['encryption_policies', 'access_controls', 'dlp_configuration'],
+              weight: 0.30
+            },
+            {
+              id: 'C1.3',
+              title: 'Confidentiality - Data Disposal',
+              description: 'The entity disposes of confidential information to meet objectives',
+              evidenceTypes: ['data_retention_policy', 'disposal_procedures', 'disposal_records'],
+              weight: 0.20
+            },
+            {
+              id: 'C1.4',
+              title: 'Confidentiality - Disclosure Controls',
+              description: 'The entity controls disclosure of confidential information to authorized parties',
+              evidenceTypes: ['nda_agreements', 'disclosure_policies', 'third_party_agreements'],
+              weight: 0.25
+            }
+          ]
+        },
+        {
+          category: 'Processing Integrity (PI)',
+          controls: [
+            {
+              id: 'PI1.1',
+              title: 'Processing Integrity - Processing Accuracy',
+              description: 'The entity implements processing activities to result in products that meet specifications',
+              evidenceTypes: ['processing_procedures', 'quality_controls', 'validation_rules'],
+              weight: 0.25
+            },
+            {
+              id: 'PI1.2',
+              title: 'Processing Integrity - Input Controls',
+              description: 'The entity implements input controls to ensure data integrity',
+              evidenceTypes: ['input_validation', 'data_quality_checks', 'error_handling'],
+              weight: 0.25
+            },
+            {
+              id: 'PI1.3',
+              title: 'Processing Integrity - Error Detection',
+              description: 'The entity detects and corrects processing errors in a timely manner',
+              evidenceTypes: ['error_logs', 'monitoring_alerts', 'correction_procedures'],
+              weight: 0.25
+            },
+            {
+              id: 'PI1.4',
+              title: 'Processing Integrity - Output Review',
+              description: 'The entity implements output review procedures',
+              evidenceTypes: ['output_validation', 'reconciliation_reports', 'review_procedures'],
+              weight: 0.25
+            }
+          ]
         }
       ]
     };

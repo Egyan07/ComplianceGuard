@@ -57,6 +57,16 @@ const SOC2_CONTROLS = [
   { id: 'A1.2', title: 'A1.2 - Environmental Protection', types: ['environmental_logs', 'facility_docs', 'disaster_recovery'] },
   { id: 'A1.3', title: 'A1.3 - Capacity Management', types: ['capacity_reports', 'performance_logs', 'resource_monitoring'] },
   { id: 'A1.4', title: 'A1.4 - Backup and Recovery', types: ['backup_logs', 'recovery_plans', 'test_results'] },
+  // Confidentiality
+  { id: 'C1.1', title: 'C1.1 - Data Classification', types: ['data_classification_policy', 'data_inventory', 'handling_procedures'] },
+  { id: 'C1.2', title: 'C1.2 - Data Protection', types: ['encryption_policies', 'access_controls', 'dlp_configuration'] },
+  { id: 'C1.3', title: 'C1.3 - Data Disposal', types: ['data_retention_policy', 'disposal_procedures', 'disposal_records'] },
+  { id: 'C1.4', title: 'C1.4 - Disclosure Controls', types: ['nda_agreements', 'disclosure_policies', 'third_party_agreements'] },
+  // Processing Integrity
+  { id: 'PI1.1', title: 'PI1.1 - Processing Accuracy', types: ['processing_procedures', 'quality_controls', 'validation_rules'] },
+  { id: 'PI1.2', title: 'PI1.2 - Input Controls', types: ['input_validation', 'data_quality_checks', 'error_handling'] },
+  { id: 'PI1.3', title: 'PI1.3 - Error Detection', types: ['error_logs', 'monitoring_alerts', 'correction_procedures'] },
+  { id: 'PI1.4', title: 'PI1.4 - Output Review', types: ['output_validation', 'reconciliation_reports', 'review_procedures'] },
 ];
 
 interface EvidenceUploadProps {

@@ -6,7 +6,7 @@
   <img src="https://img.shields.io/badge/version-0.1.0--beta-blue" alt="Version">
   <img src="https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey?logo=windows&logoColor=white" alt="Platform">
   <img src="https://img.shields.io/badge/SOC%202-Type%20II-orange?logo=shield&logoColor=white" alt="SOC 2">
-  <img src="https://img.shields.io/badge/controls-21%20implemented-brightgreen" alt="Controls">
+  <img src="https://img.shields.io/badge/controls-29%20implemented-brightgreen" alt="Controls">
   <img src="https://img.shields.io/github/license/Egyan07/complianceguard" alt="License">
   <img src="https://img.shields.io/badge/electron-28.0.0-191970?logo=electron&logoColor=white" alt="Electron">
   <img src="https://img.shields.io/badge/react-18-61DAFB?logo=react&logoColor=white" alt="React">
@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <strong>21 SOC 2 controls</strong> · <strong>Local evidence collection</strong> · <strong>Weighted compliance scoring</strong> · <strong>Zero cloud dependencies</strong>
+  <strong>29 SOC 2 controls</strong> · <strong>Local evidence collection</strong> · <strong>Weighted compliance scoring</strong> · <strong>Zero cloud dependencies</strong>
 </p>
 
 <p align="center">
@@ -100,7 +100,7 @@ Windows System ──> Collect Evidence ──> Store Locally ──> Evaluate �
 - **File Permissions** — Critical system path permission auditing
 
 ### Compliance Engine
-- **21 SOC 2 controls** across Common Criteria (CC1-CC9) and Availability (A1)
+- **29 SOC 2 controls** across Common Criteria (CC1-CC9), Availability (A1), Confidentiality (C1), and Processing Integrity (PI1)
 - **Weighted scoring** — Each control has a configurable weight for accurate scoring
 - **Gap analysis** — Identifies exactly which evidence types are missing per control
 - **Prioritized recommendations** — High/medium priority remediation guidance
@@ -154,6 +154,24 @@ Windows System ──> Collect Evidence ──> Store Locally ──> Evaluate �
 | A1.2 | Environmental Protection | Environmental logs, disaster recovery | 20% |
 | A1.3 | Capacity Management | Capacity reports, performance logs | 20% |
 | A1.4 | Backup and Recovery | Backup logs, recovery plans, test results | 35% |
+
+### Confidentiality (C) — 4 Controls
+
+| ID | Control | Evidence Types | Weight |
+|----|---------|---------------|--------|
+| C1.1 | Data Classification | Classification policy, data inventory, handling procedures | 25% |
+| C1.2 | Data Protection | Encryption policies, access controls, DLP config | 30% |
+| C1.3 | Data Disposal | Retention policy, disposal procedures, disposal records | 20% |
+| C1.4 | Disclosure Controls | NDA agreements, disclosure policies, third-party agreements | 25% |
+
+### Processing Integrity (PI) — 4 Controls
+
+| ID | Control | Evidence Types | Weight |
+|----|---------|---------------|--------|
+| PI1.1 | Processing Accuracy | Processing procedures, quality controls, validation rules | 25% |
+| PI1.2 | Input Controls | Input validation, data quality checks, error handling | 25% |
+| PI1.3 | Error Detection | Error logs, monitoring alerts, correction procedures | 25% |
+| PI1.4 | Output Review | Output validation, reconciliation reports, review procedures | 25% |
 
 ---
 

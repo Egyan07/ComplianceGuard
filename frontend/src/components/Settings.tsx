@@ -214,7 +214,7 @@ const Settings: React.FC = () => {
             <ListItem>
               <ListItemText
                 primary="SOC 2 Type II"
-                secondary="AICPA Trust Services Criteria — 21 controls across Common Criteria and Availability"
+                secondary="AICPA Trust Services Criteria — 29 controls across CC, Availability, Confidentiality, and Processing Integrity"
               />
               <Chip label="Active" size="small" color="success" />
             </ListItem>
