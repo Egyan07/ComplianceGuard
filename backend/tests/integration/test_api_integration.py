@@ -98,6 +98,46 @@ class TestAuthFlow:
         assert res.status_code == 400
         assert "Password must contain" in res.json()["detail"]
 
+    def test_email_verification_flow(self, client):
+        # Register
+        res = client.post("/api/auth/register", json={
+            "email": "verify@test.com",
+            "password": "Verify@1pass",
+            "first_name": "Verify",
+            "last_name": "User",
+        })
+        assert res.status_code == 200
+        token = res.json()["access_token"]
+
+        # Check not verified yet
+        res = client.get("/api/auth/verification-status", headers={
+            "Authorization": f"Bearer {token}",
+        })
+        assert res.status_code == 200
+        assert res.json()["is_verified"] is False
+
+        # Get verification token from test DB
+        from app.models.user import User
+        db = next(override_get_db())
+        user = db.query(User).filter(User.email == "verify@test.com").first()
+        v_token = user.verification_token
+        db.close()
+
+        # Verify
+        res = client.post("/api/auth/verify-email", json={"token": v_token})
+        assert res.status_code == 200
+        assert res.json()["message"] == "Email verified successfully"
+
+        # Check verified now
+        res = client.get("/api/auth/verification-status", headers={
+            "Authorization": f"Bearer {token}",
+        })
+        assert res.json()["is_verified"] is True
+
+    def test_invalid_verification_token(self, client):
+        res = client.post("/api/auth/verify-email", json={"token": "bogus-token"})
+        assert res.status_code == 400
+
     def test_duplicate_registration(self, client, auth_token):
         res = client.post("/api/auth/register", json={
             "email": "integration@test.com",

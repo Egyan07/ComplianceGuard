@@ -37,6 +37,8 @@ class User(Base):
     # Status fields
     is_active = Column(Boolean, default=True, nullable=False)
     is_superuser = Column(Boolean, default=False, nullable=False)
+    is_verified = Column(Boolean, default=False, nullable=False)
+    verification_token = Column(String, nullable=True)
 
     # Company relationship
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=True)

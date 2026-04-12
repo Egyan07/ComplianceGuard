@@ -6,6 +6,7 @@ This module provides JWT-based authentication endpoints including login and regi
 
 from datetime import timedelta
 from typing import Annotated
+import secrets
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
@@ -25,6 +26,7 @@ from app.core.auth import (
 from app.core.config import settings
 from app.models.user import User
 from app.core.database import get_db
+from app.api.deps import get_current_user
 from sqlalchemy.orm import Session
 
 
@@ -159,15 +161,18 @@ async def register(
             detail="User with this email already exists"
         )
 
-    # Create new user
+    # Create new user with verification token
     hashed_password = get_password_hash(user_data.password)
+    verification_token = secrets.token_urlsafe(32)
     new_user = User(
         email=user_data.email,
         hashed_password=hashed_password,
         first_name=user_data.first_name,
         last_name=user_data.last_name,
         is_active=True,
-        is_superuser=False
+        is_superuser=False,
+        is_verified=False,
+        verification_token=verification_token,
     )
 
     db.add(new_user)
@@ -180,6 +185,7 @@ async def register(
         data={"sub": new_user.email}, expires_delta=access_token_expires
     )
 
+    # In production, send verification_token via email instead of returning it
     return LoginResponse(
         access_token=access_token,
         token_type="bearer",
@@ -192,3 +198,36 @@ async def register(
             is_superuser=new_user.is_superuser
         )
     )
+
+
+class VerifyEmailRequest(BaseModel):
+    """Schema for email verification."""
+    token: str
+
+
+@router.post("/verify-email")
+async def verify_email(
+    request: VerifyEmailRequest,
+    db: Session = Depends(get_db),
+):
+    """Verify a user's email address using the verification token."""
+    user = db.query(User).filter(User.verification_token == request.token).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired verification token",
+        )
+
+    user.is_verified = True
+    user.verification_token = None
+    db.commit()
+
+    return {"message": "Email verified successfully"}
+
+
+@router.get("/verification-status")
+async def get_verification_status(
+    current_user: User = Depends(get_current_user),
+):
+    """Check if the current user's email is verified."""
+    return {"is_verified": current_user.is_verified}
