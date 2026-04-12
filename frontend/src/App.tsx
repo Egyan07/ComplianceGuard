@@ -18,18 +18,22 @@ import {
   Paper,
   IconButton,
   Tooltip,
-  Chip
+  Chip,
+  CircularProgress
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
   Settings as SettingsIcon,
-  History
+  History,
+  Logout as LogoutIcon
 } from '@mui/icons-material';
 import Dashboard from './components/Dashboard';
 import Settings from './components/Settings';
 import EvaluationHistory from './components/EvaluationHistory';
 import ErrorBoundary from './components/ErrorBoundary';
+import LoginPage from './components/LoginPage';
 import { LicenseProvider, useLicense } from './contexts/LicenseContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 type Page = 'dashboard' | 'history' | 'settings';
 
@@ -93,6 +97,21 @@ const theme = createTheme({
 function AppContent() {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const { tier } = useLicense();
+  const { user, logout, loading: authLoading } = useAuth();
+
+  if (authLoading) {
+    return (
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  // In Electron mode, skip login. In web mode, require auth.
+  const isElectron = !!(window as any).electronAPI;
+  if (!isElectron && !user) {
+    return <LoginPage />;
+  }
 
   return (
     <Box sx={{ flexGrow: 1, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -189,6 +208,13 @@ function AppContent() {
                 <SettingsIcon />
               </IconButton>
             </Tooltip>
+            {user && (
+              <Tooltip title={`Sign out (${user.email})`}>
+                <IconButton onClick={logout} sx={{ color: '#6B7280', ml: 0.5 }}>
+                  <LogoutIcon />
+                </IconButton>
+              </Tooltip>
+            )}
           </Toolbar>
         </AppBar>
 
@@ -231,9 +257,11 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <LicenseProvider>
-        <AppContent />
-      </LicenseProvider>
+      <AuthProvider>
+        <LicenseProvider>
+          <AppContent />
+        </LicenseProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }
