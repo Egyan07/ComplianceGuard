@@ -345,25 +345,16 @@ CI runs backend tests, frontend lint + type check + tests, and build on every pu
 
 ## Roadmap
 
-- [x] Evidence collection from Windows OS
-- [x] 29 SOC 2 controls with weighted scoring
-- [x] Evidence upload UI (manual documents)
-- [x] PDF compliance reports
-- [x] Evaluation history with trend tracking
-- [x] Free / Pro tier licensing with Ed25519 keys
-- [x] CI/CD pipeline (GitHub Actions — 66 tests)
-- [x] Docker Compose deployment with nginx reverse proxy
-- [x] FastAPI backend with PostgreSQL
-- [x] JWT authentication with login/register UI
-- [x] Password complexity enforcement + rate limiting
-- [x] Alembic database migrations (auto-run on startup)
-- [x] Compliance evaluations persisted to database
-- [x] API integration tests (auth, evidence, compliance)
-- [ ] Scheduled automatic collection
-- [ ] ISO 27001 framework
-- [ ] HIPAA framework
-- [ ] Cloud sync + multi-machine dashboard
-- [ ] macOS and Linux support
+| Done | Up Next |
+|------|---------|
+| Evidence collection (8 categories) | Scheduled automatic collection |
+| 29 SOC 2 controls with weighted scoring | ISO 27001 framework |
+| PDF reports + evaluation history | HIPAA framework |
+| Free / Pro licensing (Ed25519) | Cloud sync + multi-machine dashboard |
+| JWT auth + login UI | macOS and Linux support |
+| FastAPI + PostgreSQL + Docker + Nginx | |
+| CI/CD with 66 tests | |
+| Alembic migrations + rate limiting | |
 
 ## License
 
@@ -372,6 +363,8 @@ MIT — see [LICENSE](LICENSE).
 ---
 
 <p align="center">
+  <strong>ComplianceGuard</strong> — Collect. Evaluate. Comply.
+  <br><br>
   Built by <a href="https://github.com/Egyan07">Egyan07</a>
   <br>
   <a href="https://github.com/Egyan07/complianceguard/issues">Report a bug</a> · <a href="https://github.com/Egyan07/complianceguard/issues/new">Request a feature</a>
