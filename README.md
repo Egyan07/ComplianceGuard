@@ -4,11 +4,11 @@
 
 <p align="center">
   <a href="#quick-start"><img src="https://img.shields.io/badge/version-2.3.0-2563EB" alt="Version"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/Egyan07/complianceguard" alt="License"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/Egyan07/ComplianceGuard" alt="License"></a>
   <a href="#soc-2-controls"><img src="https://img.shields.io/badge/SOC%202-29%20controls-10B981" alt="Controls"></a>
   <img src="https://img.shields.io/badge/tests-76%20passing-10B981?logo=vitest&logoColor=white" alt="Tests">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
-  <a href="https://github.com/Egyan07/complianceguard/actions"><img src="https://img.shields.io/github/actions/workflow/status/Egyan07/complianceguard/ci.yml?label=CI&logo=githubactions&logoColor=white" alt="CI"></a>
+  <a href="https://github.com/Egyan07/ComplianceGuard/actions"><img src="https://img.shields.io/github/actions/workflow/status/Egyan07/ComplianceGuard/ci.yml?label=CI&logo=githubactions&logoColor=white" alt="CI"></a>
 </p>
 
 ---
@@ -35,12 +35,26 @@ ComplianceGuard lives on the endpoint too. It collects evidence directly from Wi
                    └─────────────┘
 ```
 
+## Screenshots
+
+### Dashboard
+
+![ComplianceGuard Dashboard](assets/screenshots/Dashboard.png)
+
+The dashboard shows your real-time compliance score, per-category breakdowns, and one-click access to collect evidence, run an evaluation, upload manual evidence, and export a PDF report.
+
+### Evidence List
+
+![Evidence List](assets/screenshots/EvidenceCollection.png)
+
+All collected evidence items in one place — searchable and filterable by status and source. Each item shows its compliance status, collection date, and can be expanded for full details.
+
 ## Quick Start
 
 ### One-Click (Windows)
 
 ```
-git clone https://github.com/Egyan07/complianceguard.git
+git clone https://github.com/Egyan07/ComplianceGuard.git
 ```
 
 1. Double-click **`install.bat`** — installs all dependencies, sets up the database, and creates `start.bat`
@@ -54,8 +68,8 @@ git clone https://github.com/Egyan07/complianceguard.git
 <summary>Desktop (Electron)</summary>
 
 ```bash
-git clone https://github.com/Egyan07/complianceguard.git
-cd complianceguard
+git clone https://github.com/Egyan07/ComplianceGuard.git
+cd ComplianceGuard
 npm install && cd frontend && npm install && cd ..
 npm run dev
 ```
@@ -66,8 +80,8 @@ npm run dev
 <summary>Web (Docker)</summary>
 
 ```bash
-git clone https://github.com/Egyan07/complianceguard.git
-cd complianceguard
+git clone https://github.com/Egyan07/ComplianceGuard.git
+cd ComplianceGuard
 cp .env.example .env          # configure your settings
 docker-compose up -d
 ```
@@ -103,7 +117,7 @@ They scan the cloud. We scan the machine. Use both and you've covered the full s
 ComplianceGuard pulls 8 categories of evidence from Windows:
 
 | Category | What's Collected | Maps To |
-|----------|-----------------|---------|
+|----------|-----------------|---------| 
 | Event Logs | Security, System, Application logs | CC7.1, CC4.1 |
 | Security Settings | Password policies, audit policies, registry options | CC6.1, CC6.2, CC6.3 |
 | Services | Defender, Windows Update, Firewall, Event Log status | A1.1, CC7.2 |
@@ -231,7 +245,7 @@ ComplianceGuard runs in two modes: **Desktop** (Electron + SQLite) for offline u
 **Key files:**
 
 ```
-complianceguard/
+ComplianceGuard/
 ├── backend/
 │   ├── app/
 │   │   ├── main.py                     # FastAPI app, CORS, routes
@@ -262,17 +276,20 @@ complianceguard/
 │   ├── src/
 │   │   ├── App.tsx                     # Theme, nav, auth gate, error boundary
 │   │   ├── components/                 # Dashboard, Score, Evidence, History, Settings, Login
-│   │   ├── contexts/AuthContext.tsx     # JWT auth state, login/register/logout
-│   │   ├── contexts/LicenseContext.tsx  # React context for tier state + feature checks
+│   │   ├── contexts/AuthContext.tsx    # JWT auth state, login/register/logout
+│   │   ├── contexts/LicenseContext.tsx # React context for tier state + feature checks
 │   │   ├── services/api.ts             # Unified API (IPC or HTTP)
 │   │   └── test/                       # Vitest test suite (37 tests)
 │   ├── e2e/                            # Playwright e2e tests (5 tests)
 │   ├── .eslintrc.cjs
 │   ├── .prettierrc
 │   └── Dockerfile
+├── assets/
+│   ├── banner.svg
+│   └── screenshots/                    # Dashboard.png, EvidenceCollection.png
 ├── resources/icons/                    # App icons (ico, png, svg, tray)
 ├── install.bat                         # One-click setup (installs deps, creates start.bat)
-├── .github/workflows/ci.yml           # Backend Tests → Lint & Test → Build
+├── .github/workflows/ci.yml            # Backend Tests → Lint & Test → Build
 ├── docker-compose.yml                  # PostgreSQL + Backend + Frontend + Nginx
 ├── nginx.conf                          # Reverse proxy, rate limiting, security headers
 ├── .env.example                        # Environment config template
@@ -288,14 +305,14 @@ Free gets you hooked. Pro makes you audit-ready.
 | | **Free** | **Pro** | **Enterprise** |
 |---|---|---|---|
 | **Price** | $0 forever | $49–99/mo | $299/mo + $15/machine |
-| Evidence collection (all 8 categories) | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| Evidence collection (all 8 categories) | ✅ | ✅ | ✅ |
 | SOC 2 controls | 12 core controls | All 29 controls | All 29 controls |
-| Overall compliance score | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| Per-control scoring + gap details | — | :white_check_mark: | :white_check_mark: |
-| Remediation recommendations | — | :white_check_mark: | :white_check_mark: |
-| Upload manual evidence (policies, docs) | — | :white_check_mark: | :white_check_mark: |
-| Evaluation history + trends | — | :white_check_mark: | :white_check_mark: |
-| PDF audit-ready reports | — | :white_check_mark: | :white_check_mark: |
+| Overall compliance score | ✅ | ✅ | ✅ |
+| Per-control scoring + gap details | — | ✅ | ✅ |
+| Remediation recommendations | — | ✅ | ✅ |
+| Upload manual evidence (policies, docs) | — | ✅ | ✅ |
+| Evaluation history + trends | — | ✅ | ✅ |
+| PDF audit-ready reports | — | ✅ | ✅ |
 | Machines | 1 | Up to 10 | Unlimited |
 | ISO 27001, HIPAA, PCI DSS | — | *Coming soon* | *Coming soon* |
 | Cloud dashboard (multi-machine) | — | *Coming soon* | *Coming soon* |
@@ -391,5 +408,5 @@ MIT — see [LICENSE](LICENSE).
   <br><br>
   Built by <a href="https://github.com/Egyan07">Egyan07</a>
   <br>
-  <a href="https://github.com/Egyan07/complianceguard/issues">Report a bug</a> · <a href="https://github.com/Egyan07/complianceguard/issues/new">Request a feature</a>
+  <a href="https://github.com/Egyan07/ComplianceGuard/issues">Report a bug</a> · <a href="https://github.com/Egyan07/ComplianceGuard/issues/new">Request a feature</a>
 </p>
