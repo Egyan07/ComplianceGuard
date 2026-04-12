@@ -37,7 +37,21 @@ ComplianceGuard lives on the endpoint too. It collects evidence directly from Wi
 
 ## Quick Start
 
-### Desktop (Electron)
+### One-Click (Windows)
+
+```
+git clone https://github.com/Egyan07/complianceguard.git
+```
+
+1. Double-click **`install.bat`** — installs all dependencies and sets up the database
+2. Double-click **`start.bat`** — choose Desktop or Web mode and you're running
+
+> **Prerequisites:** Windows 10/11, [Node.js 18+](https://nodejs.org/), [Python 3.10+](https://www.python.org/downloads/)
+
+### Manual Setup
+
+<details>
+<summary>Desktop (Electron)</summary>
 
 ```bash
 git clone https://github.com/Egyan07/complianceguard.git
@@ -46,9 +60,10 @@ npm install && cd frontend && npm install && cd ..
 npm run dev
 ```
 
-> **Prerequisites:** Windows 10/11, [Node.js 18+](https://nodejs.org/), npm. The app opens in Electron. Click **Collect Evidence** → **Evaluate Compliance** → see your score.
+</details>
 
-### Web (Docker)
+<details>
+<summary>Web (Docker)</summary>
 
 ```bash
 git clone https://github.com/Egyan07/complianceguard.git
@@ -57,13 +72,18 @@ cp .env.example .env          # configure your settings
 docker-compose up -d
 ```
 
-> **Prerequisites:** [Docker](https://docs.docker.com/get-docker/) and Docker Compose. App at `http://localhost` (nginx proxy), API docs at `http://localhost:8000/docs`. Create an account on the login page to get started.
+App at `http://localhost` (nginx proxy), API docs at `http://localhost:8000/docs`. Requires [Docker](https://docs.docker.com/get-docker/).
 
-### Build Installer
+</details>
+
+<details>
+<summary>Build Windows Installer</summary>
 
 ```bash
-npm run package    # Windows installer → dist/
+npm run package    # outputs to dist/
 ```
+
+</details>
 
 ## What Makes This Different
 
@@ -250,6 +270,8 @@ complianceguard/
 │   ├── .prettierrc
 │   └── Dockerfile
 ├── resources/icons/                    # App icons (ico, png, svg, tray)
+├── install.bat                         # One-click Windows setup (checks prereqs, installs deps)
+├── start.bat                           # One-click launcher (Desktop / Web mode menu)
 ├── .github/workflows/ci.yml           # Backend Tests → Lint & Test → Build
 ├── docker-compose.yml                  # PostgreSQL + Backend + Frontend + Nginx
 ├── nginx.conf                          # Reverse proxy, rate limiting, security headers
