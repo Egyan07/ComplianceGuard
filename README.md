@@ -46,7 +46,7 @@ npm install && cd frontend && npm install && cd ..
 npm run dev
 ```
 
-> Requires Windows 10/11, Node.js 18+. The app opens in Electron. Click **Collect Evidence** → **Evaluate Compliance** → see your score.
+> **Prerequisites:** Windows 10/11, [Node.js 18+](https://nodejs.org/), npm. The app opens in Electron. Click **Collect Evidence** → **Evaluate Compliance** → see your score.
 
 ### Web (Docker)
 
@@ -57,7 +57,7 @@ cp .env.example .env          # configure your settings
 docker-compose up -d
 ```
 
-> App at `http://localhost` (nginx proxy), API at `http://localhost:8000`. Uses PostgreSQL + FastAPI. Create an account on the login page to get started.
+> **Prerequisites:** [Docker](https://docs.docker.com/get-docker/) and Docker Compose. App at `http://localhost` (nginx proxy), API docs at `http://localhost:8000/docs`. Create an account on the login page to get started.
 
 ### Build Installer
 
@@ -275,12 +275,12 @@ Free gets you hooked. Pro makes you audit-ready.
 | Evaluation history + trends | — | :white_check_mark: | :white_check_mark: |
 | PDF audit-ready reports | — | :white_check_mark: | :white_check_mark: |
 | Machines | 1 | Up to 10 | Unlimited |
-| ISO 27001, HIPAA, PCI DSS | — | :white_check_mark: | :white_check_mark: |
-| Cloud dashboard (multi-machine) | — | :white_check_mark: | :white_check_mark: |
+| ISO 27001, HIPAA, PCI DSS | — | *Coming soon* | *Coming soon* |
+| Cloud dashboard (multi-machine) | — | *Coming soon* | *Coming soon* |
 | Users | 1 | Up to 10 | Unlimited |
-| SSO / SAML | — | — | :white_check_mark: |
-| Custom compliance frameworks | — | — | :white_check_mark: |
-| Central policy deployment | — | — | :white_check_mark: |
+| SSO / SAML | — | — | *Coming soon* |
+| Custom compliance frameworks | — | — | *Coming soon* |
+| Central policy deployment | — | — | *Coming soon* |
 | Support | Community | Email | Dedicated |
 
 > **Free tier** collects evidence and shows your overall score — enough to know where you stand. **Pro** unlocks the full 29-control breakdown, tells you exactly what to fix, and generates the PDF reports your auditor will ask for. That's the difference between knowing your score and passing the audit.
