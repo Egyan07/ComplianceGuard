@@ -399,7 +399,7 @@ CI runs backend tests (unit + integration), frontend lint + type check + tests, 
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+Business Source License — see [LICENSE](LICENSE).
 
 ---
 
