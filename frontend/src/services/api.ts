@@ -77,13 +77,14 @@ export interface ComplianceEvaluation {
   evaluation_date: string;
   overall_score: number;
   status: string;
+  tier?: string;
   total_controls: number;
   compliant_controls: number;
   non_compliant_controls: number;
   partial_controls: number;
   not_assessed_controls: number;
-  category_scores: Record<string, any>;
-  control_results: Record<string, any>;
+  category_scores: Record<string, any> | null;
+  control_results: Record<string, any> | null;
   recommendations: Array<Record<string, any>>;
 }
 

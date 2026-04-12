@@ -32,6 +32,8 @@ import {
   HelpOutlined
 } from '@mui/icons-material';
 
+import { useLicense } from '../contexts/LicenseContext';
+
 const isElectron = !!(window as any).electronAPI;
 
 interface EvaluationRecord {
@@ -53,7 +55,12 @@ interface EvaluationRecord {
   };
 }
 
-const EvaluationHistory: React.FC = () => {
+interface EvaluationHistoryProps {
+  onNavigate?: (page: string) => void;
+}
+
+const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => {
+  const { isFeatureAllowed } = useLicense();
   const [evaluations, setEvaluations] = useState<EvaluationRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -188,6 +195,28 @@ const EvaluationHistory: React.FC = () => {
       </Paper>
     );
   };
+
+  if (!isFeatureAllowed('evaluation_history')) {
+    return (
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', mb: 3 }}>
+          Evaluation History
+        </Typography>
+        <Paper sx={{ p: 6, textAlign: 'center' }}>
+          <Assessment sx={{ fontSize: 60, color: 'text.disabled', mb: 2 }} />
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            Track your compliance over time
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Evaluation history and score trends are available with a Pro license.
+          </Typography>
+          <Button variant="contained" onClick={() => onNavigate?.('settings')}>
+            Upgrade to Pro
+          </Button>
+        </Paper>
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>

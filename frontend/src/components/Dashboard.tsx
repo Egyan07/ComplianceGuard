@@ -26,6 +26,8 @@ import {
 import ComplianceScore from './ComplianceScore';
 import EvidenceList from './EvidenceList';
 import EvidenceUpload from './EvidenceUpload';
+import { useLicense } from '../contexts/LicenseContext';
+import UpgradePrompt from './UpgradePrompt';
 import {
   getEvidenceSummary,
   getEvidenceItems,
@@ -39,6 +41,10 @@ import {
 
 const isElectron = !!(window as any).electronAPI;
 
+interface DashboardProps {
+  onNavigate?: (page: string) => void;
+}
+
 interface DashboardState {
   summary: EvidenceSummary | null;
   evidenceItems: EvidenceItem[];
@@ -48,7 +54,7 @@ interface DashboardState {
   successMessage: string | null;
 }
 
-const Dashboard: React.FC = () => {
+const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const [state, setState] = useState<DashboardState>({
     summary: null,
     evidenceItems: [],
@@ -62,6 +68,10 @@ const Dashboard: React.FC = () => {
   const [evaluating, setEvaluating] = useState(false);
   const [exportingPDF, setExportingPDF] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [upgradePrompt, setUpgradePrompt] = useState<{ open: boolean; feature: string; description: string }>({
+    open: false, feature: '', description: ''
+  });
+  const { isFeatureAllowed } = useLicense();
 
   const fetchDashboardData = async () => {
     setState(prev => ({ ...prev, loading: true, error: null }));
@@ -249,7 +259,13 @@ const Dashboard: React.FC = () => {
                 <Button
                   variant="outlined"
                   startIcon={<Upload />}
-                  onClick={() => setUploadDialogOpen(true)}
+                  onClick={() => {
+                    if (isFeatureAllowed('evidence_upload')) {
+                      setUploadDialogOpen(true);
+                    } else {
+                      setUpgradePrompt({ open: true, feature: 'Upload Evidence', description: 'Manually upload policy documents, screenshots, and compliance evidence mapped to SOC 2 controls.' });
+                    }
+                  }}
                 >
                   Upload Evidence
                 </Button>
@@ -265,8 +281,14 @@ const Dashboard: React.FC = () => {
                 <Button
                   variant="outlined"
                   startIcon={exportingPDF ? <CircularProgress size={16} /> : <PictureAsPdf />}
-                  onClick={handleExportPDF}
-                  disabled={exportingPDF || !state.evaluation}
+                  onClick={() => {
+                    if (isFeatureAllowed('pdf_reports')) {
+                      handleExportPDF();
+                    } else {
+                      setUpgradePrompt({ open: true, feature: 'PDF Reports', description: 'Generate audit-ready PDF compliance reports with scores, gaps, and recommendations.' });
+                    }
+                  }}
+                  disabled={exportingPDF || (!state.evaluation && isFeatureAllowed('pdf_reports'))}
                   title={!state.evaluation ? 'Run an evaluation first' : 'Export PDF report'}
                 >
                   {exportingPDF ? 'Exporting...' : 'Export PDF'}
@@ -408,6 +430,15 @@ const Dashboard: React.FC = () => {
           }}
         />
       )}
+
+      {/* Upgrade Prompt */}
+      <UpgradePrompt
+        feature={upgradePrompt.feature}
+        description={upgradePrompt.description}
+        open={upgradePrompt.open}
+        onClose={() => setUpgradePrompt(prev => ({ ...prev, open: false }))}
+        onGoToSettings={() => onNavigate?.('settings')}
+      />
 
       {/* Snackbar for notifications */}
       <Snackbar

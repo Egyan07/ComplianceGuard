@@ -73,6 +73,25 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return ipcRenderer.invoke('set-user-setting', key, value, type);
   },
 
+  // License management
+  getLicenseInfo: () => ipcRenderer.invoke('get-license-info'),
+  activateLicense: (keyString) => {
+    if (typeof keyString !== 'string' || keyString.length < 10) {
+      return Promise.reject(new Error('Invalid license key'));
+    }
+    return ipcRenderer.invoke('activate-license', keyString);
+  },
+  deactivateLicense: () => ipcRenderer.invoke('deactivate-license'),
+  checkFeature: (featureName) => {
+    if (typeof featureName !== 'string') return Promise.resolve(false);
+    return ipcRenderer.invoke('check-feature', featureName);
+  },
+  onLicenseChanged: (callback) => {
+    const handler = (event, data) => callback(data);
+    ipcRenderer.on('license-changed', handler);
+    return () => ipcRenderer.removeListener('license-changed', handler);
+  },
+
   // Database maintenance
   createBackup: () => ipcRenderer.invoke('create-database-backup'),
 

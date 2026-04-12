@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [2.0.0] - 2026-04-12
+
+### Added
+- **Pro tier licensing system** — Ed25519 signed license keys, offline verification, no server dependency
+- **License key management UI** — Activate/deactivate Pro license from Settings page with key input field
+- **Feature gating** — Free tier limited to 12 of 29 SOC 2 controls with overall score only; Pro unlocks full breakdown, recommendations, PDF reports, evidence upload, and evaluation history
+- **Upgrade prompts** — Contextual dialogs when free users click gated features (Upload Evidence, Export PDF) with path to activation
+- **LicenseContext** — React context providing tier state, feature checks, and license management to all components
+- **UpgradePrompt component** — Reusable upgrade dialog with feature description and "Enter License Key" action
+- **License key generator** — Dev-only CLI tool for generating Ed25519 keypairs and signed license keys for testing
+- **Tier-aware compliance engine** — Evaluates only allowed controls per tier, redacts per-control details for free users
+- **IPC gating** — Main process rejects gated IPC calls (evidence upload, PDF export, evaluation history) for free tier with `upgrade_required` flag
+- **Tier indicator in AppBar** — Shows FREE or PRO badge next to app name
+
+### Changed
+- Compliance engine constructor now accepts optional `licenseManager` parameter
+- Dashboard buttons (Upload Evidence, Export PDF) check license tier before executing
+- EvaluationHistory page shows upgrade prompt instead of empty state for free users
+- ComplianceScore hides per-control breakdown for free tier with upgrade messaging
+- Version bump `1.1.0` → `2.0.0` across all files
+
+---
+
 ## [1.1.0] - 2026-04-12
 
 ### Added

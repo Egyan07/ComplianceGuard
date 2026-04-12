@@ -1,0 +1,107 @@
+const { verifyLicenseKey } = require('./license-crypto');
+const { FREE_TIER_CONTROL_IDS, ALL_CONTROL_IDS, FEATURE_GATES } = require('./tier-constants');
+
+class LicenseManager {
+  constructor(database) {
+    this.db = database;
+    this.tier = 'free';
+    this.licensePayload = null;
+    this.validationResult = null;
+  }
+
+  async initialize() {
+    try {
+      const storedKey = await this.db.getUserSetting('license_key', null);
+      if (storedKey) {
+        const result = verifyLicenseKey(storedKey);
+        if (result.valid) {
+          this.tier = result.payload.tier || 'pro';
+          this.licensePayload = result.payload;
+          this.validationResult = result;
+        } else {
+          // Stored key is invalid/expired — stay on free
+          this.tier = 'free';
+          this.licensePayload = null;
+        }
+      }
+    } catch (error) {
+      console.error('License initialization error:', error);
+      this.tier = 'free';
+    }
+  }
+
+  async activateLicense(keyString) {
+    const result = verifyLicenseKey(keyString);
+
+    if (!result.valid) {
+      return { valid: false, error: result.error };
+    }
+
+    // Store the key
+    await this.db.setUserSetting('license_key', keyString, 'string');
+
+    this.tier = result.payload.tier || 'pro';
+    this.licensePayload = result.payload;
+    this.validationResult = result;
+
+    return {
+      valid: true,
+      tier: this.tier,
+      payload: this.getSafeLicenseInfo(),
+    };
+  }
+
+  async deactivateLicense() {
+    await this.db.setUserSetting('license_key', '', 'string');
+    this.tier = 'free';
+    this.licensePayload = null;
+    this.validationResult = null;
+  }
+
+  getTier() {
+    return this.tier;
+  }
+
+  getControlIds() {
+    return this.tier === 'pro' ? ALL_CONTROL_IDS : FREE_TIER_CONTROL_IDS;
+  }
+
+  isFeatureAllowed(featureName) {
+    const gate = FEATURE_GATES[featureName];
+    if (!gate) return true; // ungated feature
+    return gate[this.tier] === true;
+  }
+
+  getLicenseInfo() {
+    return {
+      tier: this.tier,
+      ...this.getSafeLicenseInfo(),
+    };
+  }
+
+  getSafeLicenseInfo() {
+    if (!this.licensePayload) {
+      return {
+        licenseId: null,
+        email: null,
+        maxMachines: 1,
+        expiresAt: null,
+        daysRemaining: null,
+        isExpired: false,
+        isGracePeriod: false,
+      };
+    }
+
+    return {
+      licenseId: this.licensePayload.licenseId,
+      email: this.licensePayload.email,
+      maxMachines: this.licensePayload.maxMachines || 10,
+      expiresAt: this.licensePayload.expiresAt,
+      daysRemaining: this.validationResult?.daysRemaining ?? null,
+      isExpired: this.validationResult?.isExpired ?? false,
+      isGracePeriod: this.validationResult?.isGracePeriod ?? false,
+    };
+  }
+}
+
+module.exports = LicenseManager;

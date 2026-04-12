@@ -7,6 +7,7 @@ const ComplianceGuardDatabase = require('./database/sqlite');
 const LocalEvidenceProcessor = require('./processing/evidence-processor');
 const LocalComplianceEngine = require('./processing/compliance-engine');
 const ReportGenerator = require('./processing/report-generator');
+const LicenseManager = require('./licensing/license-manager');
 const { collectWindowsEvidence } = require('./system/windows');
 
 // Keep a global reference of the window object
@@ -18,6 +19,7 @@ let database = null;
 let evidenceProcessor = null;
 let complianceEngine = null;
 let reportGenerator = null;
+let licenseManager = null;
 
 // Development mode flag
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
@@ -208,8 +210,11 @@ ipcMain.handle('collect-windows-evidence', async (event, frameworkId = 1) => {
   }
 });
 
-// Manual evidence processing
+// Manual evidence processing (Pro only)
 ipcMain.handle('process-manual-evidence', async (event, evidenceData, frameworkId = 1) => {
+  if (!licenseManager.isFeatureAllowed('evidence_upload')) {
+    return { error: 'Evidence upload requires a Pro license.', upgrade_required: true };
+  }
   try {
     const evidenceId = await evidenceProcessor.processManualEvidence(evidenceData, frameworkId);
     return { success: true, evidence_id: evidenceId };
@@ -267,8 +272,11 @@ ipcMain.handle('generate-compliance-report', async (event, frameworkId = 1, form
   }
 });
 
-// Export compliance report as PDF
+// Export compliance report as PDF (Pro only)
 ipcMain.handle('export-pdf-report', async (event, frameworkId = 1) => {
+  if (!licenseManager.isFeatureAllowed('pdf_reports')) {
+    return { error: 'PDF reports require a Pro license.', upgrade_required: true };
+  }
   try {
     // Generate HTML report
     const html = await reportGenerator.generateHTMLReport(frameworkId);
@@ -317,14 +325,45 @@ ipcMain.handle('export-pdf-report', async (event, frameworkId = 1) => {
   }
 });
 
-// Evaluation history
+// Evaluation history (Pro only)
 ipcMain.handle('get-evaluation-history', async (event, frameworkId = 1) => {
+  if (!licenseManager.isFeatureAllowed('evaluation_history')) {
+    return { error: 'Evaluation history requires a Pro license.', upgrade_required: true };
+  }
   try {
     return await database.getEvaluationHistory(frameworkId);
   } catch (error) {
     console.error('Get evaluation history failed:', error);
     return { error: error.message };
   }
+});
+
+// ---- License Management IPC ----
+
+ipcMain.handle('get-license-info', async () => {
+  return licenseManager.getLicenseInfo();
+});
+
+ipcMain.handle('activate-license', async (event, keyString) => {
+  try {
+    const result = await licenseManager.activateLicense(keyString);
+    if (result.valid) {
+      mainWindow?.webContents.send('license-changed', licenseManager.getLicenseInfo());
+    }
+    return result;
+  } catch (error) {
+    return { valid: false, error: error.message };
+  }
+});
+
+ipcMain.handle('deactivate-license', async () => {
+  await licenseManager.deactivateLicense();
+  mainWindow?.webContents.send('license-changed', licenseManager.getLicenseInfo());
+  return { success: true };
+});
+
+ipcMain.handle('check-feature', async (event, featureName) => {
+  return licenseManager.isFeatureAllowed(featureName);
 });
 
 // Evidence search
@@ -378,8 +417,11 @@ app.whenReady().then(async () => {
     database = new ComplianceGuardDatabase();
     await database.initialize(app.getPath('userData'));
 
+    licenseManager = new LicenseManager(database);
+    await licenseManager.initialize();
+
     evidenceProcessor = new LocalEvidenceProcessor(database, app.getPath('userData'));
-    complianceEngine = new LocalComplianceEngine(database);
+    complianceEngine = new LocalComplianceEngine(database, licenseManager);
     reportGenerator = new ReportGenerator(database);
 
     console.log('Database and processing engines initialized');

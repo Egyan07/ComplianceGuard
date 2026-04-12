@@ -22,6 +22,7 @@ import {
   Info
 } from '@mui/icons-material';
 import { ComplianceMetrics, ComplianceEvaluation } from '../services/api';
+import { useLicense } from '../contexts/LicenseContext';
 
 interface ComplianceScoreProps {
   metrics: ComplianceMetrics;
@@ -95,6 +96,8 @@ const ComplianceScore: React.FC<ComplianceScoreProps> = ({
   evaluation,
   loading = false
 }) => {
+  const { tier, isFeatureAllowed } = useLicense();
+  const showDetails = isFeatureAllowed('per_control_scoring');
   if (loading) {
     return (
       <Card sx={{ height: '100%' }}>
@@ -165,8 +168,7 @@ const ComplianceScore: React.FC<ComplianceScoreProps> = ({
         </Box>
 
         <Box>
-          {evaluation && evaluation.category_scores ? (
-            // Show real category scores from evaluation
+          {showDetails && evaluation && evaluation.category_scores ? (
             Object.entries(evaluation.category_scores).map(([category, data]: [string, any]) => (
               <ScoreIndicator
                 key={category}
@@ -175,8 +177,16 @@ const ComplianceScore: React.FC<ComplianceScoreProps> = ({
                 description={`${data.control_count || 0} controls evaluated`}
               />
             ))
+          ) : evaluation && !showDetails ? (
+            <Box sx={{ textAlign: 'center', py: 3, px: 2, backgroundColor: '#EFF6FF', borderRadius: 2 }}>
+              <Typography variant="body2" sx={{ color: '#1E40AF' }}>
+                Upgrade to Pro to see per-control scoring, gap analysis, and remediation recommendations.
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                You're seeing results for 12 of 29 controls.
+              </Typography>
+            </Box>
           ) : (
-            // Show placeholder metrics when no evaluation
             <>
               <ScoreIndicator
                 score={metrics.s3_encryption_compliance}

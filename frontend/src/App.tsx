@@ -29,6 +29,7 @@ import Dashboard from './components/Dashboard';
 import Settings from './components/Settings';
 import EvaluationHistory from './components/EvaluationHistory';
 import ErrorBoundary from './components/ErrorBoundary';
+import { LicenseProvider, useLicense } from './contexts/LicenseContext';
 
 type Page = 'dashboard' | 'history' | 'settings';
 
@@ -89,15 +90,14 @@ const theme = createTheme({
   },
 });
 
-function App() {
+function AppContent() {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
+  const { tier } = useLicense();
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Box sx={{ flexGrow: 1, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        {/* App Bar */}
-        <AppBar
+    <Box sx={{ flexGrow: 1, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* App Bar */}
+      <AppBar
           position="static"
           elevation={0}
           sx={{
@@ -138,15 +138,15 @@ function App() {
               ComplianceGuard
             </Typography>
             <Chip
-              label="BETA"
+              label={tier === 'pro' ? 'PRO' : 'FREE'}
               size="small"
               sx={{
                 ml: 1.5,
                 height: 20,
                 fontSize: '0.65rem',
                 fontWeight: 600,
-                backgroundColor: '#EFF6FF',
-                color: '#2563EB',
+                backgroundColor: tier === 'pro' ? '#D1FAE5' : '#EFF6FF',
+                color: tier === 'pro' ? '#065F46' : '#2563EB',
                 letterSpacing: '1px',
               }}
             />
@@ -195,8 +195,8 @@ function App() {
         {/* Main Content */}
         <Box component="main" sx={{ flexGrow: 1, backgroundColor: 'background.default' }}>
           <ErrorBoundary>
-            {currentPage === 'dashboard' && <Dashboard />}
-            {currentPage === 'history' && <EvaluationHistory />}
+            {currentPage === 'dashboard' && <Dashboard onNavigate={setCurrentPage} />}
+            {currentPage === 'history' && <EvaluationHistory onNavigate={setCurrentPage} />}
             {currentPage === 'settings' && <Settings />}
           </ErrorBoundary>
         </Box>
@@ -219,11 +219,21 @@ function App() {
               align="center"
               sx={{ color: '#9CA3AF', fontSize: '0.75rem' }}
             >
-              ComplianceGuard v1.1.0 — Collect. Evaluate. Comply.
+              ComplianceGuard v2.0.0 — Collect. Evaluate. Comply.
             </Typography>
           </Container>
         </Paper>
       </Box>
+  );
+}
+
+function App() {
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <LicenseProvider>
+        <AppContent />
+      </LicenseProvider>
     </ThemeProvider>
   );
 }

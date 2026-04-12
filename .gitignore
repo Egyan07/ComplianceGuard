@@ -1,3 +1,9 @@
+# License keys (never commit)
+*.private-key.pem
+*.public-key.pem
+.private-key.pem
+.public-key.pem
+
 # Python
 __pycache__/
 *.py[cod]

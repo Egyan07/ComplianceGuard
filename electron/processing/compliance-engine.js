@@ -1,6 +1,9 @@
+const { FREE_TIER_CONTROL_IDS } = require('../licensing/tier-constants');
+
 class LocalComplianceEngine {
-  constructor(database) {
+  constructor(database, licenseManager = null) {
     this.db = database;
+    this.licenseManager = licenseManager;
     this.soc2Framework = this.getDefaultSOC2Framework();
   }
 
@@ -263,11 +266,17 @@ class LocalComplianceEngine {
     let totalWeight = 0;
     let weightedScore = 0;
 
+    const allowedIds = this.licenseManager
+      ? this.licenseManager.getControlIds()
+      : FREE_TIER_CONTROL_IDS;
+
     for (const category of this.soc2Framework.criteria) {
       let categoryScore = 0;
       let categoryWeight = 0;
 
       for (const control of category.controls) {
+        if (!allowedIds.includes(control.id)) continue;
+
         const controlResult = this.evaluateControl(control, evidence);
         evaluationResults.control_results[control.id] = controlResult;
         evaluationResults.total_controls++;
@@ -325,6 +334,16 @@ class LocalComplianceEngine {
     // Persist evaluation to database
     const evaluationId = await this.db.createEvaluation(frameworkId, evaluationResults);
     evaluationResults.id = evaluationId;
+
+    // Apply tier restrictions for free users
+    const tier = this.licenseManager ? this.licenseManager.getTier() : 'free';
+    evaluationResults.tier = tier;
+
+    if (tier === 'free') {
+      evaluationResults.category_scores = null;
+      evaluationResults.control_results = null;
+      evaluationResults.recommendations = [];
+    }
 
     return evaluationResults;
   }
