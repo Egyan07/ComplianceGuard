@@ -57,12 +57,11 @@ describe('ComplianceScore', () => {
     expect(screen.getByText('83%')).toBeInTheDocument(); // Math.round(82.5)
   });
 
-  it('shows category breakdown from evaluation', () => {
+  it('shows upgrade message for category breakdown in free tier', () => {
     renderWithTheme(
       <ComplianceScore metrics={defaultMetrics} evaluation={mockEvaluation} />
     );
-    expect(screen.getByText('Common Criteria (CC)')).toBeInTheDocument();
-    expect(screen.getByText('Availability (A)')).toBeInTheDocument();
+    expect(screen.getByText(/Upgrade to Pro/)).toBeInTheDocument();
   });
 
   it('shows status chip with evaluation status', () => {

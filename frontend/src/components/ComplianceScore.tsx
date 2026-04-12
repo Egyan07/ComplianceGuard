@@ -96,7 +96,7 @@ const ComplianceScore: React.FC<ComplianceScoreProps> = ({
   evaluation,
   loading = false
 }) => {
-  const { tier, isFeatureAllowed } = useLicense();
+  const { isFeatureAllowed } = useLicense();
   const showDetails = isFeatureAllowed('per_control_scoring');
   if (loading) {
     return (

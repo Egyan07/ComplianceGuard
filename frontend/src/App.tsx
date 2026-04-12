@@ -195,8 +195,8 @@ function AppContent() {
         {/* Main Content */}
         <Box component="main" sx={{ flexGrow: 1, backgroundColor: 'background.default' }}>
           <ErrorBoundary>
-            {currentPage === 'dashboard' && <Dashboard onNavigate={setCurrentPage} />}
-            {currentPage === 'history' && <EvaluationHistory onNavigate={setCurrentPage} />}
+            {currentPage === 'dashboard' && <Dashboard onNavigate={(page: string) => setCurrentPage(page as Page)} />}
+            {currentPage === 'history' && <EvaluationHistory onNavigate={(page: string) => setCurrentPage(page as Page)} />}
             {currentPage === 'settings' && <Settings />}
           </ErrorBoundary>
         </Box>
