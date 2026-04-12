@@ -232,6 +232,28 @@ npm run format:check     # Prettier
 
 CI runs automatically on every push via GitHub Actions.
 
+## Pricing
+
+The desktop app is free forever. Paid tiers unlock multi-machine management and additional frameworks.
+
+| | **Free** | **Pro** | **Enterprise** |
+|---|---|---|---|
+| **Price** | $0 | $49–99/mo | $299/mo + $15/machine |
+| SOC 2 Type II (29 controls) | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| Local evidence collection | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| Compliance scoring + gap analysis | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| PDF reports | — | :white_check_mark: | :white_check_mark: |
+| Machines | 1 | Up to 10 | Unlimited |
+| ISO 27001, HIPAA, PCI DSS | — | :white_check_mark: | :white_check_mark: |
+| Cloud dashboard (multi-machine) | — | :white_check_mark: | :white_check_mark: |
+| Users | 1 | Up to 10 | Unlimited |
+| SSO / SAML | — | — | :white_check_mark: |
+| Custom compliance frameworks | — | — | :white_check_mark: |
+| Central policy deployment | — | — | :white_check_mark: |
+| Support | Community | Email | Dedicated |
+
+> **Free tier is not a trial.** One machine, full SOC 2 coverage, no expiration. Paid tiers are for teams that need multi-machine visibility, extra frameworks, or audit-ready PDF exports.
+
 ## Roadmap
 
 - [x] Evidence collection from Windows OS
