@@ -1,368 +1,258 @@
 <p align="center">
-  <img src="assets/banner.svg" alt="ComplianceGuard — Collect. Evaluate. Comply." width="100%">
+  <img src="assets/banner.svg" alt="ComplianceGuard" width="100%">
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.1.0-blue" alt="Version">
-  <img src="https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey?logo=windows&logoColor=white" alt="Platform">
-  <img src="https://img.shields.io/badge/SOC%202-Type%20II-orange?logo=shield&logoColor=white" alt="SOC 2">
-  <img src="https://img.shields.io/badge/controls-29%20implemented-brightgreen" alt="Controls">
-  <img src="https://img.shields.io/github/license/Egyan07/complianceguard" alt="License">
-  <img src="https://img.shields.io/badge/electron-28.0.0-191970?logo=electron&logoColor=white" alt="Electron">
-  <img src="https://img.shields.io/badge/react-18-61DAFB?logo=react&logoColor=white" alt="React">
-  <img src="https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white" alt="TypeScript">
-  <img src="https://img.shields.io/badge/database-SQLite-07405E?logo=sqlite&logoColor=white" alt="SQLite">
+  <a href="#quick-start"><img src="https://img.shields.io/badge/version-1.1.0-2563EB" alt="Version"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/Egyan07/complianceguard" alt="License"></a>
+  <a href="#soc-2-controls"><img src="https://img.shields.io/badge/SOC%202-29%20controls-10B981" alt="Controls"></a>
+  <img src="https://img.shields.io/badge/platform-Windows%2010%2F11-6B7280?logo=windows&logoColor=white" alt="Platform">
+  <img src="https://img.shields.io/badge/CI-passing-10B981?logo=githubactions&logoColor=white" alt="CI">
 </p>
-
-<p align="center">
-  <strong>29 SOC 2 controls</strong> · <strong>Local evidence collection</strong> · <strong>Weighted compliance scoring</strong> · <strong>Zero cloud dependencies</strong>
-</p>
-
-<p align="center">
-  <strong>Author: <a href="https://github.com/Egyan07">Egyan07</a></strong>
-</p>
-
-> **Windows Only** — Collects evidence from Windows Event Logs, Registry, Services, Firewall, and User Accounts. macOS and Linux support planned.
-
-ComplianceGuard runs on your Windows machine, collects compliance evidence directly from the operating system, scores it against SOC 2 Type II controls, and gives you a clear picture of where you stand — **without sending a single byte to the cloud.**
 
 ---
 
-## How It Works
+Compliance tools like Vanta, Drata, and Sprinto scan your cloud infrastructure. That's useful — but they can't see what's happening **on the machines themselves**. Password policies, firewall rules, event logs, running services, local user accounts — that evidence lives on the endpoint, not in AWS.
+
+ComplianceGuard lives on the endpoint too. It collects evidence directly from Windows, scores it against 29 SOC 2 Type II controls, and tells you exactly where the gaps are. Everything stays local. No cloud account, no subscription, no data leaving your machine.
 
 ```
-Windows System ──> Collect Evidence ──> Store Locally ──> Evaluate ──> Report
-     |                   |                   |               |            |
-  Event logs       Shell commands        SQLite DB      Weighted      JSON +
-  Registry         + Windows APIs        with audit     scoring per   Dashboard
-  Services                               logging        SOC 2 control  export
-  Firewall
-  User accounts
+                    ┌─────────────┐
+  Windows OS ──────>│ Collect     │──────> SQLite DB
+  Event logs        │ Evidence    │        (local, hashed)
+  Registry          └──────┬──────┘
+  Services                 │
+  Firewall                 ▼
+  Users            ┌─────────────┐
+  Network          │ Evaluate    │──────> Score + Gaps
+  Software         │ Compliance  │        per SOC 2 control
+                   └──────┬──────┘
+                          │
+                          ▼
+                   ┌─────────────┐
+                   │ Report      │──────> PDF / Dashboard
+                   └─────────────┘
 ```
-
-**1. Collect** — Click "Collect Evidence" or use the system tray. ComplianceGuard pulls data from Windows event logs, security settings, services, firewall rules, user accounts, network config, and installed software.
-
-**2. Store** — Evidence is categorized by SOC 2 control, hashed for integrity (SHA-256), and stored in a local SQLite database. Large items (event logs) are saved as files.
-
-**3. Evaluate** — Click "Evaluate Compliance". The engine checks evidence coverage for each of the 21 controls, applies weights, and calculates per-category and overall compliance scores.
-
-**4. Report** — Dashboard shows real-time scores, gaps, and prioritized recommendations. Export detailed reports as JSON.
-
----
-
-## Tech Stack
-
-<p align="center">
-
-![Electron](https://img.shields.io/badge/Electron_28-191970?style=for-the-badge&logo=electron&logoColor=white)
-![React](https://img.shields.io/badge/React_18-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
-![Material UI](https://img.shields.io/badge/Material_UI-007FFF?style=for-the-badge&logo=mui&logoColor=white)
-![SQLite](https://img.shields.io/badge/SQLite-07405E?style=for-the-badge&logo=sqlite&logoColor=white)
-![Vite](https://img.shields.io/badge/Vite_5-646CFF?style=for-the-badge&logo=vite&logoColor=white)
-![Node.js](https://img.shields.io/badge/Node.js_18+-339933?style=for-the-badge&logo=node.js&logoColor=white)
-
-</p>
-
----
-
-## Comparison
-
-| Feature | ComplianceGuard | Vanta | Drata | Sprinto |
-|---------|:--------------:|:-----:|:-----:|:-------:|
-| Local evidence collection (OS-level) | :white_check_mark: | :x: | :x: | :x: |
-| No cloud / no vendor lock-in | :white_check_mark: | :x: | :x: | :x: |
-| No subscription required (free tier) | :white_check_mark: | :x: | :x: | :x: |
-| Works in air-gapped environments | :white_check_mark: | :x: | :x: | :x: |
-| Data never leaves your machine | :white_check_mark: | :x: | :x: | :x: |
-| Cloud infrastructure scanning | Planned | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| SOC 2 Type II controls | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| Multi-framework (ISO 27001, HIPAA) | Planned | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| GUI dashboard | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| Audit trail | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| Open source | :white_check_mark: | :x: | :x: | :x: |
-| Starting price | **Free** | ~$10k/yr | ~$10k/yr | ~$8k/yr |
-
-**ComplianceGuard fills the gap that cloud tools miss** — endpoint-level compliance evidence that SaaS scanners can't collect.
-
----
-
-## Features
-
-### Evidence Collection
-- **Windows Event Logs** — Security, System, and Application log monitoring
-- **Security Settings** — Password policies, audit policies, registry security options
-- **Services Monitoring** — Critical service status (Defender, Windows Update, Event Log, Firewall)
-- **Firewall Analysis** — Domain, Private, and Public profile status
-- **User Account Auditing** — Local accounts, administrator group membership
-- **Network Configuration** — Interfaces, open ports, routing tables
-- **Installed Software** — Registry-based software inventory
-- **File Permissions** — Critical system path permission auditing
-
-### Compliance Engine
-- **29 SOC 2 controls** across Common Criteria (CC1-CC9), Availability (A1), Confidentiality (C1), and Processing Integrity (PI1)
-- **Weighted scoring** — Each control has a configurable weight for accurate scoring
-- **Gap analysis** — Identifies exactly which evidence types are missing per control
-- **Prioritized recommendations** — High/medium priority remediation guidance
-- **Evaluation history** — All evaluations persisted to SQLite for trend tracking
-
-### Desktop Experience
-- **System tray integration** — Runs in background, one-click evidence collection
-- **Native notifications** — Windows toast notifications for collection/evaluation results
-- **File dialogs** — Save reports, select evidence folders via native OS dialogs
-- **Offline operation** — Complete functionality without internet
-- **Automatic database backup** — One-click backup of compliance database
-
-### Security & Audit
-- **Context isolation** — Secure Electron IPC with input validation on every call
-- **SHA-256 file hashing** — Evidence integrity verification
-- **Complete audit trail** — Every action logged with timestamps
-- **Local-only storage** — Zero external API calls, zero telemetry
-- **No admin data collection** — We never see your compliance data
-
----
-
-## SOC 2 Controls
-
-### Common Criteria (CC) — 17 Controls
-
-| ID | Control | Evidence Types | Weight |
-|----|---------|---------------|--------|
-| CC1.1 | Integrity and Ethical Values | Policy docs, training records, security policies | 15% |
-| CC1.2 | Board Independence | Governance docs, board charter, meeting minutes | 10% |
-| CC2.1 | Internal Communication | Communication policies, training materials | 10% |
-| CC3.1 | Risk Assessment | Risk assessments, business objectives | 12% |
-| CC4.1 | Monitoring | Audit reports, monitoring logs, checklists | 13% |
-| CC5.1 | Control Activities | Control procedures, workflow documentation | 15% |
-| CC6.1 | Logical Access Controls | Access logs, user accounts, system configs | 20% |
-| CC6.2 | Authentication | User provisioning, access requests, identity mgmt | 18% |
-| CC6.3 | Authorization | Role definitions, access matrices, policies | 18% |
-| CC6.4 | Segregation of Duties | Segregation matrix, conflict analysis | 15% |
-| CC6.5 | Network Security | Firewall configs, network diagrams, scans | 17% |
-| CC6.6 | Physical Access | Access logs, visitor logs, security badges | 12% |
-| CC6.7 | Data Transmission | Encryption policies, SSL certificates | 15% |
-| CC7.1 | Event Logging | Event logs, monitoring tools, incident reports | 18% |
-| CC7.2 | Vulnerability Management | Vuln scans, patch management, assessments | 16% |
-| CC8.1 | Change Management | Change requests, deployment logs, approvals | 14% |
-| CC9.1 | Risk Mitigation | Risk register, mitigation plans, insurance | 12% |
-
-### Availability (A) — 4 Controls
-
-| ID | Control | Evidence Types | Weight |
-|----|---------|---------------|--------|
-| A1.1 | System Availability | Uptime logs, backup logs, incident reports | 25% |
-| A1.2 | Environmental Protection | Environmental logs, disaster recovery | 20% |
-| A1.3 | Capacity Management | Capacity reports, performance logs | 20% |
-| A1.4 | Backup and Recovery | Backup logs, recovery plans, test results | 35% |
-
-### Confidentiality (C) — 4 Controls
-
-| ID | Control | Evidence Types | Weight |
-|----|---------|---------------|--------|
-| C1.1 | Data Classification | Classification policy, data inventory, handling procedures | 25% |
-| C1.2 | Data Protection | Encryption policies, access controls, DLP config | 30% |
-| C1.3 | Data Disposal | Retention policy, disposal procedures, disposal records | 20% |
-| C1.4 | Disclosure Controls | NDA agreements, disclosure policies, third-party agreements | 25% |
-
-### Processing Integrity (PI) — 4 Controls
-
-| ID | Control | Evidence Types | Weight |
-|----|---------|---------------|--------|
-| PI1.1 | Processing Accuracy | Processing procedures, quality controls, validation rules | 25% |
-| PI1.2 | Input Controls | Input validation, data quality checks, error handling | 25% |
-| PI1.3 | Error Detection | Error logs, monitoring alerts, correction procedures | 25% |
-| PI1.4 | Output Review | Output validation, reconciliation reports, review procedures | 25% |
-
----
 
 ## Quick Start
 
-### Option A — Development Setup
-
-**Requirements:** Windows 10/11, Node.js 18+, npm
-
 ```bash
 git clone https://github.com/Egyan07/complianceguard.git
 cd complianceguard
-
-# Install dependencies
-npm install
-cd frontend && npm install && cd ..
-
-# Start development mode (React dev server + Electron)
+npm install && cd frontend && npm install && cd ..
 npm run dev
 ```
 
-### Option B — Production Build
+> Requires Windows 10/11, Node.js 18+. The app opens in Electron. Click **Collect Evidence** → **Evaluate Compliance** → see your score.
+
+To build a standalone installer:
 
 ```bash
-# Build frontend and package Electron app for Windows
-npm run package
+npm run package    # outputs to dist/
 ```
 
-The installer will be in the `dist/` directory.
+## What Makes This Different
 
----
+| | ComplianceGuard | Vanta / Drata / Sprinto |
+|---|---|---|
+| **Where it runs** | On your machine | In the cloud |
+| **What it scans** | OS-level: event logs, registry, services, firewall, users | Cloud infra: AWS, GCP, Azure |
+| **Data residency** | Never leaves your device | Stored on vendor servers |
+| **Air-gapped networks** | Works completely offline | Requires internet |
+| **Cost** | Free and open source | $8k–$10k/year |
+| **SOC 2 controls** | 29 implemented | Varies |
+
+They scan the cloud. We scan the machine. Use both and you've covered the full stack.
+
+## What It Collects
+
+ComplianceGuard pulls 8 categories of evidence from Windows:
+
+| Category | What's Collected | Maps To |
+|----------|-----------------|---------|
+| Event Logs | Security, System, Application logs | CC7.1, CC4.1 |
+| Security Settings | Password policies, audit policies, registry options | CC6.1, CC6.2, CC6.3 |
+| Services | Defender, Windows Update, Firewall, Event Log status | A1.1, CC7.2 |
+| Firewall | Domain, Private, Public profile configuration | CC6.5 |
+| User Accounts | Local accounts, admin group membership | CC6.2, CC6.4 |
+| Network | Interfaces, open ports, routing tables | CC6.5, CC6.7 |
+| Software | Registry-based inventory of installed programs | CC7.2, CC8.1 |
+| File Permissions | ACLs on critical system paths | CC6.1, CC6.3 |
+
+Each evidence item is SHA-256 hashed for integrity and stored in a local SQLite database with full audit logging.
+
+## SOC 2 Controls
+
+29 controls across 4 categories. Each is scored by evidence coverage with configurable weights.
+
+<details>
+<summary><strong>Common Criteria (CC) — 17 controls</strong></summary>
+
+| ID | Control | Weight |
+|----|---------|--------|
+| CC1.1 | Integrity and Ethical Values | 15% |
+| CC1.2 | Board Independence | 10% |
+| CC2.1 | Internal Communication | 10% |
+| CC3.1 | Risk Assessment | 12% |
+| CC4.1 | Monitoring | 13% |
+| CC5.1 | Control Activities | 15% |
+| CC6.1 | Logical Access Controls | 20% |
+| CC6.2 | Authentication | 18% |
+| CC6.3 | Authorization | 18% |
+| CC6.4 | Segregation of Duties | 15% |
+| CC6.5 | Network Security | 17% |
+| CC6.6 | Physical Access | 12% |
+| CC6.7 | Data Transmission | 15% |
+| CC7.1 | Event Logging | 18% |
+| CC7.2 | Vulnerability Management | 16% |
+| CC8.1 | Change Management | 14% |
+| CC9.1 | Risk Mitigation | 12% |
+
+</details>
+
+<details>
+<summary><strong>Availability (A) — 4 controls</strong></summary>
+
+| ID | Control | Weight |
+|----|---------|--------|
+| A1.1 | System Availability | 25% |
+| A1.2 | Environmental Protection | 20% |
+| A1.3 | Capacity Management | 20% |
+| A1.4 | Backup and Recovery | 35% |
+
+</details>
+
+<details>
+<summary><strong>Confidentiality (C) — 4 controls</strong></summary>
+
+| ID | Control | Weight |
+|----|---------|--------|
+| C1.1 | Data Classification | 25% |
+| C1.2 | Data Protection | 30% |
+| C1.3 | Data Disposal | 20% |
+| C1.4 | Disclosure Controls | 25% |
+
+</details>
+
+<details>
+<summary><strong>Processing Integrity (PI) — 4 controls</strong></summary>
+
+| ID | Control | Weight |
+|----|---------|--------|
+| PI1.1 | Processing Accuracy | 25% |
+| PI1.2 | Input Controls | 25% |
+| PI1.3 | Error Detection | 25% |
+| PI1.4 | Output Review | 25% |
+
+</details>
 
 ## Architecture
 
+<details>
+<summary><strong>Click to expand</strong></summary>
+
 ```
 ┌──────────────────────────────────────────────────────────┐
-│  ELECTRON MAIN PROCESS (main.js)                         │
-│  Window management · System tray · IPC handlers          │
-│  Database lifecycle · Native dialogs · Notifications     │
-└──────────────────────┬───────────────────────────────────┘
-                       │ Secure IPC (preload.js)
-                       │ Input validation on every call
+│  ELECTRON MAIN PROCESS                                    │
+│                                                           │
+│  ┌─────────────────┐  ┌──────────────────────────────┐   │
+│  │ Evidence        │  │ Compliance Engine             │   │
+│  │ Processor       │  │ 29 controls · weighted scoring│   │
+│  │ Collect · Store │  │ gap analysis · recommendations│   │
+│  └────────┬────────┘  └──────────────┬───────────────┘   │
+│           └──────────┬───────────────┘                    │
+│                      ▼                                    │
+│           ┌─────────────────────┐                         │
+│           │  SQLite + Audit Log │                         │
+│           └─────────────────────┘                         │
+│                      ▲                                    │
+│           ┌──────────┴──────────┐                         │
+│           │ Windows Collector   │                         │
+│           │ PowerShell + WMI    │                         │
+│           └─────────────────────┘                         │
+└──────────────────────┬────────────────────────────────────┘
+                       │ IPC (context-isolated, validated)
                        ▼
 ┌──────────────────────────────────────────────────────────┐
-│  PROCESSING ENGINES                                      │
-│  ┌─────────────────┐  ┌──────────────────────────────┐  │
-│  │ Evidence        │  │ Compliance Engine             │  │
-│  │ Processor       │  │ 21 controls · weighted scoring│  │
-│  │ Collect · Store │  │ gap analysis · recommendations│  │
-│  │ Search · Export │  │ report generation             │  │
-│  └────────┬────────┘  └──────────────┬───────────────┘  │
-│           │                          │                   │
-│  ┌────────▼──────────────────────────▼───────────────┐  │
-│  │  SQLite Database (complianceguard.db)             │  │
-│  │  8 tables · indexed · FK constraints · audit log  │  │
-│  └───────────────────────────────────────────────────┘  │
-│                                                          │
-│  ┌───────────────────────────────────────────────────┐  │
-│  │  Windows Evidence Collector (windows.js)          │  │
-│  │  Event logs · Registry · Services · Firewall      │  │
-│  │  User accounts · Network · Software · Permissions │  │
-│  └───────────────────────────────────────────────────┘  │
-└──────────────────────────────────────────────────────────┘
-                       ▲
-                       │ IPC bridge
-┌──────────────────────┴───────────────────────────────────┐
-│  REACT FRONTEND (Material UI · TypeScript)               │
-│  Dashboard · Compliance Score · Evidence List             │
-│  Auto-detects Electron (IPC) vs Web (HTTP) mode          │
+│  REACT FRONTEND                                           │
+│  Dashboard · Score · Evidence List · History · Settings   │
+│  Auto-detects Electron (IPC) vs Web (HTTP) mode           │
 └──────────────────────────────────────────────────────────┘
 ```
 
----
-
-## Project Structure
+**Key files:**
 
 ```
 complianceguard/
-├── electron/                        # Electron main process
-│   ├── main.js                     # Entry point + IPC handlers
+├── electron/
+│   ├── main.js                     # Window mgmt, IPC handlers, tray
 │   ├── preload.js                  # Secure IPC bridge with validation
-│   ├── database/
-│   │   └── sqlite.js               # SQLite ops (8 tables, CRUD, backup)
+│   ├── database/sqlite.js          # SQLite operations, backup
 │   ├── processing/
-│   │   ├── compliance-engine.js    # SOC 2 evaluation engine
-│   │   └── evidence-processor.js   # Evidence collection + storage
-│   └── system/
-│       └── windows.js              # Windows system evidence collector
-├── frontend/                        # React frontend
-│   ├── src/
-│   │   ├── App.tsx                 # Root component (Material UI theme)
-│   │   ├── components/
-│   │   │   ├── Dashboard.tsx       # Main dashboard
-│   │   │   ├── ComplianceScore.tsx # Score visualization
-│   │   │   └── EvidenceList.tsx    # Filterable evidence browser
-│   │   └── services/
-│   │       └── api.ts              # Unified API (IPC / HTTP)
-│   └── package.json
-├── backend/                         # FastAPI backend (future cloud sync)
-├── resources/icons/                 # App icons (shield + checkmark)
-├── assets/                          # Banner and branding
-├── package.json                     # Electron + build config
-└── docker-compose.yml               # Backend dev environment
+│   │   ├── compliance-engine.js    # SOC 2 scoring engine
+│   │   ├── evidence-processor.js   # Evidence collection + storage
+│   │   └── report-generator.js     # HTML → PDF report generation
+│   └── system/windows.js           # Windows evidence collector
+├── frontend/src/
+│   ├── App.tsx                     # Theme, nav, error boundary
+│   ├── components/                 # Dashboard, Score, Evidence, History, Settings
+│   ├── services/api.ts             # Unified API (IPC or HTTP)
+│   └── test/                       # Vitest test suite
+├── .github/workflows/ci.yml       # Lint, test, build pipeline
+└── package.json                    # Electron + build config
 ```
 
----
+</details>
 
-## Business Model
+## Security Model
 
-| | Free (Current) | Pro (Coming) | Enterprise (Coming) |
-|---|---|---|---|
-| **Price** | **$0** | **$49-99/mo** | **$299/mo + $15/machine** |
-| SOC 2 framework | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| ISO 27001, HIPAA, PCI DSS | :x: | :white_check_mark: | :white_check_mark: |
-| Local evidence collection | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| Compliance scoring + reports | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| Machines | 1 | Up to 10 | Unlimited |
-| Cloud dashboard (multi-machine) | :x: | :white_check_mark: | :white_check_mark: |
-| PDF audit-ready reports | :x: | :white_check_mark: | :white_check_mark: |
-| Users | 1 | Up to 10 | Unlimited |
-| SSO / SAML | :x: | :x: | :white_check_mark: |
-| Custom frameworks | :x: | :x: | :white_check_mark: |
-| Central policy deployment | :x: | :x: | :white_check_mark: |
-| Support | Community | Email | Dedicated |
+All data stays local. Zero external API calls. Zero telemetry.
 
----
+| Layer | How |
+|-------|-----|
+| IPC | Context isolation. Every exposed method validates input types and uses allowlists. |
+| Evidence | SHA-256 hashing on all stored files. Full audit trail with timestamps. |
+| Database | Parameterized queries. Foreign key constraints. |
+| Navigation | External URLs blocked. `window.open` denied. |
+
+## Development
+
+```bash
+npm run dev              # Electron + React dev server
+npm run build            # Build frontend
+npm run package          # Windows installer (.msi + .nsis)
+```
+
+```bash
+cd frontend
+npm test                 # Run Vitest test suite
+npm run lint             # ESLint
+npm run format:check     # Prettier
+```
+
+CI runs automatically on every push via GitHub Actions.
 
 ## Roadmap
 
-| Target | Status |
-|--------|--------|
-| Evidence upload UI (manual docs) | In progress |
-| PDF report export | Planned |
-| Scheduled evidence collection | Planned |
-| ISO 27001 framework | Planned |
-| HIPAA framework | Planned |
-| Cloud sync + web dashboard | Planned |
-| macOS support | Future |
-| Linux support | Future |
-| AI-powered evidence classification | Future |
-
----
-
-## Limitations
-
-| Limitation | Detail |
-|------------|--------|
-| Windows only | Windows 10/11 required for evidence collection |
-| Local only | No cloud sync yet — single machine operation |
-| SOC 2 only | Additional frameworks coming soon |
-| No encryption at rest | SQLite database is not encrypted (planned) |
-| Single user | No multi-user access control yet |
-| No auto-scheduling | Manual evidence collection (scheduling planned) |
-
----
-
-## Security
-
-| Layer | Implementation |
-|-------|----------------|
-| Electron | Context isolation, nodeIntegration disabled, controlled IPC |
-| IPC Bridge | Input validation on every exposed method (type checks, allowlists) |
-| Evidence Integrity | SHA-256 file hashing on all stored evidence files |
-| Database | Foreign key constraints, parameterized queries, audit logging |
-| Navigation | External navigation blocked, window.open denied |
-| Data | All data local, zero external API calls, zero telemetry |
-
----
-
-## Contributing
-
-```bash
-git clone https://github.com/Egyan07/complianceguard.git
-cd complianceguard
-npm install
-cd frontend && npm install && cd ..
-npm run dev
-```
-
-Contributions welcome. Please open an issue first for major changes.
-
----
+- [x] Evidence collection from Windows OS
+- [x] 29 SOC 2 controls with weighted scoring
+- [x] Evidence upload UI (manual documents)
+- [x] PDF compliance reports
+- [x] Evaluation history with trend tracking
+- [ ] Scheduled automatic collection
+- [ ] ISO 27001 framework
+- [ ] HIPAA framework
+- [ ] Cloud sync + multi-machine dashboard
+- [ ] macOS and Linux support
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
+MIT — see [LICENSE](LICENSE).
 
 ---
 
 <p align="center">
-  <strong>ComplianceGuard</strong> — Collect. Evaluate. Comply.
+  Built by <a href="https://github.com/Egyan07">Egyan07</a>
   <br>
-  <a href="https://github.com/Egyan07/complianceguard/issues">Report Issues</a> · <a href="https://github.com/Egyan07/complianceguard/issues/new">Request Feature</a>
+  <a href="https://github.com/Egyan07/complianceguard/issues">Report a bug</a> · <a href="https://github.com/Egyan07/complianceguard/issues/new">Request a feature</a>
 </p>
