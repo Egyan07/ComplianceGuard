@@ -139,6 +139,31 @@ ipcMain.handle('select-folder', async () => {
   return result.filePaths[0];
 });
 
+// File picker for evidence upload
+ipcMain.handle('select-evidence-file', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openFile'],
+    filters: [
+      { name: 'Documents', extensions: ['pdf', 'doc', 'docx', 'txt', 'csv', 'json', 'xlsx', 'xls'] },
+      { name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'gif', 'bmp'] },
+      { name: 'All Files', extensions: ['*'] }
+    ]
+  });
+
+  if (result.canceled || !result.filePaths[0]) return null;
+
+  const filePath = result.filePaths[0];
+  const fileName = path.basename(filePath);
+  const fileBuffer = fs.readFileSync(filePath);
+
+  return {
+    fileName,
+    filePath,
+    fileSize: fileBuffer.length,
+    fileData: fileBuffer.toString('base64')
+  };
+});
+
 // Save report to file
 ipcMain.handle('save-report', async (event, data, filename) => {
   const result = await dialog.showSaveDialog(mainWindow, {

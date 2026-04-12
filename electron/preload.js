@@ -56,6 +56,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // File system operations
   selectFolder: () => ipcRenderer.invoke('select-folder'),
+  selectEvidenceFile: () => ipcRenderer.invoke('select-evidence-file'),
   saveReport: (data, filename) => ipcRenderer.invoke('save-report', data, filename),
 
   // User settings

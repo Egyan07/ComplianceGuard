@@ -19,10 +19,12 @@ import {
 import {
   Refresh,
   CloudUpload,
-  Assessment
+  Assessment,
+  Upload
 } from '@mui/icons-material';
 import ComplianceScore from './ComplianceScore';
 import EvidenceList from './EvidenceList';
+import EvidenceUpload from './EvidenceUpload';
 import {
   getEvidenceSummary,
   getEvidenceItems,
@@ -57,6 +59,7 @@ const Dashboard: React.FC = () => {
 
   const [collectingEvidence, setCollectingEvidence] = useState(false);
   const [evaluating, setEvaluating] = useState(false);
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
   const fetchDashboardData = async () => {
     setState(prev => ({ ...prev, loading: true, error: null }));
@@ -214,15 +217,24 @@ const Dashboard: React.FC = () => {
               Refresh
             </Button>
             {isElectron && (
-              <Button
-                variant="outlined"
-                color="secondary"
-                startIcon={<Assessment />}
-                onClick={handleEvaluateCompliance}
-                disabled={evaluating}
-              >
-                {evaluating ? 'Evaluating...' : 'Evaluate Compliance'}
-              </Button>
+              <>
+                <Button
+                  variant="outlined"
+                  startIcon={<Upload />}
+                  onClick={() => setUploadDialogOpen(true)}
+                >
+                  Upload Evidence
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  startIcon={<Assessment />}
+                  onClick={handleEvaluateCompliance}
+                  disabled={evaluating}
+                >
+                  {evaluating ? 'Evaluating...' : 'Evaluate Compliance'}
+                </Button>
+              </>
             )}
             <Button
               variant="contained"
@@ -344,6 +356,21 @@ const Dashboard: React.FC = () => {
           />
         </Box>
       </Box>
+
+      {/* Evidence Upload Dialog */}
+      {isElectron && (
+        <EvidenceUpload
+          open={uploadDialogOpen}
+          onClose={() => setUploadDialogOpen(false)}
+          onSuccess={() => {
+            setState(prev => ({
+              ...prev,
+              successMessage: 'Evidence uploaded successfully!'
+            }));
+            fetchDashboardData();
+          }}
+        />
+      )}
 
       {/* Snackbar for notifications */}
       <Snackbar
