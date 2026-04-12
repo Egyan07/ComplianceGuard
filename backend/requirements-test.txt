@@ -17,6 +17,7 @@ boto3==1.34.0
 botocore==1.34.0
 
 slowapi==0.1.9
+alembic==1.12.1
 
 # Testing
 pytest==7.4.3
