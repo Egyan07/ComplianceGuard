@@ -32,8 +32,23 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# Create tables on startup (replaced by Alembic in production)
-Base.metadata.create_all(bind=engine)
+# Run Alembic migrations on startup
+from alembic.config import Config as AlembicConfig
+from alembic import command as alembic_command
+import os
+
+def run_migrations():
+    """Run pending Alembic migrations."""
+    alembic_ini = os.path.join(os.path.dirname(__file__), "..", "alembic.ini")
+    if os.path.exists(alembic_ini):
+        alembic_cfg = AlembicConfig(alembic_ini)
+        alembic_cfg.set_main_option("sqlalchemy.url", str(engine.url))
+        alembic_command.upgrade(alembic_cfg, "head")
+    else:
+        # Fallback for environments without alembic.ini (e.g. tests)
+        Base.metadata.create_all(bind=engine)
+
+run_migrations()
 
 # Configure CORS for frontend communication
 app.add_middleware(
