@@ -22,11 +22,14 @@ from app.core.auth import get_password_hash
 
 
 def pytest_configure(config):
-    """Configure pytest with custom settings."""
-    # Ensure we're in testing mode
+    """Configure pytest with custom settings and markers."""
     os.environ.setdefault("ENVIRONMENT", "testing")
     os.environ.setdefault("DATABASE_TYPE", "sqlite")
     os.environ.setdefault("TEST_DATABASE_URL", "sqlite:///:memory:")
+    config.addinivalue_line("markers", "e2e: mark test as end-to-end test")
+    config.addinivalue_line("markers", "slow: mark test as slow running test")
+    config.addinivalue_line("markers", "integration: mark test as integration test")
+    config.addinivalue_line("markers", "unit: mark test as unit test")
 
 
 @pytest.fixture(scope="session")
@@ -140,80 +143,24 @@ def test_settings():
 
 
 def pytest_collection_modifyitems(config, items):
-    """Modify test collection to add markers and categories."""
-    for item in items:
-        # Add markers based on test path
-        if "e2e" in item.nodeid:
-            item.add_marker(pytest.mark.e2e)
-        elif "integration" in item.nodeid:
-            item.add_marker(pytest.mark.integration)
-        elif "unit" in item.nodeid:
-            item.add_marker(pytest.mark.unit)
-
-
-# Configure test database isolation
-@pytest.fixture(autouse=True)
-def enable_db_access_for_all_tests(test_db_session):
-    """Enable database access for all tests."""
-    pass
-
-
-# Mock external services for testing
-@pytest.fixture(autouse=True)
-def mock_aws_services():
-    """Mock AWS services to prevent external calls during tests."""
-    # Mocking is handled by test-specific implementations when needed
-    pass
-
-
-@pytest.fixture(autouse=True)
-def mock_external_http_calls():
-    """Mock external HTTP calls during tests."""
-    # Mocking is handled by test-specific implementations when needed
-    pass
-
-
-# Custom test markers
-
-def pytest_addoption(parser):
-    """Add custom command line options for pytest."""
-    parser.addoption(
-        "--run-e2e",
-        action="store_true",
-        default=False,
-        help="Run end-to-end tests"
-    )
-    parser.addoption(
-        "--run-slow",
-        action="store_true",
-        default=False,
-        help="Run slow tests"
-    )
-
-
-def pytest_configure(config):
-    """Configure custom markers."""
-    config.addinivalue_line(
-        "markers", "e2e: mark test as end-to-end test"
-    )
-    config.addinivalue_line(
-        "markers", "slow: mark test as slow running test"
-    )
-    config.addinivalue_line(
-        "markers", "integration: mark test as integration test"
-    )
-    config.addinivalue_line(
-        "markers", "unit: mark test as unit test"
-    )
-
-
-def pytest_collection_modifyitems(config, items):
-    """Skip tests based on command line options."""
+    """Add markers based on test path and skip e2e/slow unless opted in."""
     skip_e2e = pytest.mark.skip(reason="need --run-e2e option to run")
     skip_slow = pytest.mark.skip(reason="need --run-slow option to run")
 
     for item in items:
-        if "e2e" in item.keywords and not config.getoption("--run-e2e"):
-            item.add_marker(skip_e2e)
-        if "slow" in item.keywords and not config.getoption("--run-slow"):
+        if "e2e" in item.nodeid:
+            item.add_marker(pytest.mark.e2e)
+            if not config.getoption("--run-e2e", default=False):
+                item.add_marker(skip_e2e)
+        elif "integration" in item.nodeid:
+            item.add_marker(pytest.mark.integration)
+        elif "unit" in item.nodeid:
+            item.add_marker(pytest.mark.unit)
+        if "slow" in item.keywords and not config.getoption("--run-slow", default=False):
             item.add_marker(skip_slow)
+
+
+def pytest_addoption(parser):
+    """Add custom command line options for pytest."""
+    parser.addoption("--run-e2e", action="store_true", default=False, help="Run end-to-end tests")
+    parser.addoption("--run-slow", action="store_true", default=False, help="Run slow tests")

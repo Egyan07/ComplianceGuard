@@ -5,7 +5,6 @@ REST API endpoints for managing and collecting compliance evidence.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Dict, Any, Optional
 from pydantic import BaseModel
 import logging
@@ -13,9 +12,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 from app.services.evidence_collector import EvidenceCollectionService
+from app.api.deps import get_current_user
+from app.models.user import User
 
 router = APIRouter(prefix="/evidence", tags=["evidence"])
-security = HTTPBearer()
 
 
 class AWSCredentials(BaseModel):
@@ -42,34 +42,10 @@ class EvidenceResponse(BaseModel):
     summary: Dict[str, Any]
 
 
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
-    """
-    Validate authentication token (placeholder for actual auth implementation)
-
-    Args:
-        credentials: HTTP authorization credentials
-
-    Returns:
-        User identifier
-
-    Raises:
-        HTTPException: If authentication fails
-    """
-    # Placeholder for actual authentication logic
-    # In a real implementation, this would validate JWT tokens, API keys, etc.
-    if not credentials.credentials:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    return credentials.credentials
-
-
 @router.post("/collect", response_model=EvidenceResponse, status_code=status.HTTP_200_OK)
 async def collect_evidence(
     request: EvidenceCollectionRequest,
-    current_user: str = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ) -> Dict[str, Any]:
     """
     Collect compliance evidence from configured sources
@@ -99,7 +75,7 @@ async def collect_evidence(
         }
     """
     try:
-        logger.info(f"Starting evidence collection for user: {current_user}")
+        logger.info(f"Starting evidence collection for user: {current_user.email}")
 
         # Initialize evidence collection service
         evidence_service = EvidenceCollectionService()
@@ -114,7 +90,10 @@ async def collect_evidence(
             }
 
         # Collect evidence from all sources
-        evidence_bundle = evidence_service.collect_all_evidence(**aws_credentials)
+        if aws_credentials:
+            evidence_bundle = evidence_service.collect_all_evidence(**aws_credentials)
+        else:
+            evidence_bundle = evidence_service.collect_all_evidence()
 
         # Generate summary if requested
         summary = evidence_service.get_evidence_summary(evidence_bundle)
@@ -142,7 +121,7 @@ async def collect_evidence(
 @router.get("/status/{collection_id}", response_model=Dict[str, Any])
 async def get_collection_status(
     collection_id: str,
-    current_user: str = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ) -> Dict[str, Any]:
     """
     Get status of evidence collection by ID
@@ -167,7 +146,7 @@ async def get_collection_status(
             'status': 'completed',
             'timestamp': '2024-01-15T10:00:00Z',
             'evidence_count': 0,
-            'user_id': current_user
+            'user_id': current_user.email
         }
 
         return status_response
@@ -183,7 +162,7 @@ async def get_collection_status(
 
 @router.get("/summary", response_model=Dict[str, Any])
 async def get_evidence_summary(
-    current_user: str = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ) -> Dict[str, Any]:
     """
     Get summary of all evidence collections
@@ -198,7 +177,7 @@ async def get_evidence_summary(
         HTTPException: If summary retrieval fails or authentication fails
     """
     try:
-        logger.info(f"Retrieving evidence summary for user: {current_user}")
+        logger.info(f"Retrieving evidence summary for user: {current_user.email}")
 
         # Placeholder for actual summary logic
         # In a real implementation, this would aggregate data from database
@@ -210,7 +189,7 @@ async def get_evidence_summary(
                 'iam_policy_compliance': 0,
                 'overall_compliance_score': 0
             },
-            'user_id': current_user
+            'user_id': current_user.email
         }
 
         return summary_response
@@ -228,7 +207,7 @@ async def get_evidence_summary(
 async def validate_evidence_completeness(
     evidence_bundle: Dict[str, Any],
     required_types: list[str],
-    current_user: str = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ) -> Dict[str, Any]:
     """
     Validate completeness of evidence bundle
@@ -245,7 +224,7 @@ async def validate_evidence_completeness(
         HTTPException: If validation fails or authentication fails
     """
     try:
-        logger.info(f"Validating evidence completeness for user: {current_user}")
+        logger.info(f"Validating evidence completeness for user: {current_user.email}")
 
         # Initialize evidence collection service
         evidence_service = EvidenceCollectionService()

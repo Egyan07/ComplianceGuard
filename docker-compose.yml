@@ -29,7 +29,7 @@ services:
   # Backend API Service
   backend:
     build:
-      context: ./complianceguard/backend
+      context: ./backend
       dockerfile: Dockerfile
     container_name: complianceguard-backend
     restart: unless-stopped
@@ -61,7 +61,7 @@ services:
     networks:
       - complianceguard-network
     volumes:
-      - ./complianceguard/backend/app:/app/app:ro
+      - ./backend/app:/app/app:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -72,7 +72,7 @@ services:
   # Frontend React Application
   frontend:
     build:
-      context: ./complianceguard/frontend
+      context: ./frontend
       dockerfile: Dockerfile
     container_name: complianceguard-frontend
     restart: unless-stopped
@@ -91,8 +91,8 @@ services:
     networks:
       - complianceguard-network
     volumes:
-      - ./complianceguard/frontend/src:/app/src:ro
-      - ./complianceguard/frontend/public:/app/public:ro
+      - ./frontend/src:/app/src:ro
+      - ./frontend/public:/app/public:ro
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
       interval: 30s
@@ -135,13 +135,13 @@ services:
       ENVIRONMENT: development
       DEBUG: "true"
     volumes:
-      - ./complianceguard/backend:/app
+      - ./backend:/app
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
   frontend:
     environment:
       NODE_ENV: development
     volumes:
-      - ./complianceguard/frontend:/app
+      - ./frontend:/app
       - /app/node_modules
     command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000"]
