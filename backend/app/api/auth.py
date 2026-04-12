@@ -231,3 +231,86 @@ async def get_verification_status(
 ):
     """Check if the current user's email is verified."""
     return {"is_verified": current_user.is_verified}
+
+
+class ForgotPasswordRequest(BaseModel):
+    """Schema for forgot password."""
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    """Schema for password reset."""
+    token: str
+    new_password: str
+
+
+@router.post("/forgot-password")
+async def forgot_password(
+    request_data: ForgotPasswordRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Generate a password reset token.
+    In production, this token would be sent via email.
+    Always returns 200 to avoid leaking whether the email exists.
+    """
+    from datetime import datetime, timezone
+    user = db.query(User).filter(User.email == request_data.email).first()
+    if user:
+        user.reset_token = secrets.token_urlsafe(32)
+        user.reset_token_expires = datetime.now(timezone.utc) + timedelta(hours=1)
+        db.commit()
+        # In production: send email with reset link containing user.reset_token
+
+    return {"message": "If an account with that email exists, a reset link has been sent"}
+
+
+@router.post("/reset-password")
+async def reset_password(
+    request_data: ResetPasswordRequest,
+    db: Session = Depends(get_db),
+):
+    """Reset password using a valid reset token."""
+    from datetime import datetime, timezone
+    user = db.query(User).filter(User.reset_token == request_data.token).first()
+
+    if not user or not user.reset_token_expires:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset token",
+        )
+
+    if datetime.now(timezone.utc) > user.reset_token_expires.replace(tzinfo=timezone.utc):
+        user.reset_token = None
+        user.reset_token_expires = None
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset token",
+        )
+
+    # Validate new password
+    pwd = request_data.new_password
+    errors = []
+    if len(pwd) < settings.password_min_length:
+        errors.append(f"at least {settings.password_min_length} characters")
+    if settings.password_require_uppercase and not re.search(r"[A-Z]", pwd):
+        errors.append("an uppercase letter")
+    if settings.password_require_lowercase and not re.search(r"[a-z]", pwd):
+        errors.append("a lowercase letter")
+    if settings.password_require_digits and not re.search(r"\d", pwd):
+        errors.append("a digit")
+    if settings.password_require_special and not re.search(r"[^A-Za-z0-9]", pwd):
+        errors.append("a special character")
+    if errors:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Password must contain {', '.join(errors)}",
+        )
+
+    user.hashed_password = get_password_hash(request_data.new_password)
+    user.reset_token = None
+    user.reset_token_expires = None
+    db.commit()
+
+    return {"message": "Password reset successfully"}

@@ -138,6 +138,53 @@ class TestAuthFlow:
         res = client.post("/api/auth/verify-email", json={"token": "bogus-token"})
         assert res.status_code == 400
 
+    def test_password_reset_flow(self, client):
+        # Register a user first
+        client.post("/api/auth/register", json={
+            "email": "reset@test.com",
+            "password": "Reset@1pass",
+            "first_name": "Reset",
+            "last_name": "User",
+        })
+
+        # Request reset
+        res = client.post("/api/auth/forgot-password", json={"email": "reset@test.com"})
+        assert res.status_code == 200
+
+        # Get token from DB
+        from app.models.user import User
+        db = next(override_get_db())
+        user = db.query(User).filter(User.email == "reset@test.com").first()
+        reset_tok = user.reset_token
+        db.close()
+
+        # Reset password
+        res = client.post("/api/auth/reset-password", json={
+            "token": reset_tok,
+            "new_password": "NewReset@1pass",
+        })
+        assert res.status_code == 200
+        assert res.json()["message"] == "Password reset successfully"
+
+        # Login with new password
+        res = client.post("/api/auth/login", data={
+            "username": "reset@test.com",
+            "password": "NewReset@1pass",
+        })
+        assert res.status_code == 200
+
+    def test_invalid_reset_token(self, client):
+        res = client.post("/api/auth/reset-password", json={
+            "token": "bogus",
+            "new_password": "New@1pass",
+        })
+        assert res.status_code == 400
+
+    def test_forgot_password_nonexistent_email(self, client):
+        # Should still return 200 to avoid leaking user existence
+        res = client.post("/api/auth/forgot-password", json={"email": "nobody@test.com"})
+        assert res.status_code == 200
+
     def test_duplicate_registration(self, client, auth_token):
         res = client.post("/api/auth/register", json={
             "email": "integration@test.com",

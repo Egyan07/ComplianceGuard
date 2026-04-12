@@ -39,6 +39,8 @@ class User(Base):
     is_superuser = Column(Boolean, default=False, nullable=False)
     is_verified = Column(Boolean, default=False, nullable=False)
     verification_token = Column(String, nullable=True)
+    reset_token = Column(String, nullable=True)
+    reset_token_expires = Column(DateTime(timezone=True), nullable=True)
 
     # Company relationship
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=True)
