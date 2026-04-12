@@ -126,7 +126,6 @@ const EvaluationHistory: React.FC = () => {
 
     const recentEvals = evaluations.slice(0, 10).reverse(); // oldest first for chart
     const maxScore = 100;
-    const barWidth = Math.min(60, (100 / recentEvals.length));
 
     return (
       <Paper sx={{ p: 3, mb: 3 }}>
