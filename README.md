@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="#quick-start"><img src="https://img.shields.io/badge/version-2.0.0-2563EB" alt="Version"></a>
+  <a href="#quick-start"><img src="https://img.shields.io/badge/version-2.1.0-2563EB" alt="Version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/Egyan07/complianceguard" alt="License"></a>
   <a href="#soc-2-controls"><img src="https://img.shields.io/badge/SOC%202-29%20controls-10B981" alt="Controls"></a>
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
@@ -56,7 +56,7 @@ cp .env.example .env          # configure your settings
 docker-compose up -d
 ```
 
-> Frontend at `http://localhost:3000`, API at `http://localhost:8000`. Uses PostgreSQL for storage and FastAPI for the backend.
+> Frontend at `http://localhost:3000`, API at `http://localhost:8000`. Uses PostgreSQL for storage and FastAPI for the backend. Create an account on the login page to get started.
 
 ### Build Installer
 
@@ -216,10 +216,11 @@ complianceguard/
 │   │   ├── main.py                     # FastAPI app, CORS, routes
 │   │   ├── api/                        # Auth, evidence, compliance endpoints
 │   │   ├── core/                       # Config, database, SOC 2 controls, auth
-│   │   ├── models/                     # SQLAlchemy models (user, company, compliance)
+│   │   ├── models/                     # SQLAlchemy models (user, company, compliance, evidence)
 │   │   ├── services/                   # Compliance service, evidence collector
 │   │   └── integrations/aws.py         # AWS evidence collection
-│   ├── tests/                          # Unit, integration, e2e tests
+│   ├── migrations/                     # Alembic database migrations
+│   ├── tests/                          # Unit (14) + integration (14) tests
 │   ├── requirements.txt
 │   └── Dockerfile
 ├── electron/
@@ -238,17 +239,17 @@ complianceguard/
 │   └── system/windows.js               # Windows evidence collector
 ├── frontend/
 │   ├── src/
-│   │   ├── App.tsx                     # Theme, nav, error boundary
-│   │   ├── components/                 # Dashboard, Score, Evidence, History, Settings
+│   │   ├── App.tsx                     # Theme, nav, auth gate, error boundary
+│   │   ├── components/                 # Dashboard, Score, Evidence, History, Settings, Login
+│   │   ├── contexts/AuthContext.tsx     # JWT auth state, login/register/logout
 │   │   ├── contexts/LicenseContext.tsx  # React context for tier state + feature checks
-│   │   ├── components/UpgradePrompt.tsx # Upgrade dialog for gated features
 │   │   ├── services/api.ts             # Unified API (IPC or HTTP)
 │   │   └── test/                       # Vitest test suite (31 tests)
 │   ├── .eslintrc.cjs
 │   ├── .prettierrc
 │   └── Dockerfile
 ├── resources/icons/                    # App icons (ico, png, svg, tray)
-├── .github/workflows/ci.yml           # Lint → Type check → Test → Build
+├── .github/workflows/ci.yml           # Backend Tests → Lint & Test → Build
 ├── docker-compose.yml                  # PostgreSQL + Backend + Frontend
 ├── .env.example                        # Environment config template
 └── package.json                        # Electron + build config
@@ -295,7 +296,7 @@ All data stays under your control. Zero telemetry.
 | Database | Parameterized queries. Foreign key constraints. |
 | Navigation | External URLs blocked. `window.open` denied. |
 | Licensing | Ed25519 signed keys. Only the public key ships with the app. |
-| Auth (Web) | JWT tokens with configurable expiry. Bcrypt password hashing. |
+| Auth (Web) | JWT tokens with configurable expiry. Bcrypt password hashing. Login required for web mode. |
 
 ## Development
 
@@ -317,19 +318,26 @@ docker-compose down      # Stop all services
 ```bash
 cd backend
 pip install -r requirements.txt
-uvicorn app.main:app --reload    # Run backend locally
+alembic upgrade head                 # Run database migrations
+uvicorn app.main:app --reload        # Run backend locally
 ```
 
-### Frontend Tests & Linting
+### Tests
 
 ```bash
+# Frontend (31 tests)
 cd frontend
-npm test                 # Vitest (31 tests)
+npm test                 # Vitest
 npm run lint             # ESLint
 npm run format:check     # Prettier
+
+# Backend (28 tests)
+cd backend
+python -m pytest tests/unit/ -v              # Unit tests (14)
+python -m pytest tests/integration/ -v       # Integration tests (14)
 ```
 
-CI runs lint, type check, tests, and build on every push via GitHub Actions.
+CI runs backend tests, frontend lint + type check + tests, and build on every push via GitHub Actions. Total: **59 tests**.
 
 ## Roadmap
 
@@ -339,9 +347,12 @@ CI runs lint, type check, tests, and build on every push via GitHub Actions.
 - [x] PDF compliance reports
 - [x] Evaluation history with trend tracking
 - [x] Free / Pro tier licensing with Ed25519 keys
-- [x] CI/CD pipeline (GitHub Actions)
+- [x] CI/CD pipeline (GitHub Actions — 59 tests)
 - [x] Docker Compose deployment
 - [x] FastAPI backend with PostgreSQL
+- [x] JWT authentication with login/register UI
+- [x] Alembic database migrations
+- [x] API integration tests (auth, evidence, compliance)
 - [ ] Scheduled automatic collection
 - [ ] ISO 27001 framework
 - [ ] HIPAA framework

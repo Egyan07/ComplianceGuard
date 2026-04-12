@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [2.1.0] - 2026-04-12
+
+### Added
+- **Login / Register UI** — Tabbed auth page for web mode with email + password; Electron mode skips login
+- **AuthContext** — React context managing JWT token, user state, login/register/logout across the app
+- **Logout button** — AppBar shows sign-out icon with user email on hover
+- **Evidence persistence** — `EvidenceCollection` and `EvidenceItem` SQLAlchemy models; evidence endpoints now write to and read from the database
+- **Evidence list endpoints** — New `/evidence/items` and `/evidence/collections` endpoints with pagination
+- **Alembic migrations** — Initialized with auto-generated initial migration covering all 5 tables (users, companies, compliance_frameworks, evidence_collections, evidence_items)
+- **API integration tests** — 14 tests covering full auth flow, evidence CRUD, compliance endpoints, and health checks
+- **Shared auth dependency** — `deps.py` with `get_current_user` using real JWT verification + DB user lookup
+
+### Fixed
+- **Backend auth** — Replaced fake `get_current_user` (accepted any bearer token) with proper JWT verification
+- **Evidence collect crash** — Fixed `**None` dict unpacking when AWS credentials not provided
+- **Docker Compose paths** — Changed `./complianceguard/backend` → `./backend` to work from repo root
+- **Backend Dockerfile** — Updated to Python 3.12, fixed `migrations/` copy path, added `curl` for healthcheck
+- **Frontend Dockerfile** — Updated to Node 20 to match CI
+- **conftest.py** — Removed duplicate `pytest_configure` and `pytest_collection_modifyitems`
+- **Auth API tests** — Rewrote with proper `dependency_overrides` and in-memory SQLite instead of broken mocks
+- **bcrypt compatibility** — Pinned `bcrypt==4.0.1` to fix `passlib` AttributeError on CI
+
+### Changed
+- Backend CI now runs both unit tests (14) and integration tests (14) — **28 backend + 31 frontend = 59 total**
+- Evidence summary endpoint returns real aggregated data from user's collections
+- Health endpoint returns real timestamp and version `2.0.0`
+- CORS origins include `localhost:3000` for Docker mode
+- `Base.metadata.create_all` called on startup to auto-create tables
+
+---
+
 ## [2.0.1] - 2026-04-12
 
 ### Fixed
