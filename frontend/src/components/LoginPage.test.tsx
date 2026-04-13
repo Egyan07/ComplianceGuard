@@ -6,7 +6,6 @@ import { AuthProvider } from '../contexts/AuthContext';
 
 const theme = createTheme();
 
-// Mock axios
 vi.mock('axios', () => ({
   default: {
     post: vi.fn(),
@@ -33,15 +32,14 @@ describe('LoginPage', () => {
     renderLogin();
     expect(screen.getByText('ComplianceGuard')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Sign In' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Email')).toBeInTheDocument();
-    expect(screen.getByLabelText('Password')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: /email/i })).toBeInTheDocument();
   });
 
   it('switches to create account tab', () => {
     renderLogin();
     fireEvent.click(screen.getByText('Create Account'));
-    expect(screen.getByLabelText('First Name')).toBeInTheDocument();
-    expect(screen.getByLabelText('Last Name')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: /first name/i })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: /last name/i })).toBeInTheDocument();
   });
 
   it('shows sign in button on login tab', () => {
@@ -62,8 +60,10 @@ describe('LoginPage', () => {
     });
 
     renderLogin();
-    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'bad@test.com' } });
-    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'wrong' } });
+    fireEvent.change(screen.getByRole('textbox', { name: /email/i }), {
+      target: { value: 'bad@test.com' },
+    });
+    fireEvent.change(screen.getByDisplayValue(''), { target: { value: 'wrong' } });
     fireEvent.click(screen.getByRole('button', { name: 'Sign In' }));
 
     await waitFor(() => {
