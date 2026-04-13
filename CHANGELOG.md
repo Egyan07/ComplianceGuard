@@ -13,8 +13,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **timezone.utc in compliance health** — `compliance_health_check()` now uses `datetime.now(timezone.utc)` consistently with the rest of the backend; eliminates naive datetime in the one place it was missed
 - **execSync → async** — All `execSync` calls in `electron/system/windows.js` replaced with `promisify(exec)`; evidence collection no longer blocks the Electron main thread during collection
 
+### Added
+- **test_compliance_service.py** — 49 unit tests covering `ComplianceService` evaluate logic, scoring, status determination, compliance level, recommendations, risk assessment, next review date, trend, and report export
+- **test_auth_helpers.py** — 29 unit tests covering `validate_password_strength`, register edge cases, email verification flow, and full forgot/reset password cycle
+- **test_models.py** — 22 unit tests covering `EvidenceCollection`, `EvidenceItem`, `ComplianceEvaluationRecord`, and `ControlAssessmentRecord` model creation, defaults, JSON fields, and cascade deletes
+
 ### Changed
 - **e2e tests wired into CI** — `tests/e2e/` now runs in the `backend-tests` CI job via `--run-e2e` flag
+- Total test count: **114 backend unit + 20 integration + 8 e2e + 37 frontend unit + 5 frontend e2e = 184 tests**
 
 ---
 
