@@ -6,7 +6,7 @@
   <a href="#quick-start"><img src="https://img.shields.io/badge/version-2.3.0-2563EB" alt="Version"></a>
   <img src="https://img.shields.io/badge/license-BSL%201.1-orange" alt="License">
   <a href="#soc-2-controls"><img src="https://img.shields.io/badge/SOC%202-29%20controls-10B981" alt="Controls"></a>
-  <img src="https://img.shields.io/badge/tests-184%20passing-10B981?logo=vitest&logoColor=white" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-222%20passing-10B981?logo=vitest&logoColor=white" alt="Tests">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
   <a href="https://github.com/Egyan07/ComplianceGuard/actions"><img src="https://img.shields.io/github/actions/workflow/status/Egyan07/ComplianceGuard/ci.yml?label=CI&logo=githubactions&logoColor=white" alt="CI"></a>
 </p>
@@ -396,7 +396,7 @@ python -m pytest tests/integration/ -v       # Integration tests (20)
 python -m pytest tests/e2e/ -v --run-e2e     # E2E tests (8)
 ```
 
-CI runs backend tests (unit + integration + e2e), frontend lint + type check + tests, and build on every push via GitHub Actions. Total: **184 tests**.
+CI runs backend tests (unit + integration + e2e), frontend lint + type check + tests, and build on every push via GitHub Actions. Total: **222 tests**.
 
 ## Troubleshooting
 
