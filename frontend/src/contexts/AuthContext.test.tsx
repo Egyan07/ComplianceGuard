@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { waitFor, act } from "@testing-library/react";
 import { renderHook } from '@testing-library/react';
 import { ReactNode } from 'react';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
@@ -159,7 +159,7 @@ describe('AuthContext', () => {
         await act(async () => {
           await result.current.login('bad@example.com', 'wrong');
         });
-      } catch {}
+      } catch (_e) { /* expected */ }
 
       expect(result.current.user).toBeNull();
     });
