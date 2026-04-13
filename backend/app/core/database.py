@@ -6,8 +6,7 @@ and base model class for all database models.
 """
 
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.pool import StaticPool
 from typing import Generator, Optional
 
@@ -15,20 +14,17 @@ from app.core.config import get_database_url, settings
 
 
 # Database URL configuration
-# Use centralized configuration management
 def get_database_url_for_environment(testing: bool = False) -> str:
     """Get database URL based on environment and testing flag."""
     return get_database_url(testing=testing)
 
 
-# Create SQLAlchemy engine
 def create_database_engine(testing: bool = False):
     """Create SQLAlchemy engine with appropriate configuration."""
     url = get_database_url_for_environment(testing=testing)
 
     if "sqlite" in url:
         if testing or ":memory:" in url:
-            # Use in-memory SQLite for testing
             return create_engine(
                 "sqlite:///:memory:",
                 connect_args={"check_same_thread": False},
@@ -36,14 +32,12 @@ def create_database_engine(testing: bool = False):
                 echo=settings.database_echo
             )
         else:
-            # Use file-based SQLite for development
             return create_engine(
                 url,
                 connect_args={"check_same_thread": False},
                 echo=settings.database_echo
             )
     else:
-        # PostgreSQL or other databases
         return create_engine(
             url,
             echo=settings.database_echo,
@@ -54,7 +48,6 @@ def create_database_engine(testing: bool = False):
 # Create engine instance
 engine = create_database_engine(testing=False)
 
-
 # Create session maker
 SessionLocal = sessionmaker(
     autocommit=False,
@@ -62,17 +55,12 @@ SessionLocal = sessionmaker(
     bind=engine
 )
 
-
 # Create base class for models
 Base = declarative_base()
 
 
 def get_db() -> Generator:
-    """Dependency function to get database session.
-
-    This function is used by FastAPI dependency injection to provide
-    database sessions to route handlers.
-    """
+    """Dependency function to get database session."""
     db = SessionLocal()
     try:
         yield db
@@ -81,17 +69,10 @@ def get_db() -> Generator:
 
 
 def get_test_db() -> Generator:
-    """Get database session for testing.
-
-    Creates an in-memory SQLite database for testing purposes.
-    """
-    # Create test engine
+    """Get database session for testing."""
     test_engine = create_database_engine(testing=True)
-
-    # Create all tables
     Base.metadata.create_all(bind=test_engine)
 
-    # Create session
     TestingSessionLocal = sessionmaker(
         autocommit=False,
         autoflush=False,
@@ -103,7 +84,6 @@ def get_test_db() -> Generator:
         yield db
     finally:
         db.close()
-        # Drop all tables
         Base.metadata.drop_all(bind=test_engine)
 
 
@@ -118,12 +98,7 @@ def get_session_factory():
 
 
 def create_test_database():
-    """
-    Create a test database with all tables.
-
-    Returns:
-        Engine: The test database engine
-    """
+    """Create a test database with all tables. Returns the test engine."""
     test_engine = create_database_engine(testing=True)
     Base.metadata.create_all(bind=test_engine)
     return test_engine

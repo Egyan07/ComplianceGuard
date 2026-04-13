@@ -8,18 +8,16 @@ and JWT token generation/validation.
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from jose import jwt, JWTError
-from passlib.context import CryptContext
+import bcrypt
+import jwt
+from jwt.exceptions import InvalidTokenError
 from pydantic import BaseModel
 
 from app.models.user import User
 from app.core.config import settings
 
 
-# Password hashing configuration
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-# JWT configuration - use centralized settings
+# JWT configuration
 SECRET_KEY = settings.secret_key
 ALGORITHM = settings.algorithm
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
@@ -30,10 +28,24 @@ class TokenPayload(BaseModel):
     sub: Optional[str] = None
 
 
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify a plain password against a hashed password."""
+    return bcrypt.checkpw(
+        plain_password.encode("utf-8"),
+        hashed_password.encode("utf-8")
+    )
+
+
+def get_password_hash(password: str) -> str:
+    """Generate a bcrypt hash from a plain password."""
+    return bcrypt.hashpw(
+        password.encode("utf-8"),
+        bcrypt.gensalt()
+    ).decode("utf-8")
+
+
 def authenticate_user(db, email: str, password: str) -> Optional[User]:
     """Authenticate a user with email and password."""
-    from sqlalchemy.orm import Session
-
     db_user = db.query(User).filter(User.email == email).first()
     if not db_user:
         return None
@@ -51,8 +63,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
         expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
 def verify_access_token(token: str) -> Optional[TokenPayload]:
@@ -62,24 +73,12 @@ def verify_access_token(token: str) -> Optional[TokenPayload]:
         email: str = payload.get("sub")
         if email is None:
             return None
-        token_data = TokenPayload(sub=email)
-    except JWTError:
+        return TokenPayload(sub=email)
+    except InvalidTokenError:
         return None
-    return token_data
 
 
 class Token(BaseModel):
     """Token model for authentication response."""
     access_token: str
     token_type: str
-
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a plain password against a hashed password."""
-    return pwd_context.verify(plain_password, hashed_password)
-
-
-def get_password_hash(password: str) -> str:
-    """Generate a password hash from a plain password."""
-    return pwd_context.hash(password)
-
