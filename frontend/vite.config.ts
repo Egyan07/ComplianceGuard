@@ -18,5 +18,12 @@ export default defineConfig({
     setupFiles: './src/test/setup.ts',
     css: true,
     exclude: ['e2e/**', 'node_modules/**'],
+    pool: 'vmForks',
+    poolOptions: {
+      vmForks: {
+        maxForks: 1,
+        minForks: 1,
+      }
+    }
   }
 })

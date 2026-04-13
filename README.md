@@ -4,11 +4,11 @@
 
 <p align="center">
   <a href="#quick-start"><img src="https://img.shields.io/badge/version-2.3.0-2563EB" alt="Version"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-BSL%201.1-orange" alt="License"></a>
+  <img src="https://img.shields.io/badge/license-BSL%201.1-orange" alt="License">
   <a href="#soc-2-controls"><img src="https://img.shields.io/badge/SOC%202-29%20controls-10B981" alt="Controls"></a>
   <img src="https://img.shields.io/badge/tests-184%20passing-10B981?logo=vitest&logoColor=white" alt="Tests">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
-  <a href="https://github.com/Egyan07/complianceguard/actions"><img src="https://img.shields.io/github/actions/workflow/status/Egyan07/complianceguard/ci.yml?label=CI&logo=githubactions&logoColor=white" alt="CI"></a>
+  <a href="https://github.com/Egyan07/ComplianceGuard/actions"><img src="https://img.shields.io/github/actions/workflow/status/Egyan07/ComplianceGuard/ci.yml?label=CI&logo=githubactions&logoColor=white" alt="CI"></a>
 </p>
 
 ---
@@ -35,12 +35,26 @@ ComplianceGuard lives on the endpoint too. It collects evidence directly from Wi
                    └─────────────┘
 ```
 
+## Screenshots
+
+### Dashboard
+
+![ComplianceGuard Dashboard](assets/screenshots/Dashboard.png)
+
+The dashboard shows your real-time compliance score, per-category breakdowns, and one-click access to collect evidence, run an evaluation, upload manual evidence, and export a PDF report.
+
+### Evidence List
+
+![Evidence List](assets/screenshots/EvidenceCollection.png)
+
+All collected evidence items in one place — searchable and filterable by status and source. Each item shows its compliance status, collection date, and can be expanded for full details.
+
 ## Quick Start
 
 ### One-Click (Windows)
 
 ```
-git clone https://github.com/Egyan07/complianceguard.git
+git clone https://github.com/Egyan07/ComplianceGuard.git
 ```
 
 1. Double-click **`install.bat`** — installs all dependencies, sets up the database, and creates `start.bat`
@@ -54,8 +68,8 @@ git clone https://github.com/Egyan07/complianceguard.git
 <summary>Desktop (Electron)</summary>
 
 ```bash
-git clone https://github.com/Egyan07/complianceguard.git
-cd complianceguard
+git clone https://github.com/Egyan07/ComplianceGuard.git
+cd ComplianceGuard
 npm install && cd frontend && npm install && cd ..
 npm run dev
 ```
@@ -66,8 +80,8 @@ npm run dev
 <summary>Web (Docker)</summary>
 
 ```bash
-git clone https://github.com/Egyan07/complianceguard.git
-cd complianceguard
+git clone https://github.com/Egyan07/ComplianceGuard.git
+cd ComplianceGuard
 cp .env.example .env          # configure your settings
 docker-compose up -d
 ```
@@ -231,7 +245,7 @@ ComplianceGuard runs in two modes: **Desktop** (Electron + SQLite) for offline u
 **Key files:**
 
 ```
-complianceguard/
+ComplianceGuard/
 ├── backend/
 │   ├── app/
 │   │   ├── main.py                     # FastAPI app, CORS, routes
@@ -262,17 +276,20 @@ complianceguard/
 │   ├── src/
 │   │   ├── App.tsx                     # Theme, nav, auth gate, error boundary
 │   │   ├── components/                 # Dashboard, Score, Evidence, History, Settings, Login
-│   │   ├── contexts/AuthContext.tsx     # JWT auth state, login/register/logout
-│   │   ├── contexts/LicenseContext.tsx  # React context for tier state + feature checks
+│   │   ├── contexts/AuthContext.tsx    # JWT auth state, login/register/logout
+│   │   ├── contexts/LicenseContext.tsx # React context for tier state + feature checks
 │   │   ├── services/api.ts             # Unified API (IPC or HTTP)
-│   │   └── test/                       # Vitest test suite (37 tests)
+│   │   └── test/                       # Vitest test suite (75 tests)
 │   ├── e2e/                            # Playwright e2e tests (5 tests)
 │   ├── .eslintrc.cjs
 │   ├── .prettierrc
 │   └── Dockerfile
+├── assets/
+│   ├── banner.svg
+│   └── screenshots/                    # Dashboard.png, EvidenceCollection.png
 ├── resources/icons/                    # App icons (ico, png, svg, tray)
 ├── install.bat                         # One-click setup (installs deps, creates start.bat)
-├── .github/workflows/ci.yml           # Backend Tests → Lint & Test → Build
+├── .github/workflows/ci.yml            # Backend Tests → Lint & Test → Build
 ├── docker-compose.yml                  # PostgreSQL + Backend + Frontend + Nginx
 ├── nginx.conf                          # Reverse proxy, rate limiting, security headers
 ├── .env.example                        # Environment config template
@@ -281,6 +298,18 @@ complianceguard/
 
 </details>
 
+## Limitations
+
+ComplianceGuard is designed for Windows endpoints. The following limitations apply in the current release:
+
+- **Windows only** — evidence collection uses PowerShell, WMI, and the Windows registry. macOS and Linux support is on the roadmap.
+- **No automatic scheduling** — evidence must be collected manually or triggered via the dashboard. Scheduled collection is planned.
+- **AWS only for cloud evidence** — the web backend collects S3 and IAM evidence from AWS. GCP and Azure are not yet implemented.
+- **SOC 2 Type II only** — ISO 27001, HIPAA, and PCI DSS frameworks are in development.
+- **Single machine in free tier** — the free tier is limited to one machine. Pro supports up to 10, Enterprise is unlimited.
+- **No real-time monitoring** — ComplianceGuard takes point-in-time snapshots, not continuous streams.
+- **PDF reports require Pro** — the free tier shows your overall score but does not generate audit-ready PDF exports.
+
 ## Pricing
 
 Free gets you hooked. Pro makes you audit-ready.
@@ -288,14 +317,14 @@ Free gets you hooked. Pro makes you audit-ready.
 | | **Free** | **Pro** | **Enterprise** |
 |---|---|---|---|
 | **Price** | $0 forever | $49–99/mo | $299/mo + $15/machine |
-| Evidence collection (all 8 categories) | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| Evidence collection (all 8 categories) | ✅ | ✅ | ✅ |
 | SOC 2 controls | 12 core controls | All 29 controls | All 29 controls |
-| Overall compliance score | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| Per-control scoring + gap details | — | :white_check_mark: | :white_check_mark: |
-| Remediation recommendations | — | :white_check_mark: | :white_check_mark: |
-| Upload manual evidence (policies, docs) | — | :white_check_mark: | :white_check_mark: |
-| Evaluation history + trends | — | :white_check_mark: | :white_check_mark: |
-| PDF audit-ready reports | — | :white_check_mark: | :white_check_mark: |
+| Overall compliance score | ✅ | ✅ | ✅ |
+| Per-control scoring + gap details | — | ✅ | ✅ |
+| Remediation recommendations | — | ✅ | ✅ |
+| Upload manual evidence (policies, docs) | — | ✅ | ✅ |
+| Evaluation history + trends | — | ✅ | ✅ |
+| PDF audit-ready reports | — | ✅ | ✅ |
 | Machines | 1 | Up to 10 | Unlimited |
 | ISO 27001, HIPAA, PCI DSS | — | *Coming soon* | *Coming soon* |
 | Cloud dashboard (multi-machine) | — | *Coming soon* | *Coming soon* |
@@ -324,6 +353,8 @@ All data stays under your control. Zero telemetry.
 | Rate Limiting | 5 requests/min on login, 3/min on register. Nginx rate limiting at proxy layer. |
 | Proxy | Nginx reverse proxy with security headers (X-Frame-Options, X-Content-Type-Options, XSS protection). |
 
+For reporting security vulnerabilities, see [SECURITY.md](SECURITY.md).
+
 ## Development
 
 ### Desktop
@@ -351,7 +382,7 @@ uvicorn app.main:app --reload        # Run backend locally
 ### Tests
 
 ```bash
-# Frontend (37 unit + 5 e2e)
+# Frontend (75 unit + 5 e2e)
 cd frontend
 npm test                 # Vitest unit tests
 npm run test:e2e         # Playwright e2e tests
@@ -362,9 +393,59 @@ npm run format:check     # Prettier
 cd backend
 python -m pytest tests/unit/ -v              # Unit tests (114)
 python -m pytest tests/integration/ -v       # Integration tests (20)
+python -m pytest tests/e2e/ -v --run-e2e     # E2E tests (8)
 ```
 
-CI runs backend tests (unit + integration), frontend lint + type check + tests, and build on every push via GitHub Actions. Total: **184 tests**.
+CI runs backend tests (unit + integration + e2e), frontend lint + type check + tests, and build on every push via GitHub Actions. Total: **184 tests**.
+
+## Troubleshooting
+
+**`install.bat` fails with "Node.js not found"**
+Install [Node.js 18+](https://nodejs.org/) and ensure it is added to your PATH. Restart your terminal after installation.
+
+**`install.bat` fails with "Python not found"**
+Install [Python 3.10+](https://www.python.org/downloads/) and check "Add Python to PATH" during setup.
+
+**Backend starts but frontend shows blank screen**
+Run `cd frontend && npm install` then `npm run build`. In desktop mode, ensure the Vite dev server is running on port 5173.
+
+**Docker Compose fails with "port already in use"**
+Stop any existing services on ports 80, 8000, or 5432, then re-run `docker-compose up -d`.
+
+**Evidence collection returns empty results**
+Run the app as Administrator. Some Windows registry and event log queries require elevated privileges.
+
+**`alembic upgrade head` fails**
+Ensure `DATABASE_URL` in your `.env` is set correctly. For local SQLite, use `sqlite:///./complianceguard.db`.
+
+**License key not activating**
+License keys are tied to the Ed25519 public key bundled with the app. Ensure you are using a key generated for this build.
+
+**CI fails with `ERR_MODULE_NOT_FOUND` for react-transition-group**
+Run `cd frontend && npm install react-transition-group` to install the missing peer dependency.
+
+## FAQ
+
+**Is my compliance data sent anywhere?**
+No. All evidence collection, scoring, and storage happens locally on your machine or on your own hosted infrastructure. There is no telemetry and no data leaves your control.
+
+**Does ComplianceGuard replace a SOC 2 auditor?**
+No. It automates evidence collection and gives you a readiness score, but a formal SOC 2 audit still requires a licensed CPA firm. Think of ComplianceGuard as audit preparation, not audit replacement.
+
+**Can I use the free tier for a real audit?**
+The free tier is useful for assessing your current posture. For an actual audit you will need Pro, which unlocks the full 29-control breakdown, gap details, remediation recommendations, and PDF exports that auditors expect.
+
+**What happens to my data if I stop using ComplianceGuard?**
+Your data is stored in a local SQLite file (Desktop mode) or your own PostgreSQL instance (Web mode). Uninstalling the app or deleting the database file removes all data permanently.
+
+**Is the source code auditable?**
+Yes. The full source is available in this repository under the Business Source License. You can inspect every line of the evidence collection and scoring logic.
+
+**Will macOS and Linux be supported?**
+They are on the roadmap. The backend and frontend are already cross-platform. The main work required is porting the Windows-specific evidence collector to macOS and Linux equivalents.
+
+**How do I get a Pro license key?**
+License key purchasing is coming soon. Contact [Egyan07](https://github.com/Egyan07) directly in the meantime.
 
 ## Roadmap
 
@@ -384,6 +465,8 @@ CI runs backend tests (unit + integration), frontend lint + type check + tests, 
 
 Business Source License — see [LICENSE](LICENSE).
 
+See [CHANGELOG.md](CHANGELOG.md) for full version history.
+
 ---
 
 <p align="center">
@@ -391,5 +474,5 @@ Business Source License — see [LICENSE](LICENSE).
   <br><br>
   Built by <a href="https://github.com/Egyan07">Egyan07</a>
   <br>
-  <a href="https://github.com/Egyan07/complianceguard/issues">Report a bug</a> · <a href="https://github.com/Egyan07/complianceguard/issues/new">Request a feature</a>
+  <a href="https://github.com/Egyan07/ComplianceGuard/issues">Report a bug</a> · <a href="https://github.com/Egyan07/ComplianceGuard/issues/new">Request a feature</a>
 </p>
