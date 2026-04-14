@@ -28,8 +28,9 @@ describe('EvidenceUpload', () => {
   describe('rendering', () => {
     it('renders dialog title when open is true', () => {
       renderUpload();
-      // Use heading role to avoid matching the submit button text
-      expect(screen.getByRole('heading', { name: /upload evidence/i })).toBeInTheDocument();
+      // DialogTitle renders both an h2 wrapper and an inner h6 — use getAllByRole and check the outermost (h2)
+      const headings = screen.getAllByRole('heading', { name: /upload evidence/i });
+      expect(headings[0]).toBeInTheDocument();
     });
 
     it('does not render when open is false', () => {
@@ -107,7 +108,10 @@ describe('EvidenceUpload', () => {
 
     it('no error alert shown initially', () => {
       renderUpload();
-      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      // The info alert ("File upload requires the desktop application.") is expected in web mode.
+      // Only error alerts should be absent initially.
+      expect(screen.queryByRole('alert', { name: /error/i })).not.toBeInTheDocument();
+      expect(screen.queryByText(/please fill in/i)).not.toBeInTheDocument();
     });
   });
 
