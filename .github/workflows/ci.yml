@@ -103,20 +103,11 @@ jobs:
         with:
           node-version: 20
 
-      - name: Setup Python (for native builds)
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
       - name: Install root dependencies
         run: npm install
 
       - name: Install frontend dependencies
         run: cd frontend && npm ci
-
-      - name: Rebuild native modules for Electron
-        run: npx electron-rebuild -f -w sqlite3
-        continue-on-error: true
 
       - name: Package Windows installer
         run: npm run package

@@ -1,4 +1,4 @@
-const sqlite3 = require('sqlite3').verbose();
+const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
 
@@ -9,7 +9,6 @@ class ComplianceGuardDatabase {
   }
 
   getDatabasePath(userDataPath) {
-    // userDataPath is passed in from main.js (app.getPath('userData'))
     const dataDir = userDataPath || path.join(
       process.env.APPDATA || process.env.HOME || '.',
       'ComplianceGuard'
@@ -31,27 +30,14 @@ class ComplianceGuardDatabase {
         fs.mkdirSync(dbDir, { recursive: true });
       }
 
-      // Open database connection
-      await new Promise((resolve, reject) => {
-        this.db = new sqlite3.Database(this.dbPath, (error) => {
-          if (error) {
-            console.error('Database connection error:', error);
-            reject(error);
-          } else {
-            console.log('Connected to ComplianceGuard database at:', this.dbPath);
-            resolve();
-          }
-        });
-      });
+      this.db = new Database(this.dbPath);
+      this.db.pragma('foreign_keys = ON');
+      this.db.pragma('journal_mode = WAL');
 
-      // Enable foreign keys
-      await this.run('PRAGMA foreign_keys = ON');
+      console.log('Connected to ComplianceGuard database at:', this.dbPath);
 
-      // Initialize schema
-      await this.initializeSchema();
-
-      // Seed initial data
-      await this.seedInitialData();
+      this.initializeSchema();
+      this.seedInitialData();
 
       return this;
     } catch (error) {
@@ -60,46 +46,38 @@ class ComplianceGuardDatabase {
     }
   }
 
-  // Promise wrapper for db.run
+  // Synchronous wrappers that match the original async API signatures
   run(sql, params = []) {
-    return new Promise((resolve, reject) => {
-      this.db.run(sql, params, function (error) {
-        if (error) {
-          reject(error);
-        } else {
-          resolve({ lastID: this.lastID, changes: this.changes });
-        }
-      });
-    });
+    try {
+      const stmt = this.db.prepare(sql);
+      const result = stmt.run(params);
+      return Promise.resolve({ lastID: result.lastInsertRowid, changes: result.changes });
+    } catch (error) {
+      return Promise.reject(error);
+    }
   }
 
-  // Promise wrapper for db.get
   get(sql, params = []) {
-    return new Promise((resolve, reject) => {
-      this.db.get(sql, params, (error, row) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(row);
-        }
-      });
-    });
+    try {
+      const stmt = this.db.prepare(sql);
+      const row = stmt.get(params);
+      return Promise.resolve(row || undefined);
+    } catch (error) {
+      return Promise.reject(error);
+    }
   }
 
-  // Promise wrapper for db.all
   all(sql, params = []) {
-    return new Promise((resolve, reject) => {
-      this.db.all(sql, params, (error, rows) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(rows);
-        }
-      });
-    });
+    try {
+      const stmt = this.db.prepare(sql);
+      const rows = stmt.all(params);
+      return Promise.resolve(rows);
+    } catch (error) {
+      return Promise.reject(error);
+    }
   }
 
-  async initializeSchema() {
+  initializeSchema() {
     const tables = [
       `CREATE TABLE IF NOT EXISTS compliance_frameworks (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -203,29 +181,26 @@ class ComplianceGuardDatabase {
       'CREATE INDEX IF NOT EXISTS idx_scheduled_tasks_next_run ON scheduled_tasks(next_run_at)'
     ];
 
-    // Run each statement sequentially and await completion
     for (const sql of tables) {
-      await this.run(sql);
+      this.db.exec(sql);
     }
     for (const sql of indexes) {
-      await this.run(sql);
+      this.db.exec(sql);
     }
 
     console.log('Database schema initialized successfully');
   }
 
-  async seedInitialData() {
-    const row = await this.get(
-      'SELECT id FROM compliance_frameworks WHERE name = ?',
-      ['SOC 2 Type II']
-    );
+  seedInitialData() {
+    const row = this.db.prepare(
+      'SELECT id FROM compliance_frameworks WHERE name = ?'
+    ).get('SOC 2 Type II');
 
     if (!row) {
       const controls = this.getDefaultSOC2Controls();
-      await this.run(
-        'INSERT INTO compliance_frameworks (name, version, description, controls_json) VALUES (?, ?, ?, ?)',
-        ['SOC 2 Type II', '2017', 'AICPA SOC 2 Type II Trust Services Criteria', JSON.stringify(controls)]
-      );
+      this.db.prepare(
+        'INSERT INTO compliance_frameworks (name, version, description, controls_json) VALUES (?, ?, ?, ?)'
+      ).run('SOC 2 Type II', '2017', 'AICPA SOC 2 Type II Trust Services Criteria', JSON.stringify(controls));
       console.log('Default SOC 2 framework seeded');
     }
   }
@@ -429,25 +404,20 @@ class ComplianceGuardDatabase {
   }
 
   async vacuum() {
-    await this.run('VACUUM');
+    this.db.exec('VACUUM');
   }
 
   close() {
-    return new Promise((resolve, reject) => {
+    try {
       if (this.db) {
-        this.db.close((error) => {
-          if (error) {
-            console.error('Database close error:', error);
-            reject(error);
-          } else {
-            console.log('Database connection closed');
-            resolve();
-          }
-        });
-      } else {
-        resolve();
+        this.db.close();
+        console.log('Database connection closed');
       }
-    });
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Database close error:', error);
+      return Promise.reject(error);
+    }
   }
 }
 
