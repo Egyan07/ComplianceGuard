@@ -56,7 +56,7 @@
         "nsis"
       ],
       "icon": "resources/icons/icon.ico",
-      "legalTrademark": "ComplianceGuard",
+      "legalTrademarks": "ComplianceGuard",
       "publisherName": "ComplianceGuard LLC",
       "verifyUpdateCodeSignature": false,
       "artifactName": "${productName}-Setup-${version}.${ext}",
