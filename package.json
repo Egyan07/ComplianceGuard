@@ -24,7 +24,8 @@
     "electron": "^28.0.0",
     "electron-builder": "^24.9.1",
     "concurrently": "^8.2.2",
-    "wait-on": "^7.0.1"
+    "wait-on": "^7.0.1",
+    "electron-rebuild": "^3.2.9"
   },
   "build": {
     "appId": "com.complianceguard.desktop",

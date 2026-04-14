@@ -88,3 +88,44 @@ jobs:
 
       - name: Build frontend
         run: npm run build
+
+  package:
+    name: Package Windows Installer
+    runs-on: windows-latest
+    needs: [build]
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Python (for native builds)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install root dependencies
+        run: npm install
+
+      - name: Install frontend dependencies
+        run: cd frontend && npm ci
+
+      - name: Rebuild native modules for Electron
+        run: npx electron-rebuild -f -w sqlite3
+        continue-on-error: true
+
+      - name: Package Windows installer
+        run: npm run package
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ComplianceGuard-Windows-Installer
+          path: dist/*.exe
+          if-no-files-found: warn
