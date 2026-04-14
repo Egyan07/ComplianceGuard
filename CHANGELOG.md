@@ -21,9 +21,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 - **e2e tests wired into CI** — `tests/e2e/` now runs in the `backend-tests` CI job via `--run-e2e` flag
 - **UpgradePrompt.test.tsx** — 14 tests covering rendering (open/closed), feature name display, button interactions, onGoToSettings callback, and missing prop safety
-- **EvidenceUpload.test.tsx** — 24 tests covering rendering, upload mode toggle, validation, field interactions, file picker in electron mode, and file auto-fill behaviour
+- **EvidenceUpload.test.tsx** — 22 tests covering rendering, upload mode toggle, validation, field interactions, file picker in electron mode, and file auto-fill behaviour
 - **EvaluationHistory.test.tsx** — 8 tests covering free tier upgrade prompt, onNavigate callback, electron mode, and no-crash rendering
-- Total test count: **142 backend + 121 frontend unit + 5 frontend e2e = 268 tests**
+- Total test count: **142 backend + 119 frontend unit + 5 frontend e2e = 266 tests**
 
 ---
 

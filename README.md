@@ -6,7 +6,7 @@
   <a href="#quick-start"><img src="https://img.shields.io/badge/version-2.3.0-2563EB" alt="Version"></a>
   <img src="https://img.shields.io/badge/license-BSL%201.1-orange" alt="License">
   <a href="#soc-2-controls"><img src="https://img.shields.io/badge/SOC%202-29%20controls-10B981" alt="Controls"></a>
-  <img src="https://img.shields.io/badge/tests-268%20passing-10B981?logo=vitest&logoColor=white" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-266%20passing-10B981?logo=vitest&logoColor=white" alt="Tests">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
   <a href="https://github.com/Egyan07/ComplianceGuard/actions"><img src="https://img.shields.io/github/actions/workflow/status/Egyan07/ComplianceGuard/ci.yml?label=CI&logo=githubactions&logoColor=white" alt="CI"></a>
 </p>
@@ -279,7 +279,7 @@ ComplianceGuard/
 │   │   ├── contexts/AuthContext.tsx    # JWT auth state, login/register/logout
 │   │   ├── contexts/LicenseContext.tsx # React context for tier state + feature checks
 │   │   ├── services/api.ts             # Unified API (IPC or HTTP)
-│   │   └── test/                       # Vitest test suite (121 tests)
+│   │   └── test/                       # Vitest test suite (119 tests)
 │   ├── e2e/                            # Playwright e2e tests (5 tests)
 │   ├── .eslintrc.cjs
 │   ├── .prettierrc
@@ -396,7 +396,7 @@ python -m pytest tests/integration/ -v       # Integration tests (20)
 python -m pytest tests/e2e/ -v --run-e2e     # E2E tests (8)
 ```
 
-CI runs backend tests (unit + integration + e2e), frontend lint + type check + tests, and build on every push via GitHub Actions. Total: **268 tests**.
+CI runs backend tests (unit + integration + e2e), frontend lint + type check + tests, and build on every push via GitHub Actions. Total: **266 tests**.
 
 ## Troubleshooting
 
@@ -458,7 +458,7 @@ License key purchasing is coming soon. Contact [Egyan07](https://github.com/Egya
 | JWT auth + login UI | macOS and Linux support |
 | FastAPI + PostgreSQL + Docker + Nginx | |
 | Email verification + password reset | |
-| CI/CD with 268 tests (unit + integration + e2e) | |
+| CI/CD with 266 tests (unit + integration + e2e) | |
 | Alembic migrations + rate limiting | |
 
 ## License
