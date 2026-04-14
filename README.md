@@ -35,6 +35,10 @@ ComplianceGuard lives on the endpoint too. It collects evidence directly from Wi
                    └─────────────┘
 ```
 
+## Demo
+
+> **Coming soon** — a short GIF walkthrough showing: install → collect evidence → evaluate compliance → export PDF report.
+
 ## Screenshots
 
 ### Dashboard
@@ -51,7 +55,13 @@ All collected evidence items in one place — searchable and filterable by statu
 
 ## Quick Start
 
-### One-Click (Windows)
+### Option A — Windows Installer (Recommended)
+
+Download `ComplianceGuard-Setup.exe` from the [latest release](https://github.com/Egyan07/ComplianceGuard/releases/latest), run the installer, and launch from the Start Menu.
+
+> **Requirements:** Windows 10/11 (64-bit)
+
+### Option B — One-Click Setup (Development)
 
 ```
 git clone https://github.com/Egyan07/ComplianceGuard.git
@@ -62,7 +72,7 @@ git clone https://github.com/Egyan07/ComplianceGuard.git
 
 > **Prerequisites:** Windows 10/11, [Node.js 18+](https://nodejs.org/), [Python 3.10+](https://www.python.org/downloads/)
 
-### Manual Setup
+### Option C — Manual Setup
 
 <details>
 <summary>Desktop (Electron)</summary>
@@ -304,6 +314,7 @@ ComplianceGuard is designed for Windows endpoints. The following limitations app
 
 - **Windows only** — evidence collection uses PowerShell, WMI, and the Windows registry. macOS and Linux support is on the roadmap.
 - **No automatic scheduling** — evidence must be collected manually or triggered via the dashboard. Scheduled collection is planned.
+- **Per-machine dashboard only** — the current dashboard shows one machine at a time. A centralized Cloud Dashboard for monitoring multiple machines is coming soon.
 - **AWS only for cloud evidence** — the web backend collects S3 and IAM evidence from AWS. GCP and Azure are not yet implemented.
 - **SOC 2 Type II only** — ISO 27001, HIPAA, and PCI DSS frameworks are in development.
 - **Single machine in free tier** — the free tier is limited to one machine. Pro supports up to 10, Enterprise is unlimited.
@@ -446,6 +457,20 @@ They are on the roadmap. The backend and frontend are already cross-platform. Th
 
 **How do I get a Pro license key?**
 License key purchasing is coming soon. Contact [Egyan07](https://github.com/Egyan07) directly in the meantime.
+
+**What is the Cloud Dashboard?**
+The current version shows compliance for one machine at a time. The Cloud Dashboard (coming soon) will allow you to monitor multiple machines from a single centralized web view — ideal for teams, offices, and managed environments.
+
+## Contributing
+
+Contributions are welcome. Before submitting a pull request, please:
+
+- Add tests for any new functionality
+- Ensure all existing tests pass (`npm test` + `pytest`)
+- Follow existing code style (ESLint + Prettier for frontend, flake8 for backend)
+- Update documentation for any user-facing changes
+
+See CONTRIBUTING.md for full guidelines.
 
 ## Roadmap
 
