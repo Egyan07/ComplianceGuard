@@ -6,47 +6,43 @@
   "author": "Egyan07",
   "license": "MIT",
   "private": true,
-
   "scripts": {
     "start": "electron .",
     "dev": "concurrently \"cd frontend && npm run dev\" \"wait-on http://localhost:5173 && electron .\"",
     "build": "cd frontend && npm run build",
     "package": "npm run build && electron-builder --win --x64",
+    "publish": "npm run build && electron-builder --win --x64 --publish always",
     "package:linux": "npm run build && electron-builder --linux",
     "package:all": "npm run build && electron-builder --win --x64 --linux --mac",
     "dist": "npm run build && electron-builder",
     "postinstall": "electron-builder install-app-deps"
   },
-
   "dependencies": {
     "electron-store": "^8.1.0",
     "electron-log": "^4.4.8",
     "better-sqlite3": "^9.4.3"
   },
-
   "devDependencies": {
     "electron": "^28.0.0",
     "electron-builder": "^24.9.1",
     "concurrently": "^8.2.2",
     "wait-on": "^7.0.1"
   },
-
   "build": {
     "appId": "com.complianceguard.desktop",
     "productName": "ComplianceGuard",
     "copyright": "Copyright © 2026 Egyan07",
-
     "publish": [
       {
-        "provider": "github"
+        "provider": "github",
+        "owner": "Egyan07",
+        "repo": "ComplianceGuard"
       }
     ],
-
     "directories": {
       "output": "dist",
       "buildResources": "resources"
     },
-
     "files": [
       "electron/**/*",
       "frontend/dist/**/*",
@@ -56,7 +52,6 @@
       "!**/node_modules/*.d.ts",
       "!**/node_modules/.bin"
     ],
-
     "extraResources": [
       {
         "from": "resources",
@@ -64,19 +59,16 @@
         "filter": ["**/*"]
       }
     ],
-
     "win": {
       "target": ["msi", "nsis"],
       "icon": "resources/icons/icon.ico",
       "artifactName": "${productName}-Setup-${version}.${ext}",
       "requestedExecutionLevel": "asInvoker"
     },
-
     "msi": {
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true
     },
-
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
