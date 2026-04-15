@@ -10,7 +10,7 @@
     "start": "electron .",
     "dev": "concurrently \"cd frontend && npm run dev\" \"wait-on http://localhost:5173 && electron .\"",
     "build": "cd frontend && npm run build",
-    "package": "npm run build && electron-builder --win --x64",
+    "package": "npm run build && electron-builder --win --x64 --publish never",
     "publish": "npm run build && electron-builder --win --x64 --publish always",
     "package:linux": "npm run build && electron-builder --linux",
     "package:all": "npm run build && electron-builder --win --x64 --linux --mac",
@@ -31,14 +31,7 @@
   "build": {
     "appId": "com.complianceguard.desktop",
     "productName": "ComplianceGuard",
-    "copyright": "Copyright © 2026 Egyan07",
-    "publish": [
-      {
-        "provider": "github",
-        "owner": "Egyan07",
-        "repo": "ComplianceGuard"
-      }
-    ],
+    "copyright": "Copyright \u00a9 2026 Egyan07",
     "directories": {
       "output": "dist",
       "buildResources": "resources"
@@ -56,11 +49,16 @@
       {
         "from": "resources",
         "to": "resources",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "win": {
-      "target": ["msi", "nsis"],
+      "target": [
+        "msi",
+        "nsis"
+      ],
       "icon": "resources/icons/icon.ico",
       "artifactName": "${productName}-Setup-${version}.${ext}",
       "requestedExecutionLevel": "asInvoker"
