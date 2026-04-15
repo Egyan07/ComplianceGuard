@@ -87,14 +87,21 @@ jobs:
       - run: npm install
       - run: cd frontend && npm ci
 
-      - name: Build + Publish Electron App
+      - name: Build Electron App
         run: npm run package
+
+      - name: Upload EXE + MSI to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v2.3.1
+          files: |
+            dist/*.exe
+            dist/*.msi
         env:
-          GH_TOKEN: ${{ github.token }}
           GITHUB_TOKEN: ${{ github.token }}
 
-      - name: Upload artifact
+      - name: Upload Artifact (Backup)
         uses: actions/upload-artifact@v4
         with:
           name: ComplianceGuard-Windows
-          path: dist/*.exe
+          path: dist/*

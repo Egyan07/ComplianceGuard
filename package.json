@@ -36,10 +36,6 @@
     "productName": "ComplianceGuard",
     "copyright": "Copyright © 2026 Egyan07",
 
-    "publish": {
-      "provider": "github"
-    },
-
     "directories": {
       "output": "dist",
       "buildResources": "resources"
