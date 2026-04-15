@@ -4,7 +4,7 @@ const crypto = require('crypto');
 // The private key is kept offline and never shipped with the app.
 // Generate a keypair with: node generate-key.js --init
 const PUBLIC_KEY_PEM = `-----BEGIN PUBLIC KEY-----
-MCowBQYDK2VwAyEAPLASEHOLDER_REPLACE_WITH_REAL_KEY_BEFORE_SHIPPING=
+MCowBQYDK2VwAyEAMCowBQYDK2VwAyEAp4j9Fs0vavJAsQud2mAtJRbMe7sWmuEYLxN2IqDv6KQ=
 -----END PUBLIC KEY-----`;
 
 function verifyLicenseKey(keyString) {

@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [master, main]
 
+permissions:
+  contents: write
+
 jobs:
   backend-tests:
     name: Backend Tests
@@ -93,7 +96,11 @@ jobs:
     name: Package Windows Installer
     runs-on: windows-latest
     needs: [build]
+
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -109,14 +116,14 @@ jobs:
       - name: Install frontend dependencies
         run: cd frontend && npm ci
 
-      - name: Package Windows installer
+      - name: Build + Publish Electron App
         run: npm run package
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload installer artifact
+      - name: Upload fallback artifact
         uses: actions/upload-artifact@v4
         with:
           name: ComplianceGuard-Windows-Installer
           path: dist/*.exe
-          if-no-files-found: warn
