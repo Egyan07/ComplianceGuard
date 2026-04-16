@@ -42,6 +42,11 @@ class User(Base):
     reset_token = Column(String, nullable=True)
     reset_token_expires = Column(DateTime(timezone=True), nullable=True)
 
+    # License tier for web mode (mirrors desktop license manager)
+    # Values: "free" | "pro" | "enterprise"
+    license_tier = Column(String, nullable=False, default="free", server_default="free")
+    license_key = Column(String, nullable=True)
+
     # Company relationship
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=True)
 
