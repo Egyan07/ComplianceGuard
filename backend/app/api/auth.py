@@ -26,6 +26,7 @@ from app.core.config import settings
 from app.models.user import User
 from app.core.database import get_db
 from app.api.deps import get_current_user
+from app.core.email import send_verification_email, send_password_reset_email
 from sqlalchemy.orm import Session
 
 
@@ -182,6 +183,9 @@ async def register(
     db.commit()
     db.refresh(new_user)
 
+    # Send verification email (no-op if EMAIL_ENABLED=false)
+    await send_verification_email(new_user.email, verification_token)
+
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": new_user.email}, expires_delta=access_token_expires
@@ -261,7 +265,8 @@ async def forgot_password(
         user.reset_token = secrets.token_urlsafe(32)
         user.reset_token_expires = datetime.now(timezone.utc) + timedelta(hours=1)
         db.commit()
-        # In production: send email with reset link containing user.reset_token
+        # Send reset email (no-op if EMAIL_ENABLED=false)
+        await send_password_reset_email(user.email, user.reset_token)
 
     return {"message": "If an account with that email exists, a reset link has been sent"}
 
