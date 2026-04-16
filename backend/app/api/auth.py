@@ -8,6 +8,7 @@ from datetime import timedelta, datetime, timezone
 from typing import Annotated
 import secrets
 import re
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
@@ -184,7 +185,13 @@ async def register(
     db.refresh(new_user)
 
     # Send verification email (no-op if EMAIL_ENABLED=false)
-    await send_verification_email(new_user.email, verification_token)
+    # SMTP failures are logged but must not break registration
+    try:
+        await send_verification_email(new_user.email, verification_token)
+    except Exception:
+        logging.getLogger(__name__).error(
+            "Failed to send verification email to %s", new_user.email, exc_info=True
+        )
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
@@ -266,7 +273,13 @@ async def forgot_password(
         user.reset_token_expires = datetime.now(timezone.utc) + timedelta(hours=1)
         db.commit()
         # Send reset email (no-op if EMAIL_ENABLED=false)
-        await send_password_reset_email(user.email, user.reset_token)
+        # SMTP failures are logged but must not surface to the client
+        try:
+            await send_password_reset_email(user.email, user.reset_token)
+        except Exception:
+            logging.getLogger(__name__).error(
+                "Failed to send reset email to %s", user.email, exc_info=True
+            )
 
     return {"message": "If an account with that email exists, a reset link has been sent"}
 
