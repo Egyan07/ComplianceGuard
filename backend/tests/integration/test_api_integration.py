@@ -252,6 +252,30 @@ class TestComplianceEndpoints:
         res = client.get("/api/v1/compliance/framework/controls/by-category/INVALID")
         assert res.status_code == 400
 
+    def test_evaluation_history_requires_pro(self, client, auth_token):
+        """Free-tier users (default) must get 402 on evaluation history."""
+        res = client.get(
+            "/api/v1/compliance/evaluations/history",
+            headers={"Authorization": f"Bearer {auth_token}"},
+        )
+        assert res.status_code == 402
+
+    def test_control_assessments_requires_pro(self, client, auth_token):
+        """Free-tier users must get 402 on per-control assessment breakdown."""
+        res = client.get(
+            "/api/v1/compliance/evaluations/some-eval-id/control-assessments",
+            headers={"Authorization": f"Bearer {auth_token}"},
+        )
+        assert res.status_code == 402
+
+    def test_compliance_report_requires_pro(self, client, auth_token):
+        """Free-tier users must get 402 on the compliance report endpoint."""
+        res = client.get(
+            "/api/v1/compliance/evaluations/some-eval-id/report",
+            headers={"Authorization": f"Bearer {auth_token}"},
+        )
+        assert res.status_code == 402
+
 
 class TestHealthEndpoints:
     def test_health_check(self, client):

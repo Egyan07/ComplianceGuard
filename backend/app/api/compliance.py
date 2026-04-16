@@ -17,7 +17,7 @@ import uuid
 from app.core.soc2_controls import SOC2Framework, SOC2Control, ControlCategory, create_soc2_framework
 from app.services.compliance_service import ComplianceService, ComplianceEvaluation, ComplianceStatus, create_compliance_service
 from app.core.database import get_db
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, require_pro
 from app.models.user import User
 from app.models.evaluation import ComplianceEvaluationRecord, ControlAssessmentRecord
 
@@ -369,7 +369,7 @@ async def evaluate_compliance(
 
 @router.get("/evaluations/history", response_model=List[ComplianceEvaluationResponse])
 async def get_evaluation_history(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_pro),
     db: Session = Depends(get_db),
 ):
     """Get persisted evaluation history for the current user."""
@@ -402,7 +402,10 @@ async def get_evaluation_history(
 
 
 @router.get("/evaluations/{evaluation_id}/control-assessments", response_model=Dict[str, ControlAssessmentResponse])
-async def get_control_assessments(evaluation_id: str):
+async def get_control_assessments(
+    evaluation_id: str,
+    current_user: User = Depends(require_pro),
+):
     """
     Get detailed control assessments for a specific evaluation.
 
@@ -455,7 +458,10 @@ async def get_control_compliance_trend(control_id: str):
 
 
 @router.get("/evaluations/{evaluation_id}/report", response_model=ComplianceReportResponse)
-async def get_compliance_report(evaluation_id: str):
+async def get_compliance_report(
+    evaluation_id: str,
+    current_user: User = Depends(require_pro),
+):
     """
     Get comprehensive compliance report for an evaluation.
 
