@@ -289,10 +289,13 @@ ipcMain.handle('export-pdf-report', async (event, frameworkId = 1) => {
       webPreferences: { contextIsolation: true, nodeIntegration: false }
     });
 
-    await reportWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html));
-
-    // Wait for rendering
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve, reject) => {
+      reportWindow.webContents.once('did-finish-load', resolve);
+      reportWindow.webContents.once('did-fail-load', (_event, errorCode, errorDescription) => {
+        reject(new Error(`Report render failed: ${errorDescription} (${errorCode})`));
+      });
+      reportWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html));
+    });
 
     // Generate PDF
     const pdfBuffer = await reportWindow.webContents.printToPDF({
