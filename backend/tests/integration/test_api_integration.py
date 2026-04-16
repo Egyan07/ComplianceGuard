@@ -291,7 +291,7 @@ class TestHealthEndpoints:
         assert res.status_code == 200
         data = res.json()
         assert data["status"] == "healthy"
-        assert data["version"] == "2.3.0"
+        assert data["version"] == "2.8.0"
 
     def test_root(self, client):
         res = client.get("/")

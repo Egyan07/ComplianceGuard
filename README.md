@@ -3,10 +3,10 @@
 </p>
 
 <p align="center">
-  <a href="#quick-start"><img src="https://img.shields.io/badge/version-2.3.0-2563EB" alt="Version"></a>
+  <a href="#quick-start"><img src="https://img.shields.io/badge/version-2.8.0-2563EB" alt="Version"></a>
   <img src="https://img.shields.io/badge/license-BSL%201.1-orange" alt="License">
   <a href="#soc-2-controls"><img src="https://img.shields.io/badge/SOC%202-29%20controls-10B981" alt="Controls"></a>
-  <img src="https://img.shields.io/badge/tests-266%20passing-10B981?logo=vitest&logoColor=white" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-294%20passing-10B981?logo=vitest&logoColor=white" alt="Tests">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
   <a href="https://github.com/Egyan07/ComplianceGuard/actions"><img src="https://img.shields.io/github/actions/workflow/status/Egyan07/ComplianceGuard/ci.yml?label=CI&logo=githubactions&logoColor=white" alt="CI"></a>
 </p>
@@ -265,7 +265,7 @@ ComplianceGuard/
 │   │   ├── services/                   # Compliance service, evidence collector
 │   │   └── integrations/aws.py         # AWS evidence collection
 │   ├── migrations/                     # Alembic database migrations
-│   ├── tests/                          # Unit (114) + integration (20) + e2e (8) tests
+│   ├── tests/                          # Unit (143) + integration (27) + e2e (5) tests
 │   ├── requirements.txt
 │   └── Dockerfile
 ├── electron/
@@ -289,7 +289,7 @@ ComplianceGuard/
 │   │   ├── contexts/AuthContext.tsx    # JWT auth state, login/register/logout
 │   │   ├── contexts/LicenseContext.tsx # React context for tier state + feature checks
 │   │   ├── services/api.ts             # Unified API (IPC or HTTP)
-│   │   └── test/                       # Vitest test suite (119 tests)
+│   │   └── test/                       # Vitest test suite (114 tests)
 │   ├── e2e/                            # Playwright e2e tests (5 tests)
 │   ├── .eslintrc.cjs
 │   ├── .prettierrc
@@ -360,8 +360,10 @@ All data stays under your control. Zero telemetry.
 | Database | Parameterized queries. Foreign key constraints. Alembic-managed migrations. |
 | Navigation | External URLs blocked. `window.open` denied. |
 | Licensing | Ed25519 signed keys. Only the public key ships with the app. |
-| Auth (Web) | JWT tokens with configurable expiry. Bcrypt hashing. Password complexity enforced. Email verification. Password reset with expiring tokens. |
+| Auth (Web) | JWT access tokens (30 min) + refresh tokens (7 days). Bcrypt hashing. Password complexity enforced. Email verification. Password reset with expiring tokens. |
+| License (Web) | Ed25519 signed keys verified in Python (`cryptography`). `require_pro` dependency returns HTTP 402. License email validated on activation. |
 | Rate Limiting | 5 requests/min on login, 3/min on register. Nginx rate limiting at proxy layer. |
+| Error Monitoring | Sentry integration on backend (FastAPI + SQLAlchemy) and frontend. `send_default_pii=False`. Silent no-op when DSN unset. |
 | Proxy | Nginx reverse proxy with security headers (X-Frame-Options, X-Content-Type-Options, XSS protection). |
 
 For reporting security vulnerabilities, see [SECURITY.md](SECURITY.md).
@@ -400,14 +402,14 @@ npm run test:e2e         # Playwright e2e tests
 npm run lint             # ESLint
 npm run format:check     # Prettier
 
-# Backend (142 tests)
+# Backend (175 tests)
 cd backend
-python -m pytest tests/unit/ -v              # Unit tests (114)
-python -m pytest tests/integration/ -v       # Integration tests (20)
-python -m pytest tests/e2e/ -v --run-e2e     # E2E tests (8)
+python -m pytest tests/unit/ -v              # Unit tests (143)
+python -m pytest tests/integration/ -v       # Integration tests (27)
+python -m pytest tests/e2e/ -v --run-e2e     # E2E tests (5)
 ```
 
-CI runs backend tests (unit + integration + e2e), frontend lint + type check + tests, and build on every push via GitHub Actions. Total: **266 tests**.
+CI runs backend tests (unit + integration + e2e), frontend lint + type check + tests, and build on every push via GitHub Actions. Total: **294 tests**.
 
 ## Troubleshooting
 
@@ -480,10 +482,12 @@ See CONTRIBUTING.md for full guidelines.
 | 29 SOC 2 controls with weighted scoring | ISO 27001 framework |
 | PDF reports + evaluation history | HIPAA framework |
 | Free / Pro licensing (Ed25519) | Cloud sync + multi-machine dashboard |
-| JWT auth + login UI | macOS and Linux support |
+| JWT auth + refresh tokens + login UI | macOS and Linux support |
 | FastAPI + PostgreSQL + Docker + Nginx | |
-| Email verification + password reset | |
-| CI/CD with 266 tests (unit + integration + e2e) | |
+| Email delivery (verification + reset) | |
+| Web mode license enforcement (Ed25519) | |
+| Sentry error monitoring (backend + frontend) | |
+| CI/CD with 294 tests (unit + integration + e2e) | |
 | Alembic migrations + rate limiting | |
 
 ## License

@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [2.8.0] - 2026-04-16
+
+### Added
+- **Email delivery** — `app/core/email.py` with `send_verification_email` and `send_password_reset_email` using `aiosmtplib`; SMTP configured via `SMTP_*` env vars; silent no-op when `EMAIL_ENABLED=false` (default); verification and reset links use configurable `APP_BASE_URL`
+- **JWT refresh tokens** — `create_refresh_token` / `verify_refresh_token` in `app/core/auth.py`; `POST /api/auth/refresh` exchanges a 7-day refresh token for a new access token; login and register responses now include `refresh_token`
+- **Frontend auto-refresh** — `api.ts` response interceptor retries 401 requests after refreshing the access token; parallel 401s are queued and replayed with the new token; failed refresh rejects all queued requests and clears auth state
+- **Web mode license enforcement** — `app/core/license.py` ports Ed25519 signature verification from `electron/licensing/license-crypto.js` to Python (`cryptography` library); `User` model gains `license_tier` (default `"free"`) and `license_key` columns; `require_pro` FastAPI dependency returns HTTP 402 for free-tier users
+- **License endpoints** — `POST /api/auth/activate-license` verifies key signature, validates license email matches the authenticated user, and stores the tier; `GET /api/auth/license-info` decodes the stored key for live expiry/grace-period data
+- **Pro-gated compliance endpoints** — `/evaluations/history`, `/evaluations/{id}/control-assessments`, `/evaluations/{id}/report`, and `/controls/{id}/trend` now require `require_pro`
+- **Sentry error monitoring** — `sentry-sdk[fastapi]` integrated in backend (FastAPI + SQLAlchemy integrations, `send_default_pii=False`); `@sentry/react` with `browserTracingIntegration` integrated in frontend; both are silent no-ops when `SENTRY_DSN` / `VITE_SENTRY_DSN` are unset
+- **Alembic migration** — Adds `license_tier` (server_default `"free"`) and `license_key` to the `users` table
+
+### Fixed
+- **CORS hardcoded** — `main.py` now reads `allow_origins` from `settings.cors_origins` instead of a hardcoded list; `docker-compose.yml` updated to `CORS_ORIGINS`; `.env.example` updated to JSON array format required by pydantic-settings v2
+- **PDF render timing** — Electron `export-pdf-report` handler replaces `setTimeout(1000)` with `did-finish-load` event; `reportWindow.destroy()` called on `did-fail-load` to prevent resource leak
+- **SMTP failures silenced** — Email send errors are caught and logged in the auth endpoints; registration and password reset succeed even when SMTP is unavailable
+- **Pending request hang** — `api.ts` interceptor now stores both `onSuccess` and `onFailure` callbacks per queued request; on refresh failure all queued requests are properly rejected instead of hanging indefinitely
+- **License sharing** — `activate-license` endpoint validates the license `email` field matches the authenticated user's email before activating
+- **`get_license_info` stale data** — Endpoint now calls `verify_license_key` on the stored key to return live expiry and grace-period data
+
+### Changed
+- New dependencies: `aiosmtplib>=3.0.0`, `cryptography>=42.0.0`, `sentry-sdk[fastapi]>=2.0.0` in `backend/requirements.txt`; `@sentry/react` in frontend
+- New env vars: `APP_BASE_URL`, `SMTP_HOST/PORT/USER/PASSWORD/FROM_EMAIL/FROM_NAME/TLS/SSL`, `EMAIL_ENABLED`, `CORS_ORIGINS` (JSON array), `SENTRY_DSN`, `SENTRY_TRACES_SAMPLE_RATE`, `VITE_SENTRY_DSN` — all documented in `.env.example`
+- Test count: **175 backend + 114 frontend unit + 5 frontend e2e = 294 tests**
+
+---
+
 ## [2.3.1] - 2026-04-13
 
 ### Fixed
