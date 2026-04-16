@@ -276,6 +276,14 @@ class TestComplianceEndpoints:
         )
         assert res.status_code == 402
 
+    def test_control_trend_requires_pro(self, client, auth_token):
+        """Free-tier users must get 402 on control trend endpoint."""
+        res = client.get(
+            "/api/v1/compliance/controls/CC1.1/trend",
+            headers={"Authorization": f"Bearer {auth_token}"},
+        )
+        assert res.status_code == 402
+
 
 class TestHealthEndpoints:
     def test_health_check(self, client):

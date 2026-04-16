@@ -439,12 +439,18 @@ async def get_control_assessments(
 
 
 @router.get("/controls/{control_id}/trend", response_model=List[Dict[str, Any]])
-async def get_control_compliance_trend(control_id: str):
+async def get_control_compliance_trend(
+    control_id: str,
+    current_user: User = Depends(require_pro),
+    db: Session = Depends(get_db),
+):
     """
     Get compliance trend for a specific control across evaluations.
 
     Args:
         control_id: The ID of the control
+        current_user: Authenticated user (Pro tier required)
+        db: Database session
 
     Returns:
         List of compliance scores and status over time
