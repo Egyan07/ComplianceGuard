@@ -22,9 +22,11 @@ def _build_message(to: str, subject: str, html_body: str) -> MIMEMultipart:
     return msg
 
 
-async def _smtp_send(msg: MIMEMultipart) -> None:
+async def _smtp_send(msg: MIMEMultipart, to: str) -> None:
     await aiosmtplib.send(
         msg,
+        sender=settings.smtp_from_email,
+        recipients=[to],
         hostname=settings.smtp_host,
         port=settings.smtp_port,
         username=settings.smtp_user,
@@ -42,13 +44,13 @@ async def send_verification_email(email: str, token: str) -> None:
     html = f"""
     <h2>Verify your ComplianceGuard account</h2>
     <p>Click the link below to verify your email address:</p>
-    <p><a href="http://localhost:8000/api/auth/verify-email?token={token}">
+    <p><a href="{settings.app_base_url}/api/auth/verify-email?token={token}">
         Verify Email
     </a></p>
     <p>This link does not expire automatically — contact support if you need a new one.</p>
     """
     msg = _build_message(email, "Verify your ComplianceGuard email", html)
-    await _smtp_send(msg)
+    await _smtp_send(msg, email)
 
 
 async def send_password_reset_email(email: str, token: str) -> None:
@@ -59,10 +61,10 @@ async def send_password_reset_email(email: str, token: str) -> None:
     html = f"""
     <h2>Reset your ComplianceGuard password</h2>
     <p>Click the link below to set a new password. This link expires in 1 hour.</p>
-    <p><a href="http://localhost:8000/api/auth/reset-password?token={token}">
+    <p><a href="{settings.app_base_url}/api/auth/reset-password?token={token}">
         Reset Password
     </a></p>
     <p>If you did not request a password reset, ignore this email.</p>
     """
     msg = _build_message(email, "Reset your ComplianceGuard password", html)
-    await _smtp_send(msg)
+    await _smtp_send(msg, email)

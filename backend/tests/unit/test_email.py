@@ -2,13 +2,14 @@
 import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
 
+from app.core.email import send_verification_email, send_password_reset_email
+
 
 @pytest.mark.asyncio
 async def test_send_verification_skips_when_disabled():
     """When EMAIL_ENABLED=False, no SMTP connection is made."""
     with patch("app.core.email.settings") as mock_settings:
         mock_settings.email_enabled = False
-        from app.core.email import send_verification_email
         # Should complete without raising even though SMTP is not configured
         await send_verification_email("user@example.com", "token123")
 
@@ -29,7 +30,6 @@ async def test_send_verification_calls_smtp():
 
         with patch("app.core.email.aiosmtplib.send", new_callable=AsyncMock) as mock_send:
             mock_send.return_value = ({}, "")
-            from app.core.email import send_verification_email
             await send_verification_email("user@example.com", "abc123")
             mock_send.assert_called_once()
             msg = mock_send.call_args[0][0]
@@ -41,7 +41,6 @@ async def test_send_reset_skips_when_disabled():
     """When EMAIL_ENABLED=False, password reset email is silently skipped."""
     with patch("app.core.email.settings") as mock_settings:
         mock_settings.email_enabled = False
-        from app.core.email import send_password_reset_email
         await send_password_reset_email("user@example.com", "resettoken")
 
 
@@ -61,7 +60,6 @@ async def test_send_reset_calls_smtp():
 
         with patch("app.core.email.aiosmtplib.send", new_callable=AsyncMock) as mock_send:
             mock_send.return_value = ({}, "")
-            from app.core.email import send_password_reset_email
             await send_password_reset_email("user@example.com", "resettoken")
             mock_send.assert_called_once()
             msg = mock_send.call_args[0][0]

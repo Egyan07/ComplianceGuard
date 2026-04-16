@@ -89,6 +89,7 @@ class Settings(BaseSettings):
 
     # Email delivery settings
     # NOTE: When EMAIL_ENABLED=false (default), all email functions are silent no-ops.
+    app_base_url: str = Field("http://localhost:8000")
     smtp_host: Optional[str] = Field(None)
     smtp_port: int = Field(587)
     smtp_user: Optional[str] = Field(None)
