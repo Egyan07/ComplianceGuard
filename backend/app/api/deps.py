@@ -46,3 +46,16 @@ async def get_current_user(
         )
 
     return user
+
+
+async def require_pro(current_user: User = Depends(get_current_user)) -> User:
+    """
+    Dependency that requires Pro or Enterprise license tier.
+    Returns HTTP 402 for free-tier users attempting to access gated features.
+    """
+    if current_user.license_tier not in ("pro", "enterprise"):
+        raise HTTPException(
+            status_code=402,
+            detail="This feature requires a Pro license. Activate a license key in Settings.",
+        )
+    return current_user
