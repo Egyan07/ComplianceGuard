@@ -124,6 +124,10 @@ class Settings(BaseSettings):
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
 
+    # Error monitoring
+    sentry_dsn: Optional[str] = Field(None)
+    sentry_traces_sample_rate: float = Field(0.1)
+
     # Server settings
     host: str = Field("127.0.0.1")
     port: int = Field(8000)

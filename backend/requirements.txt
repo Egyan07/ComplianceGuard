@@ -25,6 +25,9 @@ aiosmtplib>=3.0.0
 # Rate limiting
 slowapi==0.1.9
 
+# Error monitoring
+sentry-sdk[fastapi]>=2.0.0
+
 # Utilities
 email-validator==2.1.0
 python-dateutil==2.8.2

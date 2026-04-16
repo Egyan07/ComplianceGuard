@@ -24,6 +24,19 @@ from app.core.rate_limit import limiter
 # Import all models so Base.metadata knows about them
 import app.models  # noqa: F401
 
+import sentry_sdk
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+
+if settings.sentry_dsn:
+    sentry_sdk.init(
+        dsn=settings.sentry_dsn,
+        environment=str(settings.environment.value),
+        integrations=[FastApiIntegration(), SqlalchemyIntegration()],
+        traces_sample_rate=settings.sentry_traces_sample_rate,
+        send_default_pii=False,  # Do not send PII — compliance requirement
+    )
+
 app = FastAPI(
     title="ComplianceGuard SOC 2 API",
     description="Backend API for SOC 2 compliance automation platform",
