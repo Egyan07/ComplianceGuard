@@ -55,7 +55,7 @@ async def require_pro(current_user: User = Depends(get_current_user)) -> User:
     """
     if current_user.license_tier not in ("pro", "enterprise"):
         raise HTTPException(
-            status_code=402,
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
             detail="This feature requires a Pro license. Activate a license key in Settings.",
         )
     return current_user
