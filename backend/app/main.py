@@ -17,6 +17,7 @@ from slowapi.errors import RateLimitExceeded
 from app.api.auth import router as auth_router
 from app.api.evidence import router as evidence_router
 from app.api.compliance import router as compliance_router
+from app.core.config import settings
 from app.core.database import engine, Base
 from app.core.rate_limit import limiter
 
@@ -53,7 +54,7 @@ run_migrations()
 # Configure CORS for frontend communication
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
