@@ -87,6 +87,18 @@ class Settings(BaseSettings):
     aws_region: Optional[str] = Field("us-east-1")
     aws_s3_bucket: Optional[str] = Field(None)
 
+    # Email delivery settings
+    # NOTE: When EMAIL_ENABLED=false (default), all email functions are silent no-ops.
+    smtp_host: Optional[str] = Field(None)
+    smtp_port: int = Field(587)
+    smtp_user: Optional[str] = Field(None)
+    smtp_password: Optional[str] = Field(None)
+    smtp_from_email: str = Field("noreply@complianceguard.com")
+    smtp_from_name: str = Field("ComplianceGuard")
+    smtp_tls: bool = Field(True)
+    smtp_ssl: bool = Field(False)
+    email_enabled: bool = Field(False)
+
     # Evidence collection settings
     evidence_retention_days: int = Field(2555)  # 7 years for compliance
     max_file_size_mb: int = Field(100)
