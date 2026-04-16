@@ -292,6 +292,7 @@ ipcMain.handle('export-pdf-report', async (event, frameworkId = 1) => {
     await new Promise((resolve, reject) => {
       reportWindow.webContents.once('did-finish-load', resolve);
       reportWindow.webContents.once('did-fail-load', (_event, errorCode, errorDescription) => {
+        reportWindow.destroy();
         reject(new Error(`Report render failed: ${errorDescription} (${errorCode})`));
       });
       reportWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html));
