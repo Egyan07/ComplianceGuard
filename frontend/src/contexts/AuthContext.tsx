@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import axios from 'axios';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
@@ -26,33 +26,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('auth_token'));
   const [loading, setLoading] = useState(true);
+  // Ref so the axios interceptor in api.ts always reads the latest refresh token
+  const refreshTokenRef = useRef<string | null>(localStorage.getItem('refresh_token'));
 
-  // On mount, check if we have a stored token and validate it
+  const storeTokens = (accessToken: string, refreshToken: string, userData: User) => {
+    setToken(accessToken);
+    setUser(userData);
+    refreshTokenRef.current = refreshToken;
+    localStorage.setItem('auth_token', accessToken);
+    localStorage.setItem('refresh_token', refreshToken);
+    localStorage.setItem('auth_user', JSON.stringify(userData));
+  };
+
+  const clearAuth = () => {
+    setToken(null);
+    setUser(null);
+    refreshTokenRef.current = null;
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('auth_user');
+  };
+
+  // On mount, restore session from localStorage
   useEffect(() => {
-    if (token) {
-      // Simple validation: try the health endpoint with auth header
-      // If the token is invalid, clear it
-      axios
-        .get(`${API_BASE}/health`, { headers: { Authorization: `Bearer ${token}` } })
-        .then(() => {
-          // Token is valid — decode user from stored data
-          const stored = localStorage.getItem('auth_user');
-          if (stored) {
-            setUser(JSON.parse(stored));
-          }
-        })
-        .catch(() => {
-          // Token invalid or server unreachable — clear auth
-          localStorage.removeItem('auth_token');
-          localStorage.removeItem('auth_user');
-          setToken(null);
-          setUser(null);
-        })
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
+    const storedToken = localStorage.getItem('auth_token');
+    const storedUser = localStorage.getItem('auth_user');
+    if (storedToken && storedUser) {
+      try {
+        setToken(storedToken);
+        setUser(JSON.parse(storedUser));
+      } catch {
+        clearAuth();
+      }
     }
-  }, []);  // eslint-disable-line react-hooks/exhaustive-deps
+    setLoading(false);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const login = async (email: string, password: string) => {
     const form = new URLSearchParams();
@@ -63,14 +71,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
 
-    const { access_token, user: userData } = res.data;
-    setToken(access_token);
-    setUser(userData);
-    localStorage.setItem('auth_token', access_token);
-    localStorage.setItem('auth_user', JSON.stringify(userData));
+    const { access_token, refresh_token, user: userData } = res.data;
+    storeTokens(access_token, refresh_token, userData);
   };
 
-  const register = async (email: string, password: string, firstName: string, lastName: string) => {
+  const register = async (
+    email: string,
+    password: string,
+    firstName: string,
+    lastName: string,
+  ) => {
     const res = await axios.post(`${API_BASE}/api/auth/register`, {
       email,
       password,
@@ -78,19 +88,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       last_name: lastName,
     });
 
-    const { access_token, user: userData } = res.data;
-    setToken(access_token);
-    setUser(userData);
-    localStorage.setItem('auth_token', access_token);
-    localStorage.setItem('auth_user', JSON.stringify(userData));
+    const { access_token, refresh_token, user: userData } = res.data;
+    storeTokens(access_token, refresh_token, userData);
   };
 
-  const logout = () => {
-    setToken(null);
-    setUser(null);
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('auth_user');
-  };
+  const logout = () => clearAuth();
 
   return (
     <AuthContext.Provider value={{ user, token, loading, login, register, logout }}>

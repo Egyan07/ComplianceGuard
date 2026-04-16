@@ -28,14 +28,69 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+// Track whether a refresh is already in-flight to avoid parallel refresh loops
+let isRefreshing = false;
+let pendingRequests: Array<(token: string) => void> = [];
+
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('auth_token');
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Only attempt refresh on 401, not on the refresh endpoint itself, and only once per request
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retried &&
+      !originalRequest.url?.includes('/auth/refresh')
+    ) {
+      originalRequest._retried = true;
+      const storedRefresh = localStorage.getItem('refresh_token');
+
+      if (!storedRefresh) {
+        localStorage.removeItem('auth_token');
+        return Promise.reject(error);
+      }
+
+      if (isRefreshing) {
+        // Queue this request until the in-flight refresh completes
+        return new Promise((resolve) => {
+          pendingRequests.push((newToken: string) => {
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            resolve(apiClient(originalRequest));
+          });
+        });
+      }
+
+      isRefreshing = true;
+
+      try {
+        const refreshRes = await axios.post(
+          `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/auth/refresh`,
+          { refresh_token: storedRefresh },
+        );
+        const newAccessToken: string = refreshRes.data.access_token;
+        localStorage.setItem('auth_token', newAccessToken);
+
+        // Replay all queued requests with the new token
+        pendingRequests.forEach((cb) => cb(newAccessToken));
+        pendingRequests = [];
+
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        return apiClient(originalRequest);
+      } catch {
+        // Refresh failed — clear everything so the user is prompted to log in
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('auth_user');
+        pendingRequests = [];
+        return Promise.reject(error);
+      } finally {
+        isRefreshing = false;
+      }
     }
+
     return Promise.reject(error);
-  }
+  },
 );
 
 // TypeScript interfaces

@@ -23,6 +23,7 @@ const mockUser = {
 };
 
 const mockToken = 'mock.jwt.token';
+const mockRefreshToken = 'mock.refresh.token';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -88,7 +89,7 @@ describe('AuthContext', () => {
       const axios = await import('axios');
       (axios.default.get as any).mockRejectedValue(new Error('no server'));
       (axios.default.post as any).mockResolvedValueOnce({
-        data: { access_token: mockToken, user: mockUser },
+        data: { access_token: mockToken, refresh_token: mockRefreshToken, user: mockUser },
       });
 
       const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
@@ -105,7 +106,7 @@ describe('AuthContext', () => {
     it('stores token in localStorage on success', async () => {
       const axios = await import('axios');
       (axios.default.post as any).mockResolvedValueOnce({
-        data: { access_token: mockToken, user: mockUser },
+        data: { access_token: mockToken, refresh_token: mockRefreshToken, user: mockUser },
       });
 
       const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
@@ -116,12 +117,13 @@ describe('AuthContext', () => {
       });
 
       expect(localStorage.getItem('auth_token')).toBe(mockToken);
+      expect(localStorage.getItem('refresh_token')).toBe(mockRefreshToken);
     });
 
     it('stores user in localStorage on success', async () => {
       const axios = await import('axios');
       (axios.default.post as any).mockResolvedValueOnce({
-        data: { access_token: mockToken, user: mockUser },
+        data: { access_token: mockToken, refresh_token: mockRefreshToken, user: mockUser },
       });
 
       const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
@@ -167,7 +169,7 @@ describe('AuthContext', () => {
     it('posts to correct login endpoint', async () => {
       const axios = await import('axios');
       (axios.default.post as any).mockResolvedValueOnce({
-        data: { access_token: mockToken, user: mockUser },
+        data: { access_token: mockToken, refresh_token: mockRefreshToken, user: mockUser },
       });
 
       const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
@@ -188,7 +190,7 @@ describe('AuthContext', () => {
     it('sets user and token on success', async () => {
       const axios = await import('axios');
       (axios.default.post as any).mockResolvedValueOnce({
-        data: { access_token: mockToken, user: mockUser },
+        data: { access_token: mockToken, refresh_token: mockRefreshToken, user: mockUser },
       });
 
       const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
@@ -205,7 +207,7 @@ describe('AuthContext', () => {
     it('stores token in localStorage on success', async () => {
       const axios = await import('axios');
       (axios.default.post as any).mockResolvedValueOnce({
-        data: { access_token: mockToken, user: mockUser },
+        data: { access_token: mockToken, refresh_token: mockRefreshToken, user: mockUser },
       });
 
       const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
@@ -216,6 +218,7 @@ describe('AuthContext', () => {
       });
 
       expect(localStorage.getItem('auth_token')).toBe(mockToken);
+      expect(localStorage.getItem('refresh_token')).toBe(mockRefreshToken);
     });
 
     it('throws on failed register', async () => {
@@ -235,7 +238,7 @@ describe('AuthContext', () => {
     it('posts to correct register endpoint', async () => {
       const axios = await import('axios');
       (axios.default.post as any).mockResolvedValueOnce({
-        data: { access_token: mockToken, user: mockUser },
+        data: { access_token: mockToken, refresh_token: mockRefreshToken, user: mockUser },
       });
 
       const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
@@ -252,7 +255,7 @@ describe('AuthContext', () => {
     it('sends first and last name in register payload', async () => {
       const axios = await import('axios');
       (axios.default.post as any).mockResolvedValueOnce({
-        data: { access_token: mockToken, user: mockUser },
+        data: { access_token: mockToken, refresh_token: mockRefreshToken, user: mockUser },
       });
 
       const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
@@ -274,7 +277,7 @@ describe('AuthContext', () => {
     it('clears user on logout', async () => {
       const axios = await import('axios');
       (axios.default.post as any).mockResolvedValueOnce({
-        data: { access_token: mockToken, user: mockUser },
+        data: { access_token: mockToken, refresh_token: mockRefreshToken, user: mockUser },
       });
 
       const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
@@ -292,7 +295,7 @@ describe('AuthContext', () => {
     it('clears token on logout', async () => {
       const axios = await import('axios');
       (axios.default.post as any).mockResolvedValueOnce({
-        data: { access_token: mockToken, user: mockUser },
+        data: { access_token: mockToken, refresh_token: mockRefreshToken, user: mockUser },
       });
 
       const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
@@ -310,7 +313,7 @@ describe('AuthContext', () => {
     it('removes token from localStorage on logout', async () => {
       const axios = await import('axios');
       (axios.default.post as any).mockResolvedValueOnce({
-        data: { access_token: mockToken, user: mockUser },
+        data: { access_token: mockToken, refresh_token: mockRefreshToken, user: mockUser },
       });
 
       const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
@@ -323,6 +326,7 @@ describe('AuthContext', () => {
       act(() => result.current.logout());
 
       expect(localStorage.getItem('auth_token')).toBeNull();
+      expect(localStorage.getItem('refresh_token')).toBeNull();
       expect(localStorage.getItem('auth_user')).toBeNull();
     });
   });
@@ -330,25 +334,21 @@ describe('AuthContext', () => {
   // ─── stored token rehydration ────────────────────────────────────────────
 
   describe('stored token rehydration', () => {
-    it('restores user from localStorage if token valid', async () => {
+    it('restores user from localStorage on mount', async () => {
       localStorage.setItem('auth_token', mockToken);
+      localStorage.setItem('refresh_token', mockRefreshToken);
       localStorage.setItem('auth_user', JSON.stringify(mockUser));
-
-      const axios = await import('axios');
-      (axios.default.get as any).mockResolvedValueOnce({ data: { status: 'healthy' } });
 
       const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
       await waitFor(() => expect(result.current.loading).toBe(false));
 
       expect(result.current.user).toEqual(mockUser);
+      expect(result.current.token).toBe(mockToken);
     });
 
-    it('clears localStorage if stored token is invalid', async () => {
-      localStorage.setItem('auth_token', 'bad.token');
-      localStorage.setItem('auth_user', JSON.stringify(mockUser));
-
-      const axios = await import('axios');
-      (axios.default.get as any).mockRejectedValueOnce(new Error('401'));
+    it('clears state when stored user JSON is corrupt', async () => {
+      localStorage.setItem('auth_token', mockToken);
+      localStorage.setItem('auth_user', 'not-valid-json{{{');
 
       const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
       await waitFor(() => expect(result.current.loading).toBe(false));
@@ -357,12 +357,7 @@ describe('AuthContext', () => {
       expect(localStorage.getItem('auth_token')).toBeNull();
     });
 
-    it('loading becomes false after invalid token cleared', async () => {
-      localStorage.setItem('auth_token', 'bad.token');
-
-      const axios = await import('axios');
-      (axios.default.get as any).mockRejectedValueOnce(new Error('401'));
-
+    it('loading becomes false when no stored token present', async () => {
       const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
       await waitFor(() => expect(result.current.loading).toBe(false));
 
