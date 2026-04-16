@@ -19,6 +19,8 @@ from pydantic import BaseModel, EmailStr
 from app.core.auth import (
     authenticate_user,
     create_access_token,
+    create_refresh_token,
+    verify_refresh_token,
     get_password_hash,
     Token,
     ACCESS_TOKEN_EXPIRE_MINUTES
@@ -80,6 +82,7 @@ class LoginRequest(BaseModel):
 class LoginResponse(BaseModel):
     """Schema for login response."""
     access_token: str
+    refresh_token: str
     token_type: str
     user: UserResponse
 
@@ -119,6 +122,7 @@ async def login(
 
     return LoginResponse(
         access_token=access_token,
+        refresh_token=create_refresh_token({"sub": user.email}),
         token_type="bearer",
         user=UserResponse(
             id=user.id,
@@ -201,6 +205,7 @@ async def register(
     # In production, send verification_token via email instead of returning it
     return LoginResponse(
         access_token=access_token,
+        refresh_token=create_refresh_token({"sub": new_user.email}),
         token_type="bearer",
         user=UserResponse(
             id=new_user.id,
@@ -320,3 +325,42 @@ async def reset_password(
     db.commit()
 
     return {"message": "Password reset successfully"}
+
+
+class RefreshRequest(BaseModel):
+    """Schema for token refresh."""
+    refresh_token: str
+
+
+class RefreshResponse(BaseModel):
+    """Schema for refresh token response."""
+    access_token: str
+    token_type: str
+
+
+@router.post("/refresh", response_model=RefreshResponse)
+async def refresh_token(
+    request_data: RefreshRequest,
+    db: Session = Depends(get_db),
+):
+    """Exchange a valid refresh token for a new access token."""
+    token_data = verify_refresh_token(request_data.refresh_token)
+    if token_data is None or token_data.sub is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user = db.query(User).filter(User.email == token_data.sub).first()
+    if not user or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token",
+        )
+
+    access_token = create_access_token(
+        data={"sub": user.email},
+        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+    )
+    return RefreshResponse(access_token=access_token, token_type="bearer")
