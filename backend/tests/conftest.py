@@ -84,7 +84,8 @@ def test_user(test_db_session: Session) -> User:
         first_name=user_data["first_name"],
         last_name=user_data["last_name"],
         is_active=True,
-        is_superuser=False
+        is_superuser=False,
+        license_tier="pro",
     )
 
     test_db_session.add(user)
