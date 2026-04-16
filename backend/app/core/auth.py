@@ -21,6 +21,7 @@ from app.core.config import settings
 SECRET_KEY = settings.secret_key
 ALGORITHM = settings.algorithm
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
+REFRESH_TOKEN_EXPIRE_DAYS = settings.refresh_token_expire_days
 
 
 class TokenPayload(BaseModel):
@@ -70,6 +71,33 @@ def verify_access_token(token: str) -> Optional[TokenPayload]:
     """Verify and decode a JWT access token."""
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            return None
+        return TokenPayload(sub=email)
+    except InvalidTokenError:
+        return None
+
+
+def create_refresh_token(data: dict) -> str:
+    """Create a long-lived JWT refresh token with type='refresh' claim."""
+    to_encode = {**data, "type": "refresh"}
+    expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def verify_refresh_token(token: str) -> Optional[TokenPayload]:
+    """
+    Verify a refresh token. Returns None if invalid, expired, or not a refresh token.
+    Explicitly rejects access tokens (which have no 'type' claim).
+    """
+    if not token:
+        return None
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        if payload.get("type") != "refresh":
+            return None
         email: str = payload.get("sub")
         if email is None:
             return None

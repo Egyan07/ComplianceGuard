@@ -334,3 +334,39 @@ class TestPasswordReset:
         assert user.reset_token is None
         assert user.reset_token_expires is None
         db.close()
+
+
+# ─── Refresh token tests ─────────────────────────────────────────────────────
+
+from app.core.auth import create_refresh_token, verify_refresh_token
+
+
+def test_create_refresh_token_returns_string():
+    token = create_refresh_token({"sub": "user@example.com"})
+    assert isinstance(token, str)
+    assert len(token) > 20
+
+
+def test_verify_refresh_token_valid():
+    token = create_refresh_token({"sub": "user@example.com"})
+    result = verify_refresh_token(token)
+    assert result is not None
+    assert result.sub == "user@example.com"
+
+
+def test_verify_refresh_token_rejects_access_token():
+    """An access token must not be accepted as a refresh token."""
+    from app.core.auth import create_access_token
+    access = create_access_token({"sub": "user@example.com"})
+    result = verify_refresh_token(access)
+    assert result is None
+
+
+def test_verify_refresh_token_rejects_garbage():
+    result = verify_refresh_token("not.a.token")
+    assert result is None
+
+
+def test_verify_refresh_token_rejects_empty():
+    result = verify_refresh_token("")
+    assert result is None
