@@ -30,7 +30,11 @@ apiClient.interceptors.request.use((config) => {
 
 // Track whether a refresh is already in-flight to avoid parallel refresh loops
 let isRefreshing = false;
-let pendingRequests: Array<(token: string) => void> = [];
+interface PendingRequest {
+  onSuccess: (token: string) => void;
+  onFailure: (error: unknown) => void;
+}
+let pendingRequests: PendingRequest[] = [];
 
 apiClient.interceptors.response.use(
   (response) => response,
@@ -40,10 +44,10 @@ apiClient.interceptors.response.use(
     // Only attempt refresh on 401, not on the refresh endpoint itself, and only once per request
     if (
       error.response?.status === 401 &&
-      !originalRequest._retried &&
+      !(originalRequest as any)._retried &&
       !originalRequest.url?.includes('/auth/refresh')
     ) {
-      originalRequest._retried = true;
+      (originalRequest as any)._retried = true;
       const storedRefresh = localStorage.getItem('refresh_token');
 
       if (!storedRefresh) {
@@ -52,11 +56,14 @@ apiClient.interceptors.response.use(
       }
 
       if (isRefreshing) {
-        // Queue this request until the in-flight refresh completes
-        return new Promise((resolve) => {
-          pendingRequests.push((newToken: string) => {
-            originalRequest.headers.Authorization = `Bearer ${newToken}`;
-            resolve(apiClient(originalRequest));
+        // Queue this request until the in-flight refresh completes or fails
+        return new Promise((resolve, reject) => {
+          pendingRequests.push({
+            onSuccess: (newToken: string) => {
+              originalRequest.headers.Authorization = `Bearer ${newToken}`;
+              resolve(apiClient(originalRequest));
+            },
+            onFailure: reject,
           });
         });
       }
@@ -72,17 +79,18 @@ apiClient.interceptors.response.use(
         localStorage.setItem('auth_token', newAccessToken);
 
         // Replay all queued requests with the new token
-        pendingRequests.forEach((cb) => cb(newAccessToken));
+        pendingRequests.forEach(({ onSuccess }) => onSuccess(newAccessToken));
         pendingRequests = [];
 
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return apiClient(originalRequest);
       } catch {
-        // Refresh failed — clear everything so the user is prompted to log in
+        // Refresh failed — reject all queued requests and clear auth
+        pendingRequests.forEach(({ onFailure }) => onFailure(error));
+        pendingRequests = [];
         localStorage.removeItem('auth_token');
         localStorage.removeItem('refresh_token');
         localStorage.removeItem('auth_user');
-        pendingRequests = [];
         return Promise.reject(error);
       } finally {
         isRefreshing = false;
