@@ -44,9 +44,13 @@ class Settings(BaseSettings):
 
     # API settings
     api_v1_prefix: str = Field("/api/v1")
+    # NOTE: When set via env var, use JSON array format (pydantic-settings v2 requirement):
+    # CORS_ORIGINS=["http://localhost:5173","http://localhost:3000"]
     cors_origins: List[str] = Field(
         ["http://localhost:5173", "http://localhost:3000"]
     )
+    # NOTE: When set via env var, use JSON array format (pydantic-settings v2 requirement):
+    # ALLOWED_HOSTS=["localhost","127.0.0.1"]
     allowed_hosts: List[str] = Field(
         ["localhost", "127.0.0.1"]
     )
@@ -86,11 +90,15 @@ class Settings(BaseSettings):
     # Evidence collection settings
     evidence_retention_days: int = Field(2555)  # 7 years for compliance
     max_file_size_mb: int = Field(100)
+    # NOTE: When set via env var, use JSON array format (pydantic-settings v2 requirement):
+    # ALLOWED_FILE_TYPES=[".pdf",".doc",".docx",".xls",".xlsx",".ppt",".pptx",".txt",".json",".csv"]
     allowed_file_types: List[str] = Field(
         [".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".json", ".csv"]
     )
 
     # Compliance evaluation settings
+    # NOTE: When set via env var, use JSON array format (pydantic-settings v2 requirement):
+    # DEFAULT_EVALUATION_SCOPE=["CC","A","C","PI","CA"]
     default_evaluation_scope: List[str] = Field(
         ["CC", "A", "C", "PI", "CA"]
     )
