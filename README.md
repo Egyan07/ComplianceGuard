@@ -35,6 +35,28 @@ ComplianceGuard lives on the endpoint too. It collects evidence directly from Wi
                    └─────────────┘
 ```
 
+## Choose Your Privacy Level
+
+Every organisation has different requirements. ComplianceGuard gives you full control over where your data lives.
+
+### Maximum Privacy — Self-Host
+> *"My data never leaves my infrastructure."*
+
+Deploy the web dashboard on your own server (Railway, Render, DigitalOcean, or any VPS). Your compliance data stays entirely within your control. Nobody — not even ComplianceGuard — can access it. Perfect for regulated industries, government contractors, legal firms, healthcare, and air-gapped environments.
+
+**You manage the server. You own the data. You pay less.**
+
+### Maximum Convenience — Hosted by Us
+> *"I just want it to work without managing servers."*
+
+Contact us to set up a hosted instance. Install the desktop app on your machines, enter your credentials, and you are running. We handle uptime, backups, updates, and infrastructure. Your endpoint evidence stays on your machines until you choose to sync.
+
+**We manage the server. You own the data. Zero setup required.**
+
+> Either way — the endpoint evidence collected from your Windows machines never leaves your local machine until you explicitly choose to sync it to the dashboard.
+
+---
+
 ## Demo
 
 > **Coming soon** — a short GIF walkthrough showing: install → collect evidence → evaluate compliance → export PDF report.
@@ -63,12 +85,12 @@ Download `ComplianceGuard-Setup.exe` from the [latest release](https://github.co
 
 ### Option B — One-Click Setup (Development)
 
-```
+```bash
 git clone https://github.com/Egyan07/ComplianceGuard.git
 ```
 
 1. Double-click **`install.bat`** — installs all dependencies, sets up the database, and creates `start.bat`
-2. Double-click **`start.bat`** — choose Desktop or Web mode and you're running
+2. Double-click **`start.bat`** — choose Desktop or Web mode and you are running
 
 > **Prerequisites:** Windows 10/11, [Node.js 18+](https://nodejs.org/), [Python 3.10+](https://www.python.org/downloads/)
 
@@ -87,7 +109,7 @@ npm run dev
 </details>
 
 <details>
-<summary>Web (Docker)</summary>
+<summary>Web — Self-Hosted (Docker)</summary>
 
 ```bash
 git clone https://github.com/Egyan07/ComplianceGuard.git
@@ -97,6 +119,17 @@ docker-compose up -d
 ```
 
 App at `http://localhost` (nginx proxy), API docs at `http://localhost:8000/docs`. Requires [Docker](https://docs.docker.com/get-docker/).
+
+One-click Railway deploy:
+
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app)
+
+</details>
+
+<details>
+<summary>Web — Hosted by Us</summary>
+
+Contact us at [alexisegyan1232@gmail.com](mailto:alexisegyan1232@gmail.com) to set up a managed hosted instance. We handle deployment, uptime, backups, and updates. You just install the desktop app and connect.
 
 </details>
 
@@ -116,11 +149,13 @@ npm run package    # outputs to dist/
 | **Where it runs** | On your machine or self-hosted | In the cloud |
 | **What it scans** | OS-level: event logs, registry, services, firewall, users | Cloud infra: AWS, GCP, Azure |
 | **Data residency** | Never leaves your control | Stored on vendor servers |
+| **Self-hosted option** | ✅ Full control | ❌ Cloud only |
 | **Air-gapped networks** | Desktop works completely offline | Requires internet |
 | **Cost** | Free tier available, Pro from $49/mo | $8k–$10k/year |
 | **SOC 2 controls** | 29 implemented | Varies |
+| **Open source** | ✅ BSL 1.1 | ❌ Closed source |
 
-They scan the cloud. We scan the machine. Use both and you've covered the full stack.
+They scan the cloud. We scan the machine. Use both and you have covered the full stack.
 
 ## What It Collects
 
@@ -209,7 +244,7 @@ Each evidence item is SHA-256 hashed for integrity and stored with full audit lo
 <details>
 <summary><strong>Click to expand</strong></summary>
 
-ComplianceGuard runs in two modes: **Desktop** (Electron + SQLite) for offline use, and **Web** (FastAPI + PostgreSQL + React) for hosted deployments. The frontend auto-detects which mode it's in.
+ComplianceGuard runs in two modes: Desktop (Electron + SQLite) for offline use, and Web (FastAPI + PostgreSQL + React) for hosted deployments. The frontend auto-detects which mode it's in.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -242,17 +277,20 @@ ComplianceGuard runs in two modes: **Desktop** (Electron + SQLite) for offline u
                        │ HTTP / REST API
                        ▼
 ┌──────────────────────────────────────────────────────────────┐
-│  WEB MODE (Docker / Self-Hosted)                              │
+│  WEB MODE (Self-Hosted or Managed)                            │
 │                                                               │
 │  ┌─────────────────┐  ┌───────────────────────────────────┐  │
 │  │ FastAPI Backend  │  │ PostgreSQL                        │  │
 │  │ Auth · Evidence  │  │ Users · Companies · Compliance    │  │
 │  │ Compliance API   │  │ Evidence · Frameworks             │  │
 │  └─────────────────┘  └───────────────────────────────────┘  │
+│                                                               │
+│  Your server OR our managed infrastructure —                  │
+│  your choice, your data stays yours either way.               │
 └──────────────────────────────────────────────────────────────┘
 ```
 
-**Key files:**
+Key files:
 
 ```
 ComplianceGuard/
@@ -286,8 +324,8 @@ ComplianceGuard/
 │   ├── src/
 │   │   ├── App.tsx                     # Theme, nav, auth gate, error boundary
 │   │   ├── components/                 # Dashboard, Score, Evidence, History, Settings, Login
-│   │   ├── contexts/AuthContext.tsx    # JWT auth state, login/register/logout
-│   │   ├── contexts/LicenseContext.tsx # React context for tier state + feature checks
+│   │   ├── contexts/AuthContext.tsx     # JWT auth state, login/register/logout
+│   │   ├── contexts/LicenseContext.tsx  # React context for tier state + feature checks
 │   │   ├── services/api.ts             # Unified API (IPC or HTTP)
 │   │   └── test/                       # Vitest test suite (114 tests)
 │   ├── e2e/                            # Playwright e2e tests (5 tests)
@@ -314,7 +352,7 @@ ComplianceGuard is designed for Windows endpoints. The following limitations app
 
 - **Windows only** — evidence collection uses PowerShell, WMI, and the Windows registry. macOS and Linux support is on the roadmap.
 - **No automatic scheduling** — evidence must be collected manually or triggered via the dashboard. Scheduled collection is planned.
-- **Per-machine view in desktop mode** — the Electron app shows one machine at a time. Use the web mode Cloud Dashboard (Pro/Enterprise) to monitor multiple machines centrally.
+- **Per-machine view in desktop mode** — the Electron app shows one machine at a time. Use web mode (self-hosted or managed) with the Cloud Dashboard to monitor multiple machines centrally.
 - **AWS only for cloud evidence** — the web backend collects S3 and IAM evidence from AWS. GCP and Azure are not yet implemented.
 - **SOC 2 Type II only** — ISO 27001, HIPAA, and PCI DSS frameworks are in development.
 - **Single machine in free tier** — the free tier is limited to one machine. Pro supports up to 10, Enterprise is unlimited.
@@ -325,9 +363,11 @@ ComplianceGuard is designed for Windows endpoints. The following limitations app
 
 Free gets you hooked. Pro makes you audit-ready.
 
+### Self-Hosted (You Manage the Server)
+
 | | **Free** | **Pro** | **Enterprise** |
 |---|---|---|---|
-| **Price** | $0 forever | $49–99/mo | $299/mo + $15/machine |
+| **Price** | $0 forever | $49/mo | $249/mo + $12/machine |
 | Evidence collection (all 8 categories) | ✅ | ✅ | ✅ |
 | SOC 2 controls | 12 core controls | All 29 controls | All 29 controls |
 | Overall compliance score | ✅ | ✅ | ✅ |
@@ -336,18 +376,40 @@ Free gets you hooked. Pro makes you audit-ready.
 | Upload manual evidence (policies, docs) | — | ✅ | ✅ |
 | Evaluation history + trends | — | ✅ | ✅ |
 | PDF audit-ready reports | — | ✅ | ✅ |
-| Machines | 1 | Up to 10 | Unlimited |
-| ISO 27001, HIPAA, PCI DSS | — | *Coming soon* | *Coming soon* |
 | Cloud dashboard (multi-machine) | — | ✅ | ✅ |
+| Machines | 1 | Up to 10 | Unlimited |
 | Users | 1 | Up to 10 | Unlimited |
-| SSO / SAML | — | — | *Coming soon* |
-| Custom compliance frameworks | — | — | *Coming soon* |
-| Central policy deployment | — | — | *Coming soon* |
 | Support | Community | Email | Dedicated |
 
-> **Free tier** collects evidence and shows your overall score — enough to know where you stand. **Pro** unlocks the full 29-control breakdown, tells you exactly what to fix, and generates the PDF reports your auditor will ask for. That's the difference between knowing your score and passing the audit.
+### Managed Hosting (We Manage the Server)
+
+| | **Pro Managed** | **Enterprise Managed** |
+|---|---|---|
+| **Price** | $79/mo | $449/mo + $18/machine |
+| Everything in Self-Hosted Pro/Enterprise | ✅ | ✅ |
+| Zero server setup required | ✅ | ✅ |
+| We handle uptime, backups, updates | ✅ | ✅ |
+| Onboarding assistance | ✅ | ✅ |
+| Dedicated infrastructure | — | ✅ |
+
+**Self-hosted:** Your data stays entirely on your infrastructure. Lower price because you manage the server. Perfect for regulated industries, government contractors, legal firms, and air-gapped environments.
+
+**Managed:** We host the dashboard for you. Zero setup. Higher price because we do the work. Same data sovereignty principles — your endpoint evidence never leaves your machines until you sync.
 
 License keys use Ed25519 cryptographic signatures — verified offline, no license server required.
+
+## Who Is This For?
+
+| Organisation Type | Recommended Option | Why |
+|---|---|---|
+| Government contractors | Self-hosted Enterprise | Data sovereignty requirements |
+| NHS / Healthcare | Self-hosted Enterprise | NHS DSPT, patient data governance |
+| Legal firms | Self-hosted Pro/Enterprise | Client confidentiality, SRA |
+| Financial services | Self-hosted Enterprise | FCA data residency |
+| Accounting firms | Self-hosted or Managed Pro | HMRC data, GDPR Article 32 |
+| Air-gapped environments | Desktop only | Zero network traffic |
+| Startups / SMBs | Managed Pro | Zero setup, fast onboarding |
+| IT consultants | Self-hosted Pro | Manage multiple clients |
 
 ## Security Model
 
@@ -395,21 +457,21 @@ uvicorn app.main:app --reload        # Run backend locally
 ### Tests
 
 ```bash
-# Frontend (121 unit + 5 e2e)
+# Frontend (121 unit + 5 e2e = 126 tests)
 cd frontend
 npm test                 # Vitest unit tests
 npm run test:e2e         # Playwright e2e tests
 npm run lint             # ESLint
 npm run format:check     # Prettier
 
-# Backend (175 tests)
+# Backend (143 unit + 27 integration + 5 e2e = 175 tests)
 cd backend
-python -m pytest tests/unit/ -v              # Unit tests (143)
-python -m pytest tests/integration/ -v       # Integration tests (27)
-python -m pytest tests/e2e/ -v --run-e2e     # E2E tests (5)
+python -m pytest tests/unit/ -v
+python -m pytest tests/integration/ -v
+python -m pytest tests/e2e/ -v --run-e2e
 ```
 
-CI runs backend tests (unit + integration + e2e), frontend lint + type check + tests, and build on every push via GitHub Actions. Total: **294 tests**.
+CI runs all tests on every push via GitHub Actions. Total: **311 tests** (126 frontend + 175 backend — verified against badge).
 
 ## Troubleshooting
 
@@ -442,6 +504,9 @@ Run `cd frontend && npm install react-transition-group` to install the missing p
 **Is my compliance data sent anywhere?**
 No. All evidence collection, scoring, and storage happens locally on your machine or on your own hosted infrastructure. There is no telemetry and no data leaves your control.
 
+**What is the difference between self-hosted and managed?**
+Self-hosted means you run the web dashboard on your own server — Railway, Render, DigitalOcean, or any VPS. Managed means we run it for you. Either way, the endpoint evidence collected from your Windows machines stays local until you explicitly sync it. The difference is who manages the server infrastructure.
+
 **Does ComplianceGuard replace a SOC 2 auditor?**
 No. It automates evidence collection and gives you a readiness score, but a formal SOC 2 audit still requires a licensed CPA firm. Think of ComplianceGuard as audit preparation, not audit replacement.
 
@@ -457,11 +522,14 @@ Yes. The full source is available in this repository under the Business Source L
 **Will macOS and Linux be supported?**
 They are on the roadmap. The backend and frontend are already cross-platform. The main work required is porting the Windows-specific evidence collector to macOS and Linux equivalents.
 
-**How do I get a Pro license key?**
-License key purchasing is coming soon. Contact [Egyan07](https://github.com/Egyan07) directly in the meantime.
+**How do I get a Pro or Enterprise license key?**
+Contact [alexisegyan1232@gmail.com](mailto:alexisegyan1232@gmail.com) for licensing. Managed hosted instances are also available — we handle deployment and infrastructure for you.
 
 **What is the Cloud Dashboard?**
-The current version shows compliance for one machine at a time. The Cloud Dashboard is available for Pro and Enterprise users in web mode. Each Windows machine runs the Electron desktop app; go to Settings > Cloud Sync, enter your web server URL and credentials, then click "Sync to Cloud" on the dashboard. The web dashboard shows all machines' compliance scores, last sync time, and fleet-level stats.
+The Cloud Dashboard allows you to monitor multiple machines from one centralized web view. Each Windows machine runs the Electron desktop app. Go to Settings > Cloud Sync, enter your web server URL and credentials, and click Sync to Cloud. The web dashboard then shows all machines' compliance scores, last sync time, and fleet-level stats. Available for Pro and Enterprise users.
+
+**Can I use this in an air-gapped environment?**
+Yes. The Desktop (Electron) mode works completely offline with no network traffic. Evidence is collected locally, stored in SQLite, and never leaves the machine unless you configure cloud sync. Perfect for classified, government, or highly regulated environments.
 
 ## Contributing
 
@@ -472,7 +540,7 @@ Contributions are welcome. Before submitting a pull request, please:
 - Follow existing code style (ESLint + Prettier for frontend, flake8 for backend)
 - Update documentation for any user-facing changes
 
-See CONTRIBUTING.md for full guidelines.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 
 ## Roadmap
 
@@ -481,19 +549,20 @@ See CONTRIBUTING.md for full guidelines.
 | Evidence collection (8 categories) | Scheduled automatic collection |
 | 29 SOC 2 controls with weighted scoring | ISO 27001 framework |
 | PDF reports + evaluation history | HIPAA framework |
-| Free / Pro licensing (Ed25519) | macOS and Linux support |
-| JWT auth + refresh tokens + login UI | |
-| FastAPI + PostgreSQL + Docker + Nginx | |
-| Cloud sync + multi-machine dashboard | |
-| Email delivery (verification + reset) | |
+| Free / Pro / Enterprise licensing (Ed25519) | macOS and Linux support |
+| JWT auth + refresh tokens + login UI | GCP and Azure cloud evidence |
+| FastAPI + PostgreSQL + Docker + Nginx | Air-gapped Enterprise tier |
+| Cloud sync + multi-machine dashboard | Setup video walkthrough |
+| Email delivery (verification + reset) | One-click Railway deploy button |
 | Web mode license enforcement (Ed25519) | |
 | Sentry error monitoring (backend + frontend) | |
-| CI/CD with 294 tests (unit + integration + e2e) | |
+| Self-hosted + Managed hosting options | |
+| CI/CD with 311 tests (unit + integration + e2e) | |
 | Alembic migrations + rate limiting | |
 
 ## License
 
-Business Source License — see [LICENSE](LICENSE).
+Business Source License 1.1 — free to use, modify, and self-host. You may not offer ComplianceGuard as a competing hosted commercial service. See [LICENSE](LICENSE) for full terms.
 
 See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
@@ -503,6 +572,8 @@ See [CHANGELOG.md](CHANGELOG.md) for full version history.
   <strong>ComplianceGuard</strong> — Collect. Evaluate. Comply.
   <br><br>
   Built by <a href="https://github.com/Egyan07">Egyan07</a>
-  <br>
+  <br><br>
+  <a href="mailto:alexisegyan1232@gmail.com"><img src="https://img.shields.io/badge/Email-Contact_for_Licensing-0d1117?style=for-the-badge&logo=gmail&logoColor=white" alt="Email"></a>
+  &nbsp;
   <a href="https://github.com/Egyan07/ComplianceGuard/issues">Report a bug</a> · <a href="https://github.com/Egyan07/ComplianceGuard/issues/new">Request a feature</a>
 </p>
