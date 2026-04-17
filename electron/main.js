@@ -8,6 +8,7 @@ const LocalEvidenceProcessor = require('./processing/evidence-processor');
 const LocalComplianceEngine = require('./processing/compliance-engine');
 const ReportGenerator = require('./processing/report-generator');
 const LicenseManager = require('./licensing/license-manager');
+const CloudSync = require('./cloud-sync');
 const { collectWindowsEvidence } = require('./system/windows');
 
 // Keep a global reference of the window object
@@ -410,6 +411,22 @@ ipcMain.handle('create-database-backup', async () => {
     console.error('Database backup failed:', error);
     return { error: error.message };
   }
+});
+
+ipcMain.handle('cloud-connect', async (event, serverUrl, email, password) => {
+  return await CloudSync.cloudConnect(database, serverUrl, email, password);
+});
+
+ipcMain.handle('cloud-sync', async (event, syncData) => {
+  return await CloudSync.cloudSync(database, syncData);
+});
+
+ipcMain.handle('cloud-get-config', async () => {
+  return await CloudSync.getCloudConfig(database);
+});
+
+ipcMain.handle('cloud-disconnect', async () => {
+  return await CloudSync.clearCloudConfig(database);
 });
 
 // ---- App Lifecycle ----

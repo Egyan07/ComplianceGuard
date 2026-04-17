@@ -32,7 +32,8 @@ import {
   Shield,
   Palette,
   CheckCircle,
-  VpnKey
+  VpnKey,
+  Cloud
 } from '@mui/icons-material';
 import { useLicense } from '../contexts/LicenseContext';
 
@@ -47,6 +48,11 @@ const Settings: React.FC = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [licenseKey, setLicenseKey] = useState('');
   const [activating, setActivating] = useState(false);
+  const [cloudConfig, setCloudConfig] = useState<{ connected: boolean; serverUrl: string | null; email: string | null } | null>(null);
+  const [cloudUrl, setCloudUrl] = useState('');
+  const [cloudEmail, setCloudEmail] = useState('');
+  const [cloudPassword, setCloudPassword] = useState('');
+  const [connecting, setConnecting] = useState(false);
   const { tier, licenseInfo, activateLicense, deactivateLicense } = useLicense();
 
   useEffect(() => {
@@ -58,6 +64,7 @@ const Settings: React.FC = () => {
       api.getUserSetting('dark_mode', 'false').then((val: string) => {
         setDarkMode(val === 'true');
       });
+      api.cloudGetConfig().then((cfg: any) => setCloudConfig(cfg));
     }
   }, []);
 
@@ -89,6 +96,35 @@ const Settings: React.FC = () => {
       const api = (window as any).electronAPI;
       await api.setUserSetting('dark_mode', String(newValue), 'boolean');
     }
+  };
+
+  const handleCloudConnect = async () => {
+    if (!isElectron) return;
+    setConnecting(true);
+    setError(null);
+    try {
+      const api = (window as any).electronAPI;
+      const result = await api.cloudConnect(cloudUrl, cloudEmail, cloudPassword);
+      if (result.error) {
+        setError(result.error);
+      } else {
+        setCloudConfig(result);
+        setCloudPassword('');
+        setSuccessMessage('Connected to cloud successfully!');
+      }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setConnecting(false);
+    }
+  };
+
+  const handleCloudDisconnect = async () => {
+    if (!isElectron) return;
+    const api = (window as any).electronAPI;
+    await api.cloudDisconnect();
+    setCloudConfig({ connected: false, serverUrl: null, email: null });
+    setSuccessMessage('Disconnected from cloud.');
   };
 
   return (
@@ -283,6 +319,70 @@ const Settings: React.FC = () => {
           </List>
         </Box>
       </Paper>
+
+      {/* Cloud Sync Section */}
+      {isElectron && (
+        <Paper sx={{ mb: 3 }}>
+          <Box sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+              <Cloud color="primary" />
+              <Typography variant="h6">Cloud Sync</Typography>
+              {cloudConfig?.connected && (
+                <Chip label="Connected" size="small" color="success" />
+              )}
+            </Box>
+            {cloudConfig?.connected ? (
+              <Box>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  Connected as <strong>{cloudConfig.email}</strong>
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  {cloudConfig.serverUrl}
+                </Typography>
+                <Button variant="outlined" color="error" size="small" onClick={handleCloudDisconnect}>
+                  Disconnect
+                </Button>
+              </Box>
+            ) : (
+              <Box>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Connect to your ComplianceGuard web server to sync compliance data to the Cloud Dashboard.
+                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                  <input
+                    type="text"
+                    placeholder="Server URL (e.g. https://compliance.yourcompany.com)"
+                    value={cloudUrl}
+                    onChange={(e) => setCloudUrl(e.target.value)}
+                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px' }}
+                  />
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    value={cloudEmail}
+                    onChange={(e) => setCloudEmail(e.target.value)}
+                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px' }}
+                  />
+                  <input
+                    type="password"
+                    placeholder="Password"
+                    value={cloudPassword}
+                    onChange={(e) => setCloudPassword(e.target.value)}
+                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px' }}
+                  />
+                  <Button
+                    variant="contained"
+                    disabled={connecting || !cloudUrl || !cloudEmail || !cloudPassword}
+                    onClick={handleCloudConnect}
+                  >
+                    {connecting ? 'Connecting...' : 'Connect'}
+                  </Button>
+                </Box>
+              </Box>
+            )}
+          </Box>
+        </Paper>
+      )}
 
       {/* Display Section */}
       <Paper sx={{ mb: 3 }}>

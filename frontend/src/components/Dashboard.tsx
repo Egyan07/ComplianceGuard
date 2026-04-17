@@ -21,7 +21,8 @@ import {
   CloudUpload,
   Assessment,
   Upload,
-  PictureAsPdf
+  PictureAsPdf,
+  CloudSync as CloudSyncIcon
 } from '@mui/icons-material';
 import ComplianceScore from './ComplianceScore';
 import EvidenceList from './EvidenceList';
@@ -67,6 +68,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const [collectingEvidence, setCollectingEvidence] = useState(false);
   const [evaluating, setEvaluating] = useState(false);
   const [exportingPDF, setExportingPDF] = useState(false);
+  const [syncingCloud, setSyncingCloud] = useState(false);
+  const [cloudConnected, setCloudConnected] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [upgradePrompt, setUpgradePrompt] = useState<{ open: boolean; feature: string; description: string }>({
     open: false, feature: '', description: ''
@@ -209,8 +212,43 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     setState(prev => ({ ...prev, error: null, successMessage: null }));
   };
 
+  const handleSyncToCloud = async () => {
+    if (!isElectron) return;
+    setSyncingCloud(true);
+    setState(prev => ({ ...prev, error: null }));
+    try {
+      const api = (window as any).electronAPI;
+      const levelMap: Record<string, string> = {
+        compliant: 'compliant',
+        partial_compliance: 'at_risk',
+        at_risk: 'at_risk',
+        non_compliant: 'critical',
+      };
+      const result = await api.cloudSync({
+        overall_score: state.evaluation?.overall_score ?? null,
+        compliance_level: state.evaluation?.status
+          ? (levelMap[state.evaluation.status] ?? state.evaluation.status)
+          : null,
+        evidence_count: state.summary?.total_collections ?? null,
+      });
+      if (result.error) {
+        setState(prev => ({ ...prev, error: result.error }));
+      } else {
+        setState(prev => ({ ...prev, successMessage: 'Synced to cloud successfully!' }));
+      }
+    } catch (err: any) {
+      setState(prev => ({ ...prev, error: err.message || 'Cloud sync failed.' }));
+    } finally {
+      setSyncingCloud(false);
+    }
+  };
+
   useEffect(() => {
     fetchDashboardData();
+    if (isElectron) {
+      const api = (window as any).electronAPI;
+      api.cloudGetConfig().then((cfg: any) => setCloudConnected(!!cfg?.connected));
+    }
   }, []);
 
   if (state.loading && !state.summary) {
@@ -269,6 +307,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                 >
                   Upload Evidence
                 </Button>
+                {cloudConnected && (
+                  <Button
+                    variant="outlined"
+                    startIcon={syncingCloud ? <CircularProgress size={16} /> : <CloudSyncIcon />}
+                    onClick={handleSyncToCloud}
+                    disabled={syncingCloud}
+                  >
+                    {syncingCloud ? 'Syncing...' : 'Sync to Cloud'}
+                  </Button>
+                )}
                 <Button
                   variant="outlined"
                   color="secondary"

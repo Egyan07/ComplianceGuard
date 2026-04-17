@@ -112,7 +112,22 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const handler = (event, data) => callback(data);
     ipcRenderer.on('compliance-update', handler);
     return () => ipcRenderer.removeListener('compliance-update', handler);
-  }
+  },
+
+  cloudConnect: (serverUrl, email, password) => {
+    if (typeof serverUrl !== 'string' || typeof email !== 'string' || typeof password !== 'string') {
+      return Promise.reject(new Error('Invalid cloud connect params'));
+    }
+    return ipcRenderer.invoke('cloud-connect', serverUrl, email, password);
+  },
+  cloudSync: (syncData) => {
+    if (!syncData || typeof syncData !== 'object') {
+      return Promise.reject(new Error('Invalid sync data'));
+    }
+    return ipcRenderer.invoke('cloud-sync', syncData);
+  },
+  cloudGetConfig: () => ipcRenderer.invoke('cloud-get-config'),
+  cloudDisconnect: () => ipcRenderer.invoke('cloud-disconnect'),
 });
 
 // Windows-specific APIs (only exposed on Windows)
