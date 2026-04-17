@@ -25,17 +25,19 @@ import {
   Dashboard as DashboardIcon,
   Settings as SettingsIcon,
   History,
-  Logout as LogoutIcon
+  Logout as LogoutIcon,
+  CloudQueue
 } from '@mui/icons-material';
 import Dashboard from './components/Dashboard';
 import Settings from './components/Settings';
 import EvaluationHistory from './components/EvaluationHistory';
+import CloudDashboard from './components/CloudDashboard';
 import ErrorBoundary from './components/ErrorBoundary';
 import LoginPage from './components/LoginPage';
 import { LicenseProvider, useLicense } from './contexts/LicenseContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
-type Page = 'dashboard' | 'history' | 'settings';
+type Page = 'dashboard' | 'history' | 'settings' | 'cloud';
 
 const theme = createTheme({
   palette: {
@@ -197,6 +199,20 @@ function AppContent() {
                 <History />
               </IconButton>
             </Tooltip>
+            {!isElectron && (
+              <Tooltip title="Cloud Dashboard">
+                <IconButton
+                  onClick={() => setCurrentPage('cloud')}
+                  sx={{
+                    color: currentPage === 'cloud' ? '#2563EB' : '#6B7280',
+                    backgroundColor: currentPage === 'cloud' ? '#EFF6FF' : 'transparent',
+                    mr: 0.5,
+                  }}
+                >
+                  <CloudQueue />
+                </IconButton>
+              </Tooltip>
+            )}
             <Tooltip title="Settings">
               <IconButton
                 onClick={() => setCurrentPage('settings')}
@@ -223,6 +239,7 @@ function AppContent() {
           <ErrorBoundary>
             {currentPage === 'dashboard' && <Dashboard onNavigate={(page: string) => setCurrentPage(page as Page)} />}
             {currentPage === 'history' && <EvaluationHistory onNavigate={(page: string) => setCurrentPage(page as Page)} />}
+            {currentPage === 'cloud' && <CloudDashboard onNavigate={(page: string) => setCurrentPage(page as Page)} />}
             {currentPage === 'settings' && <Settings />}
           </ErrorBoundary>
         </Box>
