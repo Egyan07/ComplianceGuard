@@ -301,3 +301,37 @@ export const getMockEvidenceItems = (): EvidenceItem[] => {
     }
   ];
 };
+
+// ---- Cloud Dashboard types ----
+
+export interface FleetStats {
+  total_machines: number;
+  compliant: number;
+  at_risk: number;
+  critical: number;
+  never_synced: number;
+  avg_score: number | null;
+  machine_limit: number | null;
+}
+
+export interface MachineRecord {
+  id: number;
+  hostname: string;
+  os_version: string | null;
+  last_score: number | null;
+  compliance_level: string | null;
+  evidence_count: number | null;
+  last_sync_at: string | null;
+  is_active: boolean;
+  created_at: string;
+}
+
+export async function getFleetStats(): Promise<FleetStats> {
+  const response = await apiClient.get('/machines/fleet-stats');
+  return response.data;
+}
+
+export async function getMachines(): Promise<MachineRecord[]> {
+  const response = await apiClient.get('/machines');
+  return response.data;
+}
