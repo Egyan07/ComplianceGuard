@@ -475,61 +475,50 @@ CI runs all tests on every push via GitHub Actions. Total: **311 tests** (126 fr
 
 ## Troubleshooting
 
-**`install.bat` fails with "Node.js not found"**
-Install [Node.js 18+](https://nodejs.org/) and ensure it is added to your PATH. Restart your terminal after installation.
+| Issue | Solution |
+| :--- | :--- |
+| **`install.bat` fails with "Node.js not found"** | Install [Node.js 18+](https://nodejs.org/) and ensure it is added to your PATH. Restart your terminal after installation. |
+| **`install.bat` fails with "Python not found"** | Install [Python 3.10+](https://www.python.org/downloads/) and check "Add Python to PATH" during setup. |
+| **Backend starts but frontend shows blank screen** | Run `cd frontend && npm install` then `npm run build`. In desktop mode, ensure the Vite dev server is running on port 5173. |
+| **Docker Compose fails with "port already in use"** | Stop any existing services on ports 80, 8000, or 5432, then re-run `docker-compose up -d`. |
+| **Evidence collection returns empty results** | Run the app as Administrator. Some Windows registry and event log queries require elevated privileges. |
+| **`alembic upgrade head` fails** | Ensure `DATABASE_URL` in your `.env` is set correctly. For local SQLite, use `sqlite:///./complianceguard.db`. |
+| **License key not activating** | License keys are tied to the Ed25519 public key bundled with the app. Ensure you are using a key generated for this build. |
+| **CI fails with `ERR_MODULE_NOT_FOUND`** | Run `cd frontend && npm install react-transition-group` to install the missing peer dependency. |
 
-**`install.bat` fails with "Python not found"**
-Install [Python 3.10+](https://www.python.org/downloads/) and check "Add Python to PATH" during setup.
-
-**Backend starts but frontend shows blank screen**
-Run `cd frontend && npm install` then `npm run build`. In desktop mode, ensure the Vite dev server is running on port 5173.
-
-**Docker Compose fails with "port already in use"**
-Stop any existing services on ports 80, 8000, or 5432, then re-run `docker-compose up -d`.
-
-**Evidence collection returns empty results**
-Run the app as Administrator. Some Windows registry and event log queries require elevated privileges.
-
-**`alembic upgrade head` fails**
-Ensure `DATABASE_URL` in your `.env` is set correctly. For local SQLite, use `sqlite:///./complianceguard.db`.
-
-**License key not activating**
-License keys are tied to the Ed25519 public key bundled with the app. Ensure you are using a key generated for this build.
-
-**CI fails with `ERR_MODULE_NOT_FOUND` for react-transition-group**
-Run `cd frontend && npm install react-transition-group` to install the missing peer dependency.
 
 ## FAQ
 
-**Is my compliance data sent anywhere?**
-No. All evidence collection, scoring, and storage happens locally on your machine or on your own hosted infrastructure. There is no telemetry and no data leaves your control.
+### Is my compliance data sent anywhere?
+> No. All evidence collection, scoring, and storage happens locally on your machine or on your own hosted infrastructure. There is no telemetry and no data leaves your control.
 
-**What is the difference between self-hosted and managed?**
-Self-hosted means you run the web dashboard on your own server — Railway, Render, DigitalOcean, or any VPS. Managed means we run it for you. Either way, the endpoint evidence collected from your Windows machines stays local until you explicitly sync it. The difference is who manages the server infrastructure.
+### What is the difference between self-hosted and managed?
+> Self-hosted means you run the web dashboard on your own server — Railway, Render, DigitalOcean, or any VPS. Managed means we run it for you. Either way, the endpoint evidence collected from your Windows machines stays local until you explicitly sync it. The difference is who manages the server infrastructure.
 
-**Does ComplianceGuard replace a SOC 2 auditor?**
-No. It automates evidence collection and gives you a readiness score, but a formal SOC 2 audit still requires a licensed CPA firm. Think of ComplianceGuard as audit preparation, not audit replacement.
+### Does ComplianceGuard replace a SOC 2 auditor?
+> No. It automates evidence collection and gives you a readiness score, but a formal SOC 2 audit still requires a licensed CPA firm. Think of ComplianceGuard as audit preparation, not audit replacement.
 
-**Can I use the free tier for a real audit?**
-The free tier is useful for assessing your current posture. For an actual audit you will need Pro, which unlocks the full 29-control breakdown, gap details, remediation recommendations, and PDF exports that auditors expect.
+### Can I use the free tier for a real audit?
+> The free tier is useful for assessing your current posture. For an actual audit you will need Pro, which unlocks the full 29-control breakdown, gap details, remediation recommendations, and PDF exports that auditors expect.
 
-**What happens to my data if I stop using ComplianceGuard?**
-Your data is stored in a local SQLite file (Desktop mode) or your own PostgreSQL instance (Web mode). Uninstalling the app or deleting the database file removes all data permanently.
+### What happens to my data if I stop using ComplianceGuard?
+> Your data is stored in a local SQLite file (Desktop mode) or your own PostgreSQL instance (Web mode). Uninstalling the app or deleting the database file removes all data permanently.
 
-**Is the source code auditable?**
-Yes. The full source is available in this repository under the Business Source License. You can inspect every line of the evidence collection and scoring logic.
+### Is the source code auditable?
+> Yes. The full source is available in this repository under the Business Source License. You can inspect every line of the evidence collection and scoring logic.
 
-**Will macOS and Linux be supported?**
-They are on the roadmap. The backend and frontend are already cross-platform. The main work required is porting the Windows-specific evidence collector to macOS and Linux equivalents.
+### Will macOS and Linux be supported?
+> They are on the roadmap. The backend and frontend are already cross-platform. The main work required is porting the Windows-specific evidence collector to macOS and Linux equivalents.
 
-**How do I get a Pro or Enterprise license key?**
-Contact [alexisegyan1232@gmail.com](mailto:alexisegyan1232@gmail.com) for licensing. Managed hosted instances are also available — we handle deployment and infrastructure for you.
+### How do I get a Pro or Enterprise license key?
+> Contact [alexisegyan1232@gmail.com](mailto:alexisegyan1232@gmail.com) for licensing. Managed hosted instances are also available — we handle deployment and infrastructure for you.
 
-**What is the Cloud Dashboard?**
-The Cloud Dashboard allows you to monitor multiple machines from one centralized web view. Each Windows machine runs the Electron desktop app. Go to Settings > Cloud Sync, enter your web server URL and credentials, and click Sync to Cloud. The web dashboard then shows all machines' compliance scores, last sync time, and fleet-level stats. Available for Pro and Enterprise users.
+### What is the Cloud Dashboard?
+> The Cloud Dashboard allows you to monitor multiple machines from one centralized web view. Each Windows machine runs the Electron desktop app. Go to Settings > Cloud Sync, enter your web server URL and credentials, and click Sync to Cloud. The web dashboard then shows all machines' compliance scores, last sync time, and fleet-level stats. Available for Pro and Enterprise users.
 
-**Can I use this in an air-gapped environment?**
-Yes. The Desktop (Electron) mode works completely offline with no network traffic. Evidence is collected locally, stored in SQLite, and never leaves the machine unless you configure cloud sync. Perfect for classified, government, or highly regulated environments.
+### Can I use this in an air-gapped environment?
+> Yes. The Desktop (Electron) mode works completely offline with no network traffic. Evidence is collected locally, stored in SQLite, and never leaves the machine unless you configure cloud sync. Perfect for classified, government, or highly regulated environments.
+
 
 ## Contributing
 
