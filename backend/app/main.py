@@ -41,7 +41,7 @@ if settings.sentry_dsn:
 app = FastAPI(
     title="ComplianceGuard SOC 2 API",
     description="Backend API for SOC 2 compliance automation platform",
-    version="2.8.0"
+    version="2.9.0"
 )
 
 app.state.limiter = limiter
@@ -95,7 +95,7 @@ async def health_check() -> Dict[str, Any]:
     return {
         "status": "healthy",
         "service": "complianceguard-api",
-        "version": "2.8.0",
+        "version": "2.9.0",
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 

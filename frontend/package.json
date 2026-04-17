@@ -1,6 +1,6 @@
 {
   "name": "complianceguard-frontend",
-  "version": "2.8.0",
+  "version": "2.9.0",
   "private": true,
   "description": "ComplianceGuard SOC 2 Automation Platform Frontend",
   "type": "module",

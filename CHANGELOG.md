@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [2.9.0] — 2026-04-17
+
+### Added
+- **Cloud Dashboard** — Pro/Enterprise web page showing fleet overview (total machines, compliant, at risk, critical, avg score) and per-machine table with hostname, score, last sync time, and status badge; stale machines (no sync in 7+ days) flagged with a warning
+- **Machine sync API** — `POST /api/v1/machines/sync` for Electron apps to register and update machine compliance snapshots; enforces tier limits (Free=1, Pro=10, Enterprise=unlimited)
+- **Fleet stats API** — `GET /api/v1/machines/fleet-stats` and `GET /api/v1/machines` (both Pro-gated)
+- **Sync to Cloud button** — Electron Dashboard gains a "Sync to Cloud" button when cloud sync is configured, posting current score, compliance level, and evidence count to the web server
+- **Cloud Sync settings** — New section in Electron Settings for entering server URL and credentials; JWT tokens stored in SQLite
+- **Machine model** — New `machines` table with Alembic migration (`2b7e3f4a9c1d`)
+- 17 new tests (11 backend + 6 frontend) — total now 311
+
+### Changed
+- Version bumped to 2.9.0
+- README: cloud dashboard promoted from "Coming soon" to ✅ in pricing table; limitations and FAQ updated; roadmap updated; test count updated to 311
+
+---
+
 ## [2.8.0] - 2026-04-16
 
 ### Added
