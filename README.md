@@ -59,7 +59,9 @@ Contact us to set up a hosted instance. Install the desktop app on your machines
 
 ## Demo
 
-> **Coming soon** — a short GIF walkthrough showing: install → collect evidence → evaluate compliance → export PDF report.
+<video src="https://github.com/user-attachments/assets/f3c049a7-d70a-402f-817d-ffe4990b10c4" controls width="100%"></video>
+
+_A walkthrough of ComplianceGuard in action — collecting endpoint evidence, uploading manual documents, evaluating compliance against 29 SOC 2 controls, exporting a PDF report, and managing a Pro license from Settings._
 
 ## Screenshots
 
