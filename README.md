@@ -129,6 +129,25 @@ One-click Railway deploy:
 </details>
 
 <details>
+<summary>Web — Local Development (without Docker)</summary>
+
+```bash
+# Terminal 1 — Backend
+cd backend
+pip install -r requirements.txt
+python -m uvicorn app.main:app --reload --port 8000
+
+# Terminal 2 — Frontend
+cd frontend
+npm install
+npm run dev
+```
+
+App at `http://localhost:5173`. Create an account on first run.
+
+</details>
+
+<details>
 <summary>Web — Hosted by Us</summary>
 
 Contact us at [alexisegyan1232@gmail.com](mailto:alexisegyan1232@gmail.com) to set up a managed hosted instance. We handle deployment, uptime, backups, and updates. You just install the desktop app and connect.
