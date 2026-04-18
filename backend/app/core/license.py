@@ -16,7 +16,7 @@ from cryptography.exceptions import InvalidSignature
 
 # Must match the public key in electron/licensing/license-crypto.js
 PUBLIC_KEY_PEM = b"""-----BEGIN PUBLIC KEY-----
-MCowBQYDK2VwAyEAMCowBQYDK2VwAyEAp4j9Fs0vavJAsQud2mAtJRbMe7sWmuEYLxN2IqDv6KQ=
+MCowBQYDK2VwAyEARu9Q8wPUkdj2SaTNXwD5nPHOsYBg72zt9pN9BEZmn54=
 -----END PUBLIC KEY-----"""
 
 GRACE_PERIOD_DAYS = 7
