@@ -6,23 +6,27 @@ import { AuthProvider } from '../contexts/AuthContext';
 
 const theme = createTheme();
 
-const mockPost = vi.fn();
-const mockGet = vi.fn().mockRejectedValue(new Error('no token'));
-
-vi.mock('axios', () => ({
-  default: {
-    create: vi.fn(() => ({
+// vi.mock is hoisted to the top by Vitest, so mockPost/mockGet must be
+// defined inside the factory — not as top-level consts — to avoid
+// "Cannot access before initialization" errors.
+vi.mock('axios', () => {
+  const mockPost = vi.fn();
+  const mockGet = vi.fn().mockRejectedValue(new Error('no token'));
+  return {
+    default: {
+      create: vi.fn(() => ({
+        post: mockPost,
+        get: mockGet,
+        interceptors: {
+          request: { use: vi.fn() },
+          response: { use: vi.fn() },
+        },
+      })),
       post: mockPost,
       get: mockGet,
-      interceptors: {
-        request: { use: vi.fn() },
-        response: { use: vi.fn() },
-      },
-    })),
-    post: mockPost,
-    get: mockGet,
-  },
-}));
+    },
+  };
+});
 
 const renderLogin = () =>
   render(
@@ -37,7 +41,6 @@ describe('LoginPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
-    mockGet.mockRejectedValue(new Error('no token'));
   });
 
   it('renders the sign in form by default', () => {
