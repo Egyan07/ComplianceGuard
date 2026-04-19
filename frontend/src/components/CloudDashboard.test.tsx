@@ -75,7 +75,8 @@ describe('CloudDashboard', () => {
 
   it('refresh button re-fetches data', async () => {
     render(<CloudDashboard />);
-    await waitFor(() => expect(api.getFleetStats).toHaveBeenCalledTimes(1));
+    // Wait for loading to finish and refresh button to appear
+    await waitFor(() => expect(screen.getByRole('button', { name: /refresh/i })).toBeInTheDocument());
     fireEvent.click(screen.getByRole('button', { name: /refresh/i }));
     await waitFor(() => expect(api.getFleetStats).toHaveBeenCalledTimes(2));
   });
