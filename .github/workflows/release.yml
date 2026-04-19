@@ -28,9 +28,6 @@ jobs:
 
       - name: Build and package
         run: npm run package
-        env:
-          CSC_LINK: ${{ secrets.CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
 
       - name: Upload installer to release
         uses: softprops/action-gh-release@v2
