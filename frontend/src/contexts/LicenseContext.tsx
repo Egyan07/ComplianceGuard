@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { getLicenseInfoHttp } from '../services/api';
+import { AuthContext } from './AuthContext';
 
 const isElectron = !!(window as any).electronAPI;
 
@@ -46,9 +48,35 @@ export function LicenseProvider({ children }: { children: ReactNode }) {
   const [licenseInfo, setLicenseInfo] = useState<LicenseInfo>(defaultInfo);
   const [loading, setLoading] = useState(true);
 
+  // Consume AuthContext directly (not via useAuth()) so this provider works
+  // even when rendered outside AuthProvider (e.g. in isolated tests).
+  const authCtx = useContext(AuthContext);
+  const user = authCtx?.user ?? null;
+
   useEffect(() => {
     if (!isElectron) {
-      setLoading(false);
+      // Web mode: fetch license from backend. Skip if the user is not logged in.
+      if (!user) {
+        setLicenseInfo(defaultInfo);
+        setLoading(false);
+        return;
+      }
+
+      getLicenseInfoHttp()
+        .then((info) => {
+          setLicenseInfo({
+            tier: info.tier === 'pro' ? 'pro' : 'free',
+            licenseId: info.license_id ?? info.licenseId ?? null,
+            email: info.email ?? null,
+            maxMachines: info.max_machines ?? info.maxMachines,
+            expiresAt: info.expires_at ?? info.expiresAt ?? null,
+            daysRemaining: info.days_remaining ?? info.daysRemaining ?? null,
+            isExpired: info.is_expired ?? info.isExpired,
+            isGracePeriod: info.is_grace_period ?? info.isGracePeriod,
+          });
+        })
+        .catch(() => setLicenseInfo(defaultInfo))
+        .finally(() => setLoading(false));
       return;
     }
 
@@ -63,7 +91,7 @@ export function LicenseProvider({ children }: { children: ReactNode }) {
     });
 
     return () => { cleanup?.(); };
-  }, []);
+  }, [user]);
 
   const isFeatureAllowed = useCallback((feature: string) => {
     const gate = FEATURE_GATES[feature];

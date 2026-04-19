@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import axios from 'axios';
+import { registerAuthCallbacks } from '../services/api';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -18,9 +19,10 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
   logout: () => void;
+  setAccessToken: (newToken: string) => void;
 }
 
-const AuthContext = createContext<AuthState | undefined>(undefined);
+export const AuthContext = createContext<AuthState | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -96,8 +98,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => clearAuth();
 
+  const setAccessToken = (newToken: string) => {
+    setToken(newToken);
+    localStorage.setItem('auth_token', newToken);
+  };
+
+  // Keep AuthContext in sync with api.ts token refresh lifecycle
+  useEffect(() => {
+    registerAuthCallbacks({
+      onRefreshed: (newToken) => {
+        setToken(newToken);
+      },
+      onFailed: () => {
+        setToken(null);
+        setUser(null);
+        // localStorage already cleared by api.ts
+      },
+    });
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, logout, setAccessToken }}>
       {children}
     </AuthContext.Provider>
   );

@@ -28,6 +28,18 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+// Auth callback hooks — registered by AuthContext to keep React state in sync
+let onTokenRefreshed: ((token: string) => void) | null = null;
+let onRefreshFailed: (() => void) | null = null;
+
+export function registerAuthCallbacks(opts: {
+  onRefreshed: (t: string) => void;
+  onFailed: () => void;
+}) {
+  onTokenRefreshed = opts.onRefreshed;
+  onRefreshFailed = opts.onFailed;
+}
+
 // Track whether a refresh is already in-flight to avoid parallel refresh loops
 let isRefreshing = false;
 interface PendingRequest {
@@ -77,6 +89,7 @@ apiClient.interceptors.response.use(
         );
         const newAccessToken: string = refreshRes.data.access_token;
         localStorage.setItem('auth_token', newAccessToken);
+        onTokenRefreshed?.(newAccessToken);
 
         // Replay all queued requests with the new token
         pendingRequests.forEach(({ onSuccess }) => onSuccess(newAccessToken));
@@ -91,6 +104,7 @@ apiClient.interceptors.response.use(
         localStorage.removeItem('auth_token');
         localStorage.removeItem('refresh_token');
         localStorage.removeItem('auth_user');
+        onRefreshFailed?.();
         return Promise.reject(error);
       } finally {
         isRefreshing = false;
@@ -301,6 +315,17 @@ export const getMockEvidenceItems = (): EvidenceItem[] => {
     }
   ];
 };
+
+// ---- License HTTP (web mode) ----
+
+export async function getLicenseInfoHttp(): Promise<any> {
+  const token = localStorage.getItem('auth_token');
+  if (!token) return { tier: 'free' };
+  const base = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/api\/v1$/, '');
+  const url = `${base}/api/auth/license-info`;
+  const res = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
+  return res.data;
+}
 
 // ---- Cloud Dashboard types ----
 

@@ -7,11 +7,27 @@ import { LicenseProvider, useLicense } from '../contexts/LicenseContext';
 
 // ─── Mock axios ──────────────────────────────────────────────────────────────
 
+const mockAxiosInstance = {
+  get: vi.fn(),
+  post: vi.fn(),
+  interceptors: {
+    request: { use: vi.fn() },
+    response: { use: vi.fn() },
+  },
+};
+
 vi.mock('axios', () => ({
   default: {
     post: vi.fn(),
     get: vi.fn(),
+    create: vi.fn(() => mockAxiosInstance),
   },
+}));
+
+// Prevent api.ts registerAuthCallbacks side-effects from interfering with tests
+vi.mock('../services/api', () => ({
+  registerAuthCallbacks: vi.fn(),
+  getLicenseInfoHttp: vi.fn().mockResolvedValue({ tier: 'free' }),
 }));
 
 const mockUser = {
