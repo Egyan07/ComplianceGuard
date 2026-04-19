@@ -285,6 +285,135 @@ class TestComplianceEndpoints:
         assert res.status_code == 402
 
 
+class TestIDORProtection:
+    """Verify that Pro endpoints scope results to the authenticated user.
+
+    A Pro user (user A) who knows another user's evaluation_id must receive a
+    404 — the server must not leak that the evaluation even exists.
+    """
+
+    def _register_pro_user(self, client, email: str) -> str:
+        """Register a user, upgrade them to Pro in the DB, and return their token."""
+        res = client.post("/api/auth/register", json={
+            "email": email,
+            "password": "ProUser@1pass",
+            "first_name": "Pro",
+            "last_name": "User",
+        })
+        assert res.status_code == 200
+        token = res.json()["access_token"]
+
+        # Promote to Pro directly in the test DB so we can hit Pro endpoints.
+        from app.models.user import User
+        db = next(override_get_db())
+        user = db.query(User).filter(User.email == email).first()
+        user.license_tier = "pro"
+        db.commit()
+        db.close()
+
+        return token
+
+    def _submit_evaluation(self, client, token: str) -> str:
+        """Submit a minimal compliance evaluation and return the evaluation_id."""
+        res = client.post(
+            "/api/v1/compliance/evaluate",
+            json={
+                "evidence_data": {
+                    "CC1.1": {
+                        "evidence_provided": ["e1"],
+                        "status": "compliant",
+                        "score": 1.0,
+                        "comments": "ok",
+                    }
+                },
+                "evaluated_by": "test",
+            },
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert res.status_code == 200
+        return res.json()["framework_id"]  # we only need the eval id from DB
+
+    def test_user_b_cannot_read_user_a_control_assessments(self, client):
+        """User B gets 404 when requesting User A's evaluation control assessments."""
+        token_a = self._register_pro_user(client, "user_a_idor@test.com")
+        token_b = self._register_pro_user(client, "user_b_idor@test.com")
+
+        # User A submits an evaluation — retrieve the evaluation_id from the DB.
+        client.post(
+            "/api/v1/compliance/evaluate",
+            json={
+                "evidence_data": {
+                    "CC1.1": {
+                        "evidence_provided": ["e1"],
+                        "status": "compliant",
+                        "score": 1.0,
+                        "comments": "ok",
+                    }
+                },
+                "evaluated_by": "user_a",
+            },
+            headers={"Authorization": f"Bearer {token_a}"},
+        )
+
+        from app.models.evaluation import ComplianceEvaluationRecord
+        from app.models.user import User
+        db = next(override_get_db())
+        user_a = db.query(User).filter(User.email == "user_a_idor@test.com").first()
+        record = (
+            db.query(ComplianceEvaluationRecord)
+            .filter(ComplianceEvaluationRecord.user_id == user_a.id)
+            .first()
+        )
+        eval_id = record.evaluation_id
+        db.close()
+
+        # User B tries to read User A's evaluation — must get 404.
+        res = client.get(
+            f"/api/v1/compliance/evaluations/{eval_id}/control-assessments",
+            headers={"Authorization": f"Bearer {token_b}"},
+        )
+        assert res.status_code == 404
+
+    def test_user_b_cannot_read_user_a_report(self, client):
+        """User B gets 404 when requesting User A's evaluation report."""
+        token_a = self._register_pro_user(client, "user_a_report@test.com")
+        token_b = self._register_pro_user(client, "user_b_report@test.com")
+
+        client.post(
+            "/api/v1/compliance/evaluate",
+            json={
+                "evidence_data": {
+                    "CC1.1": {
+                        "evidence_provided": ["e1"],
+                        "status": "compliant",
+                        "score": 1.0,
+                        "comments": "ok",
+                    }
+                },
+                "evaluated_by": "user_a",
+            },
+            headers={"Authorization": f"Bearer {token_a}"},
+        )
+
+        from app.models.evaluation import ComplianceEvaluationRecord
+        from app.models.user import User
+        db = next(override_get_db())
+        user_a = db.query(User).filter(User.email == "user_a_report@test.com").first()
+        record = (
+            db.query(ComplianceEvaluationRecord)
+            .filter(ComplianceEvaluationRecord.user_id == user_a.id)
+            .first()
+        )
+        eval_id = record.evaluation_id
+        db.close()
+
+        res = client.get(
+            f"/api/v1/compliance/evaluations/{eval_id}/report",
+            headers={"Authorization": f"Bearer {token_b}"},
+        )
+        assert res.status_code == 404
+
+
 class TestHealthEndpoints:
     def test_health_check(self, client):
         res = client.get("/health")

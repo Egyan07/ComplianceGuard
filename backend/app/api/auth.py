@@ -304,7 +304,15 @@ async def reset_password(
             detail="Invalid or expired reset token",
         )
 
-    if datetime.now(timezone.utc) > user.reset_token_expires.replace(tzinfo=timezone.utc):
+    reset_expires = user.reset_token_expires
+    # Normalize to UTC without discarding an existing stored offset.
+    # .replace() would silently overwrite a tz-aware datetime's tzinfo;
+    # use .astimezone() when the value is already tz-aware.
+    if reset_expires.tzinfo is not None:
+        expires_utc = reset_expires.astimezone(timezone.utc)
+    else:
+        expires_utc = reset_expires.replace(tzinfo=timezone.utc)
+    if datetime.now(timezone.utc) > expires_utc:
         user.reset_token = None
         user.reset_token_expires = None
         db.commit()

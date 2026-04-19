@@ -53,7 +53,20 @@ from alembic import command as alembic_command
 import os
 
 def run_migrations():
-    """Run pending Alembic migrations."""
+    """Run pending Alembic migrations.
+
+    In multi-worker deployments (uvicorn --workers > 1) every worker races on
+    the ``alembic_version`` table when this runs at import time, which can
+    cause constraint errors or duplicate migration attempts.
+
+    Production deployments should set ``RUN_MIGRATIONS_ON_STARTUP=false`` and
+    run ``alembic upgrade head`` in a dedicated pre-start step (e.g. a
+    Kubernetes init-container or a Dockerfile ENTRYPOINT wrapper) so that only
+    a single process applies migrations before the workers start.
+
+    Local development, tests, and Docker Compose leave the default (``true``)
+    so the application remains self-bootstrapping without extra steps.
+    """
     alembic_ini = os.path.join(os.path.dirname(__file__), "..", "alembic.ini")
     if os.path.exists(alembic_ini):
         alembic_cfg = AlembicConfig(alembic_ini)
@@ -63,7 +76,9 @@ def run_migrations():
         # Fallback for environments without alembic.ini (e.g. tests)
         Base.metadata.create_all(bind=engine)
 
-run_migrations()
+
+if os.getenv("RUN_MIGRATIONS_ON_STARTUP", "true").lower() == "true":
+    run_migrations()
 
 # Configure CORS for frontend communication
 app.add_middleware(

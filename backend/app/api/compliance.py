@@ -405,36 +405,52 @@ async def get_evaluation_history(
 async def get_control_assessments(
     evaluation_id: str,
     current_user: User = Depends(require_pro),
+    db: Session = Depends(get_db),
 ):
     """
     Get detailed control assessments for a specific evaluation.
 
+    Only returns assessments belonging to the authenticated user (IDOR-safe).
+
     Args:
-        evaluation_id: The ID of the evaluation
+        evaluation_id: The string evaluation_id of the evaluation
 
     Returns:
-        Dictionary of control assessments
+        Dictionary of control assessments keyed by control_id
 
     Raises:
-        HTTPException: If evaluation is not found
+        HTTPException: 404 if evaluation is not found or does not belong to the user
     """
-    evaluation = compliance_service.get_evaluation_by_id(evaluation_id)
-    if not evaluation:
+    record = (
+        db.query(ComplianceEvaluationRecord)
+        .filter(
+            ComplianceEvaluationRecord.evaluation_id == evaluation_id,
+            ComplianceEvaluationRecord.user_id == current_user.id,
+        )
+        .first()
+    )
+    if not record:
         raise HTTPException(status_code=404, detail=f"Evaluation {evaluation_id} not found")
 
+    assessment_rows = (
+        db.query(ControlAssessmentRecord)
+        .filter(ControlAssessmentRecord.evaluation_id == record.id)
+        .all()
+    )
+
     return {
-        control_id: ControlAssessmentResponse(
-            control_id=assessment.control_id,
-            status=assessment.status.value,
-            score=assessment.score,
-            evidence_provided=assessment.evidence_provided,
-            evidence_required=assessment.evidence_required,
-            gaps=assessment.gaps,
-            recommendations=assessment.recommendations,
-            assessed_date=assessment.assessed_date,
-            assessed_by=assessment.assessed_by
+        row.control_id: ControlAssessmentResponse(
+            control_id=row.control_id,
+            status=row.status,
+            score=row.score,
+            evidence_provided=row.evidence_provided or [],
+            evidence_required=[],
+            gaps=row.gaps or [],
+            recommendations=row.recommendations or [],
+            assessed_date=record.created_at,
+            assessed_by=record.evaluated_by,
         )
-        for control_id, assessment in evaluation.control_assessments.items()
+        for row in assessment_rows
     }
 
 
@@ -445,7 +461,9 @@ async def get_control_compliance_trend(
     db: Session = Depends(get_db),
 ):
     """
-    Get compliance trend for a specific control across evaluations.
+    Get compliance trend for a specific control across the current user's evaluations.
+
+    Only returns data belonging to the authenticated user (IDOR-safe).
 
     Args:
         control_id: The ID of the control
@@ -453,38 +471,89 @@ async def get_control_compliance_trend(
         db: Database session
 
     Returns:
-        List of compliance scores and status over time
+        List of {evaluation_id, score, status, date} dicts ordered by date
     """
     control = soc2_framework.get_control(control_id)
     if not control:
         raise HTTPException(status_code=404, detail=f"Control {control_id} not found")
 
-    trend = compliance_service.get_control_compliance_trend(control_id)
-    return trend
+    rows = (
+        db.query(ControlAssessmentRecord, ComplianceEvaluationRecord)
+        .join(
+            ComplianceEvaluationRecord,
+            ControlAssessmentRecord.evaluation_id == ComplianceEvaluationRecord.id,
+        )
+        .filter(
+            ControlAssessmentRecord.control_id == control_id,
+            ComplianceEvaluationRecord.user_id == current_user.id,
+        )
+        .order_by(ComplianceEvaluationRecord.created_at.asc())
+        .all()
+    )
+
+    return [
+        {
+            "evaluation_id": eval_rec.evaluation_id,
+            "score": assessment.score,
+            "status": assessment.status,
+            "date": eval_rec.created_at,
+        }
+        for assessment, eval_rec in rows
+    ]
 
 
 @router.get("/evaluations/{evaluation_id}/report", response_model=ComplianceReportResponse)
 async def get_compliance_report(
     evaluation_id: str,
     current_user: User = Depends(require_pro),
+    db: Session = Depends(get_db),
 ):
     """
     Get comprehensive compliance report for an evaluation.
 
+    Only returns reports belonging to the authenticated user (IDOR-safe).
+
     Args:
-        evaluation_id: The ID of the evaluation
+        evaluation_id: The string evaluation_id of the evaluation
 
     Returns:
-        Comprehensive compliance report
+        Comprehensive compliance report assembled from DB record
 
     Raises:
-        HTTPException: If evaluation is not found
+        HTTPException: 404 if evaluation is not found or does not belong to the user
     """
-    evaluation = compliance_service.get_evaluation_by_id(evaluation_id)
-    if not evaluation:
+    record = (
+        db.query(ComplianceEvaluationRecord)
+        .filter(
+            ComplianceEvaluationRecord.evaluation_id == evaluation_id,
+            ComplianceEvaluationRecord.user_id == current_user.id,
+        )
+        .first()
+    )
+    if not record:
         raise HTTPException(status_code=404, detail=f"Evaluation {evaluation_id} not found")
 
-    report = compliance_service.export_evaluation_report(evaluation)
+    report = {
+        "evaluation_metadata": {
+            "evaluation_id": record.evaluation_id,
+            "framework_id": record.framework_id,
+            "evaluated_by": record.evaluated_by,
+            "evaluation_date": record.created_at.isoformat() if record.created_at else None,
+            "scope": record.scope or [],
+        },
+        "summary": {
+            "overall_score": record.overall_score,
+            "compliance_status": record.compliance_status,
+            "compliance_level": record.compliance_level,
+            "control_count": record.control_count,
+            "compliant_controls": record.compliant_controls,
+        },
+        "control_details": {},
+        "risk_assessment": record.risk_assessment or {},
+        "evidence_summary": record.evidence_summary or {},
+        "recommendations": record.recommendations or [],
+        "next_review": None,
+    }
     return report
 
 

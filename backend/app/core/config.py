@@ -211,11 +211,21 @@ class Settings(BaseSettings):
     @field_validator("secret_key")
     @classmethod
     def validate_secret_key(cls, v, info):
-        """Validate secret key is set in production."""
+        """Validate secret key is explicitly set via env in production.
+
+        The default_factory generates a random key at module load time, which
+        causes each worker process to receive a different key and makes JWTs
+        randomly invalid in multi-worker deployments.  In production the key
+        MUST come from the SECRET_KEY environment variable.
+        """
         data = info.data
         environment = data.get("environment", Environment.DEVELOPMENT)
-        if environment == Environment.PRODUCTION and not v:
-            raise ValueError("SECRET_KEY must be set in production environment")
+        if environment == Environment.PRODUCTION and not os.getenv("SECRET_KEY"):
+            raise ValueError(
+                "SECRET_KEY must be set via env in production. "
+                "A random default cannot be used because each worker would "
+                "generate a different key, making JWTs randomly invalid."
+            )
         return v
 
     @field_validator("aws_access_key_id", "aws_secret_access_key")
