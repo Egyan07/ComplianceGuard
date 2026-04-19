@@ -1,5 +1,6 @@
 const { verifyLicenseKey } = require('./license-crypto');
 const { FREE_TIER_CONTROL_IDS, ALL_CONTROL_IDS, FEATURE_GATES } = require('./tier-constants');
+const secureStorage = require('../secure-storage');
 
 class LicenseManager {
   constructor(database) {
@@ -11,7 +12,8 @@ class LicenseManager {
 
   async initialize() {
     try {
-      const storedKey = await this.db.getUserSetting('license_key', null);
+      const storedRaw = await this.db.getUserSetting('license_key', null);
+      const storedKey = storedRaw ? secureStorage.decryptString(storedRaw) : null;
       if (storedKey) {
         const result = verifyLicenseKey(storedKey);
         if (result.valid) {
@@ -37,8 +39,8 @@ class LicenseManager {
       return { valid: false, error: result.error };
     }
 
-    // Store the key
-    await this.db.setUserSetting('license_key', keyString, 'string');
+    // Store the key encrypted
+    await this.db.setUserSetting('license_key', secureStorage.encryptString(keyString), 'string');
 
     this.tier = result.payload.tier || 'pro';
     this.licensePayload = result.payload;
@@ -52,7 +54,7 @@ class LicenseManager {
   }
 
   async deactivateLicense() {
-    await this.db.setUserSetting('license_key', '', 'string');
+    await this.db.setUserSetting('license_key', '', 'string'); // empty string — no encryption needed
     this.tier = 'free';
     this.licensePayload = null;
     this.validationResult = null;

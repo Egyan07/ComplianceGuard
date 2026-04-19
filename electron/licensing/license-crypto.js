@@ -55,12 +55,22 @@ function verifyLicenseKey(keyString) {
       return { valid: false, error: 'License expired', payload };
     }
 
+    if (daysRemaining < 0) {
+      return {
+        valid: false,
+        isExpired: true,
+        isGracePeriod: true,
+        error: 'License expired but within grace period',
+        payload,
+      };
+    }
+
     return {
       valid: true,
       payload,
-      isExpired: daysRemaining < 0,
-      isGracePeriod: daysRemaining < 0 && daysRemaining >= -7,
-      daysRemaining: Math.max(0, daysRemaining),
+      isExpired: false,
+      isGracePeriod: false,
+      daysRemaining,
     };
   } catch (error) {
     return { valid: false, error: error.message };
