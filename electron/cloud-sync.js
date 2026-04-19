@@ -4,7 +4,12 @@
  * Handles authentication and compliance snapshot upload to the web server.
  * Config stored in SQLite via database.getUserSetting/setUserSetting.
  * Uses Node.js 18 built-in fetch (Electron 28).
+ *
+ * Access and refresh tokens are encrypted at rest using Electron safeStorage
+ * (OS keychain / DPAPI). SERVER_URL and EMAIL are not secrets and stay plaintext.
  */
+
+const secureStorage = require('./secure-storage');
 
 const KEYS = {
   SERVER_URL: 'cloud_server_url',
@@ -30,8 +35,8 @@ async function cloudConnect(database, serverUrl, email, password) {
     const data = await res.json();
     await database.setUserSetting(KEYS.SERVER_URL, url, 'string');
     await database.setUserSetting(KEYS.EMAIL, email, 'string');
-    await database.setUserSetting(KEYS.ACCESS_TOKEN, data.access_token, 'string');
-    await database.setUserSetting(KEYS.REFRESH_TOKEN, data.refresh_token, 'string');
+    await database.setUserSetting(KEYS.ACCESS_TOKEN, secureStorage.encryptString(data.access_token), 'string');
+    await database.setUserSetting(KEYS.REFRESH_TOKEN, secureStorage.encryptString(data.refresh_token), 'string');
 
     return { connected: true, email, serverUrl: url };
   } catch (err) {
@@ -41,8 +46,8 @@ async function cloudConnect(database, serverUrl, email, password) {
 
 async function cloudSync(database, syncData) {
   const serverUrl = await database.getUserSetting(KEYS.SERVER_URL, null);
-  const accessToken = await database.getUserSetting(KEYS.ACCESS_TOKEN, null);
-  const refreshToken = await database.getUserSetting(KEYS.REFRESH_TOKEN, null);
+  const accessToken = secureStorage.decryptString(await database.getUserSetting(KEYS.ACCESS_TOKEN, null));
+  const refreshToken = secureStorage.decryptString(await database.getUserSetting(KEYS.REFRESH_TOKEN, null));
 
   if (!serverUrl || !accessToken) {
     return { error: 'Not connected to cloud. Configure Cloud Sync in Settings.' };
@@ -63,7 +68,7 @@ async function cloudSync(database, syncData) {
   if (result.status === 401 && refreshToken) {
     const newToken = await _refreshAccessToken(serverUrl, refreshToken);
     if (newToken) {
-      await database.setUserSetting(KEYS.ACCESS_TOKEN, newToken, 'string');
+      await database.setUserSetting(KEYS.ACCESS_TOKEN, secureStorage.encryptString(newToken), 'string');
       return _postSync(serverUrl, newToken, payload);
     }
     return { error: 'Session expired. Reconnect in Settings > Cloud Sync.' };
