@@ -1,3 +1,4 @@
+const log = require('./logger');
 /**
  * Cloud Sync for ComplianceGuard Electron App
  *

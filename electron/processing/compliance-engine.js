@@ -1,3 +1,4 @@
+const log = require('../logger');
 const { FREE_TIER_CONTROL_IDS } = require('../licensing/tier-constants');
 
 class LocalComplianceEngine {

@@ -4,22 +4,48 @@ Evidence Collection API Endpoints
 REST API endpoints for managing and collecting compliance evidence.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import Dict, Any, Optional, List
 from pydantic import BaseModel
 from datetime import datetime
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
 from app.api.deps import get_current_user
 from app.core.database import get_db
+from app.core.config import settings
 from app.models.user import User
 from app.models.evidence import EvidenceCollection, EvidenceItem
 from app.services.evidence_collector import EvidenceCollectionService
 
 router = APIRouter(prefix="/evidence", tags=["evidence"])
+
+# Pre-compute max bytes once so it isn't recalculated per request
+_MAX_UPLOAD_BYTES = settings.max_file_size_mb * 1024 * 1024
+
+
+def _validate_upload(filename: str, size: int) -> None:
+    """Raise HTTPException if the file fails size or type checks."""
+    ext = os.path.splitext(filename)[1].lower()
+    if ext not in settings.allowed_file_types:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail=(
+                f"File type '{ext}' is not allowed. "
+                f"Permitted types: {', '.join(settings.allowed_file_types)}"
+            ),
+        )
+    if size > _MAX_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=(
+                f"File size {size / (1024 * 1024):.1f} MB exceeds the "
+                f"{settings.max_file_size_mb} MB limit."
+            ),
+        )
 
 
 # --- Request / Response models ---
@@ -280,3 +306,83 @@ async def get_all_collections(
         )
         for c in collections
     ]
+
+
+class UploadEvidenceResponse(BaseModel):
+    """Response model for manual file evidence upload."""
+    evidence_item_id: int
+    filename: str
+    file_size_bytes: int
+    evidence_type: str
+    created_at: str
+
+
+@router.post("/upload", response_model=UploadEvidenceResponse, status_code=status.HTTP_201_CREATED)
+async def upload_evidence_file(
+    file: UploadFile = File(...),
+    evidence_type: str = "manual_upload",
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Upload a manual evidence file.
+
+    Enforces server-side file type and size limits from application settings
+    (MAX_FILE_SIZE_MB, ALLOWED_FILE_TYPES).  The file content is stored as
+    base64 inside the evidence item's data JSON column — suitable for files
+    up to the configured limit.
+    """
+    # Read into memory first so we know the real size (Content-Length is
+    # untrustworthy and multipart doesn't guarantee it).
+    content = await file.read()
+    filename = file.filename or "upload"
+
+    _validate_upload(filename, len(content))
+
+    import base64
+    import uuid
+
+    # Find or create a collection for manual uploads
+    collection_id = str(uuid.uuid4())
+    collection = EvidenceCollection(
+        collection_id=collection_id,
+        user_id=current_user.id,
+        status="completed",
+        evidence_count=1,
+        failed_count=0,
+        summary={"source": "manual_upload", "filename": filename},
+    )
+    db.add(collection)
+    db.flush()
+
+    item = EvidenceItem(
+        collection_id=collection.id,
+        evidence_type=evidence_type,
+        source="manual_upload",
+        status="pending_review",
+        data={
+            "filename": filename,
+            "file_size_bytes": len(content),
+            "content_base64": base64.b64encode(content).decode("utf-8"),
+            "uploaded_by": current_user.email,
+            "uploaded_at": datetime.utcnow().isoformat(),
+        },
+    )
+    db.add(item)
+    db.commit()
+    db.refresh(item)
+
+    logger.info(
+        "Manual evidence uploaded: user=%s file=%s size=%d bytes",
+        current_user.email,
+        filename,
+        len(content),
+    )
+
+    return UploadEvidenceResponse(
+        evidence_item_id=item.id,
+        filename=filename,
+        file_size_bytes=len(content),
+        evidence_type=evidence_type,
+        created_at=item.created_at.isoformat(),
+    )

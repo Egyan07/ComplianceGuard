@@ -1,3 +1,4 @@
+const log = require('../logger');
 const fs = require('fs');
 const path = require('path');
 

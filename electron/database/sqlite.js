@@ -1,3 +1,4 @@
+const log = require('../logger');
 const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
@@ -34,14 +35,14 @@ class ComplianceGuardDatabase {
       this.db.pragma('foreign_keys = ON');
       this.db.pragma('journal_mode = WAL');
 
-      console.log('Connected to ComplianceGuard database at:', this.dbPath);
+      log.info('Connected to ComplianceGuard database at:', this.dbPath);
 
       this.initializeSchema();
       this.seedInitialData();
 
       return this;
     } catch (error) {
-      console.error('Database initialization failed:', error);
+      log.error('Database initialization failed:', error);
       throw error;
     }
   }
@@ -188,7 +189,7 @@ class ComplianceGuardDatabase {
       this.db.exec(sql);
     }
 
-    console.log('Database schema initialized successfully');
+    log.info('Database schema initialized successfully');
   }
 
   seedInitialData() {
@@ -201,7 +202,7 @@ class ComplianceGuardDatabase {
       this.db.prepare(
         'INSERT INTO compliance_frameworks (name, version, description, controls_json) VALUES (?, ?, ?, ?)'
       ).run('SOC 2 Type II', '2017', 'AICPA SOC 2 Type II Trust Services Criteria', JSON.stringify(controls));
-      console.log('Default SOC 2 framework seeded');
+      log.info('Default SOC 2 framework seeded');
     }
   }
 
@@ -411,11 +412,11 @@ class ComplianceGuardDatabase {
     try {
       if (this.db) {
         this.db.close();
-        console.log('Database connection closed');
+        log.info('Database connection closed');
       }
       return Promise.resolve();
     } catch (error) {
-      console.error('Database close error:', error);
+      log.error('Database close error:', error);
       return Promise.reject(error);
     }
   }

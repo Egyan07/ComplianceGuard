@@ -1,3 +1,4 @@
+const log = require('../logger');
 const { exec } = require('child_process');
 const { promisify } = require('util');
 const fs = require('fs');
@@ -25,7 +26,7 @@ class WindowsEvidenceCollector {
 
   async collectAllEvidence() {
     try {
-      console.log('Starting Windows evidence collection...');
+      log.info('Starting Windows evidence collection...');
 
       await this.collectSystemInfo();
       await this.collectSecuritySettings();
@@ -38,11 +39,11 @@ class WindowsEvidenceCollector {
       await this.collectInstalledSoftware();
       await this.collectFilePermissions();
 
-      console.log('Windows evidence collection completed');
+      log.info('Windows evidence collection completed');
       return this.evidence;
 
     } catch (error) {
-      console.error('Evidence collection failed:', error);
+      log.error('Evidence collection failed:', error);
       throw error;
     }
   }
@@ -83,7 +84,7 @@ class WindowsEvidenceCollector {
       });
 
     } catch (error) {
-      console.error('System info collection failed:', error);
+      log.error('System info collection failed:', error);
       this.evidence.systemInfo.error = error.message;
     }
   }
@@ -105,7 +106,7 @@ class WindowsEvidenceCollector {
       this.evidence.securitySettings.registrySettings = securityOptions;
 
     } catch (error) {
-      console.error('Security settings collection failed:', error);
+      log.error('Security settings collection failed:', error);
       this.evidence.securitySettings.error = error.message;
     }
   }
@@ -121,13 +122,13 @@ class WindowsEvidenceCollector {
           const { stdout: result } = await execAsync(command, { encoding: 'utf8', timeout: 30000 });
           this.evidence.eventLogs[log.toLowerCase()] = result;
         } catch (logError) {
-          console.error(`Failed to collect ${log} logs:`, logError);
+          log.error(`Failed to collect ${log} logs:`, logError);
           this.evidence.eventLogs[log.toLowerCase()] = { error: logError.message };
         }
       }
 
     } catch (error) {
-      console.error('Event logs collection failed:', error);
+      log.error('Event logs collection failed:', error);
       this.evidence.eventLogs.error = error.message;
     }
   }
@@ -156,7 +157,7 @@ class WindowsEvidenceCollector {
       }
 
     } catch (error) {
-      console.error('Services collection failed:', error);
+      log.error('Services collection failed:', error);
       this.evidence.services.error = error.message;
     }
   }
@@ -173,7 +174,7 @@ class WindowsEvidenceCollector {
       };
 
     } catch (error) {
-      console.error('Firewall status collection failed:', error);
+      log.error('Firewall status collection failed:', error);
       this.evidence.firewall.error = error.message;
     }
   }
@@ -188,7 +189,7 @@ class WindowsEvidenceCollector {
       this.evidence.updates.lastInstallTime = lastUpdate?.LastSuccessTime || 'Unknown';
 
     } catch (error) {
-      console.error('Update status collection failed:', error);
+      log.error('Update status collection failed:', error);
       this.evidence.updates.error = error.message;
     }
   }
@@ -202,7 +203,7 @@ class WindowsEvidenceCollector {
       this.evidence.users.administrators = admins;
 
     } catch (error) {
-      console.error('User accounts collection failed:', error);
+      log.error('User accounts collection failed:', error);
       this.evidence.users.error = error.message;
     }
   }
@@ -219,7 +220,7 @@ class WindowsEvidenceCollector {
       this.evidence.network.routes = routes;
 
     } catch (error) {
-      console.error('Network info collection failed:', error);
+      log.error('Network info collection failed:', error);
       this.evidence.network.error = error.message;
     }
   }
@@ -234,7 +235,7 @@ class WindowsEvidenceCollector {
       this.evidence.software.running = processes;
 
     } catch (error) {
-      console.error('Software collection failed:', error);
+      log.error('Software collection failed:', error);
       this.evidence.software.error = error.message;
     }
   }
@@ -263,7 +264,7 @@ class WindowsEvidenceCollector {
       }
 
     } catch (error) {
-      console.error('File permissions collection failed:', error);
+      log.error('File permissions collection failed:', error);
       this.evidence.files.error = error.message;
     }
   }

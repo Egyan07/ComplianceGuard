@@ -1,3 +1,4 @@
+const log = require('../logger');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
@@ -210,7 +211,7 @@ class LocalEvidenceProcessor {
       { evidence_count: processedEvidence.length }
     );
 
-    console.log(`Processed ${processedEvidence.length} evidence items`);
+    log.info(`Processed ${processedEvidence.length} evidence items`);
     return processedEvidence;
   }
 

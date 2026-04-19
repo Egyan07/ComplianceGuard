@@ -1,3 +1,4 @@
+const log = require('../logger');
 const { verifyLicenseKey } = require('./license-crypto');
 const { FREE_TIER_CONTROL_IDS, ALL_CONTROL_IDS, FEATURE_GATES } = require('./tier-constants');
 const secureStorage = require('../secure-storage');
@@ -27,7 +28,7 @@ class LicenseManager {
         }
       }
     } catch (error) {
-      console.error('License initialization error:', error);
+      log.error('License initialization error:', error);
       this.tier = 'free';
     }
   }

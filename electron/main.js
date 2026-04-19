@@ -1,4 +1,5 @@
 const { app, BrowserWindow, Tray, Menu, Notification, ipcMain, dialog } = require('electron');
+const log = require('./logger');
 const path = require('path');
 const fs = require('fs');
 
@@ -58,7 +59,7 @@ function createTray() {
 
   // Only create tray if icon exists
   if (!fs.existsSync(iconPath)) {
-    console.warn('Tray icon not found at:', iconPath, '- skipping tray creation');
+    log.warn('Tray icon not found at:', iconPath, '- skipping tray creation');
     return;
   }
 
@@ -189,7 +190,7 @@ ipcMain.handle('save-report', async (event, data, filename) => {
 // Windows evidence collection
 ipcMain.handle('collect-windows-evidence', async (event, frameworkId = 1) => {
   try {
-    console.log('Starting Windows evidence collection...');
+    log.info('Starting Windows evidence collection...');
     const windowsEvidence = await collectWindowsEvidence();
 
     const processedEvidence = await evidenceProcessor.processWindowsEvidence(windowsEvidence, frameworkId);
@@ -205,7 +206,7 @@ ipcMain.handle('collect-windows-evidence', async (event, frameworkId = 1) => {
       windows_evidence: windowsEvidence
     };
   } catch (error) {
-    console.error('Windows evidence collection failed:', error);
+    log.error('Windows evidence collection failed:', error);
     showNotification('Evidence Collection Failed', error.message);
     return { error: error.message };
   }
@@ -220,7 +221,7 @@ ipcMain.handle('process-manual-evidence', async (event, evidenceData, frameworkI
     const evidenceId = await evidenceProcessor.processManualEvidence(evidenceData, frameworkId);
     return { success: true, evidence_id: evidenceId };
   } catch (error) {
-    console.error('Manual evidence processing failed:', error);
+    log.error('Manual evidence processing failed:', error);
     return { error: error.message };
   }
 });
@@ -228,7 +229,7 @@ ipcMain.handle('process-manual-evidence', async (event, evidenceData, frameworkI
 // Compliance evaluation
 ipcMain.handle('evaluate-compliance', async (event, frameworkId = 1) => {
   try {
-    console.log('Starting compliance evaluation...');
+    log.info('Starting compliance evaluation...');
     const evaluation = await complianceEngine.evaluateCompliance(frameworkId);
 
     showNotification(
@@ -238,7 +239,7 @@ ipcMain.handle('evaluate-compliance', async (event, frameworkId = 1) => {
 
     return evaluation;
   } catch (error) {
-    console.error('Compliance evaluation failed:', error);
+    log.error('Compliance evaluation failed:', error);
     return { error: error.message };
   }
 });
@@ -248,7 +249,7 @@ ipcMain.handle('get-evidence-summary', async (event, frameworkId = 1) => {
   try {
     return await evidenceProcessor.getEvidenceSummary(frameworkId);
   } catch (error) {
-    console.error('Evidence summary failed:', error);
+    log.error('Evidence summary failed:', error);
     return { error: error.message };
   }
 });
@@ -258,7 +259,7 @@ ipcMain.handle('get-evidence-list', async (event, frameworkId = 1) => {
   try {
     return await database.getEvidenceByFramework(frameworkId);
   } catch (error) {
-    console.error('Get evidence list failed:', error);
+    log.error('Get evidence list failed:', error);
     return { error: error.message };
   }
 });
@@ -268,7 +269,7 @@ ipcMain.handle('generate-compliance-report', async (event, frameworkId = 1, form
   try {
     return await complianceEngine.generateComplianceReport(frameworkId, format);
   } catch (error) {
-    console.error('Report generation failed:', error);
+    log.error('Report generation failed:', error);
     return { error: error.message };
   }
 });
@@ -325,7 +326,7 @@ ipcMain.handle('export-pdf-report', async (event, frameworkId = 1) => {
 
     return { success: true, filePath: result.filePath };
   } catch (error) {
-    console.error('PDF export failed:', error);
+    log.error('PDF export failed:', error);
     return { error: error.message };
   }
 });
@@ -338,7 +339,7 @@ ipcMain.handle('get-evaluation-history', async (event, frameworkId = 1) => {
   try {
     return await database.getEvaluationHistory(frameworkId);
   } catch (error) {
-    console.error('Get evaluation history failed:', error);
+    log.error('Get evaluation history failed:', error);
     return { error: error.message };
   }
 });
@@ -376,7 +377,7 @@ ipcMain.handle('search-evidence', async (event, frameworkId = 1, searchTerm, fil
   try {
     return await evidenceProcessor.searchEvidence(frameworkId, searchTerm, filters);
   } catch (error) {
-    console.error('Evidence search failed:', error);
+    log.error('Evidence search failed:', error);
     return { error: error.message };
   }
 });
@@ -386,7 +387,7 @@ ipcMain.handle('get-user-setting', async (event, key, defaultValue = null) => {
   try {
     return await database.getUserSetting(key, defaultValue);
   } catch (error) {
-    console.error('Get user setting failed:', error);
+    log.error('Get user setting failed:', error);
     return defaultValue;
   }
 });
@@ -396,7 +397,7 @@ ipcMain.handle('set-user-setting', async (event, key, value, type = 'string') =>
     await database.setUserSetting(key, value, type);
     return { success: true };
   } catch (error) {
-    console.error('Set user setting failed:', error);
+    log.error('Set user setting failed:', error);
     return { error: error.message };
   }
 });
@@ -408,7 +409,7 @@ ipcMain.handle('create-database-backup', async () => {
     showNotification('Database Backup Created', `Backup saved to: ${backupPath}`);
     return { success: true, backup_path: backupPath };
   } catch (error) {
-    console.error('Database backup failed:', error);
+    log.error('Database backup failed:', error);
     return { error: error.message };
   }
 });
@@ -433,7 +434,7 @@ ipcMain.handle('cloud-disconnect', async () => {
 
 app.whenReady().then(async () => {
   try {
-    console.log('Initializing ComplianceGuard...');
+    log.info('Initializing ComplianceGuard...');
 
     database = new ComplianceGuardDatabase();
     await database.initialize(app.getPath('userData'));
@@ -445,7 +446,7 @@ app.whenReady().then(async () => {
     complianceEngine = new LocalComplianceEngine(database, licenseManager);
     reportGenerator = new ReportGenerator(database);
 
-    console.log('Database and processing engines initialized');
+    log.info('Database and processing engines initialized');
 
     createWindow();
     createTray();
@@ -458,7 +459,7 @@ app.whenReady().then(async () => {
     }, 2000);
 
   } catch (error) {
-    console.error('Failed to initialize ComplianceGuard:', error);
+    log.error('Failed to initialize ComplianceGuard:', error);
     showNotification(
       'ComplianceGuard Error',
       'Failed to initialize. Please restart the application.'
@@ -483,7 +484,7 @@ app.on('before-quit', async () => {
     try {
       await database.close();
     } catch (error) {
-      console.error('Error closing database:', error);
+      log.error('Error closing database:', error);
     }
   }
 });

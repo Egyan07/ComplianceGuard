@@ -1,3 +1,4 @@
+const log = require('./logger');
 /**
  * Secure storage helpers using Electron's safeStorage API.
  *
@@ -23,7 +24,7 @@ function encryptString(plaintext) {
   if (!plaintext) return '';
   const { safeStorage } = require('electron');
   if (!isAvailable()) {
-    console.warn('safeStorage: encryption unavailable, storing plaintext');
+    log.warn('safeStorage: encryption unavailable, storing plaintext');
     return plaintext;
   }
   return 'enc:' + safeStorage.encryptString(plaintext).toString('base64');
