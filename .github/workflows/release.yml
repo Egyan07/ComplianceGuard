@@ -36,6 +36,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: dist/*.exe
-          tag_name: v2.3.0
+          tag_name: v2.9.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
