@@ -83,6 +83,8 @@ All collected evidence items in one place — searchable and filterable by statu
 
 Download `ComplianceGuard-Setup.exe` from the [latest release](https://github.com/Egyan07/ComplianceGuard/releases/latest), run the installer, and launch from the Start Menu.
 
+> ⚠️ Windows may show a SmartScreen warning as the installer is not yet code signed. Click **More info → Run anyway** to proceed. Alternatively, download the **portable `.exe`** from the same release — no installation required and no SmartScreen prompt.
+
 > **Requirements:** Windows 10/11 (64-bit)
 
 ### Option B — One-Click Setup (Development)

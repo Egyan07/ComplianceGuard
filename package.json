@@ -56,8 +56,8 @@
     ],
     "win": {
       "target": [
-        "msi",
-        "nsis"
+        "nsis",
+        "portable"
       ],
       "icon": "resources/icons/icon.ico",
       "artifactName": "${productName}-Setup-${version}.${ext}",
