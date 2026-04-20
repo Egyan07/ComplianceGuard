@@ -17,8 +17,10 @@ logger = logging.getLogger(__name__)
 from app.api.deps import get_current_user
 from app.core.database import get_db
 from app.core.config import settings
+from app.core.credential_crypto import decrypt_credential
 from app.models.user import User
 from app.models.evidence import EvidenceCollection, EvidenceItem
+from app.models.aws_credential import AwsCredential
 from app.services.evidence_collector import EvidenceCollectionService
 
 router = APIRouter(prefix="/evidence", tags=["evidence"])
@@ -50,14 +52,7 @@ def _validate_upload(filename: str, size: int) -> None:
 
 # --- Request / Response models ---
 
-class AWSCredentials(BaseModel):
-    aws_access_key_id: str
-    aws_secret_access_key: str
-    aws_region: str = "us-east-1"
-
-
 class EvidenceCollectionRequest(BaseModel):
-    aws_credentials: Optional[AWSCredentials] = None
     collection_types: Optional[list[str]] = None
 
 
@@ -107,13 +102,31 @@ async def collect_evidence(
 
         evidence_service = EvidenceCollectionService()
 
-        if request.aws_credentials:
-            aws_creds = {
-                "aws_access_key_id": request.aws_credentials.aws_access_key_id,
-                "aws_secret_access_key": request.aws_credentials.aws_secret_access_key,
-                "region_name": request.aws_credentials.aws_region,
-            }
-            bundle = evidence_service.collect_all_evidence(**aws_creds)
+        # Load AWS credentials from DB — never from the request body
+        cred = (
+            db.query(AwsCredential)
+            .filter(AwsCredential.user_id == current_user.id)
+            .first()
+        )
+
+        if cred:
+            try:
+                aws_creds = {
+                    "aws_access_key_id": decrypt_credential(
+                        cred.encrypted_access_key_id, settings.secret_key
+                    ),
+                    "aws_secret_access_key": decrypt_credential(
+                        cred.encrypted_secret_access_key, settings.secret_key
+                    ),
+                    "region_name": cred.region,
+                }
+                bundle = evidence_service.collect_all_evidence(**aws_creds)
+            except Exception as crypto_err:
+                logger.error("Failed to decrypt AWS credentials for user %s: %s", current_user.email, crypto_err)
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Could not decrypt stored AWS credentials. Re-save them in Settings.",
+                )
         else:
             bundle = evidence_service.collect_all_evidence()
 

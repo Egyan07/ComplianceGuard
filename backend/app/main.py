@@ -18,6 +18,7 @@ from app.api.auth import router as auth_router
 from app.api.evidence import router as evidence_router
 from app.api.compliance import router as compliance_router
 from app.api.machines import router as machines_router
+from app.api.aws_credentials import router as aws_credentials_router
 from app.core.config import settings
 from app.core.database import engine, Base
 from app.core.rate_limit import limiter
@@ -98,6 +99,7 @@ app.include_router(evidence_router, prefix="/api/v1")
 # Include compliance framework routes
 app.include_router(compliance_router)
 app.include_router(machines_router)
+app.include_router(aws_credentials_router)
 
 @app.get("/health")
 async def health_check() -> Dict[str, Any]:
