@@ -73,3 +73,11 @@ coverage/
 # Logs
 *.log
 logs/
+
+# Internal planning docs — never push to public repo
+docs/superpowers/
+docs/internal/
+docs/private/
+*.private.md
+NOTES.md
+ROADMAP-internal.md
