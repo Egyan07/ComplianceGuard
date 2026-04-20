@@ -348,7 +348,9 @@ class RefreshResponse(BaseModel):
 
 
 @router.post("/refresh", response_model=RefreshResponse)
+@limiter.limit("10/minute")
 async def refresh_token(
+    request: Request,
     request_data: RefreshRequest,
     db: Session = Depends(get_db),
 ):
@@ -392,7 +394,9 @@ class LicenseInfoResponse(BaseModel):
 
 
 @router.post("/activate-license", response_model=LicenseInfoResponse)
+@limiter.limit("5/minute")
 async def activate_license(
+    request: Request,
     request_data: ActivateLicenseRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),

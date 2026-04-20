@@ -1,41 +1,17 @@
-name: Release
+# This workflow is intentionally disabled.
+# All releases are handled by the 'release' job in ci.yml.
+# Keeping this file to prevent accidental recreation.
+name: Release (disabled)
 
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
-
-permissions:
-  contents: write
+    inputs:
+      note:
+        description: 'This workflow is disabled. Use ci.yml release job.'
+        required: false
 
 jobs:
-  build-windows:
-    name: Build Windows Installer
-    runs-on: windows-latest
-
+  noop:
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install root dependencies
-        run: npm install
-
-      - name: Install frontend dependencies
-        run: npm install
-        working-directory: frontend
-
-      - name: Build and package
-        run: npm run package
-
-      - name: Upload installer to release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist/*.exe
-          tag_name: v2.9.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: echo "Releases are handled by ci.yml. This workflow is a placeholder."

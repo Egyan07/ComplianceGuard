@@ -5,7 +5,7 @@ Endpoints for Electron desktop apps to sync compliance snapshots
 and for the web dashboard to view fleet status.
 """
 
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Request
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from pydantic import BaseModel, Field
@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 
 from app.core.database import get_db
 from app.api.deps import get_current_user, require_pro
+from app.core.rate_limit import limiter
 from app.models.user import User
 from app.models.machine import Machine
 
@@ -23,6 +24,8 @@ MACHINE_LIMITS = {
     "pro": 10,
     "enterprise": None,  # unlimited
 }
+
+VALID_COMPLIANCE_LEVELS = {"compliant", "at_risk", "critical"}
 
 
 class MachineSyncRequest(BaseModel):
@@ -63,8 +66,10 @@ class FleetStatsResponse(BaseModel):
 
 
 @router.post("/sync", response_model=MachineSyncResponse)
+@limiter.limit("30/minute")
 async def sync_machine(
-    request: MachineSyncRequest,
+    request: Request,
+    body: MachineSyncRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -72,12 +77,19 @@ async def sync_machine(
     Register or update a machine compliance snapshot.
     Called by the Electron 'Sync to Cloud' button.
     Enforces per-tier machine limits on new machines.
+    Rate limited to 30 syncs/minute per IP.
     """
+    if body.compliance_level is not None and body.compliance_level not in VALID_COMPLIANCE_LEVELS:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Invalid compliance_level. Must be one of: {', '.join(sorted(VALID_COMPLIANCE_LEVELS))}",
+        )
+
     limit = MACHINE_LIMITS.get(current_user.license_tier)
 
     existing_machine = (
         db.query(Machine)
-        .filter(Machine.user_id == current_user.id, Machine.hostname == request.hostname)
+        .filter(Machine.user_id == current_user.id, Machine.hostname == body.hostname)
         .first()
     )
 
@@ -93,16 +105,16 @@ async def sync_machine(
                     status_code=status.HTTP_402_PAYMENT_REQUIRED,
                     detail=f"Machine limit reached ({limit} for {current_user.license_tier} tier). Upgrade to add more machines.",
                 )
-        machine = Machine(user_id=current_user.id, hostname=request.hostname)
+        machine = Machine(user_id=current_user.id, hostname=body.hostname)
         db.add(machine)
     else:
         machine = existing_machine
 
-    machine.os_version = request.os_version
-    machine.last_score = request.overall_score
-    machine.compliance_level = request.compliance_level
-    machine.evidence_count = request.evidence_count
-    machine.agent_version = request.agent_version
+    machine.os_version = body.os_version
+    machine.last_score = body.overall_score
+    machine.compliance_level = body.compliance_level
+    machine.evidence_count = body.evidence_count
+    machine.agent_version = body.agent_version
     machine.last_sync_at = datetime.now(timezone.utc)
     machine.is_active = True
 
