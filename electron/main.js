@@ -24,7 +24,7 @@ let reportGenerator = null;
 let licenseManager = null;
 
 // Development mode flag
-const isDev = process.env.NODE_ENV === 'development';
+const isDev = !app.isPackaged;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
