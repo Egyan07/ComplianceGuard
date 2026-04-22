@@ -1,5 +1,12 @@
 # ComplianceGuard SOC 2 Automation Platform - Docker Compose Configuration
 # Multi-container deployment for development and production
+#
+# For local development with hot-reload, layer the dev override:
+#   docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+#
+# Required environment variables (see .env.example). The compose file uses
+# the `${VAR:?msg}` expansion so that an unset or empty value causes the
+# deployment to fail loudly instead of silently using a known default.
 
 version: '3.8'
 
@@ -11,8 +18,8 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_DB: complianceguard
-      POSTGRES_USER: ${DB_USER:-complianceguard}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-complianceguard}
+      POSTGRES_USER: ${DB_USER:?DB_USER is required — set it in .env}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required — set a strong value in .env, do NOT rely on defaults}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -21,7 +28,7 @@ services:
     networks:
       - complianceguard-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-complianceguard} -d complianceguard"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d complianceguard"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -35,10 +42,10 @@ services:
     restart: unless-stopped
     environment:
       # Database Configuration
-      DATABASE_URL: postgresql://${DB_USER:-complianceguard}:${DB_PASSWORD:-complianceguard}@db:5432/complianceguard
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/complianceguard
 
-      # Security Configuration
-      SECRET_KEY: ${SECRET_KEY:-your-secret-key-change-in-production}
+      # Security Configuration — no fallbacks, must be set explicitly
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required — generate with `openssl rand -hex 32` and set in .env}
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
       ALGORITHM: ${ALGORITHM:-HS256}
 
@@ -62,6 +69,7 @@ services:
       - complianceguard-network
     volumes:
       - ./backend/app:/app/app:ro
+      - evidence_storage:/app/storage
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -107,10 +115,10 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
-      # - "443:443"  # Uncomment when SSL certs are available
+      - "443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      # - ./ssl:/etc/nginx/ssl:ro  # Uncomment for HTTPS
+      - ./ssl:/etc/nginx/ssl:ro
     depends_on:
       - frontend
       - backend
@@ -125,28 +133,9 @@ services:
 volumes:
   postgres_data:
     driver: local
+  evidence_storage:
+    driver: local
 
 networks:
   complianceguard-network:
     driver: bridge
-
-# Development override configuration
-# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
----
-version: '3.8'
-services:
-  backend:
-    environment:
-      ENVIRONMENT: development
-      DEBUG: "true"
-    volumes:
-      - ./backend:/app
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
-
-  frontend:
-    environment:
-      NODE_ENV: development
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000"]

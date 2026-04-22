@@ -1,0 +1,33 @@
+# Development override — layer on top of docker-compose.yml for hot-reload and
+# HTTP-only nginx (no SSL certs needed).
+#
+# Usage:
+#   docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+#
+# This override deliberately keeps the nginx HTTPS config out of the dev loop
+# so contributors don't need to generate certs to boot the stack.
+
+version: '3.8'
+
+services:
+  backend:
+    environment:
+      ENVIRONMENT: development
+      DEBUG: "true"
+    volumes:
+      - ./backend:/app
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  frontend:
+    environment:
+      NODE_ENV: development
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000"]
+
+  nginx:
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.dev.conf:/etc/nginx/nginx.conf:ro

@@ -1,0 +1,6 @@
+cert.pem
+key.pem
+*.pem
+*.key
+*.crt
+!README.md

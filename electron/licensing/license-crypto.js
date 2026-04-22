@@ -56,12 +56,15 @@ function verifyLicenseKey(keyString) {
     }
 
     if (daysRemaining < 0) {
+      // Grace period: license expired within the last 7 days. Still valid —
+      // paid users stay unlocked while they renew. Callers should surface
+      // `isGracePeriod` in the UI as a renewal reminder.
       return {
-        valid: false,
+        valid: true,
         isExpired: true,
         isGracePeriod: true,
-        error: 'License expired but within grace period',
         payload,
+        daysRemaining,
       };
     }
 
