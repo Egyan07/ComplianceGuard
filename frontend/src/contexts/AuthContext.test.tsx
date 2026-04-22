@@ -28,6 +28,15 @@ vi.mock('axios', () => ({
 vi.mock('../services/api', () => ({
   registerAuthCallbacks: vi.fn(),
   getLicenseInfoHttp: vi.fn().mockResolvedValue({ tier: 'free' }),
+  activateLicenseHttp: vi.fn().mockResolvedValue({
+    tier: 'pro',
+    license_id: 'L-TEST',
+    email: 'buyer@example.com',
+    expires_at: '2099-01-01T00:00:00Z',
+    days_remaining: 999,
+    is_expired: false,
+    is_grace_period: false,
+  }),
 }));
 
 const mockUser = {
@@ -424,13 +433,14 @@ describe('LicenseContext', () => {
       expect(result.current.isFeatureAllowed('ungated_feature')).toBe(true);
     });
 
-    it('activateLicense returns error in web mode', async () => {
+    it('activateLicense hits backend in web mode and updates local state', async () => {
       const { result } = renderHook(() => useLicense(), { wrapper: LicenseWrapper });
       await waitFor(() => expect(result.current.loading).toBe(false));
 
       const res = await result.current.activateLicense('some-key');
-      expect(res.valid).toBe(false);
-      expect(res.error).toContain('desktop');
+      expect(res.valid).toBe(true);
+      await waitFor(() => expect(result.current.tier).toBe('pro'));
+      expect(result.current.licenseInfo.licenseId).toBe('L-TEST');
     });
 
     it('deactivateLicense does nothing in web mode', async () => {
@@ -449,12 +459,17 @@ describe('LicenseContext', () => {
   });
 
   describe('web mode additional coverage', () => {
-    it('activateLicense returns valid false with desktop error message', async () => {
+    it('activateLicense surfaces backend error detail when activation fails', async () => {
+      const api = await import('../services/api');
+      vi.mocked(api.activateLicenseHttp).mockRejectedValueOnce({
+        response: { data: { detail: 'License key is registered to a different email address.' } },
+      });
+
       const { result } = renderHook(() => useLicense(), { wrapper: LicenseWrapper });
       await waitFor(() => expect(result.current.loading).toBe(false));
       const res = await result.current.activateLicense('any-key');
       expect(res.valid).toBe(false);
-      expect(res.error).toBeDefined();
+      expect(res.error).toContain('registered to a different email');
     });
 
     it('deactivateLicense resolves without throwing in web mode', async () => {
@@ -464,6 +479,9 @@ describe('LicenseContext', () => {
     });
 
     it('tier stays free after failed activateLicense', async () => {
+      const api = await import('../services/api');
+      vi.mocked(api.activateLicenseHttp).mockRejectedValueOnce(new Error('bad key'));
+
       const { result } = renderHook(() => useLicense(), { wrapper: LicenseWrapper });
       await waitFor(() => expect(result.current.loading).toBe(false));
       await result.current.activateLicense('bad-key');

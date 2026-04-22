@@ -22,10 +22,16 @@ const KEYS = {
 async function cloudConnect(database, serverUrl, email, password) {
   try {
     const url = serverUrl.replace(/\/$/, '');
+    // FastAPI's /api/auth/login takes OAuth2PasswordRequestForm, i.e.
+    // application/x-www-form-urlencoded. Posting JSON here silently returned
+    // 422 on every connect attempt in <=v2.9.0.
+    const form = new URLSearchParams();
+    form.set('username', email);
+    form.set('password', password);
     const res = await fetch(`${url}/api/auth/login`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: email, password }),
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: form.toString(),
     });
 
     if (!res.ok) {
@@ -47,8 +53,15 @@ async function cloudConnect(database, serverUrl, email, password) {
 
 async function cloudSync(database, syncData) {
   const serverUrl = await database.getUserSetting(KEYS.SERVER_URL, null);
-  const accessToken = secureStorage.decryptString(await database.getUserSetting(KEYS.ACCESS_TOKEN, null));
-  const refreshToken = secureStorage.decryptString(await database.getUserSetting(KEYS.REFRESH_TOKEN, null));
+  let accessToken = null;
+  let refreshToken = null;
+  try {
+    accessToken = secureStorage.decryptString(await database.getUserSetting(KEYS.ACCESS_TOKEN, null));
+    refreshToken = secureStorage.decryptString(await database.getUserSetting(KEYS.REFRESH_TOKEN, null));
+  } catch (err) {
+    log.error('cloudSync: failed to decrypt stored tokens', err);
+    return { error: 'Stored credentials could not be decrypted. Reconnect in Settings > Cloud Sync.' };
+  }
 
   if (!serverUrl || !accessToken) {
     return { error: 'Not connected to cloud. Configure Cloud Sync in Settings.' };

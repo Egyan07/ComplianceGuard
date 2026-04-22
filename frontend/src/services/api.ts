@@ -327,6 +327,19 @@ export async function getLicenseInfoHttp(): Promise<any> {
   return res.data;
 }
 
+export async function activateLicenseHttp(licenseKey: string): Promise<any> {
+  const token = localStorage.getItem('auth_token');
+  if (!token) throw new Error('Not authenticated');
+  const base = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/api\/v1$/, '');
+  const url = `${base}/api/auth/activate-license`;
+  const res = await axios.post(
+    url,
+    { license_key: licenseKey },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return res.data;
+}
+
 // ---- Cloud Dashboard types ----
 
 export interface FleetStats {

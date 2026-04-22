@@ -7,6 +7,17 @@ const os = require('os');
 
 const execAsync = promisify(exec);
 
+// Per-command default. Individual call sites can still pass their own timeout.
+const DEFAULT_EXEC_TIMEOUT_MS = 30_000;
+
+function runCommand(command, opts = {}) {
+  return execAsync(command, {
+    encoding: 'utf8',
+    timeout: DEFAULT_EXEC_TIMEOUT_MS,
+    ...opts,
+  });
+}
+
 class WindowsEvidenceCollector {
   constructor() {
     this.evidence = {
@@ -25,27 +36,40 @@ class WindowsEvidenceCollector {
   }
 
   async collectAllEvidence() {
-    try {
-      log.info('Starting Windows evidence collection...');
+    log.info('Starting Windows evidence collection...');
 
-      await this.collectSystemInfo();
-      await this.collectSecuritySettings();
-      await this.collectEventLogs();
-      await this.collectServices();
-      await this.collectFirewallStatus();
-      await this.collectUpdateStatus();
-      await this.collectUserAccounts();
-      await this.collectNetworkInfo();
-      await this.collectInstalledSoftware();
-      await this.collectFilePermissions();
+    // Each collector is independent and writes to a distinct slot on
+    // this.evidence, so they can run concurrently. Promise.allSettled means a
+    // slow command in one bucket (e.g. event logs) doesn't hold up the
+    // others, and a thrown error in one doesn't abort the run — each
+    // collector already stores its own error on this.evidence.<bucket>.error.
+    const collectors = [
+      ['systemInfo',        () => this.collectSystemInfo()],
+      ['securitySettings',  () => this.collectSecuritySettings()],
+      ['eventLogs',         () => this.collectEventLogs()],
+      ['services',          () => this.collectServices()],
+      ['firewall',          () => this.collectFirewallStatus()],
+      ['updates',           () => this.collectUpdateStatus()],
+      ['users',             () => this.collectUserAccounts()],
+      ['network',           () => this.collectNetworkInfo()],
+      ['software',          () => this.collectInstalledSoftware()],
+      ['files',             () => this.collectFilePermissions()],
+    ];
 
-      log.info('Windows evidence collection completed');
-      return this.evidence;
+    const results = await Promise.allSettled(collectors.map(([, fn]) => fn()));
 
-    } catch (error) {
-      log.error('Evidence collection failed:', error);
-      throw error;
-    }
+    results.forEach((result, idx) => {
+      if (result.status === 'rejected') {
+        const [bucket] = collectors[idx];
+        log.error(`Windows evidence collector "${bucket}" failed:`, result.reason);
+        if (this.evidence[bucket] && typeof this.evidence[bucket] === 'object') {
+          this.evidence[bucket].error = result.reason?.message || String(result.reason);
+        }
+      }
+    });
+
+    log.info('Windows evidence collection completed');
+    return this.evidence;
   }
 
   async collectSystemInfo() {
@@ -60,7 +84,7 @@ class WindowsEvidenceCollector {
         uptime: os.uptime()
       };
 
-      const { stdout: systemInfo } = await execAsync('systeminfo', { encoding: 'utf8' });
+      const { stdout: systemInfo } = await runCommand('systeminfo');
       const lines = systemInfo.split('\n');
 
       lines.forEach(line => {
@@ -91,13 +115,13 @@ class WindowsEvidenceCollector {
 
   async collectSecuritySettings() {
     try {
-      const { stdout: passwordPolicy } = await execAsync('net accounts', { encoding: 'utf8' });
+      const { stdout: passwordPolicy } = await runCommand('net accounts');
       this.evidence.securitySettings.passwordPolicy = this.parseNetAccounts(passwordPolicy);
 
-      const { stdout: auditPolicy } = await execAsync('auditpol /get /category:*', { encoding: 'utf8' });
+      const { stdout: auditPolicy } = await runCommand('auditpol /get /category:*');
       this.evidence.securitySettings.auditPolicy = this.parseAuditPolicy(auditPolicy);
 
-      const { stdout: userRights } = await execAsync('whoami /priv', { encoding: 'utf8' });
+      const { stdout: userRights } = await runCommand('whoami /priv');
       this.evidence.securitySettings.userRights = userRights;
 
       const securityOptions = await this.getRegistryValue(
@@ -113,19 +137,27 @@ class WindowsEvidenceCollector {
 
   async collectEventLogs() {
     try {
-      const logs = ['Security', 'System', 'Application'];
+      const logNames = ['Security', 'System', 'Application'];
       const maxEvents = 100;
 
-      for (const log of logs) {
-        try {
-          const command = `wevtutil qe ${log} /c:${maxEvents} /f:text /rd:true`;
-          const { stdout: result } = await execAsync(command, { encoding: 'utf8', timeout: 30000 });
-          this.evidence.eventLogs[log.toLowerCase()] = result;
-        } catch (logError) {
-          log.error(`Failed to collect ${log} logs:`, logError);
-          this.evidence.eventLogs[log.toLowerCase()] = { error: logError.message };
+      // Fetch all three logs concurrently — the wevtutil calls are
+      // independent and this was the slowest serial step on Windows.
+      const results = await Promise.allSettled(
+        logNames.map(name =>
+          runCommand(`wevtutil qe ${name} /c:${maxEvents} /f:text /rd:true`)
+        )
+      );
+
+      logNames.forEach((name, idx) => {
+        const result = results[idx];
+        const key = name.toLowerCase();
+        if (result.status === 'fulfilled') {
+          this.evidence.eventLogs[key] = result.value.stdout;
+        } else {
+          log.error(`Failed to collect ${name} logs:`, result.reason);
+          this.evidence.eventLogs[key] = { error: result.reason?.message || String(result.reason) };
         }
-      }
+      });
 
     } catch (error) {
       log.error('Event logs collection failed:', error);
@@ -135,7 +167,7 @@ class WindowsEvidenceCollector {
 
   async collectServices() {
     try {
-      const { stdout: services } = await execAsync('sc query state= all', { encoding: 'utf8' });
+      const { stdout: services } = await runCommand('sc query state= all');
       this.evidence.services.list = services;
 
       const criticalServices = [
@@ -146,15 +178,16 @@ class WindowsEvidenceCollector {
         'EventLog'
       ];
 
-      this.evidence.services.critical = {};
-      for (const service of criticalServices) {
-        try {
-          const { stdout: serviceStatus } = await execAsync(`sc query ${service}`, { encoding: 'utf8' });
-          this.evidence.services.critical[service] = serviceStatus.includes('RUNNING');
-        } catch (serviceError) {
-          this.evidence.services.critical[service] = false;
-        }
-      }
+      // Poll each critical service concurrently.
+      const statuses = await Promise.allSettled(
+        criticalServices.map(svc => runCommand(`sc query ${svc}`))
+      );
+      this.evidence.services.critical = Object.fromEntries(
+        criticalServices.map((svc, idx) => {
+          const r = statuses[idx];
+          return [svc, r.status === 'fulfilled' && r.value.stdout.includes('RUNNING')];
+        })
+      );
 
     } catch (error) {
       log.error('Services collection failed:', error);
@@ -164,7 +197,7 @@ class WindowsEvidenceCollector {
 
   async collectFirewallStatus() {
     try {
-      const { stdout: firewallStatus } = await execAsync('netsh advfirewall show allprofiles', { encoding: 'utf8' });
+      const { stdout: firewallStatus } = await runCommand('netsh advfirewall show allprofiles');
       this.evidence.firewall.status = firewallStatus;
 
       this.evidence.firewall.profiles = {
@@ -181,7 +214,7 @@ class WindowsEvidenceCollector {
 
   async collectUpdateStatus() {
     try {
-      const { stdout: updateService } = await execAsync('sc query wuauserv', { encoding: 'utf8' });
+      const { stdout: updateService } = await runCommand('sc query wuauserv');
       this.evidence.updates.serviceRunning = updateService.includes('RUNNING');
 
       const lastUpdateKey = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\WindowsUpdate\\Auto Update\\Results\\Install';
@@ -196,11 +229,12 @@ class WindowsEvidenceCollector {
 
   async collectUserAccounts() {
     try {
-      const { stdout: users } = await execAsync('net user', { encoding: 'utf8' });
-      this.evidence.users.list = users;
-
-      const { stdout: admins } = await execAsync('net localgroup administrators', { encoding: 'utf8' });
-      this.evidence.users.administrators = admins;
+      const [usersResult, adminsResult] = await Promise.all([
+        runCommand('net user'),
+        runCommand('net localgroup administrators'),
+      ]);
+      this.evidence.users.list = usersResult.stdout;
+      this.evidence.users.administrators = adminsResult.stdout;
 
     } catch (error) {
       log.error('User accounts collection failed:', error);
@@ -210,14 +244,14 @@ class WindowsEvidenceCollector {
 
   async collectNetworkInfo() {
     try {
-      const { stdout: interfaces } = await execAsync('ipconfig /all', { encoding: 'utf8' });
-      this.evidence.network.interfaces = interfaces;
-
-      const { stdout: ports } = await execAsync('netstat -an', { encoding: 'utf8' });
-      this.evidence.network.openPorts = ports;
-
-      const { stdout: routes } = await execAsync('route print', { encoding: 'utf8' });
-      this.evidence.network.routes = routes;
+      const [interfaces, ports, routes] = await Promise.all([
+        runCommand('ipconfig /all'),
+        runCommand('netstat -an'),
+        runCommand('route print'),
+      ]);
+      this.evidence.network.interfaces = interfaces.stdout;
+      this.evidence.network.openPorts = ports.stdout;
+      this.evidence.network.routes = routes.stdout;
 
     } catch (error) {
       log.error('Network info collection failed:', error);
@@ -231,7 +265,7 @@ class WindowsEvidenceCollector {
       const software = await this.getRegistrySubKeys(uninstallKey);
       this.evidence.software.installed = software;
 
-      const { stdout: processes } = await execAsync('tasklist', { encoding: 'utf8' });
+      const { stdout: processes } = await runCommand('tasklist');
       this.evidence.software.running = processes;
 
     } catch (error) {
@@ -299,7 +333,7 @@ class WindowsEvidenceCollector {
 
   async getRegistryValue(keyPath) {
     try {
-      const { stdout: result } = await execAsync(`reg query "${keyPath}"`, { encoding: 'utf8' });
+      const { stdout: result } = await runCommand(`reg query "${keyPath}"`);
       return result;
     } catch (error) {
       return null;
@@ -308,7 +342,7 @@ class WindowsEvidenceCollector {
 
   async getRegistrySubKeys(keyPath) {
     try {
-      const { stdout: result } = await execAsync(`reg query "${keyPath}"`, { encoding: 'utf8' });
+      const { stdout: result } = await runCommand(`reg query "${keyPath}"`);
       const subKeys = [];
 
       const lines = result.split('\n');

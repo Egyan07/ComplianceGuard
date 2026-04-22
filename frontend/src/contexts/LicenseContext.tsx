@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { getLicenseInfoHttp } from '../services/api';
+import { activateLicenseHttp, getLicenseInfoHttp } from '../services/api';
 import { AuthContext } from './AuthContext';
 
 const isElectron = !!(window as any).electronAPI;
@@ -100,7 +100,29 @@ export function LicenseProvider({ children }: { children: ReactNode }) {
   }, [licenseInfo.tier]);
 
   const activateLicense = useCallback(async (key: string) => {
-    if (!isElectron) return { valid: false, error: 'Requires desktop app' };
+    if (!isElectron) {
+      // Web mode: hit the backend's /api/auth/activate-license endpoint and
+      // mirror the returned payload into local state. Errors from the server
+      // bubble up as structured { valid: false, error }.
+      try {
+        const result = await activateLicenseHttp(key);
+        const info: LicenseInfo = {
+          tier: result.tier === 'pro' ? 'pro' : 'free',
+          licenseId: result.license_id ?? null,
+          email: result.email ?? null,
+          expiresAt: result.expires_at ?? null,
+          daysRemaining: result.days_remaining ?? null,
+          isExpired: result.is_expired ?? false,
+          isGracePeriod: result.is_grace_period ?? false,
+        };
+        setLicenseInfo(info);
+        return { valid: true };
+      } catch (err: any) {
+        const detail = err?.response?.data?.detail || err?.message || 'License activation failed';
+        return { valid: false, error: detail };
+      }
+    }
+
     const api = (window as any).electronAPI;
     const result = await api.activateLicense(key);
     if (result.valid) {
