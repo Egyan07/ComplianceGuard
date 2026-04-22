@@ -1,0 +1,20 @@
+[tool.ruff]
+# Match the CI step so local runs and CI stay in sync.
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+# Keep this narrow — we want to catch real bugs (undefined names, unused
+# imports, truthy-comparison mistakes), not wage a style war. Bump to I/B/UP
+# once the codebase is cleaned in a dedicated pass.
+select = ["E", "F", "W"]
+ignore = [
+    # Line length handled by the formatter.
+    "E501",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Alembic migration files are auto-generated; unused imports there are fine.
+"migrations/versions/*.py" = ["F401", "I001"]
+# Test modules commonly import fixtures without using them directly.
+"tests/**/*.py" = ["F401"]

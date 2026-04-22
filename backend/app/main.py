@@ -84,6 +84,12 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+# Captured once at boot so /health can report uptime without re-reading the
+# environment on every request. GIT_SHA is injected by CI (see .github/workflows)
+# and defaults to "dev" so local runs always get *something* back.
+_SERVICE_STARTED_AT = datetime.now(timezone.utc)
+_GIT_SHA = os.getenv("GIT_SHA", "dev")
+
 # Configure CORS for frontend communication
 app.add_middleware(
     CORSMiddleware,
@@ -107,15 +113,18 @@ app.include_router(aws_credentials_router)
 @app.get("/health")
 async def health_check() -> Dict[str, Any]:
     """
-    Health check endpoint for monitoring and deployment validation.
+    Health check for monitoring and deployment validation.
 
-    Returns:
-        Dict containing service status and version information
+    ``git_sha`` lets oncall map an incident to a specific deploy even when the
+    version string hasn't been bumped; ``started_at`` exposes worker age so
+    rolling-restart regressions are obvious.
     """
     return {
         "status": "healthy",
         "service": "complianceguard-api",
         "version": VERSION,
+        "git_sha": _GIT_SHA,
+        "started_at": _SERVICE_STARTED_AT.isoformat(),
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 

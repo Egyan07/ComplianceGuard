@@ -416,11 +416,15 @@ class TestIDORProtection:
 
 class TestHealthEndpoints:
     def test_health_check(self, client):
+        from app.core.constants import VERSION
+
         res = client.get("/health")
         assert res.status_code == 200
         data = res.json()
         assert data["status"] == "healthy"
-        assert data["version"] == "2.9.0"
+        assert data["version"] == VERSION
+        assert "git_sha" in data
+        assert "started_at" in data
 
     def test_root(self, client):
         res = client.get("/")

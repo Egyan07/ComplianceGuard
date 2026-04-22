@@ -5,7 +5,7 @@ Provides AWS S3 encryption and IAM policy monitoring for SOC 2 compliance eviden
 """
 
 import boto3
-from typing import Dict, List, Any, Optional
+from typing import Dict, Any
 from datetime import datetime, timezone
 from botocore.exceptions import ClientError, NoCredentialsError, PartialCredentialsError
 import logging

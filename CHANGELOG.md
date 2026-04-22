@@ -6,6 +6,140 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [3.0.0] — 2026-04-22
+
+Major hardening release. Lifts the codebase rating from ~7.8 to ~9.0 by
+closing the long-tail of security, correctness, and scaling issues that
+would have caused incidents at SaaS scale. Contains breaking changes — see
+**Upgrade notes** below before deploying.
+
+### Added
+- **Filesystem-backed evidence uploads** — Manual uploads now write to
+  `EVIDENCE_STORAGE_PATH` (default `./storage`). The DB stores a path only,
+  not the bytes. New endpoint `GET /api/v1/evidence/items/{id}/download`
+  streams the file back with a path-traversal guard.
+- **HTTPS-ready nginx config** — `nginx.conf` ships HTTPS on port 443
+  (SSL certs via mounted `./ssl/`), HTTP → HTTPS redirect, HSTS, a locked-
+  down Content-Security-Policy, `Permissions-Policy`, and 404 responses for
+  `/docs`, `/redoc`, and `/openapi.json`. `nginx.dev.conf` +
+  `docker-compose.dev.yml` keep HTTP-only local dev frictionless.
+- **SSOT for cross-repo constants** — `backend/app/core/constants.py`,
+  `frontend/src/constants.ts`, and `electron/licensing/tier-constants.js`
+  all carry `VERSION`, `VALID_LICENSE_TIERS`, `VALID_COMPLIANCE_LEVELS`,
+  `MACHINE_LIMITS`, and `FEATURE_GATES` with cross-pointer headers.
+- **Enriched `/health`** — Now returns `git_sha` and `started_at` alongside
+  the version string, so oncall can map an incident to a specific deploy.
+- **`GET /api/v1/machines` pagination** — `?limit=` (default 50, max 200)
+  and `?offset=` query params.
+- **CHECK constraints** — `users.license_tier` locked to
+  `{free, pro, enterprise}` and `machines.compliance_level` locked to
+  `{NULL, compliant, at_risk, critical}` at the DB level.
+- **Rate limits on auth + credential endpoints** — `/forgot-password`
+  (3/min), `/reset-password` (5/min), and every AWS-credential endpoint
+  now carry slowapi limits.
+- **Domain-separated credential encryption key** — Fernet key derived from
+  `SECRET_KEY` via HKDF-SHA256 with label
+  `complianceguard:credential-encryption:v1`. Legacy SHA-256 derivation
+  retained as a read-only fallback so pre-3.0 rows still decrypt.
+- **Multi-worker rate-limit backend** — `RATELIMIT_STORAGE_URI` env var is
+  honoured (e.g. `redis://host:6379/0`). Starting under `WORKERS>1` without
+  a shared backend logs a WARNING.
+- **Ruff lint step in CI** — New `pyproject.toml` with the CI rule set;
+  `backend-tests` now runs `ruff check app` before pytest.
+- **Pip caching + release-job `build` dependency** — CI's release job was
+  able to ship even when the frontend build broke; it now waits on `build`.
+- **Alembic migrations `7a1c4f9b2d08` and `8b2e7c1d5a19`** — data-model
+  hardening (CHECKs, `Machine.updated_at`, nullable
+  `ComplianceFramework.company_id`) and index on
+  `evidence_collections.user_id`.
+
+### Changed — breaking
+- **Hardcoded docker-compose fallbacks removed.** `SECRET_KEY` and
+  `DB_PASSWORD` no longer have silent defaults. An unset value aborts the
+  stack at boot with a readable error. Existing deployments relying on the
+  published demo values will fail fast — set real values in `.env` before
+  upgrading.
+- **Manual evidence storage format changed.** Uploads are now written to
+  the filesystem; `data.content_base64` on `EvidenceItem` is gone. Any
+  automation that reached into that column must switch to the new
+  `GET /api/v1/evidence/items/{id}/download` endpoint. (If you have
+  existing base64 rows, write a one-time script to extract and rewrite
+  them — see `backend/app/api/evidence.py` for the new shape.)
+- **`GET /api/v1/machines` is paginated by default.** Old callers that
+  assumed an unbounded list now receive at most 50 machines. Pass
+  `?limit=200&offset=…` if you need more.
+- **Electron `cloudConnect` sends `application/x-www-form-urlencoded`.**
+  Fixes silent 422 on every sign-in in ≤2.9.0. No action required — this
+  was simply broken before.
+- **`fleet_stats` and `get_machines` no longer load the full machines
+  table into Python.** Same API shape; only the query plan changed.
+
+### Fixed
+- **Grace-period lockout.** `electron/licensing/license-crypto.js` now
+  returns `valid: true` during the 7-day renewal grace window. Paid
+  desktop users were previously kicked off on the day of expiry.
+- **`datetime.utcnow()` deprecation.** Replaced with
+  `datetime.now(timezone.utc)` in all production code.
+- **Module-load side effects on tests.** `run_migrations()` now runs from
+  the FastAPI lifespan handler, so importing `app.main` in tests does not
+  hit the DB.
+- **Unbounded in-memory eval cache.** `ComplianceService.evaluations` is
+  now a `collections.OrderedDict` capped at 100 entries (FIFO).
+- **Mutating a Pydantic v2 model post-construction.** `Settings`
+  environment overrides are now applied via `@model_validator(mode="after")`
+  instead of a module-level `setattr` loop.
+- **`SECRET_KEY` captured at module import.** JWT helpers now resolve the
+  key lazily, so pytest env-var overrides are honoured.
+- **`pydantic.v1.ConfigDict` import** in `config.py` removed; three
+  `class Config:` blocks migrated to `ConfigDict(...)`.
+- **Cloud-sync plaintext fallback.** `secure-storage.js` fallback path now
+  AES-256-GCM-encrypts values with a machine-derived key and logs a loud
+  warning, instead of storing plaintext. `decryptString` throws a
+  descriptive error on failure instead of returning an empty string.
+- **Windows evidence collection sequential loop.** Ten `exec` calls now
+  run concurrently via `Promise.allSettled`, each with a 30s default
+  timeout. Fixed a pre-existing `log` variable shadow in `collectEventLogs`.
+- **Web-mode license activation.** `LicenseContext.activateLicense` now
+  calls `POST /api/auth/activate-license` instead of returning
+  "Requires desktop app".
+- **Release CI gap.** `release` job now `needs: [..., build]`.
+
+### Security
+- **CSRF invariant documented.** `backend/app/api/auth.py` now carries a
+  top-of-file comment spelling out that auth state rides in the
+  `Authorization` header only — the API is CSRF-safe as long as no
+  cookie-based auth path is ever introduced without explicit CSRF
+  protection.
+
+### Upgrade notes
+1. Set `SECRET_KEY` and `DB_PASSWORD` in your `.env` (generate with
+   `openssl rand -hex 32` for the former). The stack will refuse to start
+   otherwise.
+2. Provide TLS certificates at `./ssl/cert.pem` and `./ssl/key.pem` for the
+   production `nginx` service, or run the dev stack via
+   `docker-compose -f docker-compose.yml -f docker-compose.dev.yml up`.
+3. If you run `uvicorn` with `WORKERS>1`, set
+   `RATELIMIT_STORAGE_URI=redis://…` — otherwise rate limits silently
+   multiply by worker count.
+4. Expose `GIT_SHA` (usually via CI) in your deploy env to get meaningful
+   `git_sha` values in `/health`.
+5. Run Alembic: `alembic upgrade head` applies `7a1c4f9b2d08` and
+   `8b2e7c1d5a19`. Existing rows whose `license_tier` is outside
+   `{free, pro, enterprise}` — or `compliance_level` outside
+   `{compliant, at_risk, critical}` — will fail the new CHECK. Fix the
+   data first.
+
+### Developer experience
+- Backend test DB now runs Alembic migrations (via `create_test_database`
+  → `alembic upgrade head`) instead of `Base.metadata.create_all`. New
+  migrations are exercised by every pytest run.
+- `requirements.txt` and `requirements-test.txt` ranges relaxed so Python
+  3.13 contributors don't need a Rust toolchain.
+- `frontend/src/types/electron.d.ts` replaces the `(window as any)` casts
+  in `LicenseContext` with a typed surface.
+
+---
+
 ## [2.9.0] — 2026-04-17
 
 ### Added

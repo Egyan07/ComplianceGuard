@@ -17,7 +17,7 @@
  *   4. If VERSION changed, bump package.json and frontend/package.json.
  */
 
-const VERSION = '2.9.0';
+const VERSION = '3.0.0';
 
 const VALID_LICENSE_TIERS = ['free', 'pro', 'enterprise'];
 const VALID_COMPLIANCE_LEVELS = ['compliant', 'at_risk', 'critical'];

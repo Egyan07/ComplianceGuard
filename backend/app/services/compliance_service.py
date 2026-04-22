@@ -6,18 +6,18 @@ including scoring, assessment, and reporting capabilities.
 """
 
 from collections import OrderedDict
-from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+from typing import Any, Dict, List, Optional
+
+from app.core.soc2_controls import SOC2Control, SOC2Framework
 
 # In-memory evaluation cache upper bound. Beyond this we evict the oldest
 # entry (FIFO) so a long-running process cannot be pushed into OOM. The
 # cache is NOT the source of truth — durable evaluation records live in the
 # `evaluations` table. This is purely a recent-results convenience cache.
 _MAX_EVAL_CACHE_ENTRIES = 100
-
-from app.core.soc2_controls import SOC2Framework, SOC2Control, ControlStatus
 
 
 class ComplianceStatus(str, Enum):
@@ -166,9 +166,10 @@ class ComplianceService:
                 assessed_by=assessed_by
             )
 
-        # Extract evidence information
+        # Extract evidence information. The caller's "status" field is
+        # currently informational only — the real status is derived from the
+        # score below — so we don't read it here.
         provided_evidence = evidence_data.get("evidence_provided", [])
-        evidence_status = evidence_data.get("status", "unknown")
         score = evidence_data.get("score", 0.0)
 
         # Determine status based on score
@@ -217,10 +218,10 @@ class ComplianceService:
         if not evaluated_assessments:
             return ComplianceStatus.NOT_EVALUATED
 
+        # Only the compliant ratio feeds the overall status; partial and
+        # non-compliant counts are available via _assess_risks for callers
+        # that need them.
         compliant_count = sum(1 for a in evaluated_assessments if a.status == ComplianceStatus.COMPLIANT)
-        partial_count = sum(1 for a in evaluated_assessments if a.status == ComplianceStatus.PARTIALLY_COMPLIANT)
-        non_compliant_count = sum(1 for a in evaluated_assessments if a.status == ComplianceStatus.NON_COMPLIANT)
-
         total_evaluated = len(evaluated_assessments)
         compliant_ratio = compliant_count / total_evaluated
 

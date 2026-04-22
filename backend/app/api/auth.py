@@ -1,7 +1,21 @@
 """
 Authentication API endpoints for ComplianceGuard.
 
-This module provides JWT-based authentication endpoints including login and registration.
+This module provides JWT-based authentication endpoints including login and
+registration.
+
+CSRF invariant — DO NOT SET AUTH COOKIES
+----------------------------------------
+Authentication state is carried exclusively via the ``Authorization: Bearer``
+header. No endpoint in this module sets an auth cookie, and the frontend is
+expected to store tokens in ``localStorage``, not cookies. That's what makes
+the API CSRF-safe without an explicit CSRF token: a cross-site forgery
+attempt cannot attach the bearer header because JS on an attacker-controlled
+origin has no access to our origin's ``localStorage``.
+
+If you ever add a cookie-based auth path here (session cookie, persistent
+login, OAuth proxy, etc.), you MUST also add CSRF protection — SameSite=Lax
+alone is not sufficient for state-changing endpoints.
 """
 
 from datetime import timedelta, datetime, timezone

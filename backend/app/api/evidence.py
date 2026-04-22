@@ -4,27 +4,28 @@ Evidence Collection API Endpoints
 REST API endpoints for managing and collecting compliance evidence.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
-from fastapi.responses import FileResponse
-from sqlalchemy.orm import Session
-from typing import Dict, Any, Optional, List
-from pydantic import BaseModel, ConfigDict
-from datetime import datetime, timezone
 import logging
 import os
 import re
 import uuid
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
 
-logger = logging.getLogger(__name__)
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi.responses import FileResponse
+from pydantic import BaseModel, ConfigDict
+from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
-from app.core.database import get_db
 from app.core.config import settings
 from app.core.credential_crypto import decrypt_credential
-from app.models.user import User
-from app.models.evidence import EvidenceCollection, EvidenceItem
+from app.core.database import get_db
 from app.models.aws_credential import AwsCredential
+from app.models.evidence import EvidenceCollection, EvidenceItem
+from app.models.user import User
 from app.services.evidence_collector import EvidenceCollectionService
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/evidence", tags=["evidence"])
 

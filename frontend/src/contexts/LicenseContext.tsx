@@ -2,8 +2,10 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 import { activateLicenseHttp, getLicenseInfoHttp } from '../services/api';
 import { AuthContext } from './AuthContext';
 import { FEATURE_GATES } from '../constants';
+// Typed `window.electronAPI` surface is declared in src/types/electron.d.ts
+// and picked up automatically by TS because it's under `include` in tsconfig.
 
-const isElectron = !!(window as any).electronAPI;
+const isElectron = !!window.electronAPI;
 
 export interface LicenseInfo {
   tier: 'free' | 'pro';
@@ -26,6 +28,16 @@ interface LicenseContextValue {
 }
 
 const defaultInfo: LicenseInfo = { tier: 'free' };
+
+function extractErrorDetail(err: unknown): string {
+  if (typeof err === 'object' && err !== null) {
+    const e = err as { response?: { data?: { detail?: unknown } }; message?: unknown };
+    const detail = e.response?.data?.detail;
+    if (typeof detail === 'string') return detail;
+    if (typeof e.message === 'string') return e.message;
+  }
+  return 'License activation failed';
+}
 
 const LicenseContext = createContext<LicenseContextValue>({
   tier: 'free',
@@ -72,13 +84,14 @@ export function LicenseProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const api = (window as any).electronAPI;
-    api.getLicenseInfo().then((info: LicenseInfo) => {
+    const api = window.electronAPI;
+    if (!api) return;
+    api.getLicenseInfo().then((info) => {
       setLicenseInfo(info);
       setLoading(false);
     }).catch(() => setLoading(false));
 
-    const cleanup = api.onLicenseChanged?.((info: LicenseInfo) => {
+    const cleanup = api.onLicenseChanged?.((info) => {
       setLicenseInfo(info);
     });
 
@@ -109,23 +122,25 @@ export function LicenseProvider({ children }: { children: ReactNode }) {
         };
         setLicenseInfo(info);
         return { valid: true };
-      } catch (err: any) {
-        const detail = err?.response?.data?.detail || err?.message || 'License activation failed';
+      } catch (err: unknown) {
+        const detail = extractErrorDetail(err);
         return { valid: false, error: detail };
       }
     }
 
-    const api = (window as any).electronAPI;
+    const api = window.electronAPI;
+    if (!api) return { valid: false, error: 'Electron bridge unavailable' };
     const result = await api.activateLicense(key);
     if (result.valid) {
-      setLicenseInfo(result.payload || { tier: 'pro' });
+      setLicenseInfo(result.payload ?? { tier: 'pro' });
     }
     return result;
   }, []);
 
   const deactivateLicense = useCallback(async () => {
     if (!isElectron) return;
-    const api = (window as any).electronAPI;
+    const api = window.electronAPI;
+    if (!api) return;
     await api.deactivateLicense();
     setLicenseInfo(defaultInfo);
   }, []);

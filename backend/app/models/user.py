@@ -8,15 +8,14 @@ and authorization features.
 from sqlalchemy import CheckConstraint, Column, Integer, String, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from datetime import datetime
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from app.core.constants import VALID_LICENSE_TIERS  # re-exported for backwards compat
 from app.core.database import Base
 
 
 if TYPE_CHECKING:
-    from app.models.company import Company
+    pass
 
 
 __all__ = ["User", "VALID_LICENSE_TIERS"]

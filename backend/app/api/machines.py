@@ -91,7 +91,7 @@ async def sync_machine(
         if limit is not None:
             current_count = (
                 db.query(Machine)
-                .filter(Machine.user_id == current_user.id, Machine.is_active == True)
+                .filter(Machine.user_id == current_user.id, Machine.is_active.is_(True))
                 .count()
             )
             if current_count >= limit:
@@ -155,7 +155,7 @@ async def get_fleet_stats(
             ).label("never_synced"),
             func.avg(Machine.last_score).label("avg_score"),
         )
-        .filter(Machine.user_id == current_user.id, Machine.is_active == True)  # noqa: E712
+        .filter(Machine.user_id == current_user.id, Machine.is_active.is_(True))
         .one()
     )
 
@@ -188,7 +188,7 @@ async def get_machines(
     """
     machines = (
         db.query(Machine)
-        .filter(Machine.user_id == current_user.id, Machine.is_active == True)  # noqa: E712
+        .filter(Machine.user_id == current_user.id, Machine.is_active.is_(True))
         .order_by(Machine.last_sync_at.desc().nullslast(), Machine.id.desc())
         .offset(offset)
         .limit(limit)

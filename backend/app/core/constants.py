@@ -20,7 +20,7 @@ Checklist for an edit:
       - frontend/package.json
 """
 
-VERSION = "2.9.0"
+VERSION = "3.0.0"
 
 VALID_LICENSE_TIERS = ("free", "pro", "enterprise")
 VALID_COMPLIANCE_LEVELS = ("compliant", "at_risk", "critical")

@@ -4,7 +4,7 @@ Compliance evaluation models for ComplianceGuard.
 Persists evaluation runs and per-control assessment results.
 """
 
-from sqlalchemy import Column, Integer, String, Float, DateTime, Text, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 

@@ -20,7 +20,7 @@
  *       - frontend/package.json
  */
 
-export const VERSION = '2.9.0';
+export const VERSION = '3.0.0';
 
 export const VALID_LICENSE_TIERS = ['free', 'pro', 'enterprise'] as const;
 export const VALID_COMPLIANCE_LEVELS = ['compliant', 'at_risk', 'critical'] as const;

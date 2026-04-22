@@ -16,7 +16,7 @@ from app.core.database import Base
 
 
 if TYPE_CHECKING:
-    from app.models.company import Company
+    pass
 
 
 class FrameworkType(str, PyEnum):

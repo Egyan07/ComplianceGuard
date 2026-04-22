@@ -1,25 +1,29 @@
 # FastAPI and ASGI server
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
+# fastapi>=0.110 is the first release with Python 3.13 wheels upstream.
+fastapi>=0.110,<1
+uvicorn[standard]>=0.27,<1
 
 # Database and ORM
-sqlalchemy==2.0.23
-alembic==1.12.1
-psycopg2-binary==2.9.9
+# sqlalchemy>=2.0.30 ships wheels that work with Python 3.13's typing module.
+sqlalchemy>=2.0.32,<3
+alembic>=1.13,<2
+psycopg2-binary>=2.9.9
 
 # Authentication and security
-PyJWT==2.8.0
-bcrypt==4.0.1
-python-multipart==0.0.6
+PyJWT>=2.8,<3
+bcrypt>=4.1,<5
+python-multipart>=0.0.9
 
 # Environment and configuration
-pydantic==2.5.0
-pydantic-settings==2.0.3
-python-dotenv==1.0.0
+# pydantic>=2.10 has prebuilt pydantic-core wheels for Python 3.13, so
+# `pip install` no longer requires a Rust toolchain on the install host.
+pydantic>=2.10,<3
+pydantic-settings>=2.6,<3
+python-dotenv>=1.0
 
 # HTTP and API clients
-httpx==0.25.2
-requests==2.31.0
+httpx>=0.26,<1
+requests>=2.31
 aiosmtplib>=3.0.0
 
 # Rate limiting

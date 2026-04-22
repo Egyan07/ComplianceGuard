@@ -8,7 +8,7 @@ and base model class for all database models.
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.pool import StaticPool
-from typing import Generator, Optional
+from typing import Generator
 
 from app.core.config import get_database_url, settings
 
@@ -98,9 +98,38 @@ def get_session_factory():
 
 
 def create_test_database():
-    """Create a test database with all tables. Returns the test engine."""
+    """
+    Create a test database with the real schema by running Alembic migrations.
+
+    We deliberately avoid ``Base.metadata.create_all`` so CHECK constraints,
+    server defaults, and new indexes ship the same way tests see them —
+    migrations. If migrations ever break, the test suite fails loudly
+    instead of silently drifting.
+
+    Falls back to ``create_all`` only when ``alembic.ini`` is missing (ad-hoc
+    scripts running the module outside the repo tree).
+    """
+    import os
+
     test_engine = create_database_engine(testing=True)
-    Base.metadata.create_all(bind=test_engine)
+
+    alembic_ini = os.path.join(
+        os.path.dirname(__file__), "..", "..", "alembic.ini"
+    )
+    if not os.path.exists(alembic_ini):
+        Base.metadata.create_all(bind=test_engine)
+        return test_engine
+
+    from alembic import command as alembic_command
+    from alembic.config import Config as AlembicConfig
+
+    alembic_cfg = AlembicConfig(alembic_ini)
+    alembic_cfg.set_main_option("sqlalchemy.url", str(test_engine.url))
+    # Pin the same engine's connection so the migrations operate on the
+    # in-memory DB pytest is using, not a fresh file-backed one.
+    with test_engine.connect() as connection:
+        alembic_cfg.attributes["connection"] = connection
+        alembic_command.upgrade(alembic_cfg, "head")
     return test_engine
 
 

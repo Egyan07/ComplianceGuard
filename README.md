@@ -3,13 +3,49 @@
 </p>
 
 <p align="center">
-  <a href="#quick-start"><img src="https://img.shields.io/badge/version-2.9.0-2563EB" alt="Version"></a>
+  <a href="#quick-start"><img src="https://img.shields.io/badge/version-3.0.0-2563EB" alt="Version"></a>
   <img src="https://img.shields.io/badge/license-BSL%201.1-orange" alt="License">
   <a href="#soc-2-controls"><img src="https://img.shields.io/badge/SOC%202-29%20controls-10B981" alt="Controls"></a>
   <img src="https://img.shields.io/badge/tests-311%20passing-10B981?logo=vitest&logoColor=white" alt="Tests">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
   <a href="https://github.com/Egyan07/ComplianceGuard/actions"><img src="https://img.shields.io/github/actions/workflow/status/Egyan07/ComplianceGuard/ci.yml?label=CI&logo=githubactions&logoColor=white" alt="CI"></a>
 </p>
+
+---
+
+### What's new in 3.0.0 — security & data hardening
+
+`3.0.0` is a breaking release focused on tightening the things that would
+have eventually caused outages or incidents at scale. Highlights:
+
+- **Deploys fail loudly on missing secrets.** `docker-compose.yml` no longer
+  falls back to the published demo SECRET_KEY or DB_PASSWORD; an unset value
+  aborts the stack at boot with a readable error.
+- **Filesystem-backed evidence uploads.** Manual uploads are stored under
+  `EVIDENCE_STORAGE_PATH` (default `./storage`) and referenced from the DB
+  by path — no more 100 MB base64 blobs in a JSON column. A new
+  `GET /api/v1/evidence/items/{id}/download` endpoint serves them back with
+  a path-traversal guard.
+- **Check constraints on enum columns.** `users.license_tier` and
+  `machines.compliance_level` are now CHECK-constrained at the DB layer, so
+  a bad value can no longer sneak in via a direct SQL write.
+- **Hardened nginx.** HTTPS block active, CSP / HSTS / Permissions-Policy
+  headers added, deprecated `X-XSS-Protection` removed, `/docs` and
+  `/openapi.json` return 404 publicly. A separate `nginx.dev.conf` and
+  `docker-compose.dev.yml` keep HTTP-only local dev frictionless.
+- **Rate limits extended.** `/forgot-password`, `/reset-password`, and every
+  AWS-credential endpoint now carry slowapi limits. Set
+  `RATELIMIT_STORAGE_URI=redis://…` when running with multiple workers —
+  the app logs a warning if you don't.
+- **Fleet stats is now a single query.** `/api/v1/machines/fleet-stats`
+  aggregates in SQL instead of loading every row into Python, and
+  `GET /api/v1/machines` is paginated (`?limit=…&offset=…`).
+- **Grace-period lockout fix.** Paid desktop users are no longer kicked off
+  during the 7-day renewal grace window.
+- **Credential encryption key is domain-separated** from the JWT signing key
+  via HKDF-SHA256 (with transparent fallback for legacy-encrypted rows).
+
+See [`CHANGELOG.md`](CHANGELOG.md) for the full list plus upgrade notes.
 
 ---
 

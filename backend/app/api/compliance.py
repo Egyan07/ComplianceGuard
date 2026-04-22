@@ -14,8 +14,8 @@ from pydantic import BaseModel, Field
 from datetime import datetime, timezone
 import uuid
 
-from app.core.soc2_controls import SOC2Framework, SOC2Control, ControlCategory, create_soc2_framework
-from app.services.compliance_service import ComplianceService, ComplianceEvaluation, ComplianceStatus, create_compliance_service
+from app.core.soc2_controls import SOC2Control, create_soc2_framework
+from app.services.compliance_service import ComplianceStatus, create_compliance_service
 from app.core.database import get_db
 from app.api.deps import get_current_user, require_pro
 from app.models.user import User

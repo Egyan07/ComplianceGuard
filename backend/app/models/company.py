@@ -8,15 +8,13 @@ organizations using the ComplianceGuard platform.
 from sqlalchemy import Column, Integer, String, DateTime, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from datetime import datetime
-from typing import List, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from app.core.database import Base
 
 
 if TYPE_CHECKING:
-    from app.models.user import User
-    from app.models.compliance import ComplianceFramework
+    pass
 
 
 class Company(Base):
