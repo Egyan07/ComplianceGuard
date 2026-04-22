@@ -5,14 +5,19 @@ FastAPI backend for managing compliance frameworks, evidence collection,
 and SOC 2 audit workflows.
 """
 
-from fastapi import FastAPI, HTTPException, Request
+from contextlib import asynccontextmanager
+import os
+
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from typing import Dict, Any
 from datetime import datetime, timezone
 import uvicorn
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+
+from alembic.config import Config as AlembicConfig
+from alembic import command as alembic_command
 
 from app.api.auth import router as auth_router
 from app.api.evidence import router as evidence_router
@@ -39,34 +44,17 @@ if settings.sentry_dsn:
         send_default_pii=False,  # Do not send PII — compliance requirement
     )
 
-app = FastAPI(
-    title="ComplianceGuard SOC 2 API",
-    description="Backend API for SOC 2 compliance automation platform",
-    version="2.9.0"
-)
 
-app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
-
-# Run Alembic migrations on startup
-from alembic.config import Config as AlembicConfig
-from alembic import command as alembic_command
-import os
-
-def run_migrations():
+def run_migrations() -> None:
     """Run pending Alembic migrations.
 
-    In multi-worker deployments (uvicorn --workers > 1) every worker races on
-    the ``alembic_version`` table when this runs at import time, which can
-    cause constraint errors or duplicate migration attempts.
-
-    Production deployments should set ``RUN_MIGRATIONS_ON_STARTUP=false`` and
-    run ``alembic upgrade head`` in a dedicated pre-start step (e.g. a
-    Kubernetes init-container or a Dockerfile ENTRYPOINT wrapper) so that only
-    a single process applies migrations before the workers start.
-
-    Local development, tests, and Docker Compose leave the default (``true``)
-    so the application remains self-bootstrapping without extra steps.
+    Invoked from the FastAPI lifespan handler, not at module import time — so
+    importing ``app.main`` (e.g. from pytest) does NOT hit the database. In
+    multi-worker deployments (``uvicorn --workers > 1``) every worker still
+    races on ``alembic_version`` when the default is kept; production
+    deployments should set ``RUN_MIGRATIONS_ON_STARTUP=false`` and apply
+    migrations in a dedicated pre-start step (init container, Dockerfile
+    ENTRYPOINT wrapper, etc.) so only one process runs ``alembic upgrade head``.
     """
     alembic_ini = os.path.join(os.path.dirname(__file__), "..", "alembic.ini")
     if os.path.exists(alembic_ini):
@@ -74,12 +62,26 @@ def run_migrations():
         alembic_cfg.set_main_option("sqlalchemy.url", str(engine.url))
         alembic_command.upgrade(alembic_cfg, "head")
     else:
-        # Fallback for environments without alembic.ini (e.g. tests)
+        # Fallback for environments without alembic.ini (e.g. ad-hoc scripts)
         Base.metadata.create_all(bind=engine)
 
 
-if os.getenv("RUN_MIGRATIONS_ON_STARTUP", "true").lower() == "true":
-    run_migrations()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    if os.getenv("RUN_MIGRATIONS_ON_STARTUP", "true").lower() == "true":
+        run_migrations()
+    yield
+
+
+app = FastAPI(
+    title="ComplianceGuard SOC 2 API",
+    description="Backend API for SOC 2 compliance automation platform",
+    version="2.9.0",
+    lifespan=lifespan,
+)
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Configure CORS for frontend communication
 app.add_middleware(

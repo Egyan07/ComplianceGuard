@@ -23,8 +23,7 @@ from app.core.auth import (
     create_refresh_token,
     verify_refresh_token,
     get_password_hash,
-    Token,
-    ACCESS_TOKEN_EXPIRE_MINUTES
+    ACCESS_TOKEN_EXPIRE_MINUTES,
 )
 from app.core.config import settings
 from app.models.user import User
@@ -71,12 +70,6 @@ class UserResponse(BaseModel):
     last_name: str | None = None
     is_active: bool
     is_superuser: bool
-
-
-class LoginRequest(BaseModel):
-    """Schema for login request."""
-    email: EmailStr
-    password: str
 
 
 class LoginResponse(BaseModel):

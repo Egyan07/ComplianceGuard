@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import Dict, Any, Optional, List
 from pydantic import BaseModel, ConfigDict
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 import os
 
@@ -376,7 +376,7 @@ async def upload_evidence_file(
             "file_size_bytes": len(content),
             "content_base64": base64.b64encode(content).decode("utf-8"),
             "uploaded_by": current_user.email,
-            "uploaded_at": datetime.utcnow().isoformat(),
+            "uploaded_at": datetime.now(timezone.utc).isoformat(),
         },
     )
     db.add(item)

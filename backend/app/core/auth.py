@@ -17,11 +17,18 @@ from app.models.user import User
 from app.core.config import settings
 
 
-# JWT configuration
-SECRET_KEY = settings.secret_key
+# JWT configuration — resolved lazily via settings at call time so that test
+# env-var overrides (e.g. monkeypatched SECRET_KEY) are always respected.
+# Capturing at module import broke conftest fixtures that change the secret
+# after import. Callers read via the helpers below instead of top-level
+# constants.
 ALGORITHM = settings.algorithm
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
 REFRESH_TOKEN_EXPIRE_DAYS = settings.refresh_token_expire_days
+
+
+def _secret_key() -> str:
+    return settings.secret_key
 
 
 class TokenPayload(BaseModel):
@@ -64,13 +71,13 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
         expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
     to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(to_encode, _secret_key(), algorithm=ALGORITHM)
 
 
 def verify_access_token(token: str) -> Optional[TokenPayload]:
     """Verify and decode a JWT access token."""
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, _secret_key(), algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
             return None
@@ -84,7 +91,7 @@ def create_refresh_token(data: dict) -> str:
     to_encode = {**data, "type": "refresh"}
     expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(to_encode, _secret_key(), algorithm=ALGORITHM)
 
 
 def verify_refresh_token(token: str) -> Optional[TokenPayload]:
@@ -95,7 +102,7 @@ def verify_refresh_token(token: str) -> Optional[TokenPayload]:
     if not token:
         return None
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, _secret_key(), algorithms=[ALGORITHM])
         if payload.get("type") != "refresh":
             return None
         email: str = payload.get("sub")
@@ -104,9 +111,3 @@ def verify_refresh_token(token: str) -> Optional[TokenPayload]:
         return TokenPayload(sub=email)
     except InvalidTokenError:
         return None
-
-
-class Token(BaseModel):
-    """Token model for authentication response."""
-    access_token: str
-    token_type: str

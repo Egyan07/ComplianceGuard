@@ -5,10 +5,17 @@ This service provides compliance evaluation functionality for SOC 2 controls,
 including scoring, assessment, and reporting capabilities.
 """
 
+from collections import OrderedDict
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+
+# In-memory evaluation cache upper bound. Beyond this we evict the oldest
+# entry (FIFO) so a long-running process cannot be pushed into OOM. The
+# cache is NOT the source of truth — durable evaluation records live in the
+# `evaluations` table. This is purely a recent-results convenience cache.
+_MAX_EVAL_CACHE_ENTRIES = 100
 
 from app.core.soc2_controls import SOC2Framework, SOC2Control, ControlStatus
 
@@ -70,7 +77,10 @@ class ComplianceService:
 
     def __init__(self, framework: SOC2Framework):
         self.framework = framework
-        self.evaluations: Dict[str, ComplianceEvaluation] = {}
+        # In-memory FIFO cache of recent evaluations. NOT the source of truth —
+        # durable records live in the database. Capped at _MAX_EVAL_CACHE_ENTRIES
+        # so long-running workers cannot OOM on this dict.
+        self.evaluations: "OrderedDict[str, ComplianceEvaluation]" = OrderedDict()
 
     def evaluate_compliance(self,
                           evidence_data: Dict[str, Dict[str, Any]],
@@ -132,9 +142,12 @@ class ComplianceService:
             next_review_date=self._calculate_next_review(overall_score)
         )
 
-        # Store evaluation
+        # Store evaluation in the in-memory cache (NOT the source of truth).
+        # Evict the oldest entry if we're at capacity.
         evaluation_id = f"eval_{evaluation.evaluation_date.isoformat()}"
         self.evaluations[evaluation_id] = evaluation
+        while len(self.evaluations) > _MAX_EVAL_CACHE_ENTRIES:
+            self.evaluations.popitem(last=False)
 
         return evaluation
 

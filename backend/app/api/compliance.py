@@ -107,6 +107,31 @@ class ComplianceReportResponse(BaseModel):
     next_review: Optional[str]
 
 
+def _to_control_response(control: SOC2Control) -> ControlResponse:
+    """Shared serializer — every control endpoint returns this shape."""
+    return ControlResponse(
+        id=control.id,
+        title=control.title,
+        description=control.description,
+        category=control.category.value,
+        control_objective=control.control_objective,
+        implementation_guidance=control.implementation_guidance,
+        evidence_mapping=[
+            {
+                "id": evidence.id,
+                "name": evidence.name,
+                "description": evidence.description,
+                "type": evidence.type,
+                "frequency": evidence.frequency,
+                "retention_period": evidence.retention_period,
+            }
+            for evidence in control.evidence_mapping
+        ],
+        related_controls=control.related_controls,
+        risk_level=control.risk_level,
+    )
+
+
 @router.get("/framework/summary", response_model=FrameworkSummaryResponse)
 async def get_framework_summary():
     """
@@ -128,31 +153,7 @@ async def get_all_controls():
         List of all SOC 2 controls with their details
     """
     controls = soc2_framework.get_all_controls()
-
-    return [
-        ControlResponse(
-            id=control.id,
-            title=control.title,
-            description=control.description,
-            category=control.category.value,
-            control_objective=control.control_objective,
-            implementation_guidance=control.implementation_guidance,
-            evidence_mapping=[
-                {
-                    "id": evidence.id,
-                    "name": evidence.name,
-                    "description": evidence.description,
-                    "type": evidence.type,
-                    "frequency": evidence.frequency,
-                    "retention_period": evidence.retention_period
-                }
-                for evidence in control.evidence_mapping
-            ],
-            related_controls=control.related_controls,
-            risk_level=control.risk_level
-        )
-        for control in controls
-    ]
+    return [_to_control_response(control) for control in controls]
 
 
 @router.get("/framework/controls/{control_id}", response_model=ControlResponse)
@@ -173,27 +174,7 @@ async def get_control(control_id: str):
     if not control:
         raise HTTPException(status_code=404, detail=f"Control {control_id} not found")
 
-    return ControlResponse(
-        id=control.id,
-        title=control.title,
-        description=control.description,
-        category=control.category.value,
-        control_objective=control.control_objective,
-        implementation_guidance=control.implementation_guidance,
-        evidence_mapping=[
-            {
-                "id": evidence.id,
-                "name": evidence.name,
-                "description": evidence.description,
-                "type": evidence.type,
-                "frequency": evidence.frequency,
-                "retention_period": evidence.retention_period
-            }
-            for evidence in control.evidence_mapping
-        ],
-        related_controls=control.related_controls,
-        risk_level=control.risk_level
-    )
+    return _to_control_response(control)
 
 
 @router.get("/framework/controls/by-category/{category}", response_model=List[ControlResponse])
@@ -218,31 +199,7 @@ async def get_controls_by_category(category: str):
         )
 
     controls = soc2_framework.get_controls_by_category(category)
-
-    return [
-        ControlResponse(
-            id=control.id,
-            title=control.title,
-            description=control.description,
-            category=control.category.value,
-            control_objective=control.control_objective,
-            implementation_guidance=control.implementation_guidance,
-            evidence_mapping=[
-                {
-                    "id": evidence.id,
-                    "name": evidence.name,
-                    "description": evidence.description,
-                    "type": evidence.type,
-                    "frequency": evidence.frequency,
-                    "retention_period": evidence.retention_period
-                }
-                for evidence in control.evidence_mapping
-            ],
-            related_controls=control.related_controls,
-            risk_level=control.risk_level
-        )
-        for control in controls
-    ]
+    return [_to_control_response(control) for control in controls]
 
 
 @router.get("/framework/controls/search", response_model=List[ControlResponse])
@@ -257,31 +214,7 @@ async def search_controls(q: str = Query(..., min_length=2)):
         List of controls matching the search criteria
     """
     controls = soc2_framework.search_controls(q)
-
-    return [
-        ControlResponse(
-            id=control.id,
-            title=control.title,
-            description=control.description,
-            category=control.category.value,
-            control_objective=control.control_objective,
-            implementation_guidance=control.implementation_guidance,
-            evidence_mapping=[
-                {
-                    "id": evidence.id,
-                    "name": evidence.name,
-                    "description": evidence.description,
-                    "type": evidence.type,
-                    "frequency": evidence.frequency,
-                    "retention_period": evidence.retention_period
-                }
-                for evidence in control.evidence_mapping
-            ],
-            related_controls=control.related_controls,
-            risk_level=control.risk_level
-        )
-        for control in controls
-    ]
+    return [_to_control_response(control) for control in controls]
 
 
 @router.post("/evaluate", response_model=ComplianceEvaluationResponse)
