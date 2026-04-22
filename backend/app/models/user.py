@@ -5,7 +5,7 @@ This module defines the User SQLAlchemy model with authentication
 and authorization features.
 """
 
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
+from sqlalchemy import CheckConstraint, Column, Integer, String, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from datetime import datetime
@@ -18,10 +18,22 @@ if TYPE_CHECKING:
     from app.models.company import Company
 
 
+# Single source of truth for user license tiers. Mirrored in
+# electron/licensing/tier-constants.js (JS) — keep both sides in sync.
+VALID_LICENSE_TIERS = ("free", "pro", "enterprise")
+
+
 class User(Base):
     """User model for authentication and authorization."""
 
     __tablename__ = "users"
+
+    __table_args__ = (
+        CheckConstraint(
+            "license_tier IN ('free', 'pro', 'enterprise')",
+            name="ck_users_license_tier",
+        ),
+    )
 
     # Primary key
     id = Column(Integer, primary_key=True, index=True)
@@ -78,9 +90,11 @@ class User(Base):
             "last_name": self.last_name,
             "is_active": self.is_active,
             "is_superuser": self.is_superuser,
+            "is_verified": self.is_verified,
+            "license_tier": self.license_tier,
             "company_id": self.company_id,
             "created_at": self.created_at.isoformat() if self.created_at else None,
-            "updated_at": self.updated_at.isoformat() if self.updated_at else None
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
 
     @property

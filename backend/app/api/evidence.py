@@ -5,12 +5,15 @@ REST API endpoints for managing and collecting compliance evidence.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import Dict, Any, Optional, List
 from pydantic import BaseModel, ConfigDict
 from datetime import datetime, timezone
 import logging
 import os
+import re
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +30,9 @@ router = APIRouter(prefix="/evidence", tags=["evidence"])
 
 # Pre-compute max bytes once so it isn't recalculated per request
 _MAX_UPLOAD_BYTES = settings.max_file_size_mb * 1024 * 1024
+
+
+_SAFE_NAME_RE = re.compile(r"[^A-Za-z0-9._-]")
 
 
 def _validate_upload(filename: str, size: int) -> None:
@@ -48,6 +54,36 @@ def _validate_upload(filename: str, size: int) -> None:
                 f"{settings.max_file_size_mb} MB limit."
             ),
         )
+
+
+def _safe_filename(filename: str) -> str:
+    """Strip path components and non-safe characters from a user-supplied name."""
+    base = os.path.basename(filename)
+    cleaned = _SAFE_NAME_RE.sub("_", base).strip("._")
+    return cleaned or "upload"
+
+
+def _evidence_dir_for_user(user_id: int) -> str:
+    """Return (and create) the per-user evidence directory."""
+    root = os.path.abspath(settings.evidence_storage_path)
+    user_dir = os.path.join(root, "evidence", str(user_id))
+    os.makedirs(user_dir, exist_ok=True)
+    return user_dir
+
+
+def _store_evidence_file(user_id: int, original_name: str, content: bytes) -> str:
+    """
+    Write ``content`` to the per-user evidence directory and return the
+    absolute path. A UUID prefix prevents collisions across uploads with the
+    same original name.
+    """
+    user_dir = _evidence_dir_for_user(user_id)
+    safe_name = _safe_filename(original_name)
+    storage_name = f"{uuid.uuid4().hex}_{safe_name}"
+    full_path = os.path.join(user_dir, storage_name)
+    with open(full_path, "wb") as fp:
+        fp.write(content)
+    return full_path
 
 
 # --- Request / Response models ---
@@ -339,9 +375,9 @@ async def upload_evidence_file(
     Upload a manual evidence file.
 
     Enforces server-side file type and size limits from application settings
-    (MAX_FILE_SIZE_MB, ALLOWED_FILE_TYPES).  The file content is stored as
-    base64 inside the evidence item's data JSON column — suitable for files
-    up to the configured limit.
+    (MAX_FILE_SIZE_MB, ALLOWED_FILE_TYPES). The file bytes are written to
+    ``settings.evidence_storage_path`` under a per-user directory; the DB
+    record stores only the filesystem path, not the content itself.
     """
     # Read into memory first so we know the real size (Content-Length is
     # untrustworthy and multipart doesn't guarantee it).
@@ -350,8 +386,7 @@ async def upload_evidence_file(
 
     _validate_upload(filename, len(content))
 
-    import base64
-    import uuid
+    stored_path = _store_evidence_file(current_user.id, filename, content)
 
     # Find or create a collection for manual uploads
     collection_id = str(uuid.uuid4())
@@ -374,20 +409,31 @@ async def upload_evidence_file(
         data={
             "filename": filename,
             "file_size_bytes": len(content),
-            "content_base64": base64.b64encode(content).decode("utf-8"),
+            "storage_path": stored_path,
             "uploaded_by": current_user.email,
             "uploaded_at": datetime.now(timezone.utc).isoformat(),
         },
     )
     db.add(item)
-    db.commit()
+
+    try:
+        db.commit()
+    except Exception:
+        # DB write failed — remove the orphaned file so we don't leak storage.
+        try:
+            os.remove(stored_path)
+        except OSError:
+            pass
+        raise
+
     db.refresh(item)
 
     logger.info(
-        "Manual evidence uploaded: user=%s file=%s size=%d bytes",
+        "Manual evidence uploaded: user=%s file=%s size=%d bytes path=%s",
         current_user.email,
         filename,
         len(content),
+        stored_path,
     )
 
     return UploadEvidenceResponse(
@@ -396,4 +442,45 @@ async def upload_evidence_file(
         file_size_bytes=len(content),
         evidence_type=evidence_type,
         created_at=item.created_at.isoformat(),
+    )
+
+
+@router.get("/items/{item_id}/download")
+async def download_evidence_file(
+    item_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Stream the stored bytes for a manually-uploaded evidence item.
+
+    Only the owning user can download the file; the DB-stored path is
+    confirmed to live under the configured evidence storage root before the
+    FileResponse is returned, so a tampered `data.storage_path` cannot be
+    used to read arbitrary files off the host.
+    """
+    item = (
+        db.query(EvidenceItem)
+        .join(EvidenceCollection)
+        .filter(
+            EvidenceItem.id == item_id,
+            EvidenceCollection.user_id == current_user.id,
+        )
+        .first()
+    )
+    if not item or not item.data or not item.data.get("storage_path"):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evidence file not found")
+
+    storage_path = os.path.abspath(item.data["storage_path"])
+    allowed_root = os.path.abspath(settings.evidence_storage_path)
+    if not storage_path.startswith(allowed_root + os.sep) and storage_path != allowed_root:
+        logger.error("Blocked traversal: item=%d path=%s", item_id, storage_path)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evidence file not found")
+
+    if not os.path.exists(storage_path):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evidence file missing from storage")
+
+    return FileResponse(
+        storage_path,
+        filename=item.data.get("filename", os.path.basename(storage_path)),
     )

@@ -102,6 +102,10 @@ class Settings(BaseSettings):
     # Evidence collection settings
     evidence_retention_days: int = Field(2555)  # 7 years for compliance
     max_file_size_mb: int = Field(100)
+    # Filesystem root for uploaded evidence. Files are stored under
+    # <evidence_storage_path>/evidence/<user_id>/<item_uuid>_<safe_name>. Must
+    # be writable by the API process and included in any backup policy.
+    evidence_storage_path: str = Field("./storage")
     # NOTE: When set via env var, use JSON array format (pydantic-settings v2 requirement):
     # ALLOWED_FILE_TYPES=[".pdf",".doc",".docx",".xls",".xlsx",".ppt",".pptx",".txt",".json",".csv"]
     allowed_file_types: List[str] = Field(

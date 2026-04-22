@@ -51,8 +51,10 @@ class ComplianceFramework(Base):
     status = Column(String, default="not_started", nullable=False)  # not_started, in_progress, completed, failed
     progress_percentage = Column(Integer, default=0, nullable=False)  # 0-100
 
-    # Company relationship
-    company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
+    # Company relationship — TODO: flip back to nullable=False once the
+    # company-management API is in place. Right now there's no way to create
+    # a Company, so a NOT NULL constraint would make every insert fail.
+    company_id = Column(Integer, ForeignKey("companies.id"), nullable=True)
 
     # Timestamps
     created_at = Column(

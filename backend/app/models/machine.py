@@ -4,10 +4,15 @@ Machine model for ComplianceGuard Cloud Dashboard.
 Tracks Windows endpoints that sync compliance snapshots to the web server.
 """
 
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float, ForeignKey, UniqueConstraint
+from sqlalchemy import CheckConstraint, Column, Integer, String, Boolean, DateTime, Float, ForeignKey, UniqueConstraint
 from sqlalchemy.sql import func
 
 from app.core.database import Base
+
+
+# Single source of truth for machine compliance levels. Mirrored in
+# electron/licensing/tier-constants.js (JS) — keep both sides in sync.
+VALID_COMPLIANCE_LEVELS = ("compliant", "at_risk", "critical")
 
 
 class Machine(Base):
@@ -28,7 +33,17 @@ class Machine(Base):
     created_at = Column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
 
     __table_args__ = (
         UniqueConstraint("user_id", "hostname", name="uq_machine_user_hostname"),
+        CheckConstraint(
+            "compliance_level IS NULL OR compliance_level IN ('compliant', 'at_risk', 'critical')",
+            name="ck_machines_compliance_level",
+        ),
     )
