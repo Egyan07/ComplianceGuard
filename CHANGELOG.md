@@ -6,10 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
-## [3.0.0] — 2026-04-22
+## [3.0.0]
 
-Major hardening release. Lifts the codebase rating from ~7.8 to ~9.0 by
-closing the long-tail of security, correctness, and scaling issues that
+Major hardening release. Lifts the codebase by closing the long-tail of security, correctness, and scaling issues that
 would have caused incidents at SaaS scale. Contains breaking changes — see
 **Upgrade notes** below before deploying.
 
@@ -140,7 +139,7 @@ would have caused incidents at SaaS scale. Contains breaking changes — see
 
 ---
 
-## [2.9.0] — 2026-04-17
+## [2.9.0]
 
 ### Added
 - **Cloud Dashboard** — Pro/Enterprise web page showing fleet overview (total machines, compliant, at risk, critical, avg score) and per-machine table with hostname, score, last sync time, and status badge; stale machines (no sync in 7+ days) flagged with a warning
@@ -157,7 +156,7 @@ would have caused incidents at SaaS scale. Contains breaking changes — see
 
 ---
 
-## [2.8.0] - 2026-04-16
+## [2.8.0]
 
 ### Added
 - **Email delivery** — `app/core/email.py` with `send_verification_email` and `send_password_reset_email` using `aiosmtplib`; SMTP configured via `SMTP_*` env vars; silent no-op when `EMAIL_ENABLED=false` (default); verification and reset links use configurable `APP_BASE_URL`
@@ -184,7 +183,7 @@ would have caused incidents at SaaS scale. Contains breaking changes — see
 
 ---
 
-## [2.3.1] - 2026-04-13
+## [2.3.1]
 
 ### Fixed
 - **Password validation deduplication** — Extracted shared `validate_password_strength()` helper in `auth.py`; removes duplicated 10-line validation block from both `register` and `reset_password` endpoints
@@ -205,7 +204,7 @@ would have caused incidents at SaaS scale. Contains breaking changes — see
 
 ---
 
-## [2.3.0] - 2026-04-12
+## [2.3.0]
 
 ### Added
 - **Email verification** — Registration generates a verification token; `/verify-email` endpoint validates it; `/verification-status` checks current state
@@ -221,7 +220,7 @@ would have caused incidents at SaaS scale. Contains breaking changes — see
 
 ---
 
-## [2.2.0] - 2026-04-12
+## [2.2.0]
 
 ### Added
 - **Password complexity enforcement** — Register endpoint validates min 8 chars, uppercase, lowercase, digit, and special character per app config
@@ -240,7 +239,7 @@ would have caused incidents at SaaS scale. Contains breaking changes — see
 
 ---
 
-## [2.1.0] - 2026-04-12
+## [2.1.0]
 
 ### Added
 - **Login / Register UI** — Tabbed auth page for web mode with email + password; Electron mode skips login
@@ -271,7 +270,7 @@ would have caused incidents at SaaS scale. Contains breaking changes — see
 
 ---
 
-## [2.0.1] - 2026-04-12
+## [2.0.1]
 
 ### Fixed
 - **CI pipeline** — Added missing `vite-env.d.ts` type reference that caused `import.meta.env` TypeScript error on CI
@@ -283,7 +282,7 @@ would have caused incidents at SaaS scale. Contains breaking changes — see
 
 ---
 
-## [2.0.0] - 2026-04-12
+## [2.0.0]
 
 ### Added
 - **Pro tier licensing system** — Ed25519 signed license keys, offline verification, no server dependency
@@ -306,7 +305,7 @@ would have caused incidents at SaaS scale. Contains breaking changes — see
 
 ---
 
-## [1.1.0] - 2026-04-12
+## [1.1.0]
 
 ### Added
 - **React ErrorBoundary** — Wraps all page content to prevent white-screen crashes, shows recovery UI
@@ -316,7 +315,7 @@ would have caused incidents at SaaS scale. Contains breaking changes — see
 - **Vitest configuration** — Added test config to `vite.config.ts` with jsdom environment and test setup file
 
 ### Changed
-- **Complete brand redesign** — Replaced AI-generated dark/glow/shield/circuit aesthetic with clean, flat SaaS brand identity
+- **Complete brand redesign** — Replaced dark/glow/shield/circuit aesthetic with clean, flat SaaS brand identity
   - New logo: Blue (#2563EB) rounded square with white "CG" lettermark (like Notion, Linear, Slack)
   - New banner: White background, clean typography, blue accent lines — no glow, no circuits, no dark backgrounds
   - New favicon: Blue square with white "C" — readable at 16x16
@@ -340,7 +339,7 @@ would have caused incidents at SaaS scale. Contains breaking changes — see
 
 ---
 
-## [0.1.0-beta] - 2026-04-12
+## [0.1.0-beta]
 
 ### Added
 - **Evidence Upload UI** — Dialog form to manually upload policy documents, screenshots, and text evidence mapped to SOC 2 controls
