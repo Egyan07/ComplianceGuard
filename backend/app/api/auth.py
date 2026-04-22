@@ -15,7 +15,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core.rate_limit import limiter
 from app.core.license import verify_license_key
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 from app.core.auth import (
     authenticate_user,
@@ -63,15 +63,14 @@ class UserCreate(BaseModel):
 
 class UserResponse(BaseModel):
     """Schema for user response."""
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     email: str
     first_name: str | None = None
     last_name: str | None = None
     is_active: bool
     is_superuser: bool
-
-    class Config:
-        from_attributes = True
 
 
 class LoginRequest(BaseModel):
@@ -264,7 +263,9 @@ class ResetPasswordRequest(BaseModel):
 
 
 @router.post("/forgot-password")
+@limiter.limit("3/minute")
 async def forgot_password(
+    request: Request,
     request_data: ForgotPasswordRequest,
     db: Session = Depends(get_db),
 ):
@@ -291,7 +292,9 @@ async def forgot_password(
 
 
 @router.post("/reset-password")
+@limiter.limit("5/minute")
 async def reset_password(
+    request: Request,
     request_data: ResetPasswordRequest,
     db: Session = Depends(get_db),
 ):

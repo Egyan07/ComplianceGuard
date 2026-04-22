@@ -16,7 +16,7 @@ Design decisions
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -24,6 +24,7 @@ from app.api.deps import get_current_user
 from app.core.config import settings
 from app.core.credential_crypto import encrypt_credential, decrypt_credential
 from app.core.database import get_db
+from app.core.rate_limit import limiter
 from app.models.aws_credential import AwsCredential
 from app.models.user import User
 
@@ -59,7 +60,9 @@ class AwsCredentialStatusResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 @router.post("", response_model=AwsCredentialStatusResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit("10/minute")
 async def save_aws_credentials(
+    request: Request,
     body: SaveAwsCredentialsRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -112,7 +115,9 @@ async def save_aws_credentials(
 
 
 @router.get("", response_model=AwsCredentialStatusResponse)
+@limiter.limit("30/minute")
 async def get_aws_credential_status(
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -146,7 +151,9 @@ async def get_aws_credential_status(
 
 
 @router.delete("", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("10/minute")
 async def delete_aws_credentials(
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):

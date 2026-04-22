@@ -5,10 +5,9 @@ This module provides centralized configuration management using Pydantic setting
 handling environment variables, database configuration, and application settings.
 """
 
-# Import pydantic settings - using pydantic-settings for v2 compatibility
-from pydantic_settings import BaseSettings
-from pydantic import Field, field_validator
-from pydantic.v1 import ConfigDict
+# Pydantic v2 only — never import from pydantic.v1 here.
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field, field_validator, model_validator
 from typing import Optional, List
 import secrets
 import os
@@ -242,11 +241,32 @@ class Settings(BaseSettings):
 
         return v
 
-    model_config = {
-        "env_file": ".env",
-        "env_file_encoding": "utf-8",
-        "case_sensitive": False
-    }
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+    )
+
+    @model_validator(mode="after")
+    def _apply_environment_overrides(self) -> "Settings":
+        """
+        Apply environment-specific defaults (debug flag, log level, DB echo).
+
+        Lives on the model instead of running at module import time so that
+        pydantic tracks the mutation properly and test env overrides aren't
+        stomped on. Only applies when the matching env var is NOT explicitly
+        set, so user intent wins over our convention.
+        """
+        env_defaults = {
+            Environment.DEVELOPMENT: {"debug": True, "log_level": "DEBUG", "database_echo": True},
+            Environment.TESTING: {"debug": True, "log_level": "INFO", "database_echo": False},
+            Environment.PRODUCTION: {"debug": False, "log_level": "WARNING", "database_echo": False},
+        }.get(self.environment, {})
+
+        for key, value in env_defaults.items():
+            if os.getenv(key.upper()) is None:
+                setattr(self, key, value)
+        return self
 
 
 # Create global settings instance
@@ -331,11 +351,8 @@ def validate_production_settings() -> List[str]:
     return warnings
 
 
-# Initialize settings and apply environment-specific overrides
-env_config = get_environment_config()
-for key, value in env_config.items():
-    if hasattr(settings, key):
-        setattr(settings, key, value)
+# Environment-specific overrides are applied inside Settings._apply_environment_overrides
+# at construction time — no post-init mutation here.
 
 # Validate production settings in production environment
 if settings.environment == Environment.PRODUCTION:

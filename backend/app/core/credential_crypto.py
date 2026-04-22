@@ -1,31 +1,59 @@
 """
 Symmetric encryption helpers for storing sensitive credentials at rest.
 
-Uses Fernet (AES-128-CBC + HMAC-SHA256) from the `cryptography` package,
-keyed from the application SECRET_KEY.  The same key that signs JWTs also
-encrypts stored credentials — both are invalidated together if the key rotates,
-which is the correct behaviour.
+Uses Fernet (AES-128-CBC + HMAC-SHA256) from the `cryptography` package.
+The Fernet key is derived from the application SECRET_KEY using HKDF-SHA256
+with a domain-separation label, so the key used to encrypt credentials is
+*cryptographically distinct* from the raw SECRET_KEY used to sign JWTs.
+
+A heap dump that exposes the derived Fernet key therefore does not reveal
+the JWT signing key (HKDF is one-way), and vice versa. Rotating SECRET_KEY
+rotates both keys together, which is the correct operational behaviour.
 
 Format stored in the DB:  ``enc:<base64-fernet-token>``
-This prefix lets us detect and reject legacy plaintext values if any exist.
+The prefix lets us detect and reject legacy plaintext values.
 """
 
 import base64
 import hashlib
+import logging
 
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+
+logger = logging.getLogger(__name__)
+
+# Domain-separation label — changing this value invalidates all existing
+# encrypted credentials. Bump the version suffix if you ever need to rotate
+# the KDF itself (not the input secret).
+_FERNET_INFO = b"complianceguard:credential-encryption:v1"
+
+
+def _derive_fernet_key(secret_key: str) -> bytes:
+    """Derive a 32-byte, base64-encoded Fernet key via HKDF-SHA256."""
+    raw = HKDF(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=None,
+        info=_FERNET_INFO,
+    ).derive(secret_key.encode())
+    return base64.urlsafe_b64encode(raw)
 
 
 def _make_fernet(secret_key: str) -> Fernet:
-    """
-    Derive a 32-byte Fernet key from the application secret.
+    return Fernet(_derive_fernet_key(secret_key))
 
-    Fernet requires exactly 32 url-safe base64-encoded bytes.
-    We SHA-256 the secret key and base64url-encode the digest to get that.
+
+def _legacy_fernet_key(secret_key: str) -> bytes:
     """
-    raw = hashlib.sha256(secret_key.encode()).digest()  # always 32 bytes
-    key = base64.urlsafe_b64encode(raw)
-    return Fernet(key)
+    Pre-HKDF derivation: raw SHA-256(secret_key), base64 encoded.
+
+    Retained only so tokens written before the HKDF migration can still be
+    decrypted. New encryptions always use _derive_fernet_key.
+    """
+    raw = hashlib.sha256(secret_key.encode()).digest()
+    return base64.urlsafe_b64encode(raw)
 
 
 def encrypt_credential(plaintext: str, secret_key: str) -> str:
@@ -40,12 +68,28 @@ def decrypt_credential(stored: str, secret_key: str) -> str:
     """
     Decrypt a stored credential.
 
-    Returns the plaintext, or raises ``ValueError`` if the value is not a
-    recognised encrypted token (missing ``enc:`` prefix).
+    Tries the current HKDF-derived key first; falls back to the legacy
+    SHA-256 derivation for values written before the migration. Logs a
+    one-line warning when falling back so ops can see the drift.
+
+    Raises ``ValueError`` if the value is not a recognised encrypted token.
     """
     if not stored:
         return ""
     if not stored.startswith("enc:"):
         raise ValueError("Stored value does not appear to be encrypted")
     token = stored[4:].encode()
-    return _make_fernet(secret_key).decrypt(token).decode()
+
+    try:
+        return _make_fernet(secret_key).decrypt(token).decode()
+    except InvalidToken:
+        # Legacy path: value was written before HKDF. Best-effort fallback.
+        try:
+            plaintext = Fernet(_legacy_fernet_key(secret_key)).decrypt(token).decode()
+            logger.warning(
+                "Decrypted credential with legacy key derivation — re-save "
+                "to upgrade to HKDF-derived key."
+            )
+            return plaintext
+        except InvalidToken as e:
+            raise ValueError("Could not decrypt credential") from e

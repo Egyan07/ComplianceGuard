@@ -7,7 +7,7 @@ REST API endpoints for managing and collecting compliance evidence.
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import Dict, Any, Optional, List
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 import logging
 import os
@@ -57,6 +57,8 @@ class EvidenceCollectionRequest(BaseModel):
 
 
 class EvidenceItemResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     evidence_type: str
     source: str
@@ -64,11 +66,10 @@ class EvidenceItemResponse(BaseModel):
     data: Optional[Dict[str, Any]] = None
     created_at: str
 
-    class Config:
-        from_attributes = True
-
 
 class EvidenceCollectionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     collection_id: str
     status: str
     evidence_count: int
@@ -76,9 +77,6 @@ class EvidenceCollectionResponse(BaseModel):
     summary: Optional[Dict[str, Any]] = None
     created_at: str
     items: List[EvidenceItemResponse] = []
-
-    class Config:
-        from_attributes = True
 
 
 class EvidenceSummaryResponse(BaseModel):
