@@ -5,12 +5,14 @@ Endpoints for Electron desktop apps to sync compliance snapshots
 and for the web dashboard to view fleet status.
 """
 
-from fastapi import APIRouter, HTTPException, Depends, status, Request
+from fastapi import APIRouter, HTTPException, Depends, Query, status, Request
+from sqlalchemy import case, func
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from pydantic import BaseModel, Field
 from datetime import datetime, timezone
 
+from app.core.constants import MACHINE_LIMITS, VALID_COMPLIANCE_LEVELS
 from app.core.database import get_db
 from app.api.deps import get_current_user, require_pro
 from app.core.rate_limit import limiter
@@ -18,14 +20,6 @@ from app.models.user import User
 from app.models.machine import Machine
 
 router = APIRouter(prefix="/api/v1/machines", tags=["machines"])
-
-MACHINE_LIMITS = {
-    "free": 1,
-    "pro": 10,
-    "enterprise": None,  # unlimited
-}
-
-VALID_COMPLIANCE_LEVELS = {"compliant", "at_risk", "critical"}
 
 
 class MachineSyncRequest(BaseModel):
@@ -133,30 +127,47 @@ async def get_fleet_stats(
     current_user: User = Depends(require_pro),
     db: Session = Depends(get_db),
 ):
-    """Fleet overview stats for the cloud dashboard. Requires Pro or Enterprise."""
-    machines = (
-        db.query(Machine)
-        .filter(Machine.user_id == current_user.id, Machine.is_active == True)
-        .all()
+    """
+    Fleet overview stats for the cloud dashboard. Requires Pro or Enterprise.
+
+    Computes every counter in a single SQL aggregation instead of loading the
+    full machines table into Python. This used to be O(n) in memory and on
+    the wire; it's now O(1) regardless of fleet size.
+    """
+    row = (
+        db.query(
+            func.count(Machine.id).label("total"),
+            func.coalesce(
+                func.sum(case((Machine.compliance_level == "compliant", 1), else_=0)),
+                0,
+            ).label("compliant"),
+            func.coalesce(
+                func.sum(case((Machine.compliance_level == "at_risk", 1), else_=0)),
+                0,
+            ).label("at_risk"),
+            func.coalesce(
+                func.sum(case((Machine.compliance_level == "critical", 1), else_=0)),
+                0,
+            ).label("critical"),
+            func.coalesce(
+                func.sum(case((Machine.last_sync_at.is_(None), 1), else_=0)),
+                0,
+            ).label("never_synced"),
+            func.avg(Machine.last_score).label("avg_score"),
+        )
+        .filter(Machine.user_id == current_user.id, Machine.is_active == True)  # noqa: E712
+        .one()
     )
 
-    total = len(machines)
-    compliant = sum(1 for m in machines if m.compliance_level == "compliant")
-    at_risk = sum(1 for m in machines if m.compliance_level == "at_risk")
-    critical = sum(1 for m in machines if m.compliance_level == "critical")
-    never_synced = sum(1 for m in machines if m.last_sync_at is None)
-
-    scores = [m.last_score for m in machines if m.last_score is not None]
-    avg_score = round(sum(scores) / len(scores), 1) if scores else None
-
+    avg_score = round(float(row.avg_score), 1) if row.avg_score is not None else None
     limit = MACHINE_LIMITS.get(current_user.license_tier)
 
     return FleetStatsResponse(
-        total_machines=total,
-        compliant=compliant,
-        at_risk=at_risk,
-        critical=critical,
-        never_synced=never_synced,
+        total_machines=int(row.total or 0),
+        compliant=int(row.compliant or 0),
+        at_risk=int(row.at_risk or 0),
+        critical=int(row.critical or 0),
+        never_synced=int(row.never_synced or 0),
         avg_score=avg_score,
         machine_limit=limit,
     )
@@ -166,12 +177,21 @@ async def get_fleet_stats(
 async def get_machines(
     current_user: User = Depends(require_pro),
     db: Session = Depends(get_db),
+    limit: int = Query(50, ge=1, le=200, description="Max machines to return (default 50)"),
+    offset: int = Query(0, ge=0, description="Skip this many machines before returning"),
 ):
-    """List all machines for the current user. Requires Pro or Enterprise."""
+    """
+    List machines for the current user with pagination. Requires Pro/Enterprise.
+
+    Pagination caps per-request memory and response size; large fleets no
+    longer require a single unbounded result set.
+    """
     machines = (
         db.query(Machine)
-        .filter(Machine.user_id == current_user.id, Machine.is_active == True)
-        .order_by(Machine.last_sync_at.desc())
+        .filter(Machine.user_id == current_user.id, Machine.is_active == True)  # noqa: E712
+        .order_by(Machine.last_sync_at.desc().nullslast(), Machine.id.desc())
+        .offset(offset)
+        .limit(limit)
         .all()
     )
     return [

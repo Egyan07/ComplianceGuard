@@ -11,6 +11,7 @@ const log = require('./logger');
  */
 
 const secureStorage = require('./secure-storage');
+const { VERSION } = require('./licensing/tier-constants');
 
 const KEYS = {
   SERVER_URL: 'cloud_server_url',
@@ -74,7 +75,7 @@ async function cloudSync(database, syncData) {
     overall_score: syncData.overall_score ?? null,
     compliance_level: syncData.compliance_level ?? null,
     evidence_count: syncData.evidence_count ?? null,
-    agent_version: syncData.agent_version || '2.9.0',
+    agent_version: syncData.agent_version || VERSION,
   };
 
   const result = await _postSync(serverUrl, accessToken, payload);

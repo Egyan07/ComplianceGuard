@@ -7,12 +7,11 @@ Tracks Windows endpoints that sync compliance snapshots to the web server.
 from sqlalchemy import CheckConstraint, Column, Integer, String, Boolean, DateTime, Float, ForeignKey, UniqueConstraint
 from sqlalchemy.sql import func
 
+from app.core.constants import VALID_COMPLIANCE_LEVELS  # re-exported for backwards compat
 from app.core.database import Base
 
 
-# Single source of truth for machine compliance levels. Mirrored in
-# electron/licensing/tier-constants.js (JS) — keep both sides in sync.
-VALID_COMPLIANCE_LEVELS = ("compliant", "at_risk", "critical")
+__all__ = ["Machine", "VALID_COMPLIANCE_LEVELS"]
 
 
 class Machine(Base):

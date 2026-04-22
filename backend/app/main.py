@@ -25,6 +25,7 @@ from app.api.compliance import router as compliance_router
 from app.api.machines import router as machines_router
 from app.api.aws_credentials import router as aws_credentials_router
 from app.core.config import settings
+from app.core.constants import VERSION
 from app.core.database import engine, Base
 from app.core.rate_limit import limiter
 
@@ -76,7 +77,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="ComplianceGuard SOC 2 API",
     description="Backend API for SOC 2 compliance automation platform",
-    version="2.9.0",
+    version=VERSION,
     lifespan=lifespan,
 )
 
@@ -114,7 +115,7 @@ async def health_check() -> Dict[str, Any]:
     return {
         "status": "healthy",
         "service": "complianceguard-api",
-        "version": "2.9.0",
+        "version": VERSION,
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 

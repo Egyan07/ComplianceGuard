@@ -1,17 +1,9 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { activateLicenseHttp, getLicenseInfoHttp } from '../services/api';
 import { AuthContext } from './AuthContext';
+import { FEATURE_GATES } from '../constants';
 
 const isElectron = !!(window as any).electronAPI;
-
-const FEATURE_GATES: Record<string, Record<string, boolean>> = {
-  all_controls:        { free: false, pro: true },
-  per_control_scoring: { free: false, pro: true },
-  remediation:         { free: false, pro: true },
-  pdf_reports:         { free: false, pro: true },
-  evidence_upload:     { free: false, pro: true },
-  evaluation_history:  { free: false, pro: true },
-};
 
 export interface LicenseInfo {
   tier: 'free' | 'pro';

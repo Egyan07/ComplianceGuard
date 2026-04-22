@@ -18,7 +18,7 @@ class EvidenceCollection(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     collection_id = Column(String, unique=True, index=True, nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     status = Column(String, nullable=False, default="in_progress")  # in_progress, success, partial_failure, failed
     evidence_count = Column(Integer, default=0)
     failed_count = Column(Integer, default=0)
