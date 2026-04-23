@@ -31,7 +31,7 @@
   "build": {
     "appId": "com.complianceguard.desktop",
     "productName": "ComplianceGuard",
-    "copyright": "Copyright \u00a9 2026 Egyan07",
+    "copyright": "Copyright © 2026 Egyan07",
     "directories": {
       "output": "dist",
       "buildResources": "resources"
@@ -60,7 +60,6 @@
         "portable"
       ],
       "icon": "resources/icons/icon.ico",
-      "artifactName": "${productName}-Setup-${version}.${ext}",
       "requestedExecutionLevel": "asInvoker"
     },
     "msi": {
@@ -71,7 +70,11 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "artifactName": "${productName}-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "${productName}-Portable-${version}.${ext}"
     }
   }
 }
