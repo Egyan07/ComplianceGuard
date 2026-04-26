@@ -14,7 +14,6 @@ import UpgradePrompt from './UpgradePrompt';
 import DashboardHeader from './dashboard/DashboardHeader';
 import CollectionSummary from './dashboard/CollectionSummary';
 import { useDashboard } from '../hooks/useDashboard';
-import { EvidenceItem } from '../services/api';
 
 const isElectron = !!(window as any).electronAPI;
 
@@ -84,7 +83,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           <EvidenceList
             evidenceItems={state.evidenceItems}
             loading={state.loading}
-            onItemClick={(_item: EvidenceItem) => {}}
+            onItemClick={() => {}}
           />
         </Box>
       </Box>
