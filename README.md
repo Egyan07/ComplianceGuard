@@ -6,7 +6,7 @@
   <a href="#quick-start"><img src="https://img.shields.io/badge/version-3.1.0-2563EB" alt="Version"></a>
   <img src="https://img.shields.io/badge/license-BSL%201.1-orange" alt="License">
   <a href="#soc-2-controls"><img src="https://img.shields.io/badge/SOC%202-29%20controls-10B981" alt="Controls"></a>
-  <img src="https://img.shields.io/badge/tests-187%20passing-10B981?logo=pytest&logoColor=white" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-311%20passing-10B981?logo=pytest&logoColor=white" alt="Tests">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
   <a href="https://github.com/Egyan07/ComplianceGuard/actions"><img src="https://img.shields.io/github/actions/workflow/status/Egyan07/ComplianceGuard/ci.yml?label=CI&logo=githubactions&logoColor=white" alt="CI"></a>
 </p>
@@ -495,7 +495,7 @@ python -m pytest tests/integration/ -v
 python -m pytest tests/e2e/ -v --run-e2e
 ```
 
-CI runs all tests on every push via GitHub Actions. Backend: **187 tests passing** (152 unit + 35 integration).
+CI runs all tests on every push via GitHub Actions. **311 tests passing** — backend: 187 (152 unit + 35 integration), frontend: 119 Vitest unit, e2e: 5 Playwright.
 
 ## Troubleshooting
 
@@ -570,7 +570,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 | Web mode license enforcement (Ed25519) | |
 | Sentry error monitoring (backend + frontend) | |
 | Self-hosted + Managed hosting options | |
-| CI/CD with 187 backend tests (unit + integration) | |
+| CI/CD with 311 tests (187 backend + 119 frontend + 5 e2e) | |
 | Alembic migrations + rate limiting | |
 
 ## License
