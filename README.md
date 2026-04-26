@@ -351,7 +351,7 @@ ComplianceGuard/
 │   │   ├── contexts/AuthContext.tsx     # JWT auth state, login/register/logout
 │   │   ├── contexts/LicenseContext.tsx  # React context for tier state + feature checks
 │   │   ├── services/api.ts             # Unified API (IPC or HTTP)
-│   │   └── test/                       # Vitest test suite
+│   │   └── test/                       # Vitest test suite (119 tests)
 │   ├── e2e/                            # Playwright e2e tests (5 tests)
 │   ├── .eslintrc.cjs
 │   ├── .prettierrc
