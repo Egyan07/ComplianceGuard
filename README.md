@@ -5,7 +5,7 @@
 <p align="center">
   <a href="#quick-start"><img src="https://img.shields.io/badge/version-3.1.0-2563EB" alt="Version"></a>
   <img src="https://img.shields.io/badge/license-BSL%201.1-orange" alt="License">
-  <a href="#soc-2-controls"><img src="https://img.shields.io/badge/SOC%202-54%20controls-10B981" alt="Controls"></a>
+  <a href="#soc-2-controls"><img src="https://img.shields.io/badge/SOC%202-29%20controls-10B981" alt="Controls"></a>
   <img src="https://img.shields.io/badge/tests-187%20passing-10B981?logo=pytest&logoColor=white" alt="Tests">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
   <a href="https://github.com/Egyan07/ComplianceGuard/actions"><img src="https://img.shields.io/github/actions/workflow/status/Egyan07/ComplianceGuard/ci.yml?label=CI&logo=githubactions&logoColor=white" alt="CI"></a>
@@ -325,7 +325,7 @@ ComplianceGuard/
 │   │   ├── services/                   # Compliance service, evidence collector
 │   │   └── integrations/aws.py         # AWS evidence collection
 │   ├── migrations/                     # Alembic database migrations
-│   ├── tests/                          # Unit (143) + integration (27) + e2e (5) tests
+│   ├── tests/                          # Unit (152) + integration (35) + e2e (5) tests
 │   ├── requirements.txt
 │   └── Dockerfile
 ├── electron/
@@ -433,20 +433,6 @@ License keys use Ed25519 cryptographic signatures — verified offline, no licen
 | Startups / SMBs | Managed Pro | Zero setup, fast onboarding |
 | IT consultants | Self-hosted Pro | Manage multiple clients |
 
-## What's new in 3.1.0
-
-| Area | Change |
-|------|--------|
-| Security | Refresh tokens now DB-backed (`refresh_tokens` table). `POST /api/v1/auth/logout` revokes the JTI; `/refresh` validates against DB — stolen tokens can't be reused after logout. |
-| Security | Email verification enforced on every authenticated endpoint (`get_current_user` returns 403 for unverified accounts). |
-| Security | Streaming upload rejects oversized files in 1 MB chunks — no full buffer before size check. |
-| Operations | Hourly background task prunes expired rows from `refresh_tokens` automatically. |
-| Operations | Redis rate-limit backend pinged at startup; unreachable URI logs ERROR instead of silently falling back. |
-| Architecture | All `/api/v1` prefixes now declared exclusively in `main.py`. Routers are prefix-free. Auth moved to `/api/v1/auth`. |
-| Architecture | `useDashboard` fully migrated to `useQuery` + `queryClient.invalidateQueries`. `QueryClientProvider` is now the actual data layer, not decoration. |
-| Architecture | SOC2 controls externalised to `soc2_controls.yaml` — add/edit controls without touching Python. |
-| Testing | New tests: upload 415/413, download path-traversal 404, SSOT version drift across all three constant files. 187 backend tests passing. |
-
 ## Security Model
 
 All data stays under your control. Zero telemetry.
@@ -493,21 +479,21 @@ uvicorn app.main:app --reload        # Run backend locally
 ### Tests
 
 ```bash
-# Frontend (121 unit + 5 e2e = 126 tests)
+# Frontend (Vitest unit + Playwright e2e)
 cd frontend
 npm test                 # Vitest unit tests
 npm run test:e2e         # Playwright e2e tests
 npm run lint             # ESLint
 npm run format:check     # Prettier
 
-# Backend (143 unit + 27 integration + 5 e2e = 175 tests)
+# Backend (152 unit + 35 integration + 5 e2e skipped by default)
 cd backend
 python -m pytest tests/unit/ -v
 python -m pytest tests/integration/ -v
 python -m pytest tests/e2e/ -v --run-e2e
 ```
 
-CI runs all tests on every push via GitHub Actions. Total: **311 tests** (126 frontend + 175 backend — verified against badge).
+CI runs all tests on every push via GitHub Actions. Backend: **187 tests passing** (152 unit + 35 integration).
 
 ## Troubleshooting
 
@@ -582,7 +568,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 | Web mode license enforcement (Ed25519) | |
 | Sentry error monitoring (backend + frontend) | |
 | Self-hosted + Managed hosting options | |
-| CI/CD with 311 tests (unit + integration + e2e) | |
+| CI/CD with 187 backend tests (unit + integration) | |
 | Alembic migrations + rate limiting | |
 
 ## License
