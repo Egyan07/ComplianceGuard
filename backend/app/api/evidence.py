@@ -452,11 +452,11 @@ async def upload_evidence_file(
     db.refresh(item)
 
     logger.info(
-        "Manual evidence uploaded: user=%s file=%s size=%d bytes path=%s",
+        "Manual evidence uploaded: user=%s file=%s size=%d bytes stored_name=%s",
         current_user.email,
         filename,
         len(content),
-        stored_path,
+        os.path.basename(stored_path),  # basename only — don't leak full host paths
     )
 
     return UploadEvidenceResponse(
@@ -497,7 +497,7 @@ async def download_evidence_file(
     storage_path = os.path.abspath(item.data["storage_path"])
     allowed_root = os.path.abspath(settings.evidence_storage_path)
     if not storage_path.startswith(allowed_root + os.sep) and storage_path != allowed_root:
-        logger.error("Blocked traversal: item=%d path=%s", item_id, storage_path)
+        logger.error("Blocked path-traversal attempt: item=%d name=%s", item_id, os.path.basename(storage_path))
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evidence file not found")
 
     if not os.path.exists(storage_path):

@@ -36,11 +36,12 @@ import {
   Cloud
 } from '@mui/icons-material';
 import { useLicense } from '../contexts/LicenseContext';
+import { VERSION } from '../constants';
 
 const isElectron = !!(window as any).electronAPI;
 
 const Settings: React.FC = () => {
-  const [appVersion, setAppVersion] = useState('2.9.0');
+  const [appVersion, setAppVersion] = useState(VERSION);
   const [systemInfo, setSystemInfo] = useState<any>(null);
   const [backingUp, setBackingUp] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
