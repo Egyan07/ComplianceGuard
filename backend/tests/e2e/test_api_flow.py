@@ -43,7 +43,7 @@ def auth_token(test_client: TestClient, test_user: User):
         "grant_type": "password"
     }
 
-    response = test_client.post("/api/auth/login", data=login_data)
+    response = test_client.post("/api/v1/auth/login", data=login_data)
     assert response.status_code == 200
 
     token_data = response.json()
@@ -212,7 +212,7 @@ def test_registration_and_login_flow(test_client: TestClient):
         "last_name": "User"
     }
 
-    register_response = test_client.post("/api/auth/register", json=new_user_data)
+    register_response = test_client.post("/api/v1/auth/register", json=new_user_data)
     assert register_response.status_code == 200
 
     register_result = register_response.json()
@@ -221,7 +221,7 @@ def test_registration_and_login_flow(test_client: TestClient):
     assert "user" in register_result
 
     # Test duplicate registration fails
-    duplicate_response = test_client.post("/api/auth/register", json=new_user_data)
+    duplicate_response = test_client.post("/api/v1/auth/register", json=new_user_data)
     assert duplicate_response.status_code == 400
 
     # Test login with registered user
@@ -231,7 +231,7 @@ def test_registration_and_login_flow(test_client: TestClient):
         "grant_type": "password"
     }
 
-    login_response = test_client.post("/api/auth/login", data=login_data)
+    login_response = test_client.post("/api/v1/auth/login", data=login_data)
     assert login_response.status_code == 200
 
     login_result = login_response.json()

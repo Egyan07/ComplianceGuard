@@ -3,10 +3,10 @@
 </p>
 
 <p align="center">
-  <a href="#quick-start"><img src="https://img.shields.io/badge/version-3.0.0-2563EB" alt="Version"></a>
+  <a href="#quick-start"><img src="https://img.shields.io/badge/version-3.1.0-2563EB" alt="Version"></a>
   <img src="https://img.shields.io/badge/license-BSL%201.1-orange" alt="License">
-  <a href="#soc-2-controls"><img src="https://img.shields.io/badge/SOC%202-29%20controls-10B981" alt="Controls"></a>
-  <img src="https://img.shields.io/badge/tests-311%20passing-10B981?logo=vitest&logoColor=white" alt="Tests">
+  <a href="#soc-2-controls"><img src="https://img.shields.io/badge/SOC%202-54%20controls-10B981" alt="Controls"></a>
+  <img src="https://img.shields.io/badge/tests-187%20passing-10B981?logo=pytest&logoColor=white" alt="Tests">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
   <a href="https://github.com/Egyan07/ComplianceGuard/actions"><img src="https://img.shields.io/github/actions/workflow/status/Egyan07/ComplianceGuard/ci.yml?label=CI&logo=githubactions&logoColor=white" alt="CI"></a>
 </p>
@@ -433,6 +433,20 @@ License keys use Ed25519 cryptographic signatures — verified offline, no licen
 | Startups / SMBs | Managed Pro | Zero setup, fast onboarding |
 | IT consultants | Self-hosted Pro | Manage multiple clients |
 
+## What's new in 3.1.0
+
+| Area | Change |
+|------|--------|
+| Security | Refresh tokens now DB-backed (`refresh_tokens` table). `POST /api/v1/auth/logout` revokes the JTI; `/refresh` validates against DB — stolen tokens can't be reused after logout. |
+| Security | Email verification enforced on every authenticated endpoint (`get_current_user` returns 403 for unverified accounts). |
+| Security | Streaming upload rejects oversized files in 1 MB chunks — no full buffer before size check. |
+| Operations | Hourly background task prunes expired rows from `refresh_tokens` automatically. |
+| Operations | Redis rate-limit backend pinged at startup; unreachable URI logs ERROR instead of silently falling back. |
+| Architecture | All `/api/v1` prefixes now declared exclusively in `main.py`. Routers are prefix-free. Auth moved to `/api/v1/auth`. |
+| Architecture | `useDashboard` fully migrated to `useQuery` + `queryClient.invalidateQueries`. `QueryClientProvider` is now the actual data layer, not decoration. |
+| Architecture | SOC2 controls externalised to `soc2_controls.yaml` — add/edit controls without touching Python. |
+| Testing | New tests: upload 415/413, download path-traversal 404, SSOT version drift across all three constant files. 187 backend tests passing. |
+
 ## Security Model
 
 All data stays under your control. Zero telemetry.
@@ -440,15 +454,15 @@ All data stays under your control. Zero telemetry.
 | Layer | How |
 |-------|-----|
 | IPC | Context isolation. Every exposed method validates input types and uses allowlists. |
-| Evidence | SHA-256 hashing on all stored files. Full audit trail with timestamps. |
+| Evidence | Full audit trail with timestamps. Streaming upload with early abort on size/type violation. |
 | Database | Parameterized queries. Foreign key constraints. Alembic-managed migrations. |
 | Navigation | External URLs blocked. `window.open` denied. |
 | Licensing | Ed25519 signed keys. Only the public key ships with the app. |
-| Auth (Web) | JWT access tokens (30 min) + refresh tokens (7 days). Bcrypt hashing. Password complexity enforced. Email verification. Password reset with expiring tokens. |
+| Auth (Web) | JWT access tokens (30 min) + DB-backed revocable refresh tokens (7 days). Bcrypt hashing. Email verification enforced. Password complexity + reset with expiring tokens. `POST /api/v1/auth/logout` revokes the refresh token JTI. |
 | License (Web) | Ed25519 signed keys verified in Python (`cryptography`). `require_pro` dependency returns HTTP 402. License email validated on activation. |
-| Rate Limiting | 5 requests/min on login, 3/min on register. Nginx rate limiting at proxy layer. |
+| Rate Limiting | 5 req/min on login, 3/min on register. Redis shared backend supported via `RATELIMIT_STORAGE_URI`. Nginx rate limiting at proxy layer. |
 | Error Monitoring | Sentry integration on backend (FastAPI + SQLAlchemy) and frontend. `send_default_pii=False`. Silent no-op when DSN unset. |
-| Proxy | Nginx reverse proxy with security headers (X-Frame-Options, X-Content-Type-Options, XSS protection). |
+| Proxy | Nginx reverse proxy with CSP, HSTS, Permissions-Policy, X-Frame-Options, X-Content-Type-Options. |
 
 For reporting security vulnerabilities, see [SECURITY.md](SECURITY.md).
 

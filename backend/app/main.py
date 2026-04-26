@@ -6,6 +6,8 @@ and SOC 2 audit workflows.
 """
 
 from contextlib import asynccontextmanager
+import asyncio
+import logging
 import os
 
 from fastapi import FastAPI
@@ -31,6 +33,8 @@ from app.core.rate_limit import limiter
 
 # Import all models so Base.metadata knows about them
 import app.models  # noqa: F401
+
+logger = logging.getLogger(__name__)
 
 import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration
@@ -67,11 +71,67 @@ def run_migrations() -> None:
         Base.metadata.create_all(bind=engine)
 
 
+async def _cleanup_expired_refresh_tokens() -> None:
+    """Background task: delete expired rows from refresh_tokens table hourly."""
+    from app.core.database import SessionLocal
+    from app.models.refresh_token import RefreshToken
+
+    while True:
+        await asyncio.sleep(3600)
+        try:
+            db = SessionLocal()
+            try:
+                deleted = (
+                    db.query(RefreshToken)
+                    .filter(RefreshToken.expires_at < datetime.now(timezone.utc))
+                    .delete(synchronize_session=False)
+                )
+                db.commit()
+                if deleted:
+                    logger.info("Refresh token cleanup: removed %d expired rows", deleted)
+            finally:
+                db.close()
+        except Exception:
+            logger.exception("Refresh token cleanup task failed")
+
+
+def _check_ratelimit_backend() -> None:
+    """Validate the rate-limit storage backend is reachable at startup."""
+    storage_uri = os.environ.get("RATELIMIT_STORAGE_URI")
+    if not storage_uri:
+        return
+    safe_uri = storage_uri.rsplit("@", 1)[-1]  # strip credentials for log
+    try:
+        import redis as _redis
+        r = _redis.from_url(storage_uri, socket_connect_timeout=2, socket_timeout=2)
+        r.ping()
+        logger.info("Rate limiter Redis backend reachable: %s", safe_uri)
+    except ImportError:
+        logger.warning(
+            "RATELIMIT_STORAGE_URI is set but the 'redis' package is not installed. "
+            "Run: pip install redis>=4"
+        )
+    except Exception as exc:
+        logger.error(
+            "Rate limiter backend unreachable (%s): %s — counters will NOT be "
+            "shared across workers. Fix RATELIMIT_STORAGE_URI or remove it.",
+            safe_uri,
+            exc,
+        )
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     if os.getenv("RUN_MIGRATIONS_ON_STARTUP", "true").lower() == "true":
         run_migrations()
+    _check_ratelimit_backend()
+    cleanup_task = asyncio.create_task(_cleanup_expired_refresh_tokens())
     yield
+    cleanup_task.cancel()
+    try:
+        await cleanup_task
+    except asyncio.CancelledError:
+        pass
 
 
 app = FastAPI(

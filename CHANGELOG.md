@@ -6,6 +6,82 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [3.1.0]
+
+Security hardening and architecture completion release. Closes all residual
+production blockers identified after 3.0.0. No breaking changes.
+
+### Added
+- **Refresh token cleanup background task** — FastAPI lifespan now spawns an
+  async task that runs hourly and deletes expired rows from `refresh_tokens`.
+  Prevents unbounded table growth without requiring a separate cron job or
+  database trigger.
+- **Rate-limit Redis connectivity check at startup** — If `RATELIMIT_STORAGE_URI`
+  is configured, the lifespan handler pings the backend before accepting traffic.
+  Unreachable URI logs `ERROR` (with credentials stripped) instead of silently
+  falling back to in-memory counters.
+- **Evidence upload security tests** — New `tests/unit/test_evidence_security.py`
+  covers: disallowed extension → 415, oversized streaming upload → 413,
+  path-traversal `storage_path` → 404, missing file in storage root → 404.
+- **SSOT version drift CI check** — `tests/unit/test_ssot_drift.py` asserts
+  that `backend/app/core/constants.py`, `frontend/src/constants.ts`, and
+  `electron/licensing/tier-constants.js` all carry identical `VERSION` strings.
+  Fails loudly if someone bumps only one file.
+- **react-query full integration** — `useDashboard` hook migrated from manual
+  `useEffect`/`setState` fetching to `useQuery` (`staleTime: 30 s`,
+  `refetchOnWindowFocus: true`). Mutations call
+  `queryClient.invalidateQueries({ queryKey: ['dashboard'] })` so the cache
+  invalidates automatically after evidence collection or compliance evaluation.
+  Previously `QueryClientProvider` was wired but unused; it is now the actual
+  data layer for the Dashboard.
+
+### Changed
+- **Routing** — All API routers now define only resource-level paths
+  (`/auth`, `/evidence`, `/compliance`, `/machines`, `/aws-credentials`).
+  The shared `/api/v1` prefix is applied exclusively in `main.py`. Auth
+  moved from `/api/auth` → `/api/v1/auth` for consistency.
+- **Dependency injection** — `soc2_framework` / `compliance_service`
+  module-level singletons in `compliance.py` replaced with FastAPI `Depends`
+  functions. Framework stays a read-only singleton; service is created fresh
+  per request, eliminating cross-request in-memory cache leakage risk.
+- **SOC2 controls** — Hardcoded 1 200-line Python constructor replaced by
+  `soc2_controls.yaml`. Content changes (add/remove/edit a control) no longer
+  require a Python deployment.
+- **Dashboard decomposition** — `Dashboard.tsx` (506 lines) split into
+  `useDashboard.ts` (hook), `DashboardHeader.tsx`, and `CollectionSummary.tsx`.
+- **Frontend routing** — `useState<Page>` replaced by `react-router-dom`
+  `HashRouter` + `Routes`/`Route` (works for both Electron `file://` and web).
+- **Version string** — `Settings.tsx` footer now reads `VERSION` from
+  `constants.ts` instead of the hardcoded `'2.9.0'` literal.
+
+### Fixed
+- **Email verification enforcement** — `get_current_user` now raises HTTP 403
+  for unverified accounts. `get_current_user_unverified` added for
+  verification-flow endpoints (`/verification-status`).
+- **Refresh token revocation** — `POST /api/v1/auth/logout` marks the supplied
+  refresh token's jti revoked in `refresh_tokens`; `/refresh` validates the jti
+  against the DB before issuing a new access token. Stolen tokens can no longer
+  be used after logout.
+- **Streaming upload** — File extension checked before reading; content read in
+  1 MB chunks with early abort on size exceeded. Previously the entire file was
+  buffered before the size check, creating an OOM risk for large uploads.
+- **N+1 query** — `selectinload(EvidenceCollection.items)` added to the
+  `get_collection_status` query.
+- **Log path sanitisation** — Upload and download handlers log
+  `os.path.basename(stored_path)` instead of the full host path.
+- **Stale TODO** — `api/__init__.py` "Task 2" stub comment removed.
+
+### Security
+- `refresh_tokens` table: every issued token now has a DB record keyed by JTI.
+  `POST /api/v1/auth/logout` revokes it; `/refresh` rejects revoked/expired JTIs.
+- Email verification enforced on all authenticated endpoints.
+- Streaming upload rejects disallowed extensions and oversized files without
+  loading the complete payload into memory.
+- Path-traversal guard on evidence download now covered by automated tests.
+- Rate-limit Redis backend connectivity validated at boot.
+
+---
+
 ## [3.0.0]
 
 Major hardening release. Lifts the codebase by closing the long-tail of security, correctness, and scaling issues that

@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   getEvidenceSummary,
   getEvidenceItems,
@@ -12,61 +13,74 @@ import {
 
 const isElectron = !!(window as any).electronAPI;
 
+export const DASHBOARD_QUERY_KEYS = {
+  summary: ['dashboard', 'summary'] as const,
+  items: ['dashboard', 'items'] as const,
+};
+
 export interface DashboardState {
-  summary: EvidenceSummary | null;
-  evidenceItems: EvidenceItem[];
   evaluation: ComplianceEvaluation | null;
-  loading: boolean;
   error: string | null;
   successMessage: string | null;
 }
 
 export function useDashboard() {
+  const queryClient = useQueryClient();
+
+  // ── server state via react-query ──────────────────────────────────────────
+  const {
+    data: summary = null,
+    isLoading: summaryLoading,
+    refetch: refetchSummary,
+  } = useQuery<EvidenceSummary | null>({
+    queryKey: DASHBOARD_QUERY_KEYS.summary,
+    queryFn: async () => {
+      try {
+        return await getEvidenceSummary();
+      } catch {
+        return getMockEvidenceSummary();
+      }
+    },
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
+  });
+
+  const {
+    data: evidenceItems = [],
+    isLoading: itemsLoading,
+    refetch: refetchItems,
+  } = useQuery<EvidenceItem[]>({
+    queryKey: DASHBOARD_QUERY_KEYS.items,
+    queryFn: async () => {
+      try {
+        return await getEvidenceItems();
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
+  });
+
+  // ── local UI state ─────────────────────────────────────────────────────────
   const [state, setState] = useState<DashboardState>({
-    summary: null,
-    evidenceItems: [],
     evaluation: null,
-    loading: true,
     error: null,
     successMessage: null,
   });
-
   const [collectingEvidence, setCollectingEvidence] = useState(false);
   const [evaluating, setEvaluating] = useState(false);
   const [exportingPDF, setExportingPDF] = useState(false);
   const [syncingCloud, setSyncingCloud] = useState(false);
   const [cloudConnected, setCloudConnected] = useState(false);
 
+  // ── derived ────────────────────────────────────────────────────────────────
+  const loading = summaryLoading || itemsLoading;
+
+  // ── actions ────────────────────────────────────────────────────────────────
   const fetchDashboardData = useCallback(async () => {
-    setState(prev => ({ ...prev, loading: true, error: null }));
-    try {
-      let summary: EvidenceSummary;
-      let evidenceItems: EvidenceItem[];
-      try {
-        summary = await getEvidenceSummary();
-      } catch {
-        summary = getMockEvidenceSummary();
-      }
-      try {
-        evidenceItems = await getEvidenceItems();
-      } catch {
-        evidenceItems = [];
-      }
-      setState(prev => {
-        if (prev.evaluation) {
-          summary.compliance_metrics.overall_compliance_score =
-            Math.round(prev.evaluation!.overall_score);
-        }
-        return { ...prev, summary, evidenceItems, loading: false };
-      });
-    } catch {
-      setState(prev => ({
-        ...prev,
-        loading: false,
-        error: 'Failed to load dashboard data. Please try again.',
-      }));
-    }
-  }, []);
+    await Promise.all([refetchSummary(), refetchItems()]);
+  }, [refetchSummary, refetchItems]);
 
   const handleCollectEvidence = useCallback(async () => {
     setCollectingEvidence(true);
@@ -80,14 +94,15 @@ export function useDashboard() {
           ...prev,
           successMessage: `Evidence collection complete! ${result.evidence_count || 0} items collected.`,
         }));
-        setTimeout(fetchDashboardData, 1000);
+        // Invalidate both query keys so react-query refetches automatically.
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       }
     } catch (err: any) {
       setState(prev => ({ ...prev, error: err.message || 'Failed to collect evidence.' }));
     } finally {
       setCollectingEvidence(false);
     }
-  }, [fetchDashboardData]);
+  }, [queryClient]);
 
   const handleEvaluateCompliance = useCallback(async () => {
     if (!isElectron) return;
@@ -100,13 +115,13 @@ export function useDashboard() {
         evaluation,
         successMessage: `Compliance evaluation complete! Score: ${evaluation.overall_score.toFixed(1)}%`,
       }));
-      setTimeout(fetchDashboardData, 500);
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     } catch (err: any) {
       setState(prev => ({ ...prev, error: err.message || 'Failed to evaluate compliance.' }));
     } finally {
       setEvaluating(false);
     }
-  }, [fetchDashboardData]);
+  }, [queryClient]);
 
   const handleExportPDF = useCallback(async () => {
     if (!isElectron) return;
@@ -139,12 +154,13 @@ export function useDashboard() {
         at_risk: 'at_risk',
         non_compliant: 'critical',
       };
+      const evaluation = state.evaluation;
       const result = await api.cloudSync({
-        overall_score: state.evaluation?.overall_score ?? null,
-        compliance_level: state.evaluation?.status
-          ? (levelMap[state.evaluation.status] ?? state.evaluation.status)
+        overall_score: evaluation?.overall_score ?? null,
+        compliance_level: evaluation?.status
+          ? (levelMap[evaluation.status] ?? evaluation.status)
           : null,
-        evidence_count: state.summary?.total_collections ?? null,
+        evidence_count: summary?.total_collections ?? null,
       });
       if (result.error) {
         setState(prev => ({ ...prev, error: result.error }));
@@ -156,22 +172,33 @@ export function useDashboard() {
     } finally {
       setSyncingCloud(false);
     }
-  }, [state.evaluation, state.summary]);
+  }, [state.evaluation, summary]);
 
   const clearMessage = useCallback(() => {
     setState(prev => ({ ...prev, error: null, successMessage: null }));
   }, []);
 
   useEffect(() => {
-    fetchDashboardData();
     if (isElectron) {
       const api = (window as any).electronAPI;
       api.cloudGetConfig().then((cfg: any) => setCloudConnected(!!cfg?.connected));
     }
-  }, [fetchDashboardData]);
+  }, []);
 
   return {
-    state,
+    // server state
+    summary,
+    evidenceItems,
+    // local state (merged for Dashboard compatibility)
+    state: {
+      summary,
+      evidenceItems,
+      evaluation: state.evaluation,
+      loading,
+      error: state.error,
+      successMessage: state.successMessage,
+    },
+    loading,
     collectingEvidence,
     evaluating,
     exportingPDF,

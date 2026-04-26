@@ -17,7 +17,7 @@
  *   4. If VERSION changed, bump package.json and frontend/package.json.
  */
 
-const VERSION = '3.0.0';
+const VERSION = '3.1.0';
 
 const VALID_LICENSE_TIERS = ['free', 'pro', 'enterprise'];
 const VALID_COMPLIANCE_LEVELS = ['compliant', 'at_risk', 'critical'];
@@ -56,7 +56,7 @@ const ALL_CONTROL_IDS = [
 ];
 
 module.exports = {
-  VERSION,
+  VERSION: '3.1.0',
   VALID_LICENSE_TIERS,
   VALID_COMPLIANCE_LEVELS,
   MACHINE_LIMITS,
