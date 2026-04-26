@@ -318,14 +318,14 @@ Key files:
 ComplianceGuard/
 ├── backend/
 │   ├── app/
-│   │   ├── main.py                     # FastAPI app, CORS, routes
+│   │   ├── main.py                     # FastAPI app, CORS, routes, lifespan tasks
 │   │   ├── api/                        # Auth, evidence, compliance endpoints
-│   │   ├── core/                       # Config, database, SOC 2 controls, auth
-│   │   ├── models/                     # SQLAlchemy models (user, company, compliance, evidence)
+│   │   ├── core/                       # Config, database, auth, soc2_controls.yaml
+│   │   ├── models/                     # SQLAlchemy models (user, refresh_token, evidence, compliance, machine)
 │   │   ├── services/                   # Compliance service, evidence collector
 │   │   └── integrations/aws.py         # AWS evidence collection
 │   ├── migrations/                     # Alembic database migrations
-│   ├── tests/                          # Unit (152) + integration (35) + e2e (5) tests
+│   ├── tests/                          # Unit (152) + integration (35) + e2e (5, skipped by default)
 │   ├── requirements.txt
 │   └── Dockerfile
 ├── electron/
@@ -344,12 +344,14 @@ ComplianceGuard/
 │   └── system/windows.js               # Windows evidence collector
 ├── frontend/
 │   ├── src/
-│   │   ├── App.tsx                     # Theme, nav, auth gate, error boundary
+│   │   ├── App.tsx                     # Theme, HashRouter nav, auth gate, error boundary
 │   │   ├── components/                 # Dashboard, Score, Evidence, History, Settings, Login
+│   │   │   └── dashboard/              # DashboardHeader, CollectionSummary sub-components
+│   │   ├── hooks/useDashboard.ts       # Data fetching + action handlers (react-query)
 │   │   ├── contexts/AuthContext.tsx     # JWT auth state, login/register/logout
 │   │   ├── contexts/LicenseContext.tsx  # React context for tier state + feature checks
 │   │   ├── services/api.ts             # Unified API (IPC or HTTP)
-│   │   └── test/                       # Vitest test suite (114 tests)
+│   │   └── test/                       # Vitest test suite
 │   ├── e2e/                            # Playwright e2e tests (5 tests)
 │   ├── .eslintrc.cjs
 │   ├── .prettierrc
