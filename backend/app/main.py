@@ -5,40 +5,37 @@ FastAPI backend for managing compliance frameworks, evidence collection,
 and SOC 2 audit workflows.
 """
 
-from contextlib import asynccontextmanager
 import asyncio
 import logging
 import os
+from contextlib import asynccontextmanager
+from datetime import datetime, timezone
+from typing import Dict, Any
 
+import sentry_sdk
+import uvicorn
+from alembic import command as alembic_command
+from alembic.config import Config as AlembicConfig
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Dict, Any
-from datetime import datetime, timezone
-import uvicorn
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-from alembic.config import Config as AlembicConfig
-from alembic import command as alembic_command
-
 from app.api.auth import router as auth_router
-from app.api.evidence import router as evidence_router
-from app.api.compliance import router as compliance_router
-from app.api.machines import router as machines_router
 from app.api.aws_credentials import router as aws_credentials_router
+from app.api.compliance import router as compliance_router
+from app.api.evidence import router as evidence_router
+from app.api.machines import router as machines_router
 from app.core.config import settings
 from app.core.constants import VERSION
-from app.core.database import engine, Base
+from app.core.database import Base, engine
 from app.core.rate_limit import limiter
 
-# Import all models so Base.metadata knows about them
 import app.models  # noqa: F401
 
 logger = logging.getLogger(__name__)
-
-import sentry_sdk
-from sentry_sdk.integrations.fastapi import FastApiIntegration
-from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 
 if settings.sentry_dsn:
     sentry_sdk.init(
