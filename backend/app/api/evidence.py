@@ -14,7 +14,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_current_user
 from app.core.config import settings
@@ -227,6 +227,7 @@ async def get_collection_status(
     """Get status of an evidence collection by its collection_id."""
     collection = (
         db.query(EvidenceCollection)
+        .options(selectinload(EvidenceCollection.items))
         .filter(
             EvidenceCollection.collection_id == collection_id,
             EvidenceCollection.user_id == current_user.id,
