@@ -14,19 +14,27 @@ from pydantic import BaseModel, Field
 from datetime import datetime, timezone
 import uuid
 
-from app.core.soc2_controls import SOC2Control, create_soc2_framework
-from app.services.compliance_service import ComplianceStatus, create_compliance_service
+from app.core.soc2_controls import SOC2Control, SOC2Framework, create_soc2_framework
+from app.services.compliance_service import ComplianceService, ComplianceStatus, create_compliance_service
 from app.core.database import get_db
 from app.api.deps import get_current_user, require_pro
 from app.models.user import User
 from app.models.evaluation import ComplianceEvaluationRecord, ControlAssessmentRecord
 
 
-router = APIRouter(prefix="/api/v1/compliance", tags=["compliance"])
+router = APIRouter(prefix="/compliance", tags=["compliance"])
 
-# Initialize framework and service
-soc2_framework = create_soc2_framework()
-compliance_service = create_compliance_service(soc2_framework)
+# Read-only singleton — safe to share across workers; controls never mutate at runtime.
+_soc2_framework = create_soc2_framework()
+
+
+def get_soc2_framework() -> SOC2Framework:
+    return _soc2_framework
+
+
+def get_compliance_service(framework: SOC2Framework = Depends(get_soc2_framework)) -> ComplianceService:
+    """Fresh service per request — eliminates shared mutable in-memory cache."""
+    return create_compliance_service(framework)
 
 
 # Pydantic models for API requests/responses
@@ -133,88 +141,55 @@ def _to_control_response(control: SOC2Control) -> ControlResponse:
 
 
 @router.get("/framework/summary", response_model=FrameworkSummaryResponse)
-async def get_framework_summary():
-    """
-    Get summary of the SOC 2 control framework.
-
-    Returns:
-        Framework summary including control counts by category and risk distribution
-    """
-    summary = soc2_framework.get_framework_summary()
-    return summary
+async def get_framework_summary(
+    framework: SOC2Framework = Depends(get_soc2_framework),
+):
+    """Get summary of the SOC 2 control framework."""
+    return framework.get_framework_summary()
 
 
 @router.get("/framework/controls", response_model=List[ControlResponse])
-async def get_all_controls():
-    """
-    Get all SOC 2 controls from the framework.
-
-    Returns:
-        List of all SOC 2 controls with their details
-    """
-    controls = soc2_framework.get_all_controls()
-    return [_to_control_response(control) for control in controls]
+async def get_all_controls(
+    framework: SOC2Framework = Depends(get_soc2_framework),
+):
+    """Get all SOC 2 controls from the framework."""
+    return [_to_control_response(c) for c in framework.get_all_controls()]
 
 
 @router.get("/framework/controls/{control_id}", response_model=ControlResponse)
-async def get_control(control_id: str):
-    """
-    Get a specific SOC 2 control by ID.
-
-    Args:
-        control_id: The ID of the control to retrieve
-
-    Returns:
-        Detailed information about the specified control
-
-    Raises:
-        HTTPException: If control is not found
-    """
-    control = soc2_framework.get_control(control_id)
+async def get_control(
+    control_id: str,
+    framework: SOC2Framework = Depends(get_soc2_framework),
+):
+    """Get a specific SOC 2 control by ID."""
+    control = framework.get_control(control_id)
     if not control:
         raise HTTPException(status_code=404, detail=f"Control {control_id} not found")
-
     return _to_control_response(control)
 
 
 @router.get("/framework/controls/by-category/{category}", response_model=List[ControlResponse])
-async def get_controls_by_category(category: str):
-    """
-    Get all controls for a specific SOC 2 category.
-
-    Args:
-        category: The control category (CC, A, C, PI, CA)
-
-    Returns:
-        List of controls in the specified category
-
-    Raises:
-        HTTPException: If category is invalid
-    """
+async def get_controls_by_category(
+    category: str,
+    framework: SOC2Framework = Depends(get_soc2_framework),
+):
+    """Get all controls for a specific SOC 2 category (CC, A, C, PI, CA)."""
     valid_categories = ["CC", "A", "C", "PI", "CA"]
     if category not in valid_categories:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid category. Must be one of: {', '.join(valid_categories)}"
+            detail=f"Invalid category. Must be one of: {', '.join(valid_categories)}",
         )
-
-    controls = soc2_framework.get_controls_by_category(category)
-    return [_to_control_response(control) for control in controls]
+    return [_to_control_response(c) for c in framework.get_controls_by_category(category)]
 
 
 @router.get("/framework/controls/search", response_model=List[ControlResponse])
-async def search_controls(q: str = Query(..., min_length=2)):
-    """
-    Search controls by title, description, or objective.
-
-    Args:
-        q: Search query string
-
-    Returns:
-        List of controls matching the search criteria
-    """
-    controls = soc2_framework.search_controls(q)
-    return [_to_control_response(control) for control in controls]
+async def search_controls(
+    q: str = Query(..., min_length=2),
+    framework: SOC2Framework = Depends(get_soc2_framework),
+):
+    """Search controls by title, description, or objective."""
+    return [_to_control_response(c) for c in framework.search_controls(q)]
 
 
 @router.post("/evaluate", response_model=ComplianceEvaluationResponse)
@@ -222,6 +197,7 @@ async def evaluate_compliance(
     request: ComplianceEvaluationRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    svc: ComplianceService = Depends(get_compliance_service),
 ):
     """Evaluate compliance and persist results to database."""
     try:
@@ -235,7 +211,7 @@ async def evaluate_compliance(
             for control_id, evidence in request.evidence_data.items()
         }
 
-        evaluation = compliance_service.evaluate_compliance(
+        evaluation = svc.evaluate_compliance(
             evidence_data=evidence_data,
             scope=request.scope,
             evaluated_by=request.evaluated_by
@@ -392,21 +368,14 @@ async def get_control_compliance_trend(
     control_id: str,
     current_user: User = Depends(require_pro),
     db: Session = Depends(get_db),
+    framework: SOC2Framework = Depends(get_soc2_framework),
 ):
     """
     Get compliance trend for a specific control across the current user's evaluations.
 
     Only returns data belonging to the authenticated user (IDOR-safe).
-
-    Args:
-        control_id: The ID of the control
-        current_user: Authenticated user (Pro tier required)
-        db: Database session
-
-    Returns:
-        List of {evaluation_id, score, status, date} dicts ordered by date
     """
-    control = soc2_framework.get_control(control_id)
+    control = framework.get_control(control_id)
     if not control:
         raise HTTPException(status_code=404, detail=f"Control {control_id} not found")
 
@@ -491,17 +460,13 @@ async def get_compliance_report(
 
 
 @router.get("/health")
-async def compliance_health_check():
-    """
-    Health check for compliance endpoints.
-
-    Returns:
-        Service health status
-    """
+async def compliance_health_check(
+    framework: SOC2Framework = Depends(get_soc2_framework),
+):
+    """Health check for compliance endpoints."""
     return {
         "status": "healthy",
         "service": "compliance-api",
-        "framework_controls": soc2_framework.get_control_count(),
-        "evaluations_performed": len(compliance_service.evaluations),
-        "timestamp": datetime.now(timezone.utc).isoformat()
+        "framework_controls": framework.get_control_count(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }

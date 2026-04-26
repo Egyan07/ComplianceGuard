@@ -19,7 +19,7 @@ from app.core.rate_limit import limiter
 from app.models.user import User
 from app.models.machine import Machine
 
-router = APIRouter(prefix="/api/v1/machines", tags=["machines"])
+router = APIRouter(prefix="/machines", tags=["machines"])
 
 
 class MachineSyncRequest(BaseModel):

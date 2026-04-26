@@ -30,7 +30,7 @@ from app.models.user import User
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/aws-credentials", tags=["aws-credentials"])
+router = APIRouter(prefix="/aws-credentials", tags=["aws-credentials"])
 
 
 # ---------------------------------------------------------------------------

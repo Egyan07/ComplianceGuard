@@ -17,6 +17,7 @@ from .evidence import EvidenceCollection, EvidenceItem
 from .evaluation import ComplianceEvaluationRecord, ControlAssessmentRecord
 from .machine import Machine
 from .aws_credential import AwsCredential
+from .refresh_token import RefreshToken
 
 __all__ = [
     "User",
@@ -28,4 +29,5 @@ __all__ = [
     "ControlAssessmentRecord",
     "Machine",
     "AwsCredential",
+    "RefreshToken",
 ]

@@ -99,16 +99,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include authentication routes
-app.include_router(auth_router)
-
-# Include evidence collection routes
+# All routers define only resource-level paths (e.g. /auth, /evidence).
+# The shared /api/v1 prefix is applied here so the convention is enforced
+# in a single place and individual routers stay prefix-free.
+app.include_router(auth_router, prefix="/api/v1")
 app.include_router(evidence_router, prefix="/api/v1")
-
-# Include compliance framework routes
-app.include_router(compliance_router)
-app.include_router(machines_router)
-app.include_router(aws_credentials_router)
+app.include_router(compliance_router, prefix="/api/v1")
+app.include_router(machines_router, prefix="/api/v1")
+app.include_router(aws_credentials_router, prefix="/api/v1")
 
 @app.get("/health")
 async def health_check() -> Dict[str, Any]:

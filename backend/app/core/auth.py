@@ -5,6 +5,7 @@ This module provides authentication functionality including password hashing
 and JWT token generation/validation.
 """
 
+import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -34,6 +35,7 @@ def _secret_key() -> str:
 class TokenPayload(BaseModel):
     """Token payload model."""
     sub: Optional[str] = None
+    jti: Optional[str] = None
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -86,18 +88,29 @@ def verify_access_token(token: str) -> Optional[TokenPayload]:
         return None
 
 
-def create_refresh_token(data: dict) -> str:
-    """Create a long-lived JWT refresh token with type='refresh' claim."""
-    to_encode = {**data, "type": "refresh"}
+def create_refresh_token(data: dict) -> tuple[str, str]:
+    """
+    Create a long-lived JWT refresh token.
+
+    Returns:
+        (token, jti) — the caller must persist the jti in ``refresh_tokens``
+        so the token can be revoked before its natural expiry.
+    """
+    jti = secrets.token_hex(32)
+    to_encode = {**data, "type": "refresh", "jti": jti}
     expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, _secret_key(), algorithm=ALGORITHM)
+    token = jwt.encode(to_encode, _secret_key(), algorithm=ALGORITHM)
+    return token, jti
 
 
 def verify_refresh_token(token: str) -> Optional[TokenPayload]:
     """
-    Verify a refresh token. Returns None if invalid, expired, or not a refresh token.
-    Explicitly rejects access tokens (which have no 'type' claim).
+    Verify a refresh token's JWT signature and claims.
+
+    Returns None if invalid, expired, or not a refresh token.
+    Callers must additionally check the DB for revocation — this function
+    only validates the cryptographic signature and basic claims.
     """
     if not token:
         return None
@@ -106,8 +119,9 @@ def verify_refresh_token(token: str) -> Optional[TokenPayload]:
         if payload.get("type") != "refresh":
             return None
         email: str = payload.get("sub")
-        if email is None:
+        jti: str = payload.get("jti")
+        if email is None or jti is None:
             return None
-        return TokenPayload(sub=email)
+        return TokenPayload(sub=email, jti=jti)
     except InvalidTokenError:
         return None

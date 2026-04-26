@@ -376,16 +376,37 @@ async def upload_evidence_file(
     Upload a manual evidence file.
 
     Enforces server-side file type and size limits from application settings
-    (MAX_FILE_SIZE_MB, ALLOWED_FILE_TYPES). The file bytes are written to
-    ``settings.evidence_storage_path`` under a per-user directory; the DB
-    record stores only the filesystem path, not the content itself.
+    (MAX_FILE_SIZE_MB, ALLOWED_FILE_TYPES). The file bytes are streamed in
+    1 MB chunks and rejected as soon as the running total exceeds the limit —
+    avoiding loading multi-gigabyte uploads fully into memory before refusing.
     """
-    # Read into memory first so we know the real size (Content-Length is
-    # untrustworthy and multipart doesn't guarantee it).
-    content = await file.read()
     filename = file.filename or "upload"
 
-    _validate_upload(filename, len(content))
+    # Extension check is free (uses the filename header) — do it before reading.
+    ext = os.path.splitext(filename)[1].lower()
+    if ext not in settings.allowed_file_types:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail=(
+                f"File type '{ext}' is not allowed. "
+                f"Permitted types: {', '.join(settings.allowed_file_types)}"
+            ),
+        )
+
+    # Stream in 1 MB chunks — fail fast on oversized uploads.
+    _CHUNK = 1024 * 1024
+    content = bytearray()
+    while True:
+        chunk = await file.read(_CHUNK)
+        if not chunk:
+            break
+        content.extend(chunk)
+        if len(content) > _MAX_UPLOAD_BYTES:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=f"File exceeds the {settings.max_file_size_mb} MB upload limit.",
+            )
+    content = bytes(content)
 
     stored_path = _store_evidence_file(current_user.id, filename, content)
 

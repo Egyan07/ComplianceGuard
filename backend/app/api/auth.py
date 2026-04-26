@@ -38,16 +38,26 @@ from app.core.auth import (
     verify_refresh_token,
     get_password_hash,
     ACCESS_TOKEN_EXPIRE_MINUTES,
+    REFRESH_TOKEN_EXPIRE_DAYS,
 )
 from app.core.config import settings
 from app.models.user import User
+from app.models.refresh_token import RefreshToken
 from app.core.database import get_db
 from app.api.deps import get_current_user
 from app.core.email import send_verification_email, send_password_reset_email
 from sqlalchemy.orm import Session
 
 
-router = APIRouter(prefix="/api/auth", tags=["authentication"])
+router = APIRouter(prefix="/auth", tags=["authentication"])
+
+
+def _issue_refresh_token(user_id: int, sub: str, db: Session) -> str:
+    """Create a refresh token JWT and persist its jti to the DB for revocation support."""
+    token, jti = create_refresh_token({"sub": sub})
+    expires_at = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    db.add(RefreshToken(jti=jti, user_id=user_id, expires_at=expires_at))
+    return token
 
 
 def validate_password_strength(password: str) -> list[str]:
@@ -127,9 +137,12 @@ async def login(
         data={"sub": user.email}, expires_delta=access_token_expires
     )
 
+    refresh_token = _issue_refresh_token(user.id, user.email, db)
+    db.commit()
+
     return LoginResponse(
         access_token=access_token,
-        refresh_token=create_refresh_token({"sub": user.email}),
+        refresh_token=refresh_token,
         token_type="bearer",
         user=UserResponse(
             id=user.id,
@@ -137,8 +150,8 @@ async def login(
             first_name=user.first_name,
             last_name=user.last_name,
             is_active=user.is_active,
-            is_superuser=user.is_superuser
-        )
+            is_superuser=user.is_superuser,
+        ),
     )
 
 
@@ -209,10 +222,12 @@ async def register(
         data={"sub": new_user.email}, expires_delta=access_token_expires
     )
 
-    # In production, send verification_token via email instead of returning it
+    refresh_token = _issue_refresh_token(new_user.id, new_user.email, db)
+    db.commit()
+
     return LoginResponse(
         access_token=access_token,
-        refresh_token=create_refresh_token({"sub": new_user.email}),
+        refresh_token=refresh_token,
         token_type="bearer",
         user=UserResponse(
             id=new_user.id,
@@ -220,8 +235,8 @@ async def register(
             first_name=new_user.first_name,
             last_name=new_user.last_name,
             is_active=new_user.is_active,
-            is_superuser=new_user.is_superuser
-        )
+            is_superuser=new_user.is_superuser,
+        ),
     )
 
 
@@ -365,26 +380,58 @@ async def refresh_token(
     db: Session = Depends(get_db),
 ):
     """Exchange a valid refresh token for a new access token."""
+    _invalid = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid or expired refresh token",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
     token_data = verify_refresh_token(request_data.refresh_token)
-    if token_data is None or token_data.sub is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired refresh token",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    if token_data is None or token_data.sub is None or token_data.jti is None:
+        raise _invalid
+
+    # Validate against DB — ensures the token hasn't been revoked via /logout.
+    db_token = (
+        db.query(RefreshToken).filter(RefreshToken.jti == token_data.jti).first()
+    )
+    if db_token is None or db_token.is_revoked or db_token.is_expired:
+        raise _invalid
 
     user = db.query(User).filter(User.email == token_data.sub).first()
     if not user or not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired refresh token",
-        )
+        raise _invalid
 
     access_token = create_access_token(
         data={"sub": user.email},
         expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
     )
     return RefreshResponse(access_token=access_token, token_type="bearer")
+
+
+@router.post("/logout")
+@limiter.limit("20/minute")
+async def logout(
+    request: Request,
+    request_data: RefreshRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Revoke the supplied refresh token.
+
+    The access token (short-lived) cannot be revoked here — clients must
+    simply discard it. The refresh token's jti is marked revoked in the DB
+    so it can never be exchanged for a new access token.
+    """
+    token_data = verify_refresh_token(request_data.refresh_token)
+    if token_data is not None and token_data.jti:
+        db_token = (
+            db.query(RefreshToken).filter(RefreshToken.jti == token_data.jti).first()
+        )
+        if db_token and not db_token.is_revoked:
+            db_token.revoked_at = datetime.now(timezone.utc)
+            db.commit()
+    # Always return 200 — don't leak whether the token existed.
+    return {"message": "Logged out successfully"}
 
 
 class ActivateLicenseRequest(BaseModel):
