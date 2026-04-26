@@ -94,12 +94,13 @@ export function useDashboard() {
           ...prev,
           successMessage: `Evidence collection complete! ${result.evidence_count || 0} items collected.`,
         }));
-        // Invalidate both query keys so react-query refetches automatically.
-        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       }
     } catch (err: any) {
       setState(prev => ({ ...prev, error: err.message || 'Failed to collect evidence.' }));
     } finally {
+      // Invalidate on both success and failure — server state may have partially
+      // changed even when the mutation throws, so always sync the cache.
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       setCollectingEvidence(false);
     }
   }, [queryClient]);
@@ -115,10 +116,12 @@ export function useDashboard() {
         evaluation,
         successMessage: `Compliance evaluation complete! Score: ${evaluation.overall_score.toFixed(1)}%`,
       }));
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     } catch (err: any) {
       setState(prev => ({ ...prev, error: err.message || 'Failed to evaluate compliance.' }));
     } finally {
+      // Invalidate on both success and failure — keeps cache consistent with
+      // server state regardless of mutation outcome.
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       setEvaluating(false);
     }
   }, [queryClient]);

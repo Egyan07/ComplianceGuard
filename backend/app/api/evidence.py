@@ -29,8 +29,9 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/evidence", tags=["evidence"])
 
-# Pre-compute max bytes once so it isn't recalculated per request
+# Pre-compute max bytes and chunk size once so they aren't recalculated per request
 _MAX_UPLOAD_BYTES = settings.max_file_size_mb * 1024 * 1024
+_UPLOAD_CHUNK_BYTES = 1024 * 1024  # 1 MB read chunks for streaming uploads
 
 
 _SAFE_NAME_RE = re.compile(r"[^A-Za-z0-9._-]")
@@ -395,10 +396,9 @@ async def upload_evidence_file(
         )
 
     # Stream in 1 MB chunks — fail fast on oversized uploads.
-    _CHUNK = 1024 * 1024
     content = bytearray()
     while True:
-        chunk = await file.read(_CHUNK)
+        chunk = await file.read(_UPLOAD_CHUNK_BYTES)
         if not chunk:
             break
         content.extend(chunk)
