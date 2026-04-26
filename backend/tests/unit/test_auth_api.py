@@ -72,7 +72,7 @@ def seeded_user():
 
 def test_login_success(client, seeded_user):
     """Test successful login with valid credentials."""
-    response = client.post("/api/auth/login", data={
+    response = client.post("/api/v1/auth/login", data={
         "username": "test@example.com",
         "password": "Test@pass1",
     })
@@ -85,7 +85,7 @@ def test_login_success(client, seeded_user):
 
 def test_login_invalid_credentials(client, seeded_user):
     """Test login with invalid credentials."""
-    response = client.post("/api/auth/login", data={
+    response = client.post("/api/v1/auth/login", data={
         "username": "test@example.com",
         "password": "wrongpassword",
     })
@@ -95,7 +95,7 @@ def test_login_invalid_credentials(client, seeded_user):
 
 def test_register_success(client):
     """Test successful user registration."""
-    response = client.post("/api/auth/register", json={
+    response = client.post("/api/v1/auth/register", json={
         "email": "newuser@example.com",
         "password": "New@pass456",
         "first_name": "New",
@@ -110,7 +110,7 @@ def test_register_success(client):
 
 def test_register_existing_user(client, seeded_user):
     """Test registration with existing email."""
-    response = client.post("/api/auth/register", json={
+    response = client.post("/api/v1/auth/register", json={
         "email": "test@example.com",
         "password": "Another@1pass",
         "first_name": "Test",

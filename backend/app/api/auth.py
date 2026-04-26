@@ -44,7 +44,7 @@ from app.core.config import settings
 from app.models.user import User
 from app.models.refresh_token import RefreshToken
 from app.core.database import get_db
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, get_current_user_unverified
 from app.core.email import send_verification_email, send_password_reset_email
 from sqlalchemy.orm import Session
 
@@ -267,7 +267,7 @@ async def verify_email(
 
 @router.get("/verification-status")
 async def get_verification_status(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_unverified),
 ):
     """Check if the current user's email is verified."""
     return {"is_verified": current_user.is_verified}

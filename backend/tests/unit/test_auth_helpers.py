@@ -53,7 +53,7 @@ def client():
 @pytest.fixture
 def registered_user(client):
     """Register and return a valid user + token."""
-    res = client.post("/api/auth/register", json={
+    res = client.post("/api/v1/auth/register", json={
         "email": "valid@test.com",
         "password": "Valid@pass1",
         "first_name": "Test",
@@ -114,7 +114,7 @@ class TestValidatePasswordStrength:
 class TestRegisterEndpoint:
 
     def test_weak_password_rejected(self, client):
-        res = client.post("/api/auth/register", json={
+        res = client.post("/api/v1/auth/register", json={
             "email": "user@test.com",
             "password": "weakpass",
         })
@@ -122,21 +122,21 @@ class TestRegisterEndpoint:
         assert "Password must contain" in res.json()["detail"]
 
     def test_no_uppercase_rejected(self, client):
-        res = client.post("/api/auth/register", json={
+        res = client.post("/api/v1/auth/register", json={
             "email": "user@test.com",
             "password": "valid@pass1",
         })
         assert res.status_code == 400
 
     def test_no_special_char_rejected(self, client):
-        res = client.post("/api/auth/register", json={
+        res = client.post("/api/v1/auth/register", json={
             "email": "user@test.com",
             "password": "Validpass1",
         })
         assert res.status_code == 400
 
     def test_duplicate_email_rejected(self, client, registered_user):
-        res = client.post("/api/auth/register", json={
+        res = client.post("/api/v1/auth/register", json={
             "email": "valid@test.com",
             "password": "Valid@pass1",
         })
@@ -144,7 +144,7 @@ class TestRegisterEndpoint:
         assert "already exists" in res.json()["detail"]
 
     def test_successful_register_returns_token(self, client):
-        res = client.post("/api/auth/register", json={
+        res = client.post("/api/v1/auth/register", json={
             "email": "newuser@test.com",
             "password": "Valid@pass1",
         })
@@ -154,20 +154,20 @@ class TestRegisterEndpoint:
         assert data["token_type"] == "bearer"
 
     def test_register_user_not_verified_by_default(self, client):
-        res = client.post("/api/auth/register", json={
+        res = client.post("/api/v1/auth/register", json={
             "email": "unverified@test.com",
             "password": "Valid@pass1",
         })
         assert res.status_code == 200
         token = res.json()["access_token"]
         status = client.get(
-            "/api/auth/verification-status",
+            "/api/v1/auth/verification-status",
             headers={"Authorization": f"Bearer {token}"}
         )
         assert status.json()["is_verified"] is False
 
     def test_invalid_email_rejected(self, client):
-        res = client.post("/api/auth/register", json={
+        res = client.post("/api/v1/auth/register", json={
             "email": "not-an-email",
             "password": "Valid@pass1",
         })
@@ -179,12 +179,12 @@ class TestRegisterEndpoint:
 class TestEmailVerification:
 
     def test_invalid_token_returns_400(self, client):
-        res = client.post("/api/auth/verify-email", json={"token": "badtoken"})
+        res = client.post("/api/v1/auth/verify-email", json={"token": "badtoken"})
         assert res.status_code == 400
 
     def test_valid_token_verifies_user(self, client):
         # Register user and get verification token from DB
-        client.post("/api/auth/register", json={
+        client.post("/api/v1/auth/register", json={
             "email": "verify@test.com",
             "password": "Valid@pass1",
         })
@@ -193,12 +193,12 @@ class TestEmailVerification:
         token = user.verification_token
         db.close()
 
-        res = client.post("/api/auth/verify-email", json={"token": token})
+        res = client.post("/api/v1/auth/verify-email", json={"token": token})
         assert res.status_code == 200
         assert res.json()["message"] == "Email verified successfully"
 
     def test_token_nulled_after_verification(self, client):
-        client.post("/api/auth/register", json={
+        client.post("/api/v1/auth/register", json={
             "email": "verify2@test.com",
             "password": "Valid@pass1",
         })
@@ -207,7 +207,7 @@ class TestEmailVerification:
         token = user.verification_token
         db.close()
 
-        client.post("/api/auth/verify-email", json={"token": token})
+        client.post("/api/v1/auth/verify-email", json={"token": token})
 
         db = TestSession()
         user = db.query(User).filter(User.email == "verify2@test.com").first()
@@ -216,7 +216,7 @@ class TestEmailVerification:
         db.close()
 
     def test_reusing_token_fails(self, client):
-        client.post("/api/auth/register", json={
+        client.post("/api/v1/auth/register", json={
             "email": "verify3@test.com",
             "password": "Valid@pass1",
         })
@@ -225,8 +225,8 @@ class TestEmailVerification:
         token = user.verification_token
         db.close()
 
-        client.post("/api/auth/verify-email", json={"token": token})
-        res = client.post("/api/auth/verify-email", json={"token": token})
+        client.post("/api/v1/auth/verify-email", json={"token": token})
+        res = client.post("/api/v1/auth/verify-email", json={"token": token})
         assert res.status_code == 400
 
 
@@ -235,32 +235,32 @@ class TestEmailVerification:
 class TestPasswordReset:
 
     def test_forgot_password_always_200(self, client):
-        res = client.post("/api/auth/forgot-password", json={
+        res = client.post("/api/v1/auth/forgot-password", json={
             "email": "doesnotexist@test.com"
         })
         assert res.status_code == 200
 
     def test_forgot_password_registered_user_200(self, client, registered_user):
-        res = client.post("/api/auth/forgot-password", json={
+        res = client.post("/api/v1/auth/forgot-password", json={
             "email": "valid@test.com"
         })
         assert res.status_code == 200
 
     def test_reset_with_invalid_token_400(self, client):
-        res = client.post("/api/auth/reset-password", json={
+        res = client.post("/api/v1/auth/reset-password", json={
             "token": "invalidtoken",
             "new_password": "NewValid@1"
         })
         assert res.status_code == 400
 
     def test_reset_with_weak_password_400(self, client, registered_user):
-        client.post("/api/auth/forgot-password", json={"email": "valid@test.com"})
+        client.post("/api/v1/auth/forgot-password", json={"email": "valid@test.com"})
         db = TestSession()
         user = db.query(User).filter(User.email == "valid@test.com").first()
         token = user.reset_token
         db.close()
 
-        res = client.post("/api/auth/reset-password", json={
+        res = client.post("/api/v1/auth/reset-password", json={
             "token": token,
             "new_password": "weakpass"
         })
@@ -268,13 +268,13 @@ class TestPasswordReset:
         assert "Password must contain" in res.json()["detail"]
 
     def test_valid_reset_succeeds(self, client, registered_user):
-        client.post("/api/auth/forgot-password", json={"email": "valid@test.com"})
+        client.post("/api/v1/auth/forgot-password", json={"email": "valid@test.com"})
         db = TestSession()
         user = db.query(User).filter(User.email == "valid@test.com").first()
         token = user.reset_token
         db.close()
 
-        res = client.post("/api/auth/reset-password", json={
+        res = client.post("/api/v1/auth/reset-password", json={
             "token": token,
             "new_password": "NewValid@1pass"
         })
@@ -282,49 +282,49 @@ class TestPasswordReset:
         assert res.json()["message"] == "Password reset successfully"
 
     def test_can_login_with_new_password_after_reset(self, client, registered_user):
-        client.post("/api/auth/forgot-password", json={"email": "valid@test.com"})
+        client.post("/api/v1/auth/forgot-password", json={"email": "valid@test.com"})
         db = TestSession()
         user = db.query(User).filter(User.email == "valid@test.com").first()
         token = user.reset_token
         db.close()
 
-        client.post("/api/auth/reset-password", json={
+        client.post("/api/v1/auth/reset-password", json={
             "token": token,
             "new_password": "NewValid@1pass"
         })
 
-        login = client.post("/api/auth/login", data={
+        login = client.post("/api/v1/auth/login", data={
             "username": "valid@test.com",
             "password": "NewValid@1pass",
         })
         assert login.status_code == 200
 
     def test_old_password_fails_after_reset(self, client, registered_user):
-        client.post("/api/auth/forgot-password", json={"email": "valid@test.com"})
+        client.post("/api/v1/auth/forgot-password", json={"email": "valid@test.com"})
         db = TestSession()
         user = db.query(User).filter(User.email == "valid@test.com").first()
         token = user.reset_token
         db.close()
 
-        client.post("/api/auth/reset-password", json={
+        client.post("/api/v1/auth/reset-password", json={
             "token": token,
             "new_password": "NewValid@1pass"
         })
 
-        login = client.post("/api/auth/login", data={
+        login = client.post("/api/v1/auth/login", data={
             "username": "valid@test.com",
             "password": "Valid@pass1",
         })
         assert login.status_code == 401
 
     def test_token_cleared_after_reset(self, client, registered_user):
-        client.post("/api/auth/forgot-password", json={"email": "valid@test.com"})
+        client.post("/api/v1/auth/forgot-password", json={"email": "valid@test.com"})
         db = TestSession()
         user = db.query(User).filter(User.email == "valid@test.com").first()
         token = user.reset_token
         db.close()
 
-        client.post("/api/auth/reset-password", json={
+        client.post("/api/v1/auth/reset-password", json={
             "token": token,
             "new_password": "NewValid@1pass"
         })
@@ -342,16 +342,19 @@ from app.core.auth import create_refresh_token, verify_refresh_token
 
 
 def test_create_refresh_token_returns_string():
-    token = create_refresh_token({"sub": "user@example.com"})
+    token, jti = create_refresh_token({"sub": "user@example.com"})
     assert isinstance(token, str)
+    assert isinstance(jti, str)
     assert len(token) > 20
+    assert len(jti) == 64  # 32 bytes hex
 
 
 def test_verify_refresh_token_valid():
-    token = create_refresh_token({"sub": "user@example.com"})
+    token, jti = create_refresh_token({"sub": "user@example.com"})
     result = verify_refresh_token(token)
     assert result is not None
     assert result.sub == "user@example.com"
+    assert result.jti == jti
 
 
 def test_verify_refresh_token_rejects_access_token():

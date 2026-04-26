@@ -46,23 +46,39 @@ def client():
     return TestClient(app)
 
 
-@pytest.fixture
-def auth_token(client):
-    """Register a user and return an auth token."""
-    res = client.post("/api/auth/register", json={
-        "email": "integration@test.com",
-        "password": "Test@pass1",
-        "first_name": "Integration",
-        "last_name": "Test",
+def _register_and_verify(client, email: str, password: str, **extra) -> str:
+    """Register a user, verify their email via DB, and return the access token."""
+    from app.models.user import User as UserModel
+    res = client.post("/api/v1/auth/register", json={
+        "email": email, "password": password, **extra,
     })
     assert res.status_code == 200
-    return res.json()["access_token"]
+    token = res.json()["access_token"]
+
+    # Directly mark the user verified in the test DB (no real email delivery).
+    db = TestSession()
+    user = db.query(UserModel).filter(UserModel.email == email).first()
+    v_token = user.verification_token
+    db.close()
+    if v_token:
+        client.post("/api/v1/auth/verify-email", json={"token": v_token})
+
+    return token
+
+
+@pytest.fixture
+def auth_token(client):
+    """Register+verify a user and return an auth token."""
+    return _register_and_verify(
+        client, "integration@test.com", "Test@pass1",
+        first_name="Integration", last_name="Test",
+    )
 
 
 class TestAuthFlow:
     def test_register_and_login(self, client):
         # Register
-        res = client.post("/api/auth/register", json={
+        res = client.post("/api/v1/auth/register", json={
             "email": "newuser@test.com",
             "password": "Secure@1pass",
             "first_name": "New",
@@ -74,7 +90,7 @@ class TestAuthFlow:
         assert "access_token" in data
 
         # Login with same credentials
-        res = client.post("/api/auth/login", data={
+        res = client.post("/api/v1/auth/login", data={
             "username": "newuser@test.com",
             "password": "Secure@1pass",
         })
@@ -82,14 +98,14 @@ class TestAuthFlow:
         assert "access_token" in res.json()
 
     def test_login_wrong_password(self, client, auth_token):
-        res = client.post("/api/auth/login", data={
+        res = client.post("/api/v1/auth/login", data={
             "username": "integration@test.com",
             "password": "wrongpassword",
         })
         assert res.status_code == 401
 
     def test_weak_password_rejected(self, client):
-        res = client.post("/api/auth/register", json={
+        res = client.post("/api/v1/auth/register", json={
             "email": "weak@test.com",
             "password": "short",
             "first_name": "Weak",
@@ -100,7 +116,7 @@ class TestAuthFlow:
 
     def test_email_verification_flow(self, client):
         # Register
-        res = client.post("/api/auth/register", json={
+        res = client.post("/api/v1/auth/register", json={
             "email": "verify@test.com",
             "password": "Verify@1pass",
             "first_name": "Verify",
@@ -110,7 +126,7 @@ class TestAuthFlow:
         token = res.json()["access_token"]
 
         # Check not verified yet
-        res = client.get("/api/auth/verification-status", headers={
+        res = client.get("/api/v1/auth/verification-status", headers={
             "Authorization": f"Bearer {token}",
         })
         assert res.status_code == 200
@@ -124,23 +140,23 @@ class TestAuthFlow:
         db.close()
 
         # Verify
-        res = client.post("/api/auth/verify-email", json={"token": v_token})
+        res = client.post("/api/v1/auth/verify-email", json={"token": v_token})
         assert res.status_code == 200
         assert res.json()["message"] == "Email verified successfully"
 
         # Check verified now
-        res = client.get("/api/auth/verification-status", headers={
+        res = client.get("/api/v1/auth/verification-status", headers={
             "Authorization": f"Bearer {token}",
         })
         assert res.json()["is_verified"] is True
 
     def test_invalid_verification_token(self, client):
-        res = client.post("/api/auth/verify-email", json={"token": "bogus-token"})
+        res = client.post("/api/v1/auth/verify-email", json={"token": "bogus-token"})
         assert res.status_code == 400
 
     def test_password_reset_flow(self, client):
         # Register a user first
-        client.post("/api/auth/register", json={
+        client.post("/api/v1/auth/register", json={
             "email": "reset@test.com",
             "password": "Reset@1pass",
             "first_name": "Reset",
@@ -148,7 +164,7 @@ class TestAuthFlow:
         })
 
         # Request reset
-        res = client.post("/api/auth/forgot-password", json={"email": "reset@test.com"})
+        res = client.post("/api/v1/auth/forgot-password", json={"email": "reset@test.com"})
         assert res.status_code == 200
 
         # Get token from DB
@@ -159,7 +175,7 @@ class TestAuthFlow:
         db.close()
 
         # Reset password
-        res = client.post("/api/auth/reset-password", json={
+        res = client.post("/api/v1/auth/reset-password", json={
             "token": reset_tok,
             "new_password": "NewReset@1pass",
         })
@@ -167,14 +183,14 @@ class TestAuthFlow:
         assert res.json()["message"] == "Password reset successfully"
 
         # Login with new password
-        res = client.post("/api/auth/login", data={
+        res = client.post("/api/v1/auth/login", data={
             "username": "reset@test.com",
             "password": "NewReset@1pass",
         })
         assert res.status_code == 200
 
     def test_invalid_reset_token(self, client):
-        res = client.post("/api/auth/reset-password", json={
+        res = client.post("/api/v1/auth/reset-password", json={
             "token": "bogus",
             "new_password": "New@1pass",
         })
@@ -182,11 +198,11 @@ class TestAuthFlow:
 
     def test_forgot_password_nonexistent_email(self, client):
         # Should still return 200 to avoid leaking user existence
-        res = client.post("/api/auth/forgot-password", json={"email": "nobody@test.com"})
+        res = client.post("/api/v1/auth/forgot-password", json={"email": "nobody@test.com"})
         assert res.status_code == 200
 
     def test_duplicate_registration(self, client, auth_token):
-        res = client.post("/api/auth/register", json={
+        res = client.post("/api/v1/auth/register", json={
             "email": "integration@test.com",
             "password": "Another@1pass",
             "first_name": "Dup",
@@ -293,19 +309,12 @@ class TestIDORProtection:
     """
 
     def _register_pro_user(self, client, email: str) -> str:
-        """Register a user, upgrade them to Pro in the DB, and return their token."""
-        res = client.post("/api/auth/register", json={
-            "email": email,
-            "password": "ProUser@1pass",
-            "first_name": "Pro",
-            "last_name": "User",
-        })
-        assert res.status_code == 200
-        token = res.json()["access_token"]
-
-        # Promote to Pro directly in the test DB so we can hit Pro endpoints.
+        """Register+verify a user, upgrade to Pro, and return their token."""
         from app.models.user import User
-        db = next(override_get_db())
+        token = _register_and_verify(client, email, "ProUser@1pass", first_name="Pro", last_name="User")
+
+        # Promote to Pro directly in the test DB.
+        db = TestSession()
         user = db.query(User).filter(User.email == email).first()
         user.license_tier = "pro"
         db.commit()

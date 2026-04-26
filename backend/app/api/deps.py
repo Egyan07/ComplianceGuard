@@ -15,43 +15,52 @@ from app.models.user import User
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 
-async def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db),
-) -> User:
-    """
-    Validate JWT token and return the authenticated user.
-
-    Raises:
-        HTTPException 401: If the token is invalid or the user doesn't exist.
-    """
+def _resolve_user(token: str, db: Session) -> User:
+    """Resolve a JWT to a User, raising 401/403 on failure."""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid or expired token",
         headers={"WWW-Authenticate": "Bearer"},
     )
-
     token_data = verify_access_token(token)
     if token_data is None or token_data.sub is None:
         raise credentials_exception
-
     user = db.query(User).filter(User.email == token_data.sub).first()
     if user is None:
         raise credentials_exception
-
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Inactive user account",
         )
+    return user
 
+
+async def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db),
+) -> User:
+    """Validate JWT and return the authenticated, verified user."""
+    user = _resolve_user(token, db)
     if user.is_verified is False:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Email address not verified. Check your inbox for a verification link.",
         )
-
     return user
+
+
+async def get_current_user_unverified(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db),
+) -> User:
+    """
+    Like get_current_user but does NOT enforce email verification.
+
+    Use only for endpoints that are part of the verification flow itself
+    (e.g. GET /verification-status, POST /resend-verification).
+    """
+    return _resolve_user(token, db)
 
 
 async def require_pro(current_user: User = Depends(get_current_user)) -> User:
