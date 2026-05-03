@@ -303,12 +303,22 @@ async def get_evidence_items(
     db: Session = Depends(get_db),
     limit: int = 50,
     offset: int = 0,
+    status: Optional[str] = None,
+    search: Optional[str] = None,
 ):
-    """Get all evidence items for the current user."""
-    items = (
+    """Get evidence items with optional status and search filters."""
+    query = (
         db.query(EvidenceItem)
         .join(EvidenceCollection)
         .filter(EvidenceCollection.user_id == current_user.id)
+    )
+    if status:
+        query = query.filter(EvidenceItem.status == status)
+    if search:
+        query = query.filter(EvidenceItem.evidence_type.ilike(f"%{search}%"))
+
+    items = (
+        query
         .order_by(EvidenceItem.created_at.desc())
         .offset(offset)
         .limit(limit)

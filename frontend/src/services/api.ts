@@ -245,8 +245,12 @@ export const getEvidenceSummary = async (): Promise<EvidenceSummary> => {
   return httpGetEvidenceSummary();
 };
 
-async function httpGetEvidenceItems(): Promise<EvidenceItem[]> {
-  const response = await apiClient.get('/evidence/items');
+async function httpGetEvidenceItems(status?: string, search?: string): Promise<EvidenceItem[]> {
+  const params = new URLSearchParams();
+  if (status) params.set('status', status);
+  if (search) params.set('search', search);
+  const qs = params.toString();
+  const response = await apiClient.get(`/evidence/items${qs ? '?' + qs : ''}`);
   return (response.data as any[]).map((item: any) => ({
     id: String(item.id),
     type: item.evidence_type,
@@ -257,9 +261,9 @@ async function httpGetEvidenceItems(): Promise<EvidenceItem[]> {
   }));
 }
 
-export const getEvidenceItems = async (): Promise<EvidenceItem[]> => {
+export const getEvidenceItems = async (status?: string, search?: string): Promise<EvidenceItem[]> => {
   if (isElectron) return electronGetEvidenceItems();
-  return httpGetEvidenceItems();
+  return httpGetEvidenceItems(status, search);
 };
 
 export const collectEvidence = async (
