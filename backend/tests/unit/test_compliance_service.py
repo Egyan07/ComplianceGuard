@@ -6,7 +6,7 @@ compliance level, recommendations, risk assessment, and helpers.
 """
 
 import pytest
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any
 
 from app.core.soc2_controls import create_soc2_framework
@@ -235,17 +235,17 @@ class TestNextReviewDate:
     def test_high_score_review_in_365_days(self, service):
         from datetime import timedelta
         date = service._calculate_next_review(0.95)
-        diff = (date - datetime.now()).days
+        diff = (date - datetime.now(timezone.utc)).days
         assert 360 <= diff <= 370
 
     def test_medium_score_review_in_180_days(self, service):
         date = service._calculate_next_review(0.75)
-        diff = (date - datetime.now()).days
+        diff = (date - datetime.now(timezone.utc)).days
         assert 175 <= diff <= 185
 
     def test_low_score_review_in_90_days(self, service):
         date = service._calculate_next_review(0.4)
-        diff = (date - datetime.now()).days
+        diff = (date - datetime.now(timezone.utc)).days
         assert 85 <= diff <= 95
 
 
