@@ -84,7 +84,7 @@ apiClient.interceptors.response.use(
 
       try {
         const refreshRes = await axios.post(
-          `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/auth/refresh`,
+          `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/v1/auth/refresh`,
           { refresh_token: storedRefresh },
         );
         const newAccessToken: string = refreshRes.data.access_token;
@@ -245,9 +245,21 @@ export const getEvidenceSummary = async (): Promise<EvidenceSummary> => {
   return httpGetEvidenceSummary();
 };
 
+async function httpGetEvidenceItems(): Promise<EvidenceItem[]> {
+  const response = await apiClient.get('/evidence/items');
+  return (response.data as any[]).map((item: any) => ({
+    id: String(item.id),
+    type: item.evidence_type,
+    status: item.status,
+    data: item.data || {},
+    timestamp: item.created_at,
+    source: item.source,
+  }));
+}
+
 export const getEvidenceItems = async (): Promise<EvidenceItem[]> => {
   if (isElectron) return electronGetEvidenceItems();
-  return getMockEvidenceItems(); // Web mode falls back to mock for now
+  return httpGetEvidenceItems();
 };
 
 export const collectEvidence = async (
@@ -322,7 +334,7 @@ export async function getLicenseInfoHttp(): Promise<any> {
   const token = localStorage.getItem('auth_token');
   if (!token) return { tier: 'free' };
   const base = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/api\/v1$/, '');
-  const url = `${base}/api/auth/license-info`;
+  const url = `${base}/api/v1/auth/license-info`;
   const res = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
   return res.data;
 }
@@ -331,7 +343,7 @@ export async function activateLicenseHttp(licenseKey: string): Promise<any> {
   const token = localStorage.getItem('auth_token');
   if (!token) throw new Error('Not authenticated');
   const base = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/api\/v1$/, '');
-  const url = `${base}/api/auth/activate-license`;
+  const url = `${base}/api/v1/auth/activate-license`;
   const res = await axios.post(
     url,
     { license_key: licenseKey },

@@ -71,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     form.append('username', email);
     form.append('password', password);
 
-    const res = await axios.post(`${API_BASE}/api/auth/login`, form, {
+    const res = await axios.post(`${API_BASE}/api/v1/auth/login`, form, {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
 
@@ -85,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     firstName: string,
     lastName: string,
   ) => {
-    const res = await axios.post(`${API_BASE}/api/auth/register`, {
+    const res = await axios.post(`${API_BASE}/api/v1/auth/register`, {
       email,
       password,
       first_name: firstName,

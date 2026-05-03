@@ -29,7 +29,7 @@ async function cloudConnect(database, serverUrl, email, password) {
     const form = new URLSearchParams();
     form.set('username', email);
     form.set('password', password);
-    const res = await fetch(`${url}/api/auth/login`, {
+    const res = await fetch(`${url}/api/v1/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: form.toString(),
@@ -117,7 +117,7 @@ async function _postSync(serverUrl, accessToken, payload) {
 
 async function _refreshAccessToken(serverUrl, refreshToken) {
   try {
-    const res = await fetch(`${serverUrl}/api/auth/refresh`, {
+    const res = await fetch(`${serverUrl}/api/v1/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refresh_token: refreshToken }),

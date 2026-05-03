@@ -43,6 +43,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import LoginPage from './components/LoginPage';
 import { LicenseProvider, useLicense } from './contexts/LicenseContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { VERSION } from './constants';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
@@ -191,7 +192,7 @@ function AppContent() {
       <Paper square elevation={0} sx={{ py: 1.5, px: 3, backgroundColor: '#F8FAFC', borderTop: '1px solid', borderColor: 'divider' }}>
         <Container maxWidth="xl">
           <Typography variant="body2" align="center" sx={{ color: '#9CA3AF', fontSize: '0.75rem' }}>
-            ComplianceGuard v3.0.0 — Collect. Evaluate. Comply.
+            ComplianceGuard v{VERSION} — Collect. Evaluate. Comply.
           </Typography>
         </Container>
       </Paper>

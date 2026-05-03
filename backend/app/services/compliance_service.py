@@ -7,7 +7,7 @@ including scoring, assessment, and reporting capabilities.
 
 from collections import OrderedDict
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -133,7 +133,7 @@ class ComplianceService:
             compliance_status=compliance_status,
             compliance_level=compliance_level,
             control_assessments=control_assessments,
-            evaluation_date=datetime.now(),
+            evaluation_date=datetime.now(timezone.utc),
             evaluated_by=evaluated_by,
             scope=scope or [control.category.value for control in self.framework.get_all_controls()],
             evidence_summary=self._generate_evidence_summary(control_assessments),
@@ -162,7 +162,7 @@ class ComplianceService:
                 evidence_required=[req.id for req in control.evidence_mapping],
                 gaps=["No evidence provided"],
                 recommendations=["Provide required evidence for assessment"],
-                assessed_date=datetime.now(),
+                assessed_date=datetime.now(timezone.utc),
                 assessed_by=assessed_by
             )
 
@@ -201,7 +201,7 @@ class ComplianceService:
             evidence_required=[req.id for req in control.evidence_mapping],
             gaps=gaps,
             recommendations=recommendations,
-            assessed_date=datetime.now(),
+            assessed_date=datetime.now(timezone.utc),
             assessed_by=assessed_by
         )
 
@@ -330,7 +330,7 @@ class ComplianceService:
             # Low compliance - review quarterly
             days = 90
 
-        return datetime.now() + timedelta(days=days)
+        return datetime.now(timezone.utc) + timedelta(days=days)
 
     def get_evaluation_history(self) -> List[ComplianceEvaluation]:
         """Get list of all evaluations performed."""
