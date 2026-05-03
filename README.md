@@ -6,7 +6,7 @@
   <a href="#quick-start"><img src="https://img.shields.io/badge/version-3.1.0-2563EB" alt="Version"></a>
   <img src="https://img.shields.io/badge/license-BSL%201.1-orange" alt="License">
   <a href="#soc-2-controls"><img src="https://img.shields.io/badge/SOC%202-29%20controls-10B981" alt="Controls"></a>
-  <img src="https://img.shields.io/badge/tests-333%20passing-10B981?logo=pytest&logoColor=white" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-355%20passing-10B981?logo=pytest&logoColor=white" alt="Tests">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
   <a href="https://github.com/Egyan07/ComplianceGuard/actions"><img src="https://img.shields.io/github/actions/workflow/status/Egyan07/ComplianceGuard/ci.yml?label=CI&logo=githubactions&logoColor=white" alt="CI"></a>
 </p>
@@ -495,7 +495,7 @@ python -m pytest tests/integration/ -v
 python -m pytest tests/e2e/ -v --run-e2e
 ```
 
-CI runs all tests on every push via GitHub Actions. **333 tests passing** — backend: 209 (175 unit + 26 integration + 8 e2e), frontend: 119 Vitest unit, e2e: 5 Playwright.
+CI runs all tests on every push via GitHub Actions. **355 tests passing** — backend: 231 (197 unit + 26 integration + 8 e2e), frontend: 119 Vitest unit, e2e: 5 Playwright.
 
 ## Troubleshooting
 
@@ -560,22 +560,24 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 | Done | Up Next |
 |------|---------|
 | Evidence collection (8 categories) | Scheduled automatic collection |
-| 29 SOC 2 controls with weighted scoring | HIPAA framework |
-| PDF reports + evaluation history | macOS and Linux support |
-| Free / Pro / Enterprise licensing (Ed25519) | GCP and Azure cloud evidence |
-| JWT auth + refresh tokens + login UI | Air-gapped Enterprise tier |
-| FastAPI + PostgreSQL + Docker + Nginx | Setup video walkthrough |
+| 29 SOC 2 controls with weighted scoring | macOS and Linux support |
+| PDF reports + evaluation history | GCP and Azure cloud evidence |
+| Free / Pro / Enterprise licensing (Ed25519) | Air-gapped Enterprise tier |
+| JWT auth + refresh tokens + login UI | Setup video walkthrough |
+| FastAPI + PostgreSQL + Docker + Nginx | Scheduled automatic collection |
 | Cloud sync + multi-machine dashboard | |
 | Email delivery (verification + reset) | |
 | Web mode license enforcement (Ed25519) | |
 | Sentry error monitoring (backend + frontend) | |
 | Self-hosted + Managed hosting options | |
 | ISO 27001:2013 framework (47 controls, read-only API) | |
+| HIPAA Security Rule framework (47 safeguards, read-only API) | |
 | One-click Railway deploy (`railway.toml`) | |
 | Evidence search + status filter (`GET /evidence/items`) | |
+| Evidence-to-control mapping (`GET /evidence/items/{id}/controls`) | |
 | Web-mode compliance evaluation (`POST /evaluate-from-evidence`) | |
-| `GET /auth/me` + resend verification email endpoint | |
-| CI/CD with 333 tests (209 backend + 119 frontend + 5 e2e) | |
+| `GET /auth/me`, resend verification, profile update, account deletion | |
+| CI/CD with 355 tests (231 backend + 119 frontend + 5 e2e) | |
 | Alembic migrations + rate limiting | |
 
 ## License

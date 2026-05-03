@@ -8,16 +8,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-Six additive features. No breaking changes, no schema migrations.
+Ten additive features across two development sessions. No breaking changes, no schema migrations.
 
 ### Added
 - **`GET /api/v1/auth/me`** — Returns the authenticated user's profile. Useful for frontends that need to re-hydrate user state without re-logging in.
 - **`POST /api/v1/auth/resend-verification`** — Issues a fresh email verification token and re-sends the verification email. Rate-limited to 3/minute. Returns 400 if the email is already verified.
+- **`PATCH /api/v1/auth/profile`** — Update `first_name` and/or `last_name`. Only provided (non-None) fields are written. Rate-limited to 10/minute. Returns `UserResponse`.
+- **`DELETE /api/v1/auth/account`** — Permanently hard-deletes the authenticated user's account and all associated data (GDPR Article 17). Requires password confirmation. Cascades through control assessments → evaluations → evidence → machines → AWS credentials → refresh tokens → user in FK-safe order. Rate-limited to 3/minute.
 - **Evidence search and status filter** — `GET /api/v1/evidence/items` now accepts optional `?status=` (exact match) and `?search=` (case-insensitive substring on `evidence_type`) query params. Frontend `getEvidenceItems(status?, search?)` forwards the params automatically.
-- **Web-mode compliance evaluation** — New `POST /api/v1/compliance/evaluate-from-evidence` endpoint auto-builds scored evidence data from the authenticated user's stored evidence items via a built-in `_EVIDENCE_CONTROL_MAP` (14 evidence types → SOC 2 control IDs), runs the standard evaluation, and persists the result. Frontend `evaluateComplianceWeb()` calls this endpoint; `useDashboard.handleEvaluateCompliance` now works in both Electron and web mode.
-- **ISO 27001:2013 framework** — `backend/app/core/iso27001_controls.yaml` (47 controls across all 14 Annex A domains, A.5–A.18) + `ISO27001Framework` Python loader + read-only API router at `/api/v1/iso27001` (summary, controls list, search, by-category, by-id, health). No evaluate endpoint — scoring is out of scope for this release.
-- **Railway one-click deploy** — `railway.toml` added at repo root (Dockerfile builder, `/health` healthcheck, production env vars). README deploy button now links to the template URL.
-- 23 new backend tests (175 unit + 26 integration + 8 e2e = 209 total backend). Frontend unchanged at 119 Vitest + 5 Playwright. Grand total: **333 tests**.
+- **`GET /api/v1/evidence/items/{id}/controls`** — Returns the SOC 2 controls an evidence item contributes to, with base scores, using the shared `EVIDENCE_CONTROL_MAP`. Returns `{}` for unmapped types (e.g. `manual_upload`).
+- **Web-mode compliance evaluation** — New `POST /api/v1/compliance/evaluate-from-evidence` endpoint auto-builds scored evidence data from the user's stored evidence items via `EVIDENCE_CONTROL_MAP`, runs the standard evaluation, and persists the result. Frontend `evaluateComplianceWeb()` calls this endpoint; `useDashboard.handleEvaluateCompliance` now works in both Electron and web mode.
+- **ISO 27001:2013 framework** — `iso27001_controls.yaml` (47 controls, all 14 Annex A domains A.5–A.18) + `ISO27001Framework` loader + read-only API at `/api/v1/iso27001`.
+- **HIPAA Security Rule framework** — `hipaa_controls.yaml` (47 safeguards, all five 45 CFR Part 164 sections: 164.308–164.316) + `HIPAAFramework` loader + read-only API at `/api/v1/hipaa`. Includes `specification_type` (required/addressable) in every control.
+- **Railway one-click deploy** — `railway.toml` at repo root. README deploy button points to the template URL.
+- **`EVIDENCE_CONTROL_MAP` extracted** to `backend/app/core/evidence_mapping.py` — shared by both `compliance.py` and `evidence.py` without circular imports.
+- 22 new backend tests. Total: **231 backend** (197 unit + 26 integration + 8 e2e) + 119 frontend Vitest + 5 Playwright = **355 total**.
 
 ---
 
