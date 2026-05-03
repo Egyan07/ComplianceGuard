@@ -205,7 +205,7 @@ describe('AuthContext', () => {
       });
 
       const callUrl = (axios.default.post as any).mock.calls[0][0];
-      expect(callUrl).toContain('/api/auth/login');
+      expect(callUrl).toContain('/api/v1/auth/login');
     });
   });
 
@@ -274,7 +274,7 @@ describe('AuthContext', () => {
       });
 
       const callUrl = (axios.default.post as any).mock.calls[0][0];
-      expect(callUrl).toContain('/api/auth/register');
+      expect(callUrl).toContain('/api/v1/auth/register');
     });
 
     it('sends first and last name in register payload', async () => {
