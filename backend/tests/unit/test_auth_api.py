@@ -219,3 +219,36 @@ def test_patch_profile_partial_update(client, verified_user_token):
 def test_patch_profile_unauthorized(client):
     resp = client.patch("/api/v1/auth/profile", json={"first_name": "X"})
     assert resp.status_code == 401
+
+
+def test_delete_account_wrong_password(client, verified_user_token):
+    resp = client.request(
+        "DELETE",
+        "/api/v1/auth/account",
+        json={"password": "WrongPassword!1"},
+        headers={"Authorization": f"Bearer {verified_user_token}"},
+    )
+    assert resp.status_code == 400
+    assert "incorrect" in resp.json()["detail"].lower()
+
+
+def test_delete_account_success(client, verified_user_token):
+    resp = client.request(
+        "DELETE",
+        "/api/v1/auth/account",
+        json={"password": "Me@pass123"},
+        headers={"Authorization": f"Bearer {verified_user_token}"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["message"] == "Account deleted"
+
+    login = client.post("/api/v1/auth/login", data={
+        "username": "me@example.com",
+        "password": "Me@pass123",
+    })
+    assert login.status_code == 401
+
+
+def test_delete_account_unauthorized(client):
+    resp = client.request("DELETE", "/api/v1/auth/account", json={"password": "anything"})
+    assert resp.status_code == 401

@@ -37,6 +37,7 @@ from app.core.auth import (
     create_refresh_token,
     verify_refresh_token,
     get_password_hash,
+    verify_password,
     ACCESS_TOKEN_EXPIRE_MINUTES,
     REFRESH_TOKEN_EXPIRE_DAYS,
 )
@@ -578,3 +579,70 @@ async def update_profile(
     db.commit()
     db.refresh(current_user)
     return current_user
+
+
+class DeleteAccountRequest(BaseModel):
+    """Password confirmation required to prevent accidental deletion."""
+    password: str
+
+
+@router.delete("/account")
+@limiter.limit("3/minute")
+async def delete_account(
+    request: Request,
+    request_data: DeleteAccountRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Permanently delete the authenticated user's account and all associated data.
+
+    Requires password confirmation (GDPR Article 17). Deletion order respects FK
+    constraints: control assessments -> evaluations -> evidence (cascades) ->
+    evidence collections -> machines -> AWS credentials -> refresh tokens -> user.
+    """
+    if not verify_password(request_data.password, current_user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Incorrect password",
+        )
+
+    from app.models.evaluation import ComplianceEvaluationRecord, ControlAssessmentRecord
+    from app.models.evidence import EvidenceCollection
+    from app.models.machine import Machine
+    from app.models.aws_credential import AwsCredential
+
+    user_id = current_user.id
+
+    eval_ids = [
+        row.id for row in db.query(ComplianceEvaluationRecord.id)
+        .filter(ComplianceEvaluationRecord.user_id == user_id)
+        .all()
+    ]
+    if eval_ids:
+        db.query(ControlAssessmentRecord).filter(
+            ControlAssessmentRecord.evaluation_id.in_(eval_ids)
+        ).delete(synchronize_session=False)
+
+    db.query(ComplianceEvaluationRecord).filter(
+        ComplianceEvaluationRecord.user_id == user_id
+    ).delete(synchronize_session=False)
+
+    db.query(EvidenceCollection).filter(
+        EvidenceCollection.user_id == user_id
+    ).delete(synchronize_session=False)
+
+    db.query(Machine).filter(Machine.user_id == user_id).delete(synchronize_session=False)
+
+    db.query(AwsCredential).filter(
+        AwsCredential.user_id == user_id
+    ).delete(synchronize_session=False)
+
+    db.query(RefreshToken).filter(
+        RefreshToken.user_id == user_id
+    ).delete(synchronize_session=False)
+
+    db.delete(current_user)
+    db.commit()
+
+    return {"message": "Account deleted"}
