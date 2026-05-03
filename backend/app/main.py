@@ -26,6 +26,7 @@ from slowapi.errors import RateLimitExceeded
 from app.api.auth import router as auth_router
 from app.api.aws_credentials import router as aws_credentials_router
 from app.api.iso27001 import router as iso27001_router
+from app.api.hipaa import router as hipaa_router
 from app.api.compliance import router as compliance_router
 from app.api.evidence import router as evidence_router
 from app.api.machines import router as machines_router
@@ -166,6 +167,7 @@ app.include_router(compliance_router, prefix="/api/v1")
 app.include_router(machines_router, prefix="/api/v1")
 app.include_router(aws_credentials_router, prefix="/api/v1")
 app.include_router(iso27001_router, prefix="/api/v1")
+app.include_router(hipaa_router, prefix="/api/v1")
 
 @app.get("/health")
 async def health_check() -> Dict[str, Any]:
