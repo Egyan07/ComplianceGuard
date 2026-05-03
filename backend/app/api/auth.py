@@ -554,3 +554,27 @@ async def resend_verification(
             "Failed to resend verification email to %s", current_user.email, exc_info=True
         )
     return {"message": "Verification email sent"}
+
+
+class ProfileUpdateRequest(BaseModel):
+    """Schema for profile update. Only provided fields are written."""
+    first_name: str | None = None
+    last_name: str | None = None
+
+
+@router.patch("/profile", response_model=UserResponse)
+@limiter.limit("10/minute")
+async def update_profile(
+    request: Request,
+    request_data: ProfileUpdateRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Update the authenticated user's first and/or last name."""
+    if request_data.first_name is not None:
+        current_user.first_name = request_data.first_name
+    if request_data.last_name is not None:
+        current_user.last_name = request_data.last_name
+    db.commit()
+    db.refresh(current_user)
+    return current_user

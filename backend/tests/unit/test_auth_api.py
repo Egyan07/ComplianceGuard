@@ -189,3 +189,33 @@ def test_resend_verification_already_verified(client, verified_user_token):
     )
     assert resp.status_code == 400
     assert "already verified" in resp.json()["detail"]
+
+
+def test_patch_profile_updates_name(client, verified_user_token):
+    resp = client.patch(
+        "/api/v1/auth/profile",
+        json={"first_name": "Bob", "last_name": "Jones"},
+        headers={"Authorization": f"Bearer {verified_user_token}"},
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["first_name"] == "Bob"
+    assert data["last_name"] == "Jones"
+    assert data["email"] == "me@example.com"
+
+
+def test_patch_profile_partial_update(client, verified_user_token):
+    resp = client.patch(
+        "/api/v1/auth/profile",
+        json={"first_name": "Charlie"},
+        headers={"Authorization": f"Bearer {verified_user_token}"},
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["first_name"] == "Charlie"
+    assert data["last_name"] == "Smith"
+
+
+def test_patch_profile_unauthorized(client):
+    resp = client.patch("/api/v1/auth/profile", json={"first_name": "X"})
+    assert resp.status_code == 401
