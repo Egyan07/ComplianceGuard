@@ -16,6 +16,8 @@ Compliance tools like Vanta, Drata, and Sprinto scan your cloud infrastructure. 
 
 ComplianceGuard lives on the endpoint too. It collects evidence directly from Windows, scores it against 29 SOC 2 Type II controls, and tells you exactly where the gaps are. The web API also supports ISO 27001:2013 and HIPAA Security Rule frameworks. Run it as a desktop app or deploy the web version with Docker — everything stays under your control.
 
+How it works: the desktop app collects OS-level evidence → maps it to compliance controls → scores your readiness → optionally syncs to a multi-machine cloud dashboard.
+
 ```
                     ┌─────────────┐
   Windows OS ──────>│ Collect     │──────> SQLite / PostgreSQL
@@ -33,6 +35,38 @@ ComplianceGuard lives on the endpoint too. It collects evidence directly from Wi
                    │ Report      │──────> PDF / Dashboard
                    └─────────────┘
 ```
+
+## Demo
+
+<video src="https://github.com/user-attachments/assets/ae1dfc02-fac4-4c9e-9736-9cd7b96b22af" controls width="100%"></video>
+
+_A walkthrough of ComplianceGuard in action — collecting endpoint evidence, uploading manual documents, evaluating compliance against SOC 2 controls, exporting a PDF report, and managing a Pro license from Settings._
+
+## Screenshots
+
+### Dashboard
+
+![ComplianceGuard Dashboard](assets/screenshots/Dashboard.png)
+
+The dashboard shows your real-time compliance score, per-category breakdowns, and one-click access to collect evidence, run an evaluation, upload manual evidence, and export a PDF report.
+
+### Evidence List
+
+![Evidence List](assets/screenshots/EvidenceCollection.png)
+
+All collected evidence items in one place — searchable and filterable by status and source. Each item shows its compliance status, collection date, and can be expanded for full details.
+
+## Who Is This For?
+
+- Security and IT teams preparing for SOC 2, ISO 27001, or HIPAA audits
+- Companies that need endpoint-level evidence, not just cloud infrastructure scanning
+- Teams requiring self-hosting, air-gapped deployment, or strict data residency
+
+## Not a Good Fit If
+
+- You only need cloud compliance — [Vanta](https://www.vanta.com/) or [Drata](https://drata.com/) cover that better
+- Your endpoints run macOS or Linux (Windows only for now — cross-platform is on the roadmap)
+- You want a fully managed SaaS with zero self-hosting involvement
 
 ## Choose Your Privacy Level
 
@@ -55,26 +89,6 @@ Contact us to set up a hosted instance. Install the desktop app on your machines
 > Either way — the endpoint evidence collected from your Windows machines never leaves your local machine until you explicitly choose to sync it to the dashboard.
 
 ---
-
-## Demo
-
-<video src="https://github.com/user-attachments/assets/ae1dfc02-fac4-4c9e-9736-9cd7b96b22af" controls width="100%"></video>
-
-_A walkthrough of ComplianceGuard in action — collecting endpoint evidence, uploading manual documents, evaluating compliance against SOC 2 controls, exporting a PDF report, and managing a Pro license from Settings._
-
-## Screenshots
-
-### Dashboard
-
-![ComplianceGuard Dashboard](assets/screenshots/Dashboard.png)
-
-The dashboard shows your real-time compliance score, per-category breakdowns, and one-click access to collect evidence, run an evaluation, upload manual evidence, and export a PDF report.
-
-### Evidence List
-
-![Evidence List](assets/screenshots/EvidenceCollection.png)
-
-All collected evidence items in one place — searchable and filterable by status and source. Each item shows its compliance status, collection date, and can be expanded for full details.
 
 ## Quick Start
 
@@ -432,7 +446,7 @@ Free gets you hooked. Pro makes you audit-ready.
 
 License keys use Ed25519 cryptographic signatures — verified offline, no license server required.
 
-## Who Is This For?
+## Target Industries
 
 | Organisation Type | Recommended Option | Why |
 |---|---|---|
