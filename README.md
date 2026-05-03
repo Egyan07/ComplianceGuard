@@ -125,7 +125,7 @@ App at `http://localhost` (nginx proxy), API docs at `http://localhost:8000/docs
 
 One-click Railway deploy:
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app)
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.com/new/template?template=https://github.com/Egyan07/ComplianceGuard)
 
 </details>
 
