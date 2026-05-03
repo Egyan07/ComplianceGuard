@@ -530,3 +530,27 @@ async def get_me(
 ):
     """Return the authenticated user's profile."""
     return current_user
+
+
+@router.post("/resend-verification")
+@limiter.limit("3/minute")
+async def resend_verification(
+    request: Request,
+    current_user: User = Depends(get_current_user_unverified),
+    db: Session = Depends(get_db),
+):
+    """Issue a fresh verification token and re-send the verification email."""
+    if current_user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already verified",
+        )
+    current_user.verification_token = secrets.token_urlsafe(32)
+    db.commit()
+    try:
+        await send_verification_email(current_user.email, current_user.verification_token)
+    except Exception:
+        logging.getLogger(__name__).error(
+            "Failed to resend verification email to %s", current_user.email, exc_info=True
+        )
+    return {"message": "Verification email sent"}

@@ -156,3 +156,36 @@ def test_get_me_returns_user(client, verified_user_token):
 def test_get_me_unauthorized(client):
     resp = client.get("/api/v1/auth/me")
     assert resp.status_code == 401
+
+
+def test_resend_verification_sends_new_token(client):
+    reg = client.post("/api/v1/auth/register", json={
+        "email": "resend@example.com",
+        "password": "Resend@1pass",
+    })
+    assert reg.status_code == 200, f"Registration failed: {reg.text}"
+    token = reg.json()["access_token"]
+
+    resp = client.post(
+        "/api/v1/auth/resend-verification",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["message"] == "Verification email sent"
+
+    db = TestSessionLocal()
+    try:
+        user = db.query(User).filter(User.email == "resend@example.com").first()
+        assert user is not None
+        assert user.verification_token is not None
+    finally:
+        db.close()
+
+
+def test_resend_verification_already_verified(client, verified_user_token):
+    resp = client.post(
+        "/api/v1/auth/resend-verification",
+        headers={"Authorization": f"Bearer {verified_user_token}"},
+    )
+    assert resp.status_code == 400
+    assert "already verified" in resp.json()["detail"]
