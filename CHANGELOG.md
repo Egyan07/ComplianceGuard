@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [Unreleased]
+
+Six additive features. No breaking changes, no schema migrations.
+
+### Added
+- **`GET /api/v1/auth/me`** — Returns the authenticated user's profile. Useful for frontends that need to re-hydrate user state without re-logging in.
+- **`POST /api/v1/auth/resend-verification`** — Issues a fresh email verification token and re-sends the verification email. Rate-limited to 3/minute. Returns 400 if the email is already verified.
+- **Evidence search and status filter** — `GET /api/v1/evidence/items` now accepts optional `?status=` (exact match) and `?search=` (case-insensitive substring on `evidence_type`) query params. Frontend `getEvidenceItems(status?, search?)` forwards the params automatically.
+- **Web-mode compliance evaluation** — New `POST /api/v1/compliance/evaluate-from-evidence` endpoint auto-builds scored evidence data from the authenticated user's stored evidence items via a built-in `_EVIDENCE_CONTROL_MAP` (14 evidence types → SOC 2 control IDs), runs the standard evaluation, and persists the result. Frontend `evaluateComplianceWeb()` calls this endpoint; `useDashboard.handleEvaluateCompliance` now works in both Electron and web mode.
+- **ISO 27001:2013 framework** — `backend/app/core/iso27001_controls.yaml` (47 controls across all 14 Annex A domains, A.5–A.18) + `ISO27001Framework` Python loader + read-only API router at `/api/v1/iso27001` (summary, controls list, search, by-category, by-id, health). No evaluate endpoint — scoring is out of scope for this release.
+- **Railway one-click deploy** — `railway.toml` added at repo root (Dockerfile builder, `/health` healthcheck, production env vars). README deploy button now links to the template URL.
+- 23 new backend tests (175 unit + 26 integration + 8 e2e = 209 total backend). Frontend unchanged at 119 Vitest + 5 Playwright. Grand total: **333 tests**.
+
+---
+
 ## [3.1.0]
 
 Security hardening and architecture completion release. Closes all residual

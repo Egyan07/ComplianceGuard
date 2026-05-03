@@ -6,7 +6,7 @@
   <a href="#quick-start"><img src="https://img.shields.io/badge/version-3.1.0-2563EB" alt="Version"></a>
   <img src="https://img.shields.io/badge/license-BSL%201.1-orange" alt="License">
   <a href="#soc-2-controls"><img src="https://img.shields.io/badge/SOC%202-29%20controls-10B981" alt="Controls"></a>
-  <img src="https://img.shields.io/badge/tests-311%20passing-10B981?logo=pytest&logoColor=white" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-333%20passing-10B981?logo=pytest&logoColor=white" alt="Tests">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
   <a href="https://github.com/Egyan07/ComplianceGuard/actions"><img src="https://img.shields.io/github/actions/workflow/status/Egyan07/ComplianceGuard/ci.yml?label=CI&logo=githubactions&logoColor=white" alt="CI"></a>
 </p>
@@ -319,13 +319,13 @@ ComplianceGuard/
 ├── backend/
 │   ├── app/
 │   │   ├── main.py                     # FastAPI app, CORS, routes, lifespan tasks
-│   │   ├── api/                        # Auth, evidence, compliance endpoints
-│   │   ├── core/                       # Config, database, auth, soc2_controls.yaml
+│   │   ├── api/                        # Auth, evidence, compliance, ISO 27001 endpoints
+│   │   ├── core/                       # Config, database, auth, soc2_controls.yaml, iso27001_controls.yaml
 │   │   ├── models/                     # SQLAlchemy models (user, refresh_token, evidence, compliance, machine)
 │   │   ├── services/                   # Compliance service, evidence collector
 │   │   └── integrations/aws.py         # AWS evidence collection
 │   ├── migrations/                     # Alembic database migrations
-│   ├── tests/                          # Unit (152) + integration (35) + e2e (5, skipped by default)
+│   ├── tests/                          # Unit (175) + integration (26) + e2e (8)
 │   ├── requirements.txt
 │   └── Dockerfile
 ├── electron/
@@ -495,7 +495,7 @@ python -m pytest tests/integration/ -v
 python -m pytest tests/e2e/ -v --run-e2e
 ```
 
-CI runs all tests on every push via GitHub Actions. **311 tests passing** — backend: 187 (152 unit + 35 integration), frontend: 119 Vitest unit, e2e: 5 Playwright.
+CI runs all tests on every push via GitHub Actions. **333 tests passing** — backend: 209 (175 unit + 26 integration + 8 e2e), frontend: 119 Vitest unit, e2e: 5 Playwright.
 
 ## Troubleshooting
 
@@ -560,17 +560,22 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 | Done | Up Next |
 |------|---------|
 | Evidence collection (8 categories) | Scheduled automatic collection |
-| 29 SOC 2 controls with weighted scoring | ISO 27001 framework |
-| PDF reports + evaluation history | HIPAA framework |
-| Free / Pro / Enterprise licensing (Ed25519) | macOS and Linux support |
-| JWT auth + refresh tokens + login UI | GCP and Azure cloud evidence |
-| FastAPI + PostgreSQL + Docker + Nginx | Air-gapped Enterprise tier |
-| Cloud sync + multi-machine dashboard | Setup video walkthrough |
-| Email delivery (verification + reset) | One-click Railway deploy button |
+| 29 SOC 2 controls with weighted scoring | HIPAA framework |
+| PDF reports + evaluation history | macOS and Linux support |
+| Free / Pro / Enterprise licensing (Ed25519) | GCP and Azure cloud evidence |
+| JWT auth + refresh tokens + login UI | Air-gapped Enterprise tier |
+| FastAPI + PostgreSQL + Docker + Nginx | Setup video walkthrough |
+| Cloud sync + multi-machine dashboard | |
+| Email delivery (verification + reset) | |
 | Web mode license enforcement (Ed25519) | |
 | Sentry error monitoring (backend + frontend) | |
 | Self-hosted + Managed hosting options | |
-| CI/CD with 311 tests (187 backend + 119 frontend + 5 e2e) | |
+| ISO 27001:2013 framework (47 controls, read-only API) | |
+| One-click Railway deploy (`railway.toml`) | |
+| Evidence search + status filter (`GET /evidence/items`) | |
+| Web-mode compliance evaluation (`POST /evaluate-from-evidence`) | |
+| `GET /auth/me` + resend verification email endpoint | |
+| CI/CD with 333 tests (209 backend + 119 frontend + 5 e2e) | |
 | Alembic migrations + rate limiting | |
 
 ## License
