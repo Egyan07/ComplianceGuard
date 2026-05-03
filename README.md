@@ -5,7 +5,7 @@
 <p align="center">
   <a href="#quick-start"><img src="https://img.shields.io/badge/version-3.1.0-2563EB" alt="Version"></a>
   <img src="https://img.shields.io/badge/license-BSL%201.1-orange" alt="License">
-  <a href="#soc-2-controls"><img src="https://img.shields.io/badge/SOC%202-29%20controls-10B981" alt="Controls"></a>
+  <a href="#compliance-frameworks"><img src="https://img.shields.io/badge/frameworks-SOC%202%20%7C%20ISO%2027001%20%7C%20HIPAA-10B981" alt="Frameworks"></a>
   <img src="https://img.shields.io/badge/tests-355%20passing-10B981?logo=pytest&logoColor=white" alt="Tests">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
   <a href="https://github.com/Egyan07/ComplianceGuard/actions"><img src="https://img.shields.io/github/actions/workflow/status/Egyan07/ComplianceGuard/ci.yml?label=CI&logo=githubactions&logoColor=white" alt="CI"></a>
@@ -14,7 +14,7 @@
 
 Compliance tools like Vanta, Drata, and Sprinto scan your cloud infrastructure. That's useful — but they can't see what's happening **on the machines themselves**. Password policies, firewall rules, event logs, running services, local user accounts — that evidence lives on the endpoint, not in AWS.
 
-ComplianceGuard lives on the endpoint too. It collects evidence directly from Windows, scores it against 29 SOC 2 Type II controls, and tells you exactly where the gaps are. Run it as a desktop app or deploy the web version with Docker — everything stays under your control.
+ComplianceGuard lives on the endpoint too. It collects evidence directly from Windows, scores it against 29 SOC 2 Type II controls, and tells you exactly where the gaps are. The web API also supports ISO 27001:2013 and HIPAA Security Rule frameworks. Run it as a desktop app or deploy the web version with Docker — everything stays under your control.
 
 ```
                     ┌─────────────┐
@@ -25,7 +25,7 @@ ComplianceGuard lives on the endpoint too. It collects evidence directly from Wi
   Firewall                 ▼
   Users            ┌─────────────┐
   Network          │ Evaluate    │──────> Score + Gaps
-  Software         │ Compliance  │        per SOC 2 control
+  Software         │ Compliance  │        per control
                    └──────┬──────┘
                           │
                           ▼
@@ -60,7 +60,7 @@ Contact us to set up a hosted instance. Install the desktop app on your machines
 
 <video src="https://github.com/user-attachments/assets/ae1dfc02-fac4-4c9e-9736-9cd7b96b22af" controls width="100%"></video>
 
-_A walkthrough of ComplianceGuard in action — collecting endpoint evidence, uploading manual documents, evaluating compliance against 29 SOC 2 controls, exporting a PDF report, and managing a Pro license from Settings._
+_A walkthrough of ComplianceGuard in action — collecting endpoint evidence, uploading manual documents, evaluating compliance against SOC 2 controls, exporting a PDF report, and managing a Pro license from Settings._
 
 ## Screenshots
 
@@ -174,7 +174,7 @@ npm run package    # outputs to dist/
 | **Self-hosted option** | ✅ Full control | ❌ Cloud only |
 | **Air-gapped networks** | Desktop works completely offline | Requires internet |
 | **Cost** | Free tier available, Pro from $49/mo | $8k–$10k/year |
-| **SOC 2 controls** | 29 implemented | Varies |
+| **Compliance frameworks** | SOC 2 (29 controls), ISO 27001 (47), HIPAA (47) | SOC 2 only |
 | **Open source** | ✅ BSL 1.1 | ❌ Closed source |
 
 They scan the cloud. We scan the machine. Use both and you have covered the full stack.
@@ -196,7 +196,9 @@ ComplianceGuard pulls 8 categories of evidence from Windows:
 
 Each evidence item is SHA-256 hashed for integrity and stored with full audit logging.
 
-## SOC 2 Controls
+## Compliance Frameworks
+
+### SOC 2 Controls
 
 29 controls across 4 categories. Each is scored by evidence coverage with configurable weights.
 
@@ -261,6 +263,14 @@ Each evidence item is SHA-256 hashed for integrity and stored with full audit lo
 
 </details>
 
+### ISO 27001:2013
+
+47 controls across all 14 Annex A domains (A.5–A.18). Available via the web API at `GET /api/v1/iso27001/framework/controls`. Includes control objectives, implementation guidance, and risk levels. Browse by domain (`/by-category/A.9`), search by keyword, or fetch by ID.
+
+### HIPAA Security Rule
+
+47 safeguards across all five 45 CFR Part 164 sections (§164.308–§164.316). Available via `GET /api/v1/hipaa/framework/controls`. Each safeguard includes its specification type (Required or Addressable) and implementation guidance aligned with HHS guidance.
+
 ## Architecture
 
 <details>
@@ -320,7 +330,7 @@ ComplianceGuard/
 │   ├── app/
 │   │   ├── main.py                     # FastAPI app, CORS, routes, lifespan tasks
 │   │   ├── api/                        # Auth, evidence, compliance, ISO 27001 endpoints
-│   │   ├── core/                       # Config, database, auth, soc2_controls.yaml, iso27001_controls.yaml
+│   │   ├── core/                       # Config, database, auth, soc2/iso27001/hipaa_controls.yaml, evidence_mapping.py
 │   │   ├── models/                     # SQLAlchemy models (user, refresh_token, evidence, compliance, machine)
 │   │   ├── services/                   # Compliance service, evidence collector
 │   │   └── integrations/aws.py         # AWS evidence collection
@@ -378,7 +388,7 @@ ComplianceGuard is designed for Windows endpoints. The following limitations app
 - **No automatic scheduling** — evidence must be collected manually or triggered via the dashboard. Scheduled collection is planned.
 - **Per-machine view in desktop mode** — the Electron app shows one machine at a time. Use web mode (self-hosted or managed) with the Cloud Dashboard to monitor multiple machines centrally.
 - **AWS only for cloud evidence** — the web backend collects S3 and IAM evidence from AWS. GCP and Azure are not yet implemented.
-- **SOC 2 Type II only** — ISO 27001, HIPAA, and PCI DSS frameworks are in development.
+- **PCI DSS not yet implemented** — SOC 2 Type II (29 controls), ISO 27001:2013 (47 controls), and HIPAA Security Rule (47 safeguards) are all available. PCI DSS is planned.
 - **Single machine in free tier** — the free tier is limited to one machine. Pro supports up to 10, Enterprise is unlimited.
 - **No real-time monitoring** — ComplianceGuard takes point-in-time snapshots, not continuous streams.
 - **PDF reports require Pro** — the free tier shows your overall score but does not generate audit-ready PDF exports.
@@ -488,7 +498,7 @@ npm run test:e2e         # Playwright e2e tests
 npm run lint             # ESLint
 npm run format:check     # Prettier
 
-# Backend (152 unit + 35 integration + 5 e2e skipped by default)
+# Backend (197 unit + 26 integration + 8 e2e)
 cd backend
 python -m pytest tests/unit/ -v
 python -m pytest tests/integration/ -v
@@ -564,7 +574,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 | PDF reports + evaluation history | GCP and Azure cloud evidence |
 | Free / Pro / Enterprise licensing (Ed25519) | Air-gapped Enterprise tier |
 | JWT auth + refresh tokens + login UI | Setup video walkthrough |
-| FastAPI + PostgreSQL + Docker + Nginx | Scheduled automatic collection |
+| FastAPI + PostgreSQL + Docker + Nginx | PCI DSS framework |
 | Cloud sync + multi-machine dashboard | |
 | Email delivery (verification + reset) | |
 | Web mode license enforcement (Ed25519) | |
