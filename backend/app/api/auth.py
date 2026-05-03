@@ -522,3 +522,11 @@ async def get_license_info(
         is_expired=False,
         is_grace_period=False,
     )
+
+
+@router.get("/me", response_model=UserResponse)
+async def get_me(
+    current_user: User = Depends(get_current_user),
+):
+    """Return the authenticated user's profile."""
+    return current_user

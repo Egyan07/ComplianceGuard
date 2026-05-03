@@ -118,3 +118,41 @@ def test_register_existing_user(client, seeded_user):
     })
     assert response.status_code == 400
     assert "detail" in response.json()
+
+
+@pytest.fixture
+def verified_user_token(client):
+    reg = client.post("/api/v1/auth/register", json={
+        "email": "me@example.com",
+        "password": "Me@pass123",
+        "first_name": "Alice",
+        "last_name": "Smith",
+    })
+    assert reg.status_code == 200, f"Registration failed: {reg.text}"
+    token = reg.json()["access_token"]
+    db = TestSessionLocal()
+    try:
+        user = db.query(User).filter(User.email == "me@example.com").first()
+        assert user is not None
+        user.is_verified = True
+        db.commit()
+    finally:
+        db.close()
+    return token
+
+
+def test_get_me_returns_user(client, verified_user_token):
+    resp = client.get(
+        "/api/v1/auth/me",
+        headers={"Authorization": f"Bearer {verified_user_token}"},
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["email"] == "me@example.com"
+    assert data["first_name"] == "Alice"
+    assert data["last_name"] == "Smith"
+
+
+def test_get_me_unauthorized(client):
+    resp = client.get("/api/v1/auth/me")
+    assert resp.status_code == 401
