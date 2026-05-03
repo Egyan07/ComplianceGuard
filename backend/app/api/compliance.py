@@ -24,25 +24,7 @@ from app.models.evaluation import ComplianceEvaluationRecord, ControlAssessmentR
 
 router = APIRouter(prefix="/compliance", tags=["compliance"])
 
-# Maps collected evidence_type values to {control_id: base_score}.
-# Used by /evaluate-from-evidence to auto-build scored evidence data from
-# stored evidence items so web-mode users don't have to supply scores manually.
-_EVIDENCE_CONTROL_MAP: Dict[str, Dict[str, float]] = {
-    "s3_encryption":      {"CC6.7": 0.8, "C1.2": 0.8, "C1.1": 0.6},
-    "iam_policy":         {"CC6.1": 0.7, "CC6.2": 0.8, "CC6.3": 0.7, "CC6.4": 0.6},
-    "s3_public_access":   {"CC6.5": 0.8, "CC6.7": 0.7, "C1.4": 0.7},
-    "iam_mfa":            {"CC6.2": 0.9, "CC6.1": 0.7},
-    "event_logs":         {"CC7.1": 0.9, "CC4.1": 0.8, "CC5.1": 0.6},
-    "security_settings":  {"CC6.1": 0.8, "CC6.2": 0.9, "CC6.3": 0.7},
-    "services":           {"A1.1": 0.8, "CC7.2": 0.7, "A1.2": 0.6},
-    "firewall":           {"CC6.5": 0.9, "CC6.7": 0.7, "A1.1": 0.6},
-    "users":              {"CC6.2": 0.8, "CC6.4": 0.7, "CC6.1": 0.6},
-    "network":            {"CC6.5": 0.8, "CC6.7": 0.8, "A1.1": 0.6},
-    "software":           {"CC7.2": 0.8, "CC8.1": 0.7, "A1.1": 0.5},
-    "file_permissions":   {"CC6.1": 0.8, "CC6.3": 0.8, "C1.2": 0.6},
-    "system_info":        {"A1.3": 0.7, "CC7.2": 0.5},
-    "update_status":      {"CC7.2": 0.8, "A1.1": 0.6},
-}
+from app.core.evidence_mapping import EVIDENCE_CONTROL_MAP as _EVIDENCE_CONTROL_MAP
 
 # Read-only singleton — safe to share across workers; controls never mutate at runtime.
 _soc2_framework = create_soc2_framework()
