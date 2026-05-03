@@ -6,6 +6,7 @@ import {
   getMockEvidenceSummary,
   collectEvidence,
   evaluateCompliance,
+  evaluateComplianceWeb,
   EvidenceSummary,
   EvidenceItem,
   ComplianceEvaluation,
@@ -106,11 +107,12 @@ export function useDashboard() {
   }, [queryClient]);
 
   const handleEvaluateCompliance = useCallback(async () => {
-    if (!isElectron) return;
     setEvaluating(true);
     setState(prev => ({ ...prev, error: null }));
     try {
-      const evaluation = await evaluateCompliance();
+      const evaluation = isElectron
+        ? await evaluateCompliance()
+        : await evaluateComplianceWeb();
       setState(prev => ({
         ...prev,
         evaluation,
@@ -119,8 +121,6 @@ export function useDashboard() {
     } catch (err: any) {
       setState(prev => ({ ...prev, error: err.message || 'Failed to evaluate compliance.' }));
     } finally {
-      // Invalidate on both success and failure — keeps cache consistent with
-      // server state regardless of mutation outcome.
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       setEvaluating(false);
     }

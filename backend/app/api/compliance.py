@@ -24,6 +24,26 @@ from app.models.evaluation import ComplianceEvaluationRecord, ControlAssessmentR
 
 router = APIRouter(prefix="/compliance", tags=["compliance"])
 
+# Maps collected evidence_type values to {control_id: base_score}.
+# Used by /evaluate-from-evidence to auto-build scored evidence data from
+# stored evidence items so web-mode users don't have to supply scores manually.
+_EVIDENCE_CONTROL_MAP: Dict[str, Dict[str, float]] = {
+    "s3_encryption":      {"CC6.7": 0.8, "C1.2": 0.8, "C1.1": 0.6},
+    "iam_policy":         {"CC6.1": 0.7, "CC6.2": 0.8, "CC6.3": 0.7, "CC6.4": 0.6},
+    "s3_public_access":   {"CC6.5": 0.8, "CC6.7": 0.7, "C1.4": 0.7},
+    "iam_mfa":            {"CC6.2": 0.9, "CC6.1": 0.7},
+    "event_logs":         {"CC7.1": 0.9, "CC4.1": 0.8, "CC5.1": 0.6},
+    "security_settings":  {"CC6.1": 0.8, "CC6.2": 0.9, "CC6.3": 0.7},
+    "services":           {"A1.1": 0.8, "CC7.2": 0.7, "A1.2": 0.6},
+    "firewall":           {"CC6.5": 0.9, "CC6.7": 0.7, "A1.1": 0.6},
+    "users":              {"CC6.2": 0.8, "CC6.4": 0.7, "CC6.1": 0.6},
+    "network":            {"CC6.5": 0.8, "CC6.7": 0.8, "A1.1": 0.6},
+    "software":           {"CC7.2": 0.8, "CC8.1": 0.7, "A1.1": 0.5},
+    "file_permissions":   {"CC6.1": 0.8, "CC6.3": 0.8, "C1.2": 0.6},
+    "system_info":        {"A1.3": 0.7, "CC7.2": 0.5},
+    "update_status":      {"CC7.2": 0.8, "A1.1": 0.6},
+}
+
 # Read-only singleton — safe to share across workers; controls never mutate at runtime.
 _soc2_framework = create_soc2_framework()
 
@@ -470,3 +490,108 @@ async def compliance_health_check(
         "framework_controls": framework.get_control_count(),
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
+
+
+@router.post("/evaluate-from-evidence", response_model=ComplianceEvaluationResponse)
+async def evaluate_from_evidence(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    svc: ComplianceService = Depends(get_compliance_service),
+):
+    """
+    Evaluate SOC 2 compliance automatically from the user's stored evidence items.
+
+    Builds scored evidence_data by mapping evidence_type values to control IDs
+    via _EVIDENCE_CONTROL_MAP, then runs the standard evaluation and persists the
+    result. Designed for web-mode users who don't supply per-control scores manually.
+    """
+    from app.models.evidence import EvidenceCollection as EvColl
+    from app.models.evidence import EvidenceItem as EvItem
+
+    items = (
+        db.query(EvItem)
+        .join(EvColl)
+        .filter(EvColl.user_id == current_user.id)
+        .all()
+    )
+
+    # Aggregate: control_id → max score seen + list of contributing evidence types
+    control_scores: Dict[str, Dict[str, Any]] = {}
+    for item in items:
+        for control_id, score in _EVIDENCE_CONTROL_MAP.get(item.evidence_type, {}).items():
+            if control_id not in control_scores:
+                control_scores[control_id] = {
+                    "score": score,
+                    "evidence_provided": [item.evidence_type],
+                    "status": "unknown",
+                    "comments": "Auto-evaluated from stored evidence",
+                }
+            else:
+                control_scores[control_id]["score"] = max(
+                    control_scores[control_id]["score"], score
+                )
+                if item.evidence_type not in control_scores[control_id]["evidence_provided"]:
+                    control_scores[control_id]["evidence_provided"].append(item.evidence_type)
+
+    try:
+        evaluation = svc.evaluate_compliance(
+            evidence_data=control_scores,
+            evaluated_by="web_auto",
+        )
+
+        compliant_count = sum(
+            1 for a in evaluation.control_assessments.values()
+            if a.status == ComplianceStatus.COMPLIANT
+        )
+
+        record = ComplianceEvaluationRecord(
+            evaluation_id=f"eval-{uuid.uuid4().hex[:12]}",
+            framework_id=evaluation.framework_id,
+            user_id=current_user.id,
+            overall_score=evaluation.overall_score,
+            compliance_status=evaluation.compliance_status.value,
+            compliance_level=evaluation.compliance_level.value,
+            evaluated_by=evaluation.evaluated_by,
+            scope=evaluation.scope,
+            evidence_summary=evaluation.evidence_summary,
+            risk_assessment=evaluation.risk_assessment,
+            recommendations=evaluation.recommendations,
+            control_count=len(evaluation.control_assessments),
+            compliant_controls=compliant_count,
+        )
+        db.add(record)
+        db.flush()
+
+        for ctrl_id, assessment in evaluation.control_assessments.items():
+            db.add(ControlAssessmentRecord(
+                evaluation_id=record.id,
+                control_id=ctrl_id,
+                status=assessment.status.value,
+                score=assessment.score,
+                evidence_provided=assessment.evidence_provided,
+                gaps=assessment.gaps,
+                recommendations=assessment.recommendations,
+            ))
+
+        db.commit()
+        db.refresh(record)
+
+        return ComplianceEvaluationResponse(
+            framework_id=record.framework_id,
+            overall_score=record.overall_score,
+            compliance_status=record.compliance_status,
+            compliance_level=record.compliance_level,
+            evaluation_date=record.created_at,
+            evaluated_by=record.evaluated_by,
+            scope=record.scope or [],
+            evidence_summary=record.evidence_summary or {},
+            risk_assessment=record.risk_assessment or {},
+            recommendations=record.recommendations or [],
+            next_review_date=None,
+            control_count=record.control_count,
+            compliant_controls=record.compliant_controls,
+        )
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Evaluation failed: {str(e)}")

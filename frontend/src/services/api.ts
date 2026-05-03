@@ -278,6 +278,27 @@ export const evaluateCompliance = async (): Promise<ComplianceEvaluation> => {
   throw new Error('Compliance evaluation requires the desktop application');
 };
 
+export const evaluateComplianceWeb = async (): Promise<ComplianceEvaluation> => {
+  const response = await apiClient.post('/compliance/evaluate-from-evidence');
+  const d = response.data;
+  return {
+    framework_id: d.framework_id,
+    framework_name: 'SOC 2 Type II',
+    evaluation_date: d.evaluation_date,
+    overall_score: (d.overall_score ?? 0) * 100,
+    status: d.compliance_status,
+    tier: 'web',
+    total_controls: d.control_count,
+    compliant_controls: d.compliant_controls,
+    non_compliant_controls: d.control_count - d.compliant_controls,
+    partial_controls: 0,
+    not_assessed_controls: 0,
+    category_scores: null,
+    control_results: null,
+    recommendations: d.recommendations ?? [],
+  };
+};
+
 export const checkHealth = async (): Promise<Record<string, any>> => {
   if (isElectron) {
     const api = getElectronAPI();
