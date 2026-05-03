@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_current_user
 from app.core.config import settings
+from app.core.evidence_mapping import EVIDENCE_CONTROL_MAP
 from app.core.credential_crypto import decrypt_credential
 from app.core.database import get_db
 from app.models.aws_credential import AwsCredential
@@ -516,4 +517,37 @@ async def download_evidence_file(
     return FileResponse(
         storage_path,
         filename=item.data.get("filename", os.path.basename(storage_path)),
+    )
+
+
+class EvidenceControlsResponse(BaseModel):
+    """Which SOC 2 controls this evidence item contributes to, with base scores."""
+    item_id: int
+    evidence_type: str
+    controls: Dict[str, float]
+
+
+@router.get("/items/{item_id}/controls", response_model=EvidenceControlsResponse)
+async def get_evidence_item_controls(
+    item_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Return the SOC 2 controls an evidence item contributes to with base scores."""
+    item = (
+        db.query(EvidenceItem)
+        .join(EvidenceCollection)
+        .filter(
+            EvidenceItem.id == item_id,
+            EvidenceCollection.user_id == current_user.id,
+        )
+        .first()
+    )
+    if not item:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evidence item not found")
+
+    return EvidenceControlsResponse(
+        item_id=item.id,
+        evidence_type=item.evidence_type,
+        controls=EVIDENCE_CONTROL_MAP.get(item.evidence_type, {}),
     )
