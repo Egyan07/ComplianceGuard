@@ -20,11 +20,10 @@ from app.core.database import get_db
 from app.api.deps import get_current_user, require_pro
 from app.models.user import User
 from app.models.evaluation import ComplianceEvaluationRecord, ControlAssessmentRecord
+from app.core.evidence_mapping import EVIDENCE_CONTROL_MAP as _EVIDENCE_CONTROL_MAP
 
 
 router = APIRouter(prefix="/compliance", tags=["compliance"])
-
-from app.core.evidence_mapping import EVIDENCE_CONTROL_MAP as _EVIDENCE_CONTROL_MAP
 
 # Read-only singleton — safe to share across workers; controls never mutate at runtime.
 _soc2_framework = create_soc2_framework()
