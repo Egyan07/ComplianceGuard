@@ -74,6 +74,9 @@ coverage/
 *.log
 logs/
 
+# Git worktrees
+.worktrees/
+
 # Internal planning docs — never push to public repo
 docs/superpowers/
 docs/internal/
