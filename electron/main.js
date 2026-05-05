@@ -2,6 +2,7 @@ const { app, BrowserWindow, Tray, Menu, Notification, ipcMain, dialog } = requir
 const log = require('./logger');
 const path = require('path');
 const fs = require('fs');
+const yaml = require('js-yaml');
 
 // Local processing modules
 const ComplianceGuardDatabase = require('./database/sqlite');
@@ -25,6 +26,14 @@ let licenseManager = null;
 
 // Development mode flag
 const isDev = !app.isPackaged;
+
+// ---- Framework Reference Browser ----
+const frameworkCache = new Map();
+const FRAMEWORK_FILES = {
+  1: { name: 'SOC 2', file: 'soc2_controls.yaml' },
+  2: { name: 'ISO 27001', file: 'iso27001_controls.yaml' },
+  3: { name: 'HIPAA', file: 'hipaa_controls.yaml' },
+};
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -428,6 +437,28 @@ ipcMain.handle('cloud-get-config', async () => {
 
 ipcMain.handle('cloud-disconnect', async () => {
   return await CloudSync.clearCloudConfig(database);
+});
+
+// Framework reference browser
+ipcMain.handle('get-framework-controls', (event, frameworkId) => {
+  if (frameworkCache.has(frameworkId)) {
+    return frameworkCache.get(frameworkId);
+  }
+  const meta = FRAMEWORK_FILES[frameworkId];
+  if (!meta) {
+    return { error: `Unknown framework ID: ${frameworkId}` };
+  }
+  try {
+    const filePath = path.join(__dirname, 'data', meta.file);
+    const raw = fs.readFileSync(filePath, 'utf8');
+    const parsed = yaml.load(raw);
+    const result = { frameworkId, name: meta.name, controls: parsed.controls };
+    frameworkCache.set(frameworkId, result);
+    return result;
+  } catch (error) {
+    log.error(`Failed to load framework ${frameworkId}:`, error);
+    return { error: error.message };
+  }
 });
 
 // ---- App Lifecycle ----
