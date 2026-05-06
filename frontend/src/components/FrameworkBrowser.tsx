@@ -61,6 +61,10 @@ const FrameworkBrowser: React.FC = () => {
 
   useEffect(() => {
     if (frameworks[currentFrameworkId] !== undefined || loading[currentFrameworkId]) return;
+    if (!api?.getFrameworkControls) {
+      setFrameworks(prev => ({ ...prev, [currentFrameworkId]: { error: 'Electron API unavailable' } }));
+      return;
+    }
     setLoading(prev => ({ ...prev, [currentFrameworkId]: true }));
     api.getFrameworkControls(currentFrameworkId)
       .then((data: FrameworkData | FrameworkDataError) => {
@@ -72,6 +76,8 @@ const FrameworkBrowser: React.FC = () => {
       .finally(() => {
         setLoading(prev => ({ ...prev, [currentFrameworkId]: false }));
       });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // frameworks/loading/api are read only as gate conditions; excluding them prevents re-fetch loops
   }, [currentFrameworkId]);
 
   const currentData = frameworks[currentFrameworkId];
