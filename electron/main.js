@@ -452,7 +452,18 @@ ipcMain.handle('get-framework-controls', (event, frameworkId) => {
     const filePath = path.join(__dirname, 'data', meta.file);
     const raw = fs.readFileSync(filePath, 'utf8');
     const parsed = yaml.load(raw);
-    const result = { frameworkId, name: meta.name, controls: parsed.controls };
+    const controls = parsed.controls.map(c => ({
+      id: c.id,
+      title: c.title,
+      description: c.description,
+      category: c.category,
+      control_objective: c.control_objective,
+      implementation_guidance: c.implementation_guidance,
+      risk_level: c.risk_level ?? 'medium',
+      ...(c.specification_type !== undefined && { specification_type: c.specification_type }),
+      ...(c.related_controls !== undefined && { related_controls: c.related_controls }),
+    }));
+    const result = { frameworkId, name: meta.name, controls };
     frameworkCache.set(frameworkId, result);
     return result;
   } catch (error) {

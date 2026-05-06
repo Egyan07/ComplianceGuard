@@ -29,7 +29,7 @@ export interface FrameworkControl {
   category: string;
   control_objective: string;
   implementation_guidance: string;
-  risk_level: 'low' | 'medium' | 'high';
+  risk_level?: 'low' | 'medium' | 'high';
   specification_type?: 'required' | 'addressable';
   related_controls?: string[];
 }
