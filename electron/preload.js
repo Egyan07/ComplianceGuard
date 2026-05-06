@@ -129,6 +129,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
   cloudGetConfig: () => ipcRenderer.invoke('cloud-get-config'),
   cloudDisconnect: () => ipcRenderer.invoke('cloud-disconnect'),
 
+  getSchedule: () => ipcRenderer.invoke('get-schedule'),
+
+  setSchedule: (config) => {
+    if (!config || typeof config !== 'object') {
+      return Promise.reject(new Error('Invalid schedule config'));
+    }
+    return ipcRenderer.invoke('set-schedule', config);
+  },
+
+  runCollectionNow: () => ipcRenderer.invoke('run-collection-now'),
+
   getFrameworkControls: (frameworkId) => {
     if (!Number.isInteger(frameworkId) || frameworkId < 1) {
       return Promise.reject(new Error('Invalid framework ID'));

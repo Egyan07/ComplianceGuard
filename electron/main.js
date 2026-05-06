@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Tray, Menu, Notification, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, Tray, Menu, Notification, ipcMain, dialog, powerMonitor } = require('electron');
 const log = require('./logger');
 const path = require('path');
 const fs = require('fs');
@@ -12,6 +12,7 @@ const ReportGenerator = require('./processing/report-generator');
 const LicenseManager = require('./licensing/license-manager');
 const CloudSync = require('./cloud-sync');
 const { collectWindowsEvidence } = require('./system/windows');
+const scheduler = require('./scheduler');
 
 // Keep a global reference of the window object
 let mainWindow = null;
@@ -472,6 +473,50 @@ ipcMain.handle('get-framework-controls', (event, frameworkId) => {
   }
 });
 
+// ---- Schedule IPC ----
+
+ipcMain.handle('get-schedule', async () => {
+  try {
+    const task = await database.getScheduleTask();
+    if (!task) return { config: { enabled: false, frequency: 'daily', time: '09:00' }, last_run_at: null, next_run_at: null, last_result: null };
+    return {
+      config: JSON.parse(task.schedule_config_json),
+      last_run_at: task.last_run_at,
+      next_run_at: task.next_run_at,
+      last_result: task.last_result_json ? JSON.parse(task.last_result_json) : null,
+    };
+  } catch (err) {
+    log.error('get-schedule failed:', err);
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('set-schedule', async (event, config) => {
+  try {
+    const { enabled, frequency, time } = config;
+    if (!['daily', 'weekly'].includes(frequency)) return { error: 'Invalid frequency' };
+    if (!/^\d{2}:\d{2}$/.test(time)) return { error: 'Invalid time format' };
+    const { calcNextRunAt } = require('./scheduler');
+    const nextRunAt = enabled ? calcNextRunAt(config) : null;
+    await database.updateScheduleConfig(config, nextRunAt);
+    return { config, next_run_at: nextRunAt };
+  } catch (err) {
+    log.error('set-schedule failed:', err);
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('run-collection-now', async () => {
+  try {
+    const { runCollection } = require('./scheduler');
+    const result = await runCollection();
+    return result;
+  } catch (err) {
+    log.error('run-collection-now failed:', err);
+    return { error: err.message };
+  }
+});
+
 // ---- App Lifecycle ----
 
 app.whenReady().then(async () => {
@@ -489,6 +534,8 @@ app.whenReady().then(async () => {
     reportGenerator = new ReportGenerator(database);
 
     log.info('Database and processing engines initialized');
+
+    await scheduler.start(database, evidenceProcessor);
 
     createWindow();
     createTray();

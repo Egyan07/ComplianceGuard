@@ -1,6 +1,6 @@
-import { powerMonitor, Notification } from 'electron';
-import * as log from './logger.js';
-import { collectWindowsEvidence } from './system/windows.js';
+const { powerMonitor, Notification } = require('electron');
+const log = require('./logger');
+const { collectWindowsEvidence } = require('./system/windows');
 
 const FRAMEWORKS = [1, 2, 3];
 const CHECK_INTERVAL_MS = 60_000;
@@ -10,15 +10,16 @@ let _processor = null;
 let _isRunning = false;
 let _intervalId = null;
 
-export function calcNextRunAt(config) {
+function calcNextRunAt(config) {
   const [hours, minutes] = config.time.split(':').map(Number);
   const next = new Date();
-  next.setSeconds(0, 0);
-  next.setHours(hours, minutes);
+  next.setHours(hours, minutes, 0, 0);
 
   if (config.frequency === 'weekly') {
-    // Advance to next Monday
-    const daysUntilMonday = (8 - next.getDay()) % 7 || 7;
+    let daysUntilMonday = (8 - next.getDay()) % 7;
+    if (daysUntilMonday === 0 && next <= new Date()) {
+      daysUntilMonday = 7;
+    }
     next.setDate(next.getDate() + daysUntilMonday);
     return next.toISOString();
   }
@@ -31,7 +32,19 @@ export function calcNextRunAt(config) {
   return next.toISOString();
 }
 
-export async function runCollection() {
+async function persistResult(ranAt, result) {
+  try {
+    const task = await _db.getScheduleTask();
+    if (!task) return;
+    const config = JSON.parse(task.schedule_config_json);
+    const nextRunAt = calcNextRunAt(config);
+    await _db.updateScheduleResult(ranAt, nextRunAt, result);
+  } catch (err) {
+    log.error('Failed to persist schedule result:', err);
+  }
+}
+
+async function runCollection() {
   if (_isRunning) return { error: 'Collection already in progress' };
   _isRunning = true;
   const ranAt = new Date().toISOString();
@@ -46,12 +59,8 @@ export async function runCollection() {
       if (frameworkId === 1) evidenceCount = items.length;
     }
 
-    const task = await _db.getScheduleTask();
-    const config = JSON.parse(task.schedule_config_json);
-    const nextRunAt = calcNextRunAt(config);
     const result = { success: true, evidence_count: evidenceCount, ran_at: ranAt };
-
-    await _db.updateScheduleResult(ranAt, nextRunAt, result);
+    await persistResult(ranAt, result);
     log.info(`Scheduled collection complete: ${evidenceCount} items`);
 
     if (Notification.isSupported()) {
@@ -64,11 +73,8 @@ export async function runCollection() {
     return result;
   } catch (err) {
     log.error('Scheduled collection failed:', err);
-    const task = await _db.getScheduleTask();
-    const config = JSON.parse(task.schedule_config_json);
-    const nextRunAt = calcNextRunAt(config);
     const result = { success: false, evidence_count: 0, ran_at: ranAt, error: err.message };
-    await _db.updateScheduleResult(ranAt, nextRunAt, result);
+    await persistResult(ranAt, result);
 
     if (Notification.isSupported()) {
       new Notification({
@@ -83,7 +89,7 @@ export async function runCollection() {
   }
 }
 
-export async function checkAndRun() {
+async function checkAndRun() {
   try {
     const task = await _db.getScheduleTask();
     if (!task) return;
@@ -97,7 +103,7 @@ export async function checkAndRun() {
   }
 }
 
-export async function start(database, evidenceProcessor) {
+async function start(database, evidenceProcessor) {
   _db = database;
   _processor = evidenceProcessor;
   try {
@@ -110,7 +116,10 @@ export async function start(database, evidenceProcessor) {
   }
 }
 
-export function stop() {
+function stop() {
   if (_intervalId) clearInterval(_intervalId);
   _intervalId = null;
+  powerMonitor.removeListener('resume', checkAndRun);
 }
+
+module.exports = { start, stop, checkAndRun, runCollection, calcNextRunAt };
