@@ -189,6 +189,13 @@ class ComplianceGuardDatabase {
       this.db.exec(sql);
     }
 
+    // Migrate: add last_result_json if missing (idempotent)
+    try {
+      this.db.exec('ALTER TABLE scheduled_tasks ADD COLUMN last_result_json TEXT');
+    } catch (_) {
+      // column already exists — safe to ignore
+    }
+
     log.info('Database schema initialized successfully');
   }
 
@@ -419,6 +426,45 @@ class ComplianceGuardDatabase {
       log.error('Database close error:', error);
       return Promise.reject(error);
     }
+  }
+
+  async ensureScheduleTask() {
+    const existing = await this.get(
+      'SELECT id FROM scheduled_tasks WHERE task_name = ?',
+      ['auto_evidence_collection']
+    );
+    if (!existing) {
+      await this.run(
+        `INSERT INTO scheduled_tasks (task_name, task_type, schedule_config_json, status)
+         VALUES ('auto_evidence_collection', 'evidence_collection', ?, 'paused')`,
+        [JSON.stringify({ enabled: false, frequency: 'daily', time: '09:00' })]
+      );
+    }
+  }
+
+  async getScheduleTask() {
+    return this.get(
+      'SELECT * FROM scheduled_tasks WHERE task_name = ?',
+      ['auto_evidence_collection']
+    );
+  }
+
+  async updateScheduleConfig(config, nextRunAt) {
+    return this.run(
+      `UPDATE scheduled_tasks
+       SET schedule_config_json = ?, next_run_at = ?, status = ?
+       WHERE task_name = 'auto_evidence_collection'`,
+      [JSON.stringify(config), nextRunAt, config.enabled ? 'active' : 'paused']
+    );
+  }
+
+  async updateScheduleResult(lastRunAt, nextRunAt, result) {
+    return this.run(
+      `UPDATE scheduled_tasks
+       SET last_run_at = ?, next_run_at = ?, last_result_json = ?
+       WHERE task_name = 'auto_evidence_collection'`,
+      [lastRunAt, nextRunAt, JSON.stringify(result)]
+    );
   }
 }
 
