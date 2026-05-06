@@ -25,7 +25,8 @@ import {
   Settings as SettingsIcon,
   History,
   Logout as LogoutIcon,
-  CloudQueue
+  CloudQueue,
+  MenuBook,
 } from '@mui/icons-material';
 import {
   HashRouter,
@@ -39,6 +40,7 @@ import Dashboard from './components/Dashboard';
 import Settings from './components/Settings';
 import EvaluationHistory from './components/EvaluationHistory';
 import CloudDashboard from './components/CloudDashboard';
+import FrameworkBrowser from './components/FrameworkBrowser';
 import ErrorBoundary from './components/ErrorBoundary';
 import LoginPage from './components/LoginPage';
 import { LicenseProvider, useLicense } from './contexts/LicenseContext';
@@ -156,6 +158,13 @@ function AppContent() {
               <History />
             </IconButton>
           </Tooltip>
+          {isElectron && (
+            <Tooltip title="Browse Frameworks">
+              <IconButton onClick={() => navigate('/frameworks')} sx={at('/frameworks') ? NAV_ACTIVE : NAV_IDLE} style={{ marginRight: 4 }}>
+                <MenuBook />
+              </IconButton>
+            </Tooltip>
+          )}
           {!isElectron && (
             <Tooltip title="Cloud Dashboard">
               <IconButton onClick={() => navigate('/cloud')} sx={at('/cloud') ? NAV_ACTIVE : NAV_IDLE} style={{ marginRight: 4 }}>
@@ -184,6 +193,7 @@ function AppContent() {
             <Route path="/" element={<Dashboard onNavigate={navigate} />} />
             <Route path="/history" element={<EvaluationHistory onNavigate={navigate} />} />
             <Route path="/cloud" element={<CloudDashboard onNavigate={navigate} />} />
+            <Route path="/frameworks" element={<FrameworkBrowser />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </ErrorBoundary>
