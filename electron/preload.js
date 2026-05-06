@@ -128,6 +128,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   cloudGetConfig: () => ipcRenderer.invoke('cloud-get-config'),
   cloudDisconnect: () => ipcRenderer.invoke('cloud-disconnect'),
+
+  getFrameworkControls: (frameworkId) => {
+    if (typeof frameworkId !== 'number' || frameworkId < 1) {
+      return Promise.reject(new Error('Invalid framework ID'));
+    }
+    return ipcRenderer.invoke('get-framework-controls', frameworkId);
+  },
 });
 
 // Windows-specific APIs (only exposed on Windows)
