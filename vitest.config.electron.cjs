@@ -10,6 +10,8 @@ module.exports = defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    pool: 'forks',
+    execArgv: ['--require', path.resolve(__dirname, 'vitest.electron.preload.cjs')],
     include: ['electron/**/*.test.js'],
   },
 });

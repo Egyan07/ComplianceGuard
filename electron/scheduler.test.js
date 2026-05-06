@@ -1,15 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('electron', () => ({
-  powerMonitor: { on: vi.fn() },
-  Notification: class {
-    constructor() {}
-    show() {}
-    static isSupported() { return false; }
-  },
-}));
+// electron is stubbed via preload (vitest.electron.preload.cjs) and resolve.alias,
+// both pointing to __mocks__/electron.js — same CJS cache entry as scheduler.js uses.
 
 vi.mock('./logger', () => ({
+  default: { info: vi.fn(), error: vi.fn(), warn: vi.fn() },
   info: vi.fn(),
   error: vi.fn(),
   warn: vi.fn(),
@@ -122,6 +117,15 @@ describe('checkAndRun', () => {
 });
 
 describe('start', () => {
+  let onSpy;
+
+  beforeEach(() => {
+    const { powerMonitor } = require('../__mocks__/electron.js');
+    onSpy = vi.spyOn(powerMonitor, 'on');
+  });
+
+  afterEach(() => vi.restoreAllMocks());
+
   it('calls ensureScheduleTask on startup', async () => {
     const db = makeDb();
     await start(db, { processWindowsEvidence: vi.fn() });
@@ -129,9 +133,8 @@ describe('start', () => {
   });
 
   it('registers powerMonitor resume handler', async () => {
-    const { powerMonitor } = await import('electron');
     const db = makeDb();
     await start(db, { processWindowsEvidence: vi.fn() });
-    expect(powerMonitor.on).toHaveBeenCalledWith('resume', expect.any(Function));
+    expect(onSpy).toHaveBeenCalledWith('resume', expect.any(Function));
   });
 });

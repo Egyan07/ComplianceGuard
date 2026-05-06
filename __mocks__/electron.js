@@ -1,7 +1,7 @@
-// Stub for electron — resolved via Vite alias in vitest.config.electron.cjs.
-// vi.mock('electron', factory) in tests will override this at runtime.
+// Loaded by vitest.electron.preload.cjs so all require('electron') calls in the
+// worker see this stub. Tests spy on powerMonitor.on via the shared object reference.
 module.exports = {
-  powerMonitor: { on: () => {} },
+  powerMonitor: { on: () => {}, removeListener: () => {} },
   Notification: class {
     constructor() {}
     show() {}
