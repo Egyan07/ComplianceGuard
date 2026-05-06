@@ -31,7 +31,7 @@ export function calcNextRunAt(config) {
   return next.toISOString();
 }
 
-async function runCollection() {
+export async function runCollection() {
   if (_isRunning) return { error: 'Collection already in progress' };
   _isRunning = true;
   const ranAt = new Date().toISOString();
