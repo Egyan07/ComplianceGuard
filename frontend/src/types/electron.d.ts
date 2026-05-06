@@ -22,6 +22,26 @@ export interface ElectronLicenseAPI {
   onLicenseChanged?: (handler: (info: LicenseInfo) => void) => (() => void) | undefined;
 }
 
+export interface ScheduleConfig {
+  enabled: boolean;
+  frequency: 'daily' | 'weekly';
+  time: string;
+}
+
+export interface CollectionResult {
+  success: boolean;
+  evidence_count: number;
+  ran_at: string;
+  error?: string;
+}
+
+export interface ScheduleState {
+  config: ScheduleConfig;
+  last_run_at: string | null;
+  next_run_at: string | null;
+  last_result: CollectionResult | null;
+}
+
 export interface FrameworkControl {
   id: string;
   title: string;
@@ -46,6 +66,9 @@ export interface FrameworkDataError {
 
 export interface ElectronAPI extends ElectronLicenseAPI {
   getFrameworkControls: (frameworkId: number) => Promise<FrameworkData | FrameworkDataError>;
+  getSchedule: () => Promise<ScheduleState>;
+  setSchedule: (config: ScheduleConfig) => Promise<{ config: ScheduleConfig; next_run_at: string | null } | { error: string }>;
+  runCollectionNow: () => Promise<CollectionResult | { error: string }>;
   // Other IPCs exposed by electron/preload.js. Declared as `unknown` so
   // consumers that need them have to cast with a narrow helper rather than
   // sprinkling `any` everywhere.
