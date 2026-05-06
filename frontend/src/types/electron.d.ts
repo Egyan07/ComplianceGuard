@@ -22,7 +22,30 @@ export interface ElectronLicenseAPI {
   onLicenseChanged?: (handler: (info: LicenseInfo) => void) => (() => void) | undefined;
 }
 
+export interface FrameworkControl {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  control_objective: string;
+  implementation_guidance: string;
+  risk_level?: 'low' | 'medium' | 'high';
+  specification_type?: 'required' | 'addressable';
+  related_controls?: string[];
+}
+
+export interface FrameworkData {
+  frameworkId: number;
+  name: string;
+  controls: FrameworkControl[];
+}
+
+export interface FrameworkDataError {
+  error: string;
+}
+
 export interface ElectronAPI extends ElectronLicenseAPI {
+  getFrameworkControls: (frameworkId: number) => Promise<FrameworkData | FrameworkDataError>;
   // Other IPCs exposed by electron/preload.js. Declared as `unknown` so
   // consumers that need them have to cast with a narrow helper rather than
   // sprinkling `any` everywhere.

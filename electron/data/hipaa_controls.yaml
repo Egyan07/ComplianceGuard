@@ -1,0 +1,429 @@
+# HIPAA Security Rule (45 CFR Part 164, Subpart C) safeguards.
+# 47 standards and implementation specifications across all five sections.
+# specification_type: required | addressable
+# risk_level: low | medium | high
+
+controls:
+  - id: 164.308.a.1
+    title: Security Management Process
+    description: Implement policies and procedures to prevent, detect, contain, and correct security violations.
+    category: "164.308"
+    control_objective: Establish a security management process to manage security risks to ePHI.
+    implementation_guidance: Establish a formal security management program with executive sponsorship. Assign ownership and track remediation of identified risks.
+    specification_type: required
+    risk_level: high
+
+  - id: 164.308.a.1.ii.A
+    title: Risk Analysis
+    description: Conduct an accurate and thorough assessment of the potential risks and vulnerabilities to the confidentiality, integrity, and availability of ePHI.
+    category: "164.308"
+    control_objective: Identify and document all reasonably anticipated threats to ePHI.
+    implementation_guidance: Conduct formal risk analysis at least annually and after significant changes. Document scope, data flows, threat identification, likelihood, and impact ratings.
+    specification_type: required
+    risk_level: high
+    related_controls: [164.308.a.1.ii.B]
+
+  - id: 164.308.a.1.ii.B
+    title: Risk Management
+    description: Implement security measures sufficient to reduce risks and vulnerabilities to a reasonable and appropriate level.
+    category: "164.308"
+    control_objective: Reduce identified risks to ePHI to an acceptable level.
+    implementation_guidance: Develop and implement a risk treatment plan. Track remediation of identified risks to closure. Re-assess residual risk after controls are applied.
+    specification_type: required
+    risk_level: high
+
+  - id: 164.308.a.1.ii.C
+    title: Sanction Policy
+    description: Apply appropriate sanctions against workforce members who fail to comply with the security policies and procedures of the covered entity.
+    category: "164.308"
+    control_objective: Deter workforce members from violating security policies.
+    implementation_guidance: Document sanction policy in employee handbook. Define graduated sanctions from warning to termination. Apply consistently and document all actions taken.
+    specification_type: required
+    risk_level: medium
+
+  - id: 164.308.a.1.ii.D
+    title: Information System Activity Review
+    description: Implement procedures to regularly review records of information system activity, such as audit logs, access reports, and security incident tracking reports.
+    category: "164.308"
+    control_objective: Detect unauthorized access or security incidents involving ePHI.
+    implementation_guidance: Review audit logs at least weekly. Automate alerting on anomalous access patterns. Document review activities and findings.
+    specification_type: required
+    risk_level: high
+
+  - id: 164.308.a.2
+    title: Assigned Security Responsibility
+    description: Identify the security official who is responsible for the development and implementation of the policies and procedures required by this subpart.
+    category: "164.308"
+    control_objective: Ensure accountability for HIPAA security compliance.
+    implementation_guidance: Formally designate a HIPAA Security Officer. Document the designation in writing. Ensure the officer has authority and resources to fulfill the role.
+    specification_type: required
+    risk_level: high
+
+  - id: 164.308.a.3.i
+    title: Workforce Security
+    description: Implement policies and procedures to ensure that all members of its workforce have appropriate access to ePHI, and to prevent those workforce members who do not have access from obtaining access to ePHI.
+    category: "164.308"
+    control_objective: Ensure workforce access to ePHI is appropriately controlled.
+    implementation_guidance: Define and document access levels for all roles that handle ePHI. Review access assignments annually and after role changes. Maintain a workforce access matrix.
+    specification_type: required
+    risk_level: high
+
+  - id: 164.308.a.3.ii.A
+    title: Authorization and Supervision
+    description: Implement procedures for the authorisation and supervision of workforce members who work with ePHI or in locations where it might be accessed.
+    category: "164.308"
+    control_objective: Ensure workforce members are appropriately supervised when handling ePHI.
+    implementation_guidance: Define role-based access authorisation procedures. Require manager approval for ePHI access. Document supervision requirements for each role that handles ePHI.
+    specification_type: addressable
+    risk_level: medium
+
+  - id: 164.308.a.3.ii.C
+    title: Termination Procedures
+    description: Implement procedures for terminating access to ePHI when the employment of, or other arrangement with, a workforce member ends.
+    category: "164.308"
+    control_objective: Prevent former workforce members from accessing ePHI after separation.
+    implementation_guidance: Revoke all ePHI access within one business day of termination. Recover all access credentials and devices. Document completion in offboarding checklist.
+    specification_type: addressable
+    risk_level: high
+
+  - id: 164.308.a.4.ii.B
+    title: Access Authorization
+    description: Implement policies and procedures for granting access to ePHI.
+    category: "164.308"
+    control_objective: Ensure only authorised workforce members can access ePHI.
+    implementation_guidance: Implement formal access request and approval process. Enforce role-based access control. Review access rights quarterly.
+    specification_type: addressable
+    risk_level: high
+
+  - id: 164.308.a.4.ii.C
+    title: Access Establishment and Modification
+    description: Implement policies and procedures that establish, document, review, and modify a user's right of access to ePHI systems.
+    category: "164.308"
+    control_objective: Maintain accurate and current access rights for all workforce members.
+    implementation_guidance: Automate provisioning and deprovisioning where possible. Document all access changes. Review access rights after role changes within 48 hours.
+    specification_type: addressable
+    risk_level: high
+
+  - id: 164.308.a.5.ii.A
+    title: Security Reminders
+    description: Periodic security updates to keep workforce members aware of threats and policies.
+    category: "164.308"
+    control_objective: Keep workforce members aware of current security threats and policies.
+    implementation_guidance: Send monthly security awareness reminders. Include phishing examples, policy updates, and incident summaries. Track delivery and acknowledgement.
+    specification_type: addressable
+    risk_level: medium
+
+  - id: 164.308.a.5.ii.B
+    title: Protection from Malicious Software
+    description: Procedures for guarding against, detecting, and reporting malicious software.
+    category: "164.308"
+    control_objective: Prevent malware from compromising ePHI confidentiality, integrity, or availability.
+    implementation_guidance: Deploy EDR on all endpoints that access ePHI. Enable automatic definition updates. Block execution of unauthorised software. Report malware detections within 24 hours.
+    specification_type: addressable
+    risk_level: high
+
+  - id: 164.308.a.5.ii.C
+    title: Log-in Monitoring
+    description: Procedures for monitoring log-in attempts and reporting discrepancies.
+    category: "164.308"
+    control_objective: Detect and respond to unauthorised access attempts to systems containing ePHI.
+    implementation_guidance: Alert on 5+ consecutive failed login attempts. Review failed login reports weekly. Escalate anomalous patterns to the Security Officer within 24 hours.
+    specification_type: addressable
+    risk_level: high
+
+  - id: 164.308.a.5.ii.D
+    title: Password Management
+    description: Procedures for creating, changing, and safeguarding passwords.
+    category: "164.308"
+    control_objective: Ensure workforce members use and protect strong passwords for ePHI systems.
+    implementation_guidance: Enforce minimum 12-character passwords with complexity requirements. Prohibit password reuse (last 12). Require password changes every 90 days. Provide a password manager.
+    specification_type: addressable
+    risk_level: high
+
+  - id: 164.308.a.6.ii
+    title: Response and Reporting
+    description: Identify and respond to suspected or known security incidents; mitigate harmful effects; document security incidents and outcomes.
+    category: "164.308"
+    control_objective: Contain and remediate security incidents involving ePHI promptly.
+    implementation_guidance: Document incident response procedures. Report breaches to HHS within 60 days of discovery. Conduct post-incident reviews within 5 business days.
+    specification_type: required
+    risk_level: high
+
+  - id: 164.308.a.7.ii.A
+    title: Data Backup Plan
+    description: Establish and implement procedures to create and maintain retrievable exact copies of ePHI.
+    category: "164.308"
+    control_objective: Ensure ePHI can be recovered following a disaster or system failure.
+    implementation_guidance: Back up all ePHI daily. Encrypt backups at rest. Store at least one copy off-site. Test restore procedures quarterly.
+    specification_type: required
+    risk_level: high
+
+  - id: 164.308.a.7.ii.B
+    title: Disaster Recovery Plan
+    description: Establish and implement procedures to restore any loss of data.
+    category: "164.308"
+    control_objective: Restore ePHI systems to normal operations after a disaster.
+    implementation_guidance: Define RTO and RPO for each ePHI system. Document recovery procedures. Test DR plan at least annually. Keep plan updated after system changes.
+    specification_type: required
+    risk_level: high
+
+  - id: 164.308.a.7.ii.C
+    title: Emergency Mode Operation Plan
+    description: Establish and implement procedures to enable continuation of critical business processes for protection of ePHI while operating in emergency mode.
+    category: "164.308"
+    control_objective: Maintain protection of ePHI during emergency operations.
+    implementation_guidance: Define emergency access procedures. Ensure emergency access accounts are protected and audited. Test emergency procedures annually.
+    specification_type: required
+    risk_level: high
+
+  - id: 164.308.a.8
+    title: Evaluation
+    description: Perform a periodic technical and non-technical evaluation based upon the standards implemented under this rule.
+    category: "164.308"
+    control_objective: Ensure security measures continue to protect ePHI as the environment changes.
+    implementation_guidance: Conduct internal HIPAA security evaluation at least annually. Engage a qualified third party after significant system changes. Document findings and remediation.
+    specification_type: required
+    risk_level: high
+
+  - id: 164.308.b.1
+    title: Business Associate Contracts
+    description: A covered entity may permit a business associate to create, receive, maintain, or transmit ePHI only if it obtains satisfactory assurances that the BA will appropriately safeguard the information.
+    category: "164.308"
+    control_objective: Ensure business associates protect ePHI to the same standard as the covered entity.
+    implementation_guidance: Obtain signed Business Associate Agreements from all vendors that touch ePHI. Review BAAs annually. Terminate agreements with non-compliant associates.
+    specification_type: required
+    risk_level: high
+
+  - id: 164.310.a.2.i
+    title: Contingency Operations
+    description: Establish and implement procedures that allow facility access in support of restoration of lost data under the disaster recovery plan.
+    category: "164.310"
+    control_objective: Ensure authorised personnel can access facilities during an emergency.
+    implementation_guidance: Define emergency access procedures for data centres. Maintain an up-to-date list of personnel authorised for emergency access. Test procedures annually.
+    specification_type: addressable
+    risk_level: medium
+
+  - id: 164.310.a.2.ii
+    title: Facility Security Plan
+    description: Implement policies and procedures to safeguard the facility and the equipment therein from unauthorised physical access, tampering, and theft.
+    category: "164.310"
+    control_objective: Prevent unauthorised physical access to facilities where ePHI is stored or processed.
+    implementation_guidance: Document physical security controls for all facilities. Implement badge access, CCTV, and visitor management. Review and update the plan annually.
+    specification_type: addressable
+    risk_level: high
+
+  - id: 164.310.a.2.iii
+    title: Access Control and Validation Procedures
+    description: Implement procedures to control and validate a person's access to facilities based on their role or function.
+    category: "164.310"
+    control_objective: Ensure only authorised individuals access areas where ePHI is processed or stored.
+    implementation_guidance: Enforce role-based physical access. Require visitors to sign in and be escorted. Review access lists monthly and revoke access for departing staff within 24 hours.
+    specification_type: addressable
+    risk_level: high
+
+  - id: 164.310.a.2.iv
+    title: Maintenance Records
+    description: Implement policies and procedures to document repairs and modifications to the physical components of a facility related to security.
+    category: "164.310"
+    control_objective: Maintain an audit trail of physical security modifications and repairs.
+    implementation_guidance: Log all maintenance activities on physical security systems. Retain records for 6 years. Review maintenance logs monthly.
+    specification_type: addressable
+    risk_level: low
+
+  - id: 164.310.b
+    title: Workstation Use
+    description: Implement policies and procedures that specify the proper functions to be performed and the physical attributes of workstations that can access ePHI.
+    category: "164.310"
+    control_objective: Ensure workstations are used appropriately and securely when accessing ePHI.
+    implementation_guidance: Define acceptable use for all workstations with ePHI access. Require screen locks after 5 minutes of inactivity. Prohibit ePHI access in public areas without VPN.
+    specification_type: required
+    risk_level: medium
+
+  - id: 164.310.c
+    title: Workstation Security
+    description: Implement physical safeguards for all workstations that access ePHI, to restrict access to authorised users.
+    category: "164.310"
+    control_objective: Prevent unauthorised physical access to workstations that process ePHI.
+    implementation_guidance: Position screens to prevent shoulder-surfing. Use privacy screens in open areas. Lock or remove workstations from unsecured areas. Encrypt all workstation hard drives.
+    specification_type: required
+    risk_level: high
+
+  - id: 164.310.d.2.i
+    title: Disposal
+    description: Implement policies and procedures to address the final disposition of ePHI and the hardware or electronic media on which it is stored.
+    category: "164.310"
+    control_objective: Prevent ePHI from being recovered after disposal of electronic media.
+    implementation_guidance: Use NIST 800-88-compliant data sanitisation before disposal. Obtain certificates of destruction for physical destruction. Log all disposal activities.
+    specification_type: required
+    risk_level: high
+
+  - id: 164.310.d.2.ii
+    title: Media Re-use
+    description: Implement procedures for removal of ePHI from electronic media before the media are made available for re-use.
+    category: "164.310"
+    control_objective: Ensure ePHI cannot be recovered from reused electronic media.
+    implementation_guidance: Perform NIST 800-88 sanitisation before reuse. Maintain a log of all media sanitised. Verify sanitisation with a third-party tool before reuse.
+    specification_type: required
+    risk_level: high
+
+  - id: 164.310.d.2.iii
+    title: Accountability
+    description: Maintain a record of the movements of hardware and electronic media and any person responsible.
+    category: "164.310"
+    control_objective: Track the location and custody of all electronic media containing ePHI.
+    implementation_guidance: Maintain a media inventory log. Record all transfers of media containing ePHI. Conduct quarterly reconciliation of the inventory.
+    specification_type: addressable
+    risk_level: medium
+
+  - id: 164.310.d.2.iv
+    title: Data Backup and Storage
+    description: Create a retrievable, exact copy of ePHI, when needed, before movement of equipment.
+    category: "164.310"
+    control_objective: Prevent data loss when moving equipment containing ePHI.
+    implementation_guidance: Back up all ePHI before moving any equipment. Verify backup integrity before decommissioning original equipment. Document all equipment moves and backup activities.
+    specification_type: addressable
+    risk_level: medium
+
+  - id: 164.312.a.2.i
+    title: Unique User Identification
+    description: Assign a unique name and/or number for identifying and tracking user identity.
+    category: "164.312"
+    control_objective: Enable accountability by ensuring each user's ePHI access can be attributed to a specific individual.
+    implementation_guidance: Prohibit shared accounts for ePHI systems. Assign unique usernames to every workforce member. Disable generic or group accounts.
+    specification_type: required
+    risk_level: high
+
+  - id: 164.312.a.2.ii
+    title: Emergency Access Procedure
+    description: Establish and implement as needed procedures for obtaining necessary ePHI during an emergency.
+    category: "164.312"
+    control_objective: Ensure authorised personnel can access ePHI when normal access controls are unavailable.
+    implementation_guidance: Document emergency access procedures in the DR plan. Store emergency access credentials in a secured, audited vault. Test procedures at least annually.
+    specification_type: required
+    risk_level: high
+
+  - id: 164.312.a.2.iii
+    title: Automatic Logoff
+    description: Implement electronic procedures that terminate an electronic session after a predetermined time of inactivity.
+    category: "164.312"
+    control_objective: Prevent unauthorised access to an unattended workstation or session containing ePHI.
+    implementation_guidance: Configure automatic session timeout after 15 minutes of inactivity for all ePHI systems. Require re-authentication after timeout. Log all automatic logoff events.
+    specification_type: addressable
+    risk_level: medium
+
+  - id: 164.312.a.2.iv
+    title: Encryption and Decryption
+    description: Implement a mechanism to encrypt and decrypt ePHI.
+    category: "164.312"
+    control_objective: Protect ePHI confidentiality in storage.
+    implementation_guidance: Encrypt all ePHI at rest using AES-256. Use validated cryptographic modules (FIPS 140-2). Manage encryption keys via a KMS with documented key rotation schedules.
+    specification_type: addressable
+    risk_level: high
+
+  - id: 164.312.b
+    title: Audit Controls
+    description: Implement hardware, software, and/or procedural mechanisms that record and examine activity in information systems that contain or use ePHI.
+    category: "164.312"
+    control_objective: Provide a record of all ePHI access and activity for investigation and compliance purposes.
+    implementation_guidance: Enable audit logging on all ePHI systems. Centralise logs to a SIEM. Retain logs for 6 years. Alert on anomalous access patterns within 24 hours.
+    specification_type: required
+    risk_level: high
+
+  - id: 164.312.c.2
+    title: Mechanism to Authenticate ePHI
+    description: Implement electronic mechanisms to corroborate that ePHI has not been altered or destroyed in an unauthorised manner.
+    category: "164.312"
+    control_objective: Detect unauthorised modification or destruction of ePHI.
+    implementation_guidance: Use cryptographic checksums or digital signatures to verify ePHI integrity. Alert on integrity failures. Verify integrity on each access for high-sensitivity ePHI.
+    specification_type: addressable
+    risk_level: high
+
+  - id: 164.312.d
+    title: Person or Entity Authentication
+    description: Implement procedures to verify that a person or entity seeking access to ePHI is the one claimed.
+    category: "164.312"
+    control_objective: Ensure only authenticated and authorised individuals access ePHI.
+    implementation_guidance: Require multi-factor authentication for all ePHI system access. Use FIDO2/WebAuthn or TOTP as the second factor. Log all authentication attempts.
+    specification_type: required
+    risk_level: high
+
+  - id: 164.312.e.2.i
+    title: Integrity Controls
+    description: Implement security measures to ensure that electronically transmitted ePHI is not improperly modified without detection.
+    category: "164.312"
+    control_objective: Detect unauthorised modification of ePHI in transit.
+    implementation_guidance: Use TLS 1.2+ with integrity-providing cipher suites for all ePHI transmissions. Verify message integrity using HMAC or digital signatures for high-risk transmissions.
+    specification_type: addressable
+    risk_level: high
+
+  - id: 164.312.e.2.ii
+    title: Encryption of ePHI in Transit
+    description: Implement a mechanism to encrypt ePHI whenever deemed appropriate.
+    category: "164.312"
+    control_objective: Protect ePHI confidentiality during transmission over open networks.
+    implementation_guidance: Enforce TLS 1.2+ for all ePHI transmissions. Prohibit transmission of ePHI over unencrypted channels. Implement certificate pinning for mobile applications handling ePHI.
+    specification_type: addressable
+    risk_level: high
+
+  - id: 164.314.a.1
+    title: Business Associate Contracts — Organizational Requirements
+    description: A covered entity is not in compliance if it knew of a material breach or violation of the business associate's obligation and did not take action.
+    category: "164.314"
+    control_objective: Ensure covered entities take action when business associates fail to safeguard ePHI.
+    implementation_guidance: Monitor business associate compliance annually. Take corrective action within 30 days of identifying a material breach. Terminate contracts with non-compliant associates if necessary.
+    specification_type: required
+    risk_level: high
+
+  - id: 164.314.b.1
+    title: Requirements for Group Health Plans
+    description: A group health plan must ensure that its plan documents provide that the plan sponsor will reasonably and appropriately safeguard ePHI.
+    category: "164.314"
+    control_objective: Ensure plan sponsors implement appropriate safeguards for ePHI received from group health plans.
+    implementation_guidance: Amend plan documents to include HIPAA security requirements for plan sponsors. Obtain certifications of compliance from plan sponsors annually.
+    specification_type: required
+    risk_level: medium
+
+  - id: 164.316.a
+    title: Policies and Procedures
+    description: Implement reasonable and appropriate policies and procedures to comply with the standards, implementation specifications, or other requirements of this subpart.
+    category: "164.316"
+    control_objective: Provide a documented foundation for all HIPAA security compliance activities.
+    implementation_guidance: Maintain a comprehensive HIPAA security policy library. Review all policies annually. Obtain sign-off from executive leadership. Track version history and changes.
+    specification_type: required
+    risk_level: high
+
+  - id: 164.316.b.1
+    title: Documentation
+    description: Maintain the policies and procedures implemented to comply with this subpart in written form.
+    category: "164.316"
+    control_objective: Ensure all HIPAA security activities are documented and auditable.
+    implementation_guidance: Store all HIPAA documentation in a centrally accessible, version-controlled repository. Protect documentation from unauthorised modification.
+    specification_type: required
+    risk_level: medium
+
+  - id: 164.316.b.2.i
+    title: Time Limit
+    description: Retain the documentation required by this subpart for 6 years from the date of its creation or the date when it last was in effect, whichever is later.
+    category: "164.316"
+    control_objective: Ensure HIPAA documentation is retained for the required period.
+    implementation_guidance: Configure document retention policies to enforce 6-year minimum retention. Apply legal hold when litigation or investigation is anticipated.
+    specification_type: required
+    risk_level: medium
+
+  - id: 164.316.b.2.ii
+    title: Availability
+    description: Make documentation available to those persons responsible for implementing the procedures to which the documentation pertains.
+    category: "164.316"
+    control_objective: Ensure relevant personnel can access required HIPAA documentation.
+    implementation_guidance: Publish all HIPAA policies on the intranet with role-based access. Notify affected staff of policy updates within 48 hours. Include policy access in onboarding.
+    specification_type: required
+    risk_level: low
+
+  - id: 164.316.b.2.iii
+    title: Updates
+    description: Review documentation periodically, and update as needed, in response to environmental or operational changes affecting the security of ePHI.
+    category: "164.316"
+    control_objective: Keep HIPAA documentation current and accurate.
+    implementation_guidance: Review all policies annually and after significant system, process, or regulatory changes. Log all updates with rationale. Obtain re-approval from the Security Officer for material changes.
+    specification_type: required
+    risk_level: medium

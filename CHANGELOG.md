@@ -32,7 +32,12 @@ Bug fixes carried forward from the 3.1.0 routing migration, ten additive feature
 **Deployment**
 - **Railway one-click deploy** — `railway.toml` at repo root. README deploy button points to the template URL.
 
-- 22 new backend tests. Total: **231 backend** (197 unit + 26 integration + 8 e2e) + 119 frontend Vitest + 5 Playwright = **355 total**.
+**Electron — Framework Reference Browser**
+- **Browse Frameworks tab** — New read-only reference library in the Electron desktop app. Three-tab view (SOC 2 / ISO 27001 / HIPAA) with live search, risk-level filter, and controls grouped by category in collapsible accordions. Expands each control to show description, objective, implementation guidance, and (for HIPAA) specification type badge.
+- **YAML bundled with desktop app** — `electron/data/` ships the three control YAML files independently of the backend, so the desktop app works fully offline.
+- **IPC bridge** — `get-framework-controls` handler in the main process lazy-loads and caches each framework on first request. Strips `evidence_mapping` and defaults `risk_level` to `medium` at the boundary.
+
+- 22 new backend tests + 10 new frontend tests. Total: **231 backend** (197 unit + 26 integration + 8 e2e) + 129 frontend Vitest + 5 Playwright = **365 total**.
 
 ### Changed
 - **`EVIDENCE_CONTROL_MAP` extracted** to `backend/app/core/evidence_mapping.py` — shared by both `compliance.py` and `evidence.py` without circular imports.
