@@ -279,11 +279,11 @@ Each evidence item is SHA-256 hashed for integrity and stored with full audit lo
 
 ### ISO 27001:2013
 
-47 controls across all 14 Annex A domains (A.5–A.18). Available via the web API at `GET /api/v1/iso27001/framework/controls`. Includes control objectives, implementation guidance, and risk levels. Browse by domain (`/by-category/A.9`), search by keyword, or fetch by ID.
+47 controls across all 14 Annex A domains (A.5–A.18). Available via the web API at `GET /api/v1/iso27001/framework/controls`. Includes control objectives, implementation guidance, and risk levels. Browse by domain (`/by-category/A.9`), search by keyword, or fetch by ID. The desktop app includes a read-only **Browse Frameworks** tab for offline reference.
 
 ### HIPAA Security Rule
 
-47 safeguards across all five 45 CFR Part 164 sections (§164.308–§164.316). Available via `GET /api/v1/hipaa/framework/controls`. Each safeguard includes its specification type (Required or Addressable) and implementation guidance aligned with HHS guidance.
+47 safeguards across all five 45 CFR Part 164 sections (§164.308–§164.316). Available via `GET /api/v1/hipaa/framework/controls`. Each safeguard includes its specification type (Required or Addressable) and implementation guidance aligned with HHS guidance. Also browseable offline in the desktop app's **Browse Frameworks** tab.
 
 ## Architecture
 
