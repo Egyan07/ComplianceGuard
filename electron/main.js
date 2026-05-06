@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Tray, Menu, Notification, ipcMain, dialog, powerMonitor } = require('electron');
+const { app, BrowserWindow, Tray, Menu, Notification, ipcMain, dialog } = require('electron');
 const log = require('./logger');
 const path = require('path');
 const fs = require('fs');
@@ -494,10 +494,10 @@ ipcMain.handle('get-schedule', async () => {
 ipcMain.handle('set-schedule', async (event, config) => {
   try {
     const { enabled, frequency, time } = config;
+    if (typeof enabled !== 'boolean') return { error: 'Invalid enabled flag' };
     if (!['daily', 'weekly'].includes(frequency)) return { error: 'Invalid frequency' };
-    if (!/^\d{2}:\d{2}$/.test(time)) return { error: 'Invalid time format' };
-    const { calcNextRunAt } = require('./scheduler');
-    const nextRunAt = enabled ? calcNextRunAt(config) : null;
+    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) return { error: 'Invalid time format' };
+    const nextRunAt = enabled ? scheduler.calcNextRunAt(config) : null;
     await database.updateScheduleConfig(config, nextRunAt);
     return { config, next_run_at: nextRunAt };
   } catch (err) {
@@ -508,8 +508,7 @@ ipcMain.handle('set-schedule', async (event, config) => {
 
 ipcMain.handle('run-collection-now', async () => {
   try {
-    const { runCollection } = require('./scheduler');
-    const result = await runCollection();
+    const result = await scheduler.runCollection();
     return result;
   } catch (err) {
     log.error('run-collection-now failed:', err);
