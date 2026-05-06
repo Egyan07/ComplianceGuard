@@ -76,8 +76,8 @@ const FrameworkBrowser: React.FC = () => {
       .finally(() => {
         setLoading(prev => ({ ...prev, [currentFrameworkId]: false }));
       });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   // frameworks/loading/api are read only as gate conditions; excluding them prevents re-fetch loops
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentFrameworkId]);
 
   const currentData = frameworks[currentFrameworkId];
