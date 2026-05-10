@@ -3,6 +3,8 @@ const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
 
+const SCHEDULE_TASK_NAME = 'auto_evidence_collection';
+
 class ComplianceGuardDatabase {
   constructor() {
     this.db = null;
@@ -179,7 +181,8 @@ class ComplianceGuardDatabase {
       'CREATE INDEX IF NOT EXISTS idx_control_assessments_eval ON control_assessments(evaluation_id)',
       'CREATE INDEX IF NOT EXISTS idx_system_evidence_type ON system_evidence(evidence_type)',
       'CREATE INDEX IF NOT EXISTS idx_audit_log_action ON audit_log(action)',
-      'CREATE INDEX IF NOT EXISTS idx_scheduled_tasks_next_run ON scheduled_tasks(next_run_at)'
+      'CREATE INDEX IF NOT EXISTS idx_scheduled_tasks_next_run ON scheduled_tasks(next_run_at)',
+      'CREATE UNIQUE INDEX IF NOT EXISTS idx_scheduled_tasks_task_name ON scheduled_tasks(task_name)'
     ];
 
     for (const sql of tables) {
@@ -187,6 +190,16 @@ class ComplianceGuardDatabase {
     }
     for (const sql of indexes) {
       this.db.exec(sql);
+    }
+
+    // Migrate: add last_result_json if missing (idempotent)
+    try {
+      this.db.exec('ALTER TABLE scheduled_tasks ADD COLUMN last_result_json TEXT');
+    } catch (err) {
+      if (!/duplicate column name/i.test(err.message)) {
+        log.error('scheduled_tasks migration failed:', err);
+        throw err;
+      }
     }
 
     log.info('Database schema initialized successfully');
@@ -419,6 +432,39 @@ class ComplianceGuardDatabase {
       log.error('Database close error:', error);
       return Promise.reject(error);
     }
+  }
+
+  async ensureScheduleTask() {
+    await this.run(
+      `INSERT OR IGNORE INTO scheduled_tasks (task_name, task_type, schedule_config_json, status)
+       VALUES (?, 'evidence_collection', ?, 'paused')`,
+      [SCHEDULE_TASK_NAME, JSON.stringify({ enabled: false, frequency: 'daily', time: '09:00' })]
+    );
+  }
+
+  async getScheduleTask() {
+    return this.get(
+      'SELECT * FROM scheduled_tasks WHERE task_name = ?',
+      [SCHEDULE_TASK_NAME]
+    );
+  }
+
+  async updateScheduleConfig(config, nextRunAt) {
+    return this.run(
+      `UPDATE scheduled_tasks
+       SET schedule_config_json = ?, next_run_at = ?, status = ?
+       WHERE task_name = ?`,
+      [JSON.stringify(config), nextRunAt, config.enabled ? 'active' : 'paused', SCHEDULE_TASK_NAME]
+    );
+  }
+
+  async updateScheduleResult(lastRunAt, nextRunAt, result) {
+    return this.run(
+      `UPDATE scheduled_tasks
+       SET last_run_at = ?, next_run_at = ?, last_result_json = ?
+       WHERE task_name = ?`,
+      [lastRunAt, nextRunAt, JSON.stringify(result), SCHEDULE_TASK_NAME]
+    );
   }
 }
 

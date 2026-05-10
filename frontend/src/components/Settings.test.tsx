@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { ReactElement } from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material';
 import Settings from './Settings';
 
@@ -57,5 +57,80 @@ describe('Settings', () => {
     renderWithTheme(<Settings />);
     expect(screen.getByText('Web')).toBeInTheDocument();
     expect(screen.getByText('Web Browser')).toBeInTheDocument();
+  });
+
+  describe('Automatic Collection section (Electron mode)', () => {
+    beforeEach(() => {
+      (window as any).electronAPI = {
+        getAppVersion: vi.fn().mockResolvedValue('3.1.0'),
+        getSystemInfo: vi.fn().mockResolvedValue({ platform: 'win32', arch: 'x64', version: 'v20', electronVersion: '28' }),
+        getUserSetting: vi.fn().mockResolvedValue('false'),
+        cloudGetConfig: vi.fn().mockResolvedValue({ connected: false, serverUrl: null, email: null }),
+        getSchedule: vi.fn().mockResolvedValue({
+          config: { enabled: false, frequency: 'daily', time: '09:00' },
+          last_run_at: null,
+          next_run_at: null,
+          last_result: null,
+        }),
+        setSchedule: vi.fn().mockResolvedValue({ config: { enabled: true, frequency: 'daily', time: '09:00' }, next_run_at: '2026-05-07T09:00:00.000Z' }),
+        runCollectionNow: vi.fn().mockResolvedValue({ success: true, evidence_count: 42, ran_at: new Date().toISOString() }),
+      };
+    });
+
+    afterEach(() => {
+      (window as any).electronAPI = undefined;
+    });
+
+    it('renders Automatic Collection section in Electron mode', async () => {
+      renderWithTheme(<Settings />);
+      await waitFor(() => {
+        expect(screen.getByText('Automatic Collection')).toBeInTheDocument();
+      });
+    });
+
+    it('shows Never for last run when no prior run', async () => {
+      renderWithTheme(<Settings />);
+      await waitFor(() => {
+        expect(screen.getByText(/Never/)).toBeInTheDocument();
+      });
+    });
+
+    it('calls setSchedule when enable toggle is clicked', async () => {
+      renderWithTheme(<Settings />);
+      await waitFor(() => screen.getByText('Automatic Collection'));
+      const toggle = screen.getByRole('switch', { name: /enable automatic collection/i });
+      fireEvent.click(toggle);
+      await waitFor(() => {
+        expect((window as any).electronAPI.setSchedule).toHaveBeenCalledWith(
+          expect.objectContaining({ enabled: true })
+        );
+      });
+    });
+
+    it('shows Run Now button and calls runCollectionNow when clicked', async () => {
+      renderWithTheme(<Settings />);
+      await waitFor(() => screen.getByText('Run Now'));
+      fireEvent.click(screen.getByText('Run Now'));
+      await waitFor(() => {
+        expect((window as any).electronAPI.runCollectionNow).toHaveBeenCalled();
+      });
+    });
+
+    it('shows last run result after successful collection', async () => {
+      renderWithTheme(<Settings />);
+      await waitFor(() => screen.getByText('Automatic Collection'));
+
+      (window as any).electronAPI.getSchedule = vi.fn().mockResolvedValue({
+        config: { enabled: true, frequency: 'daily', time: '09:00' },
+        last_run_at: '2026-05-06T09:02:00.000Z',
+        next_run_at: '2026-05-07T09:00:00.000Z',
+        last_result: { success: true, evidence_count: 47, ran_at: '2026-05-06T09:02:00.000Z' },
+      });
+
+      renderWithTheme(<Settings />);
+      await waitFor(() => {
+        expect(screen.getAllByText(/47 items/)[0]).toBeInTheDocument();
+      });
+    });
   });
 });
