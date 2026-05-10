@@ -441,12 +441,10 @@ const Settings: React.FC = () => {
                   secondary="Collect evidence on a recurring schedule"
                 />
                 <ListItemSecondaryAction>
-                  <input
-                    type="checkbox"
-                    aria-label="enable automatic collection"
+                  <Switch
                     checked={schedule?.config.enabled ?? false}
                     onChange={() => handleScheduleChange({ enabled: !schedule?.config.enabled })}
-                    style={{ width: 36, height: 20, cursor: 'pointer', accentColor: '#1976d2' }}
+                    slotProps={{ input: { role: 'switch', 'aria-label': 'enable automatic collection' } as any }}
                   />
                 </ListItemSecondaryAction>
               </ListItem>
