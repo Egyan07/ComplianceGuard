@@ -25,6 +25,7 @@ controls:
         type: document
         frequency: periodic
         retention_period: 7_years
+    evidence_types: [policy_document, training_records, security_policies]
 
   - id: CC1.2
     title: Board Independence
@@ -39,6 +40,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 7_years
+    evidence_types: [policy_document, audit_reports]
 
   - id: CC1.3
     title: Management Philosophy
@@ -53,6 +55,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
+    evidence_types: [policy_document, training_records]
 
   - id: CC2.1
     title: Communication and Information
@@ -68,6 +71,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
+    evidence_types: [policy_document, training_records]
 
   - id: CC2.2
     title: Information Quality
@@ -82,6 +86,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
+    evidence_types: [policy_document, audit_reports]
 
   - id: CC2.3
     title: External Communication
@@ -96,6 +101,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
+    evidence_types: [policy_document, audit_reports]
 
   - id: CC3.1
     title: Risk Assessment Process
@@ -110,6 +116,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
+    evidence_types: [policy_document, audit_reports]
 
   - id: CC3.2
     title: Risk Identification
@@ -124,6 +131,7 @@ controls:
         type: document
         frequency: quarterly
         retention_period: 3_years
+    evidence_types: [policy_document, audit_reports]
 
   - id: CC3.3
     title: Risk Analysis
@@ -138,6 +146,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
+    evidence_types: [policy_document, audit_reports]
 
   - id: CC4.1
     title: Monitoring Activities
@@ -152,6 +161,7 @@ controls:
         type: document
         frequency: continuous
         retention_period: 3_years
+    evidence_types: [audit_reports, event_logs]
 
   - id: CC4.2
     title: Separate Evaluations
@@ -166,6 +176,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 5_years
+    evidence_types: [audit_reports, policy_document]
 
   - id: CC5.1
     title: Control Activities
@@ -180,6 +191,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
+    evidence_types: [policy_document, audit_reports]
 
   - id: CC5.2
     title: Control Activities Development
@@ -194,6 +206,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
+    evidence_types: [policy_document, audit_reports]
 
   - id: CC6.1
     title: Logical Access Controls
@@ -215,6 +228,7 @@ controls:
         type: system
         frequency: continuous
         retention_period: 1_year
+    evidence_types: [access_logs, user_provisioning, system_configs, network_configs]
 
   - id: CC6.2
     title: Authentication
@@ -230,6 +244,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
+    evidence_types: [user_provisioning, system_configs]
 
   - id: CC6.3
     title: Authorization
@@ -245,6 +260,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
+    evidence_types: [user_provisioning, policy_document]
 
   - id: CC7.1
     title: System Operations
@@ -259,6 +275,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
+    evidence_types: [event_logs, system_configs]
 
   - id: CC8.1
     title: Change Management
@@ -273,6 +290,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
+    evidence_types: [audit_reports, policy_document]
 
   - id: CC9.1
     title: Risk Mitigation
@@ -287,6 +305,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
+    evidence_types: [policy_document, audit_reports]
 
   # ── Availability (A) ─────────────────────────────────────────────────────────
   - id: A1.1
@@ -308,6 +327,7 @@ controls:
         type: system
         frequency: continuous
         retention_period: 1_year
+    evidence_types: [system_configs, backup_logs, incident_reports]
 
   - id: A1.2
     title: Capacity Management
@@ -322,6 +342,7 @@ controls:
         type: document
         frequency: quarterly
         retention_period: 3_years
+    evidence_types: [policy_document, backup_logs]
 
   - id: A1.3
     title: Backup and Recovery
@@ -337,6 +358,7 @@ controls:
         type: system
         frequency: monthly
         retention_period: 1_year
+    evidence_types: [system_configs]
 
   - id: A1.4
     title: Incident Response
@@ -351,6 +373,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
+    evidence_types: [backup_logs, policy_document]
 
   - id: A1.5
     title: System Performance Monitoring
@@ -365,6 +388,7 @@ controls:
         type: system
         frequency: daily
         retention_period: 1_year
+    evidence_types: [system_configs, event_logs]
 
   - id: A2.1
     title: Environmental Controls
@@ -379,6 +403,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
+    evidence_types: [policy_document, audit_reports]
 
   - id: A2.2
     title: Facility Access
@@ -393,6 +418,7 @@ controls:
         type: system
         frequency: continuous
         retention_period: 1_year
+    evidence_types: [access_logs, audit_reports]
 
   - id: A3.1
     title: Network Security
@@ -408,6 +434,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
+    evidence_types: [network_configs, firewall_configs]
 
   - id: A3.2
     title: Firewall Management
@@ -422,6 +449,7 @@ controls:
         type: document
         frequency: quarterly
         retention_period: 3_years
+    evidence_types: [firewall_configs, network_configs]
 
   # ── Confidentiality (C) ──────────────────────────────────────────────────────
   - id: C1.1
@@ -443,6 +471,7 @@ controls:
         type: system
         frequency: continuous
         retention_period: 1_year
+    evidence_types: [policy_document, system_configs]
 
   - id: C1.2
     title: Data Classification
@@ -457,6 +486,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
+    evidence_types: [encryption_policies, system_configs]
 
   - id: C1.3
     title: Encryption Controls
@@ -472,6 +502,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
+    evidence_types: [policy_document, audit_reports]
 
   - id: C1.4
     title: Data Masking
@@ -486,6 +517,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
+    evidence_types: [policy_document, audit_reports]
 
   - id: C2.1
     title: Confidentiality Agreements
@@ -500,6 +532,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 7_years
+    evidence_types: [policy_document, audit_reports]
 
   - id: C2.2
     title: Data Retention
@@ -514,6 +547,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
+    evidence_types: [policy_document, audit_reports]
 
   - id: C2.3
     title: Data Disposal
@@ -528,6 +562,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
+    evidence_types: [policy_document, audit_reports]
 
   - id: C3.1
     title: Third Party Confidentiality
@@ -542,6 +577,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 7_years
+    evidence_types: [policy_document, audit_reports]
 
   - id: C3.2
     title: Confidentiality Monitoring
@@ -556,6 +592,7 @@ controls:
         type: document
         frequency: quarterly
         retention_period: 3_years
+    evidence_types: [audit_reports, event_logs]
 
   # ── Processing Integrity (PI) ────────────────────────────────────────────────
   - id: PI1.1
@@ -571,6 +608,7 @@ controls:
         type: system
         frequency: continuous
         retention_period: 1_year
+    evidence_types: [policy_document, audit_reports]
 
   - id: PI1.2
     title: Quality Assurance
@@ -585,6 +623,7 @@ controls:
         type: document
         frequency: periodic
         retention_period: 3_years
+    evidence_types: [system_configs, audit_reports]
 
   - id: PI1.3
     title: Input Validation
@@ -599,6 +638,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
+    evidence_types: [event_logs, audit_reports]
 
   - id: PI1.4
     title: Processing Controls
@@ -613,6 +653,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
+    evidence_types: [audit_reports, policy_document]
 
   - id: PI1.5
     title: Output Validation
@@ -627,6 +668,7 @@ controls:
         type: document
         frequency: periodic
         retention_period: 3_years
+    evidence_types: [event_logs, audit_reports]
 
   - id: PI2.1
     title: Error Handling
@@ -641,6 +683,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
+    evidence_types: [event_logs, audit_reports]
 
   - id: PI2.2
     title: Transaction Integrity
@@ -655,6 +698,7 @@ controls:
         type: system
         frequency: continuous
         retention_period: 1_year
+    evidence_types: [event_logs, system_configs]
 
   - id: PI3.1
     title: Processing Monitoring
@@ -669,6 +713,7 @@ controls:
         type: document
         frequency: daily
         retention_period: 1_year
+    evidence_types: [event_logs, audit_reports]
 
   - id: PI3.2
     title: Exception Reporting
@@ -683,6 +728,7 @@ controls:
         type: document
         frequency: event_driven
         retention_period: 3_years
+    evidence_types: [event_logs, audit_reports]
 
   # ── Confidentiality & Availability (CA) ──────────────────────────────────────
   - id: CA1.1
@@ -698,6 +744,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
+    evidence_types: [policy_document, audit_reports]
 
   - id: CA1.2
     title: Incident Response
@@ -719,6 +766,7 @@ controls:
         type: system
         frequency: event_driven
         retention_period: 3_years
+    evidence_types: [incident_reports, policy_document]
 
   - id: CA1.3
     title: Security Awareness Training
@@ -733,6 +781,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
+    evidence_types: [training_records, security_policies]
 
   - id: CA1.4
     title: Physical Security
@@ -747,6 +796,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
+    evidence_types: [policy_document, audit_reports]
 
   - id: CA1.5
     title: Vendor Management
@@ -761,6 +811,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
+    evidence_types: [policy_document, audit_reports]
 
   - id: CA1.6
     title: Change Management
@@ -775,6 +826,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
+    evidence_types: [audit_reports, policy_document]
 
   - id: CA1.7
     title: Business Continuity
@@ -790,6 +842,7 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
+    evidence_types: [backup_logs, policy_document]
 
   - id: CA1.8
     title: Security Monitoring
@@ -804,3 +857,4 @@ controls:
         type: system
         frequency: continuous
         retention_period: 1_year
+    evidence_types: [event_logs, system_configs]

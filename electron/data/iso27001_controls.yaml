@@ -11,6 +11,7 @@ controls:
     control_objective: Provide management direction and support for information security.
     implementation_guidance: Define an information security policy document approved at board level and communicated to all staff. Review annually or after significant changes.
     risk_level: high
+    evidence_types: [security_policies, policy_document]
 
   - id: A.5.1.2
     title: Review of Policies for Information Security
@@ -19,6 +20,7 @@ controls:
     control_objective: Ensure policies remain suitable, adequate and effective.
     implementation_guidance: Schedule annual policy reviews. Document review outcomes and any changes approved by management.
     risk_level: medium
+    evidence_types: [security_policies, policy_document]
 
   # ── A.6 Organisation of Information Security ─────────────────────────────
   - id: A.6.1.1
@@ -28,6 +30,7 @@ controls:
     control_objective: Establish a management framework to initiate and control information security implementation.
     implementation_guidance: Define RACI matrix for information security roles. Assign an Information Security Officer.
     risk_level: high
+    evidence_types: [security_policies, user_provisioning]
 
   - id: A.6.1.2
     title: Segregation of Duties
@@ -36,6 +39,7 @@ controls:
     control_objective: Reduce risk of fraud, error, and bypass of security controls.
     implementation_guidance: Identify conflicting roles and enforce separation via access controls and workflow approvals.
     risk_level: high
+    evidence_types: [security_policies, user_provisioning]
 
   - id: A.6.2.1
     title: Mobile Device Policy
@@ -44,6 +48,7 @@ controls:
     control_objective: Ensure the security of information accessed, processed or stored on mobile devices.
     implementation_guidance: Implement MDM solution, enforce encryption, remote wipe, and screen lock on all mobile devices.
     risk_level: medium
+    evidence_types: [security_policies, user_provisioning]
 
   # ── A.7 Human Resource Security ──────────────────────────────────────────
   - id: A.7.1.1
@@ -53,6 +58,7 @@ controls:
     control_objective: Ensure employees and contractors are suitable and understand their responsibilities.
     implementation_guidance: Conduct background checks before employment. Document checks performed and results.
     risk_level: medium
+    evidence_types: [security_policies, policy_document]
 
   - id: A.7.2.2
     title: Information Security Awareness, Education and Training
@@ -61,6 +67,7 @@ controls:
     control_objective: Ensure users are aware of information security threats and their responsibilities.
     implementation_guidance: Deliver annual security awareness training. Track completion rates and test knowledge.
     risk_level: high
+    evidence_types: [training_records, security_policies]
 
   - id: A.7.3.1
     title: Termination or Change of Employment Responsibilities
@@ -69,6 +76,7 @@ controls:
     control_objective: Protect assets upon termination or change of employment.
     implementation_guidance: Revoke all access within 24 hours of termination. Conduct offboarding checklist.
     risk_level: high
+    evidence_types: [user_provisioning, security_policies]
 
   # ── A.8 Asset Management ─────────────────────────────────────────────────
   - id: A.8.1.1
@@ -78,6 +86,7 @@ controls:
     control_objective: Identify organisational assets and define appropriate protection responsibilities.
     implementation_guidance: Maintain a CMDB with all hardware, software, data, and cloud assets. Review quarterly.
     risk_level: medium
+    evidence_types: [system_configs, policy_document]
 
   - id: A.8.1.3
     title: Acceptable Use of Assets
@@ -86,6 +95,7 @@ controls:
     control_objective: Ensure information and assets are appropriately protected.
     implementation_guidance: Publish an acceptable use policy. Include in onboarding and require annual sign-off.
     risk_level: medium
+    evidence_types: [system_configs, policy_document]
 
   - id: A.8.2.1
     title: Classification of Information
@@ -94,6 +104,7 @@ controls:
     control_objective: Ensure information receives appropriate levels of protection.
     implementation_guidance: Define classification tiers (Public, Internal, Confidential, Restricted). Label all data assets.
     risk_level: high
+    evidence_types: [system_configs, policy_document]
 
   - id: A.8.3.1
     title: Management of Removable Media
@@ -102,6 +113,7 @@ controls:
     control_objective: Prevent unauthorised disclosure, modification, removal, or destruction of information on removable media.
     implementation_guidance: Disable USB ports by default. Allow exceptions only via approved process with encryption required.
     risk_level: medium
+    evidence_types: [system_configs, policy_document]
 
   # ── A.9 Access Control ────────────────────────────────────────────────────
   - id: A.9.1.1
@@ -112,6 +124,7 @@ controls:
     implementation_guidance: Document role-based access control policy. Review at least annually and after organisational changes.
     risk_level: high
     related_controls: [A.9.1.2, A.9.2.1]
+    evidence_types: [user_provisioning, policy_document]
 
   - id: A.9.2.1
     title: User Registration and De-registration
@@ -120,6 +133,7 @@ controls:
     control_objective: Ensure authorised user access and prevent unauthorised access.
     implementation_guidance: Implement formal joiner/leaver/mover process. Automate provisioning and deprovisioning where possible.
     risk_level: high
+    evidence_types: [user_provisioning, system_configs]
 
   - id: A.9.2.3
     title: Management of Privileged Access Rights
@@ -128,6 +142,7 @@ controls:
     control_objective: Prevent unauthorised access to critical systems.
     implementation_guidance: Implement PAM solution. Require MFA for all privileged accounts. Review quarterly.
     risk_level: high
+    evidence_types: [user_provisioning, system_configs]
 
   - id: A.9.3.1
     title: Use of Secret Authentication Information
@@ -136,6 +151,7 @@ controls:
     control_objective: Prevent unauthorised access to systems and services.
     implementation_guidance: Enforce strong password policy (12+ chars, complexity, no reuse). Deploy password manager.
     risk_level: high
+    evidence_types: [user_provisioning, security_policies]
 
   - id: A.9.4.1
     title: Information Access Restriction
@@ -144,6 +160,7 @@ controls:
     control_objective: Prevent unauthorised access to systems and applications.
     implementation_guidance: Implement least-privilege access. Review access rights quarterly.
     risk_level: high
+    evidence_types: [system_configs, user_provisioning]
 
   - id: A.9.4.4
     title: Use of Privileged Utility Programs
@@ -152,6 +169,7 @@ controls:
     control_objective: Prevent circumvention of system controls.
     implementation_guidance: Inventory all privileged utilities. Restrict access to authorised personnel only with logging.
     risk_level: medium
+    evidence_types: [system_configs, user_provisioning]
 
   # ── A.10 Cryptography ────────────────────────────────────────────────────
   - id: A.10.1.1
@@ -161,6 +179,7 @@ controls:
     control_objective: Ensure proper and effective use of cryptography to protect confidentiality, authenticity, and integrity.
     implementation_guidance: Document approved cryptographic algorithms (AES-256, RSA-2048+, TLS 1.2+). Prohibit weak ciphers.
     risk_level: high
+    evidence_types: [encryption_policies, system_configs]
 
   - id: A.10.1.2
     title: Key Management
@@ -169,6 +188,7 @@ controls:
     control_objective: Ensure proper management of cryptographic keys.
     implementation_guidance: Use a KMS for key storage. Enforce key rotation schedules. Document key custodians.
     risk_level: high
+    evidence_types: [encryption_policies, system_configs]
 
   # ── A.11 Physical and Environmental Security ──────────────────────────────
   - id: A.11.1.1
@@ -178,6 +198,7 @@ controls:
     control_objective: Prevent unauthorised physical access, damage, and interference.
     implementation_guidance: Define and document physical security zones. Implement badge access, CCTV, and visitor logs.
     risk_level: high
+    evidence_types: [policy_document, audit_reports]
 
   - id: A.11.1.2
     title: Physical Entry Controls
@@ -186,6 +207,7 @@ controls:
     control_objective: Ensure only authorised personnel access secure areas.
     implementation_guidance: Deploy card/biometric access on all secure areas. Review access logs monthly.
     risk_level: high
+    evidence_types: [policy_document, audit_reports]
 
   - id: A.11.2.4
     title: Equipment Maintenance
@@ -194,6 +216,7 @@ controls:
     control_objective: Prevent loss, damage, theft or compromise of assets.
     implementation_guidance: Follow manufacturer maintenance schedules. Document all maintenance activities.
     risk_level: low
+    evidence_types: [policy_document, audit_reports]
 
   - id: A.11.2.7
     title: Secure Disposal or Reuse of Equipment
@@ -202,6 +225,7 @@ controls:
     control_objective: Prevent leakage of information from equipment to be disposed or reused.
     implementation_guidance: Use NIST 800-88 compliant data destruction. Certificate of destruction required for all disposals.
     risk_level: high
+    evidence_types: [policy_document, audit_reports]
 
   # ── A.12 Operations Security ──────────────────────────────────────────────
   - id: A.12.1.1
@@ -211,6 +235,7 @@ controls:
     control_objective: Ensure correct and secure operations of information processing facilities.
     implementation_guidance: Document all standard operating procedures in a versioned knowledge base. Review annually.
     risk_level: medium
+    evidence_types: [system_configs, audit_reports]
 
   - id: A.12.2.1
     title: Controls Against Malware
@@ -219,6 +244,7 @@ controls:
     control_objective: Protect integrity of software and information against malware threats.
     implementation_guidance: Deploy EDR on all endpoints. Enable automatic updates. Block execution of unapproved software.
     risk_level: high
+    evidence_types: [system_configs, audit_reports]
 
   - id: A.12.3.1
     title: Information Backup
@@ -227,6 +253,7 @@ controls:
     control_objective: Protect against loss of data.
     implementation_guidance: Implement 3-2-1 backup strategy. Test restores quarterly. Encrypt all backup media.
     risk_level: high
+    evidence_types: [backup_logs, policy_document]
 
   - id: A.12.4.1
     title: Event Logging
@@ -235,6 +262,7 @@ controls:
     control_objective: Record events and generate evidence to support investigation of information security incidents.
     implementation_guidance: Centralise logs to SIEM. Retain for minimum 12 months. Alert on critical events.
     risk_level: high
+    evidence_types: [event_logs, system_configs, audit_reports]
 
   - id: A.12.6.1
     title: Management of Technical Vulnerabilities
@@ -243,6 +271,7 @@ controls:
     control_objective: Prevent exploitation of technical vulnerabilities.
     implementation_guidance: Run authenticated vulnerability scans monthly. Patch critical CVEs within 30 days.
     risk_level: high
+    evidence_types: [system_configs, audit_reports]
 
   - id: A.12.7.1
     title: Information Systems Audit Controls
@@ -251,6 +280,7 @@ controls:
     control_objective: Minimise impact of audit activities on operational systems.
     implementation_guidance: Schedule audit activities outside peak hours. Use read-only audit accounts.
     risk_level: low
+    evidence_types: [system_configs, audit_reports]
 
   # ── A.13 Communications Security ─────────────────────────────────────────
   - id: A.13.1.1
@@ -260,6 +290,7 @@ controls:
     control_objective: Ensure protection of information in networks and supporting information processing facilities.
     implementation_guidance: Segment networks by sensitivity. Implement IDS/IPS. Review firewall rules quarterly.
     risk_level: high
+    evidence_types: [network_configs, firewall_configs]
 
   - id: A.13.2.1
     title: Information Transfer Policies and Procedures
@@ -268,6 +299,7 @@ controls:
     control_objective: Maintain security of information transferred within an organisation and with external entities.
     implementation_guidance: Enforce TLS for all data in transit. Prohibit transfer of sensitive data via unencrypted channels.
     risk_level: high
+    evidence_types: [network_configs, firewall_configs]
 
   - id: A.13.2.3
     title: Electronic Messaging
@@ -276,6 +308,7 @@ controls:
     control_objective: Ensure appropriate protection of information in electronic messaging.
     implementation_guidance: Enable email encryption for sensitive communications. Deploy DLP to prevent data leakage.
     risk_level: medium
+    evidence_types: [network_configs, firewall_configs]
 
   # ── A.14 System Acquisition, Development and Maintenance ──────────────────
   - id: A.14.1.1
@@ -285,6 +318,7 @@ controls:
     control_objective: Ensure information security is an integral part of information systems.
     implementation_guidance: Include security requirements in project intake process. Conduct threat modelling for new systems.
     risk_level: high
+    evidence_types: [policy_document, audit_reports]
 
   - id: A.14.2.1
     title: Secure Development Policy
@@ -293,6 +327,7 @@ controls:
     control_objective: Ensure information security is designed and implemented within the development lifecycle.
     implementation_guidance: Enforce OWASP Top 10 controls. Mandate code review. Run SAST/DAST in CI pipeline.
     risk_level: high
+    evidence_types: [policy_document, audit_reports]
 
   - id: A.14.2.8
     title: System Security Testing
@@ -301,6 +336,7 @@ controls:
     control_objective: Validate security controls operate as intended.
     implementation_guidance: Require security test cases in test plans. Conduct penetration testing annually.
     risk_level: high
+    evidence_types: [policy_document, audit_reports]
 
   - id: A.14.3.1
     title: Protection of Test Data
@@ -309,6 +345,7 @@ controls:
     control_objective: Ensure protection of data used for testing.
     implementation_guidance: Anonymise or synthesise all test data. Prohibit use of live production data in test environments.
     risk_level: high
+    evidence_types: [policy_document, audit_reports]
 
   # ── A.15 Supplier Relationships ───────────────────────────────────────────
   - id: A.15.1.1
@@ -318,6 +355,7 @@ controls:
     control_objective: Ensure protection of assets accessible by suppliers.
     implementation_guidance: Include security requirements in all supplier contracts. Conduct annual supplier risk assessments.
     risk_level: high
+    evidence_types: [policy_document, audit_reports]
 
   - id: A.15.2.1
     title: Monitoring and Review of Supplier Services
@@ -326,6 +364,7 @@ controls:
     control_objective: Maintain agreed level of information security and service delivery.
     implementation_guidance: Review supplier security posture annually. Track incidents and SLA compliance.
     risk_level: medium
+    evidence_types: [policy_document, audit_reports]
 
   # ── A.16 Information Security Incident Management ─────────────────────────
   - id: A.16.1.1
@@ -335,6 +374,7 @@ controls:
     control_objective: Ensure consistent and effective approach to managing information security incidents.
     implementation_guidance: Document and test incident response plan. Define roles and escalation paths. Review annually.
     risk_level: high
+    evidence_types: [incident_reports, event_logs]
 
   - id: A.16.1.2
     title: Reporting Information Security Events
@@ -343,6 +383,7 @@ controls:
     control_objective: Enable timely corrective action against information security events.
     implementation_guidance: Establish clear reporting channels. Train all staff to recognise and report incidents.
     risk_level: high
+    evidence_types: [incident_reports, event_logs]
 
   - id: A.16.1.5
     title: Response to Information Security Incidents
@@ -351,6 +392,7 @@ controls:
     control_objective: Ensure effective and orderly resolution of information security incidents.
     implementation_guidance: Follow documented IR runbooks. Log all response actions. Conduct post-incident review within 5 days.
     risk_level: high
+    evidence_types: [incident_reports, event_logs]
 
   # ── A.17 Business Continuity Management ───────────────────────────────────
   - id: A.17.1.1
@@ -360,6 +402,7 @@ controls:
     control_objective: Embed information security continuity in business continuity management.
     implementation_guidance: Include information security requirements in BCP. Define RTO/RPO for critical systems.
     risk_level: high
+    evidence_types: [backup_logs, policy_document]
 
   - id: A.17.1.3
     title: Verify, Review and Evaluate Information Security Continuity
@@ -368,6 +411,7 @@ controls:
     control_objective: Ensure continuity controls remain valid and effective.
     implementation_guidance: Test BCP/DR annually. Document results and remediate gaps within 90 days.
     risk_level: high
+    evidence_types: [backup_logs, policy_document]
 
   # ── A.18 Compliance ───────────────────────────────────────────────────────
   - id: A.18.1.1
@@ -377,6 +421,7 @@ controls:
     control_objective: Avoid breaches of legal, statutory, regulatory or contractual obligations.
     implementation_guidance: Maintain a compliance register. Assign ownership to each obligation. Review quarterly.
     risk_level: high
+    evidence_types: [audit_reports, policy_document]
 
   - id: A.18.1.3
     title: Protection of Records
@@ -385,6 +430,7 @@ controls:
     control_objective: Ensure compliance with legal, statutory, regulatory and contractual requirements on records management.
     implementation_guidance: Implement record retention policy. Enforce immutable logging. Encrypt records at rest.
     risk_level: high
+    evidence_types: [audit_reports, policy_document]
 
   - id: A.18.2.2
     title: Compliance with Security Policies and Standards
@@ -393,3 +439,4 @@ controls:
     control_objective: Ensure information security is implemented and operated in accordance with policies and standards.
     implementation_guidance: Conduct annual internal security audits. Publish compliance dashboards to management.
     risk_level: medium
+    evidence_types: [audit_reports, policy_document]
