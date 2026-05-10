@@ -37,7 +37,13 @@ Bug fixes carried forward from the 3.1.0 routing migration, ten additive feature
 - **YAML bundled with desktop app** — `electron/data/` ships the three control YAML files independently of the backend, so the desktop app works fully offline.
 - **IPC bridge** — `get-framework-controls` handler in the main process lazy-loads and caches each framework on first request. Strips `evidence_mapping` and defaults `risk_level` to `medium` at the boundary.
 
-- 22 new backend tests + 10 new frontend tests. Total: **231 backend** (197 unit + 26 integration + 8 e2e) + 129 frontend Vitest + 5 Playwright = **365 total**.
+**Electron — Scheduled Automatic Evidence Collection**
+- **Automatic Collection** — Evidence collection now runs on a user-configured Daily or Weekly schedule while the desktop app is open. Collection sweeps all three frameworks (SOC 2, ISO 27001, HIPAA) in one pass.
+- **Power-resume handling** — A `powerMonitor.resume` hook fires an immediate check when the machine wakes from sleep, preventing missed runs on laptops.
+- **Tray notifications** — Success and failure both notify via the system tray. Success shows evidence count; failure shows the error message.
+- **Settings UI** — New "Automatic Collection" section in Settings: enable/disable toggle, frequency (Daily/Weekly), time-of-day picker, last run status, and "Run Now" button.
+
+- 22 new backend tests + 15 new tests (5 frontend Settings + 10 scheduler unit). Total: **231 backend** (197 unit + 26 integration + 8 e2e) + 134 frontend Vitest + 10 scheduler unit + 5 Playwright = **380 total**.
 
 ### Changed
 - **`EVIDENCE_CONTROL_MAP` extracted** to `backend/app/core/evidence_mapping.py` — shared by both `compliance.py` and `evidence.py` without circular imports.

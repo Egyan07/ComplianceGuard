@@ -6,7 +6,7 @@
   <a href="#quick-start"><img src="https://img.shields.io/badge/version-3.1.0-2563EB" alt="Version"></a>
   <img src="https://img.shields.io/badge/license-BSL%201.1-orange" alt="License">
   <a href="#compliance-frameworks"><img src="https://img.shields.io/badge/frameworks-SOC%202%20%7C%20ISO%2027001%20%7C%20HIPAA-10B981" alt="Frameworks"></a>
-  <img src="https://img.shields.io/badge/tests-365%20passing-10B981?logo=pytest&logoColor=white" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-380%20passing-10B981?logo=pytest&logoColor=white" alt="Tests">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
   <a href="https://github.com/Egyan07/ComplianceGuard/actions"><img src="https://img.shields.io/github/actions/workflow/status/Egyan07/ComplianceGuard/ci.yml?label=CI&logo=githubactions&logoColor=white" alt="CI"></a>
 </p>
@@ -375,7 +375,7 @@ ComplianceGuard/
 │   │   ├── contexts/AuthContext.tsx     # JWT auth state, login/register/logout
 │   │   ├── contexts/LicenseContext.tsx  # React context for tier state + feature checks
 │   │   ├── services/api.ts             # Unified API (IPC or HTTP)
-│   │   └── test/                       # Vitest test suite (129 tests)
+│   │   └── test/                       # Vitest test suite (134 tests)
 │   ├── e2e/                            # Playwright e2e tests (5 tests)
 │   ├── .eslintrc.cjs
 │   ├── .prettierrc
@@ -399,7 +399,7 @@ ComplianceGuard/
 ComplianceGuard is designed for Windows endpoints. The following limitations apply in the current release:
 
 - **Windows only** — evidence collection uses PowerShell, WMI, and the Windows registry. macOS and Linux support is on the roadmap.
-- **No automatic scheduling** — evidence must be collected manually or triggered via the dashboard. Scheduled collection is planned.
+- **Automatic scheduling** — Daily or Weekly evidence collection runs automatically while the desktop app is open. Configure in Settings → Automatic Collection.
 - **Per-machine view in desktop mode** — the Electron app shows one machine at a time. Use web mode (self-hosted or managed) with the Cloud Dashboard to monitor multiple machines centrally.
 - **AWS only for cloud evidence** — the web backend collects S3 and IAM evidence from AWS. GCP and Azure are not yet implemented.
 - **PCI DSS not yet implemented** — SOC 2 Type II (29 controls), ISO 27001:2013 (47 controls), and HIPAA Security Rule (47 safeguards) are all available. PCI DSS is planned.
@@ -519,7 +519,7 @@ python -m pytest tests/integration/ -v
 python -m pytest tests/e2e/ -v --run-e2e
 ```
 
-CI runs all tests on every push via GitHub Actions. **365 tests passing** — backend: 231 (197 unit + 26 integration + 8 e2e), frontend: 119 Vitest unit, e2e: 5 Playwright.
+CI runs all tests on every push via GitHub Actions. **380 tests passing** — backend: 231 (197 unit + 26 integration + 8 e2e), frontend: 134 Vitest unit + 10 scheduler unit, e2e: 5 Playwright.
 
 ## Troubleshooting
 
@@ -583,7 +583,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 
 | Done | Up Next |
 |------|---------|
-| Evidence collection (8 categories) | Scheduled automatic collection |
+| Evidence collection (8 categories) | |
+| Scheduled automatic collection (Daily/Weekly) | |
 | 29 SOC 2 controls with weighted scoring | macOS and Linux support |
 | PDF reports + evaluation history | GCP and Azure cloud evidence |
 | Free / Pro / Enterprise licensing (Ed25519) | Air-gapped Enterprise tier |
@@ -601,7 +602,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 | Evidence-to-control mapping (`GET /evidence/items/{id}/controls`) | |
 | Web-mode compliance evaluation (`POST /evaluate-from-evidence`) | |
 | `GET /auth/me`, resend verification, profile update, account deletion | |
-| CI/CD with 365 tests (231 backend + 129 frontend + 5 e2e) | |
+| CI/CD with 380 tests (231 backend + 134 frontend + 10 scheduler + 5 e2e) | |
 | Alembic migrations + rate limiting | |
 
 ## License
