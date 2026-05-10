@@ -22,7 +22,11 @@ import {
   Chip,
   Alert,
   Snackbar,
-  CircularProgress
+  CircularProgress,
+  FormControl,
+  Select,
+  MenuItem,
+  TextField,
 } from '@mui/material';
 import {
   Info,
@@ -33,14 +37,14 @@ import {
   Palette,
   CheckCircle,
   VpnKey,
-  Cloud
+  Cloud,
+  Schedule,
 } from '@mui/icons-material';
 import { useLicense } from '../contexts/LicenseContext';
 import { VERSION } from '../constants';
 
-const isElectron = !!(window as any).electronAPI;
-
 const Settings: React.FC = () => {
+  const isElectron = !!(window as any).electronAPI;
   const [appVersion, setAppVersion] = useState(VERSION);
   const [systemInfo, setSystemInfo] = useState<any>(null);
   const [backingUp, setBackingUp] = useState(false);
@@ -55,6 +59,13 @@ const Settings: React.FC = () => {
   const [cloudPassword, setCloudPassword] = useState('');
   const [connecting, setConnecting] = useState(false);
   const { tier, licenseInfo, activateLicense, deactivateLicense } = useLicense();
+  const [schedule, setScheduleState] = useState<{
+    config: { enabled: boolean; frequency: string; time: string };
+    last_run_at: string | null;
+    next_run_at: string | null;
+    last_result: { success: boolean; evidence_count: number; error?: string } | null;
+  } | null>(null);
+  const [runningNow, setRunningNow] = useState(false);
 
   useEffect(() => {
     if (isElectron) {
@@ -66,6 +77,7 @@ const Settings: React.FC = () => {
         setDarkMode(val === 'true');
       });
       api.cloudGetConfig().then((cfg: any) => setCloudConfig(cfg));
+      api.getSchedule().then((s: any) => setScheduleState(s));
     }
   }, []);
 
@@ -126,6 +138,34 @@ const Settings: React.FC = () => {
     await api.cloudDisconnect();
     setCloudConfig({ connected: false, serverUrl: null, email: null });
     setSuccessMessage('Disconnected from cloud.');
+  };
+
+  const handleScheduleChange = async (patch: Partial<{ enabled: boolean; frequency: string; time: string }>) => {
+    if (!isElectron || !schedule) return;
+    const api = (window as any).electronAPI;
+    const newConfig = { ...schedule.config, ...patch };
+    const result = await api.setSchedule(newConfig);
+    if (!result.error) {
+      setScheduleState(prev => prev ? { ...prev, config: newConfig, next_run_at: result.next_run_at } : prev);
+    }
+  };
+
+  const handleRunNow = async () => {
+    if (!isElectron) return;
+    setRunningNow(true);
+    try {
+      const api = (window as any).electronAPI;
+      const result = await api.runCollectionNow();
+      if (!result.error) {
+        setScheduleState(prev => prev ? {
+          ...prev,
+          last_run_at: result.ran_at,
+          last_result: result,
+        } : prev);
+      }
+    } finally {
+      setRunningNow(false);
+    }
   };
 
   return (
@@ -381,6 +421,95 @@ const Settings: React.FC = () => {
                 </Box>
               </Box>
             )}
+          </Box>
+        </Paper>
+      )}
+
+      {/* Automatic Collection — Electron only */}
+      {isElectron && (
+        <Paper sx={{ mb: 3 }}>
+          <Box sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+              <Schedule color="primary" />
+              <Typography variant="h6">Automatic Collection</Typography>
+            </Box>
+
+            <List disablePadding>
+              <ListItem>
+                <ListItemText
+                  primary="Enable automatic collection"
+                  secondary="Collect evidence on a recurring schedule"
+                />
+                <ListItemSecondaryAction>
+                  <input
+                    type="checkbox"
+                    aria-label="enable automatic collection"
+                    checked={schedule?.config.enabled ?? false}
+                    onChange={() => handleScheduleChange({ enabled: !schedule?.config.enabled })}
+                    style={{ width: 36, height: 20, cursor: 'pointer', accentColor: '#1976d2' }}
+                  />
+                </ListItemSecondaryAction>
+              </ListItem>
+              <Divider component="li" />
+              <ListItem>
+                <ListItemText primary="Frequency" />
+                <ListItemSecondaryAction>
+                  <FormControl size="small" disabled={!schedule?.config.enabled} sx={{ minWidth: 120, mr: 1 }}>
+                    <Select
+                      value={schedule?.config.frequency ?? 'daily'}
+                      onChange={e => handleScheduleChange({ frequency: e.target.value })}
+                    >
+                      <MenuItem value="daily">Daily</MenuItem>
+                      <MenuItem value="weekly">Weekly (Monday)</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <TextField
+                    type="time"
+                    size="small"
+                    value={schedule?.config.time ?? '09:00'}
+                    onChange={e => handleScheduleChange({ time: e.target.value })}
+                    disabled={!schedule?.config.enabled}
+                    sx={{ width: 120 }}
+                    slotProps={{ htmlInput: { step: 300 } }}
+                  />
+                </ListItemSecondaryAction>
+              </ListItem>
+              <Divider component="li" />
+              <ListItem>
+                <ListItemText
+                  primary="Last run"
+                  secondary={
+                    schedule?.last_result
+                      ? schedule.last_result.success
+                        ? `${schedule.last_result.evidence_count} items collected`
+                        : schedule.last_result.error ?? 'Failed'
+                      : 'Never'
+                  }
+                  slotProps={{
+                    secondary: { style: { color: schedule?.last_result && !schedule.last_result.success ? 'red' : undefined } },
+                  }}
+                />
+                {schedule?.next_run_at && (
+                  <ListItemSecondaryAction>
+                    <Typography variant="caption" color="text.secondary">
+                      Next: {new Date(schedule.next_run_at).toLocaleString()}
+                    </Typography>
+                  </ListItemSecondaryAction>
+                )}
+              </ListItem>
+              <Divider component="li" />
+              <ListItem>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={handleRunNow}
+                  disabled={runningNow}
+                  startIcon={runningNow ? <CircularProgress size={14} /> : undefined}
+                >
+                  {runningNow ? 'Running...' : 'Run Now'}
+                </Button>
+              </ListItem>
+            </List>
           </Box>
         </Paper>
       )}
