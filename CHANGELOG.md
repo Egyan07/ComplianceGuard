@@ -37,6 +37,13 @@ Bug fixes carried forward from the 3.1.0 routing migration, ten additive feature
 - **YAML bundled with desktop app** — `electron/data/` ships the three control YAML files independently of the backend, so the desktop app works fully offline.
 - **IPC bridge** — `get-framework-controls` handler in the main process lazy-loads and caches each framework on first request. Strips `evidence_mapping` and defaults `risk_level` to `medium` at the boundary.
 
+**Electron — Multi-Framework Scoring**
+- **ISO 27001 and HIPAA scoring in the desktop app** — The compliance engine now evaluates against all three frameworks (SOC 2, ISO 27001:2013, HIPAA Security Rule). Previously it silently scored SOC 2 controls regardless of which framework was requested.
+- **Framework picker on the Dashboard** — A SOC 2 / ISO 27001 / HIPAA toggle sits above the compliance score card. Select a framework and click Evaluate to score it. Evidence collected in a single Windows pass contributes to all three frameworks automatically.
+- **YAML as single source of truth** — All three control YAML files now carry `evidence_types` arrays, making them the authoritative input for both the read-only Framework Browser and the scoring engine. No duplicate control definitions in JS.
+- **ISO 27001 and HIPAA framework rows** seeded into the local SQLite database automatically on first launch (idempotent, safe on existing databases).
+- 24 new tests (13 engine unit + 6 sqlite unit + 5 Dashboard UI). Total: **404**.
+
 **Electron — Scheduled Automatic Evidence Collection**
 - **Automatic Collection** — Evidence collection now runs on a user-configured Daily or Weekly schedule while the desktop app is open. Collection sweeps all three frameworks (SOC 2, ISO 27001, HIPAA) in one pass.
 - **Power-resume handling** — A `powerMonitor.resume` hook fires an immediate check when the machine wakes from sleep, preventing missed runs on laptops.

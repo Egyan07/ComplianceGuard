@@ -211,9 +211,9 @@ async function electronCollectEvidence(): Promise<EvidenceCollectionResult> {
   return await api.collectWindowsEvidence(1);
 }
 
-async function electronEvaluateCompliance(): Promise<ComplianceEvaluation> {
+async function electronEvaluateCompliance(frameworkId = 1): Promise<ComplianceEvaluation> {
   const api = getElectronAPI();
-  const result = await api.evaluateCompliance(1);
+  const result = await api.evaluateCompliance(frameworkId);
   if (result?.error) throw new Error(result.error);
   return result;
 }
@@ -273,8 +273,8 @@ export const collectEvidence = async (
   return httpCollectEvidence(request || {});
 };
 
-export const evaluateCompliance = async (): Promise<ComplianceEvaluation> => {
-  if (isElectron) return electronEvaluateCompliance();
+export const evaluateCompliance = async (frameworkId = 1): Promise<ComplianceEvaluation> => {
+  if (isElectron) return electronEvaluateCompliance(frameworkId);
   throw new Error('Compliance evaluation requires the desktop application');
 };
 

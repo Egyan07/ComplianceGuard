@@ -217,6 +217,18 @@ class ComplianceGuardDatabase {
       ).run('SOC 2 Type II', '2017', 'AICPA SOC 2 Type II Trust Services Criteria', JSON.stringify(controls));
       log.info('Default SOC 2 framework seeded');
     }
+
+    this.db.prepare(
+      `INSERT OR IGNORE INTO compliance_frameworks (id, name, version, description)
+       VALUES (2, 'ISO 27001:2013', '2013', 'ISO/IEC 27001 Information Security Management')`
+    ).run();
+
+    this.db.prepare(
+      `INSERT OR IGNORE INTO compliance_frameworks (id, name, version, description)
+       VALUES (3, 'HIPAA Security Rule', '2003', 'HIPAA Security Rule 45 CFR Part 164 Subpart C')`
+    ).run();
+
+    return Promise.resolve();
   }
 
   getDefaultSOC2Controls() {
@@ -281,6 +293,16 @@ class ComplianceGuardDatabase {
     const rows = await this.all(
       'SELECT * FROM evidence_items WHERE framework_id = ? ORDER BY collected_at DESC',
       [frameworkId]
+    );
+    return rows.map(row => ({
+      ...row,
+      metadata: row.metadata_json ? JSON.parse(row.metadata_json) : {}
+    }));
+  }
+
+  async getAllEvidence() {
+    const rows = await this.all(
+      'SELECT * FROM evidence_items ORDER BY collected_at DESC'
     );
     return rows.map(row => ({
       ...row,

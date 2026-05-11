@@ -71,6 +71,7 @@ export function useDashboard() {
   });
   const [collectingEvidence, setCollectingEvidence] = useState(false);
   const [evaluating, setEvaluating] = useState(false);
+  const [selectedFramework, setSelectedFramework] = useState<1 | 2 | 3>(1);
   const [exportingPDF, setExportingPDF] = useState(false);
   const [syncingCloud, setSyncingCloud] = useState(false);
   const [cloudConnected, setCloudConnected] = useState(false);
@@ -111,7 +112,7 @@ export function useDashboard() {
     setState(prev => ({ ...prev, error: null }));
     try {
       const evaluation = isElectron
-        ? await evaluateCompliance()
+        ? await evaluateCompliance(selectedFramework)
         : await evaluateComplianceWeb();
       setState(prev => ({
         ...prev,
@@ -124,7 +125,7 @@ export function useDashboard() {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       setEvaluating(false);
     }
-  }, [queryClient]);
+  }, [queryClient, selectedFramework]);
 
   const handleExportPDF = useCallback(async () => {
     if (!isElectron) return;
@@ -204,6 +205,8 @@ export function useDashboard() {
     loading,
     collectingEvidence,
     evaluating,
+    selectedFramework,
+    setSelectedFramework,
     exportingPDF,
     syncingCloud,
     cloudConnected,
