@@ -6,7 +6,7 @@
   <a href="#quick-start"><img src="https://img.shields.io/badge/version-3.1.0-2563EB" alt="Version"></a>
   <img src="https://img.shields.io/badge/license-BSL%201.1-orange" alt="License">
   <a href="#compliance-frameworks"><img src="https://img.shields.io/badge/frameworks-SOC%202%20%7C%20ISO%2027001%20%7C%20HIPAA-10B981" alt="Frameworks"></a>
-  <img src="https://img.shields.io/badge/tests-404%20passing-10B981?logo=pytest&logoColor=white" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-435%20passing-10B981?logo=pytest&logoColor=white" alt="Tests">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
   <a href="https://github.com/Egyan07/ComplianceGuard/actions"><img src="https://img.shields.io/github/actions/workflow/status/Egyan07/ComplianceGuard/ci.yml?label=CI&logo=githubactions&logoColor=white" alt="CI"></a>
 </p>
@@ -519,7 +519,7 @@ python -m pytest tests/integration/ -v
 python -m pytest tests/e2e/ -v --run-e2e
 ```
 
-CI runs all tests on every push via GitHub Actions. **404 tests passing** — backend: 231 (197 unit + 26 integration + 8 e2e), frontend: 139 Vitest unit + 29 Electron unit (10 scheduler + 13 engine + 6 sqlite), e2e: 5 Playwright.
+CI runs all tests on every push via GitHub Actions. **~435 tests passing** — backend: ~247 (213 unit + 26 integration + 8 e2e), frontend: 139 Vitest unit + 29 Electron unit (10 scheduler + 13 engine + 6 sqlite), e2e: 5 Playwright.
 
 ## Troubleshooting
 
@@ -602,7 +602,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 | Evidence-to-control mapping (`GET /evidence/items/{id}/controls`) | |
 | Web-mode compliance evaluation (`POST /evaluate-from-evidence`) | |
 | `GET /auth/me`, resend verification, profile update, account deletion | |
-| CI/CD with 404 tests (231 backend + 139 frontend + 29 Electron + 5 e2e) | |
+| CI/CD with ~435 tests (~247 backend + 139 frontend + 29 Electron + 5 e2e) | |
 | Alembic migrations + rate limiting | |
 
 ## License

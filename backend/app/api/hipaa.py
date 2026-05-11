@@ -3,13 +3,22 @@ HIPAA Security Rule Framework API — read-only endpoints for browsing safeguard
 Mirrors iso27001.py but uses HIPAAFramework and HIPAAControl.
 """
 
+import uuid
 from datetime import datetime, timezone
 from typing import Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
+from app.api.compliance import ComplianceEvaluationResponse
+from app.api.deps import get_current_user
+from app.core.database import get_db
+from app.core.framework_scoring import score_from_map, derive_overall
 from app.core.hipaa_controls import HIPAAControl, HIPAAFramework, create_hipaa_framework
+from app.core.hipaa_evidence_map import HIPAA_EVIDENCE_CONTROL_MAP
+from app.models.evaluation import ComplianceEvaluationRecord
+from app.models.user import User
 
 router = APIRouter(prefix="/hipaa", tags=["hipaa"])
 
@@ -105,3 +114,61 @@ async def health(fw: HIPAAFramework = Depends(get_hipaa_framework)):
         "framework_controls": fw.get_control_count(),
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
+
+
+@router.post("/evaluate-from-evidence", response_model=ComplianceEvaluationResponse)
+async def evaluate_from_evidence(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Auto-evaluate HIPAA Security Rule compliance from the user's stored evidence items."""
+    from app.models.evidence import EvidenceCollection as EvColl, EvidenceItem as EvItem
+
+    items = (
+        db.query(EvItem)
+        .join(EvColl)
+        .filter(EvColl.user_id == current_user.id)
+        .all()
+    )
+
+    control_scores = score_from_map(items, HIPAA_EVIDENCE_CONTROL_MAP)
+    totals = derive_overall(control_scores)
+
+    try:
+        record = ComplianceEvaluationRecord(
+            evaluation_id=f"eval-{uuid.uuid4().hex[:12]}",
+            framework_id="hipaa_security_rule",
+            user_id=current_user.id,
+            overall_score=totals["overall_score"],
+            compliance_status=totals["compliance_status"],
+            compliance_level=totals["compliance_level"],
+            evaluated_by="web_auto",
+            scope=list({c.category for c in _hipaa_framework.get_all_controls()}),
+            evidence_summary={"total_evidence": len(items)},
+            risk_assessment={},
+            recommendations=[],
+            control_count=totals["control_count"],
+            compliant_controls=totals["compliant_controls"],
+        )
+        db.add(record)
+        db.commit()
+        db.refresh(record)
+
+        return ComplianceEvaluationResponse(
+            framework_id=record.framework_id,
+            overall_score=record.overall_score,
+            compliance_status=record.compliance_status,
+            compliance_level=record.compliance_level,
+            evaluation_date=record.created_at,
+            evaluated_by=record.evaluated_by,
+            scope=record.scope or [],
+            evidence_summary=record.evidence_summary or {},
+            risk_assessment=record.risk_assessment or {},
+            recommendations=record.recommendations or [],
+            next_review_date=None,
+            control_count=record.control_count,
+            compliant_controls=record.compliant_controls,
+        )
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Evaluation failed: {str(e)}")

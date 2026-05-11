@@ -113,7 +113,7 @@ export function useDashboard() {
     try {
       const evaluation = isElectron
         ? await evaluateCompliance(selectedFramework)
-        : await evaluateComplianceWeb();
+        : await evaluateComplianceWeb(selectedFramework);
       setState(prev => ({
         ...prev,
         evaluation,

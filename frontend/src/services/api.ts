@@ -278,12 +278,22 @@ export const evaluateCompliance = async (frameworkId = 1): Promise<ComplianceEva
   throw new Error('Compliance evaluation requires the desktop application');
 };
 
-export const evaluateComplianceWeb = async (): Promise<ComplianceEvaluation> => {
-  const response = await apiClient.post('/compliance/evaluate-from-evidence');
+export const evaluateComplianceWeb = async (frameworkId = 1): Promise<ComplianceEvaluation> => {
+  const urls: Record<number, string> = {
+    1: '/compliance/evaluate-from-evidence',
+    2: '/iso27001/evaluate-from-evidence',
+    3: '/hipaa/evaluate-from-evidence',
+  };
+  const frameworkNames: Record<number, string> = {
+    1: 'SOC 2 Type II',
+    2: 'ISO 27001:2013',
+    3: 'HIPAA Security Rule',
+  };
+  const response = await apiClient.post(urls[frameworkId] ?? urls[1]);
   const d = response.data;
   return {
     framework_id: d.framework_id,
-    framework_name: 'SOC 2 Type II',
+    framework_name: frameworkNames[frameworkId] ?? 'SOC 2 Type II',
     evaluation_date: d.evaluation_date,
     overall_score: (d.overall_score ?? 0) * 100,
     status: d.compliance_status,
