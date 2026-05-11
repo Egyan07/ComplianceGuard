@@ -37,6 +37,13 @@ Bug fixes carried forward from the 3.1.0 routing migration, ten additive feature
 - **YAML bundled with desktop app** — `electron/data/` ships the three control YAML files independently of the backend, so the desktop app works fully offline.
 - **IPC bridge** — `get-framework-controls` handler in the main process lazy-loads and caches each framework on first request. Strips `evidence_mapping` and defaults `risk_level` to `medium` at the boundary.
 
+**Web Mode — ISO 27001 & HIPAA Scoring**
+- **`POST /api/v1/iso27001/evaluate-from-evidence`** — auto-scores ISO 27001:2013 compliance from the user's stored evidence items via a 14-type evidence-to-control map. Persists result to `compliance_evaluations` with `framework_id="iso27001_v2013"`.
+- **`POST /api/v1/hipaa/evaluate-from-evidence`** — same for HIPAA Security Rule (`framework_id="hipaa_security_rule"`).
+- **`evaluateComplianceWeb(frameworkId)`** — frontend now routes to the correct endpoint based on the selected framework; `framework_name` in the result is also dynamic.
+- Shared `score_from_map` + `derive_overall` helpers in `backend/app/core/framework_scoring.py` — reused by both new endpoints.
+- 16 new tests (10 backend unit + 6 map validation). Total: **~435**.
+
 **Electron — Multi-Framework Scoring**
 - **ISO 27001 and HIPAA scoring in the desktop app** — The compliance engine now evaluates against all three frameworks (SOC 2, ISO 27001:2013, HIPAA Security Rule). Previously it silently scored SOC 2 controls regardless of which framework was requested.
 - **Framework picker on the Dashboard** — A SOC 2 / ISO 27001 / HIPAA toggle sits above the compliance score card. Select a framework and click Evaluate to score it. Evidence collected in a single Windows pass contributes to all three frameworks automatically.
