@@ -298,7 +298,7 @@ ComplianceGuard runs in two modes: Desktop (Electron + SQLite) for offline use, 
 │                                                               │
 │  ┌─────────────────┐  ┌───────────────────────────────────┐  │
 │  │ Evidence        │  │ Compliance Engine                  │  │
-│  │ Processor       │  │ 29 controls · weighted scoring     │  │
+│  │ Processor       │  │ SOC 2 / ISO 27001 / HIPAA scoring  │  │
 │  │ Collect · Store │  │ gap analysis · recommendations     │  │
 │  └────────┬────────┘  └───────────────┬───────────────────┘  │
 │           └──────────┬────────────────┘                       │
@@ -349,7 +349,7 @@ ComplianceGuard/
 │   │   ├── services/                   # Compliance service, evidence collector
 │   │   └── integrations/aws.py         # AWS evidence collection
 │   ├── migrations/                     # Alembic database migrations
-│   ├── tests/                          # Unit (197) + integration (26) + e2e (8)
+│   ├── tests/                          # Unit (213) + integration (26) + e2e (8)
 │   ├── requirements.txt
 │   └── Dockerfile
 ├── electron/
@@ -585,7 +585,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 |------|---------|
 | Evidence collection (8 categories) | |
 | Scheduled automatic collection (Daily/Weekly) | |
-| 29 SOC 2 controls with weighted scoring | macOS and Linux support |
+| SOC 2 / ISO 27001 / HIPAA scoring (desktop + web) | macOS and Linux support |
 | PDF reports + evaluation history | GCP and Azure cloud evidence |
 | Free / Pro / Enterprise licensing (Ed25519) | Air-gapped Enterprise tier |
 | JWT auth + refresh tokens + login UI | Setup video walkthrough |
@@ -595,8 +595,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 | Web mode license enforcement (Ed25519) | |
 | Sentry error monitoring (backend + frontend) | |
 | Self-hosted + Managed hosting options | |
-| ISO 27001:2013 framework (47 controls, read-only API) | |
-| HIPAA Security Rule framework (47 safeguards, read-only API) | |
+| ISO 27001:2013 framework (47 controls, scoring + read-only API) | |
+| HIPAA Security Rule framework (47 safeguards, scoring + read-only API) | |
 | One-click Railway deploy (`railway.toml`) | |
 | Evidence search + status filter (`GET /evidence/items`) | |
 | Evidence-to-control mapping (`GET /evidence/items/{id}/controls`) | |
