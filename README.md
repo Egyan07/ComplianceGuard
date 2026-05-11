@@ -349,7 +349,7 @@ ComplianceGuard/
 │   │   ├── services/                   # Compliance service, evidence collector
 │   │   └── integrations/aws.py         # AWS evidence collection
 │   ├── migrations/                     # Alembic database migrations
-│   ├── tests/                          # Unit (175) + integration (26) + e2e (8)
+│   ├── tests/                          # Unit (197) + integration (26) + e2e (8)
 │   ├── requirements.txt
 │   └── Dockerfile
 ├── electron/
@@ -362,7 +362,7 @@ ComplianceGuard/
 │   │   ├── license-manager.js          # License state, feature gates, persistence
 │   │   └── tier-constants.js           # Free vs Pro feature definitions
 │   ├── processing/
-│   │   ├── compliance-engine.js        # SOC 2 scoring engine (tier-aware)
+│   │   ├── compliance-engine.js        # SOC 2 / ISO 27001 / HIPAA scoring engine (tier-aware)
 │   │   ├── evidence-processor.js       # Evidence collection + storage
 │   │   └── report-generator.js         # HTML → PDF report generation
 │   └── system/windows.js               # Windows evidence collector
@@ -375,7 +375,7 @@ ComplianceGuard/
 │   │   ├── contexts/AuthContext.tsx     # JWT auth state, login/register/logout
 │   │   ├── contexts/LicenseContext.tsx  # React context for tier state + feature checks
 │   │   ├── services/api.ts             # Unified API (IPC or HTTP)
-│   │   └── test/                       # Vitest test suite (134 tests)
+│   │   └── test/                       # Vitest test suite (139 tests)
 │   ├── e2e/                            # Playwright e2e tests (5 tests)
 │   ├── .eslintrc.cjs
 │   ├── .prettierrc
@@ -519,7 +519,7 @@ python -m pytest tests/integration/ -v
 python -m pytest tests/e2e/ -v --run-e2e
 ```
 
-CI runs all tests on every push via GitHub Actions. **380 tests passing** — backend: 231 (197 unit + 26 integration + 8 e2e), frontend: 134 Vitest unit + 10 scheduler unit, e2e: 5 Playwright.
+CI runs all tests on every push via GitHub Actions. **404 tests passing** — backend: 231 (197 unit + 26 integration + 8 e2e), frontend: 139 Vitest unit + 29 Electron unit (10 scheduler + 13 engine + 6 sqlite), e2e: 5 Playwright.
 
 ## Troubleshooting
 
@@ -602,7 +602,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 | Evidence-to-control mapping (`GET /evidence/items/{id}/controls`) | |
 | Web-mode compliance evaluation (`POST /evaluate-from-evidence`) | |
 | `GET /auth/me`, resend verification, profile update, account deletion | |
-| CI/CD with 380 tests (231 backend + 134 frontend + 10 scheduler + 5 e2e) | |
+| CI/CD with 404 tests (231 backend + 139 frontend + 29 Electron + 5 e2e) | |
 | Alembic migrations + rate limiting | |
 
 ## License
