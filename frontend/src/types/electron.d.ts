@@ -64,8 +64,28 @@ export interface FrameworkDataError {
   error: string;
 }
 
+export interface ComplianceEvaluationResult {
+  framework_id: number;
+  framework_name: string;
+  overall_score: number;
+  status: 'compliant' | 'partial' | 'non_compliant';
+  total_controls: number;
+  compliant_controls: number;
+  non_compliant_controls: number;
+  partial_controls: number;
+  not_assessed_controls: number;
+  id: number;
+  tier: string;
+  category_scores: Record<string, { score: number; weight: number; control_count: number }> | null;
+  control_results: Record<string, unknown> | null;
+  recommendations: Array<{ control_id: string; priority: string; recommendation: string; evidence_needed: string[] }>;
+  evaluation_date: string;
+  error?: string;
+}
+
 export interface ElectronAPI extends ElectronLicenseAPI {
   getFrameworkControls: (frameworkId: number) => Promise<FrameworkData | FrameworkDataError>;
+  evaluateCompliance: (frameworkId?: number) => Promise<ComplianceEvaluationResult>;
   getSchedule: () => Promise<ScheduleState>;
   setSchedule: (config: ScheduleConfig) => Promise<{ config: ScheduleConfig; next_run_at: string | null } | { error: string }>;
   runCollectionNow: () => Promise<CollectionResult | { error: string }>;
