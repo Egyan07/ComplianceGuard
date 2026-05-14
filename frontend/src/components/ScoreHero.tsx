@@ -39,7 +39,7 @@ const ScoreHero: React.FC<ScoreHeroProps> = ({
 
   useEffect(() => {
     scoreSpring.set(evaluation ? Math.round(evaluation.overall_score) : 0);
-  }, [evaluation?.overall_score, scoreSpring]);
+  }, [evaluation, scoreSpring]);
 
   if (loading) {
     return (
