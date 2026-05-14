@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import {
   Box,
   Container,
@@ -48,6 +49,16 @@ function groupByCategory(controls: FrameworkControl[]): Record<string, Framework
     return acc;
   }, {});
 }
+
+const accordionListVariants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.05 } },
+};
+
+const accordionItemVariants = {
+  hidden:  { opacity: 0, y: 8 },
+  visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 180, damping: 22 } },
+};
 
 const FrameworkBrowser: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -169,24 +180,25 @@ const FrameworkBrowser: React.FC = () => {
                 No controls match your filters.
               </Typography>
             ) : (
-              Object.entries(grouped).map(([category, controls]) => (
-                <Accordion
-                  key={category}
-                  disableGutters
-                  elevation={0}
-                  sx={{ border: '1px solid', borderColor: 'divider', mb: 1, '&:before': { display: 'none' } }}
-                >
-                  <AccordionSummary expandIcon={<ExpandMore />}>
-                    <Typography sx={{ fontWeight: 500 }}>{category} ({controls.length})</Typography>
-                  </AccordionSummary>
-                  <AccordionDetails sx={{ p: 0 }}>
-                    {controls.map(control => (
-                      <Accordion
-                        key={control.id}
-                        disableGutters
-                        elevation={0}
-                        sx={{ borderTop: '1px solid', borderColor: 'divider', '&:before': { display: 'none' } }}
-                      >
+              <motion.div variants={accordionListVariants} initial="hidden" animate="visible">
+                {Object.entries(grouped).map(([category, controls]) => (
+                  <motion.div key={category} variants={accordionItemVariants}>
+                    <Accordion
+                      disableGutters
+                      elevation={0}
+                      sx={{ border: '1px solid', borderColor: 'divider', mb: 1, '&:before': { display: 'none' } }}
+                    >
+                      <AccordionSummary expandIcon={<ExpandMore />}>
+                        <Typography sx={{ fontWeight: 500 }}>{category} ({controls.length})</Typography>
+                      </AccordionSummary>
+                      <AccordionDetails sx={{ p: 0 }}>
+                        {controls.map(control => (
+                          <Accordion
+                            key={control.id}
+                            disableGutters
+                            elevation={0}
+                            sx={{ borderTop: '1px solid', borderColor: 'divider', '&:before': { display: 'none' } }}
+                          >
                         <AccordionSummary expandIcon={<ExpandMore />}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: '100%', pr: 1 }}>
                             <Typography variant="body2" color="text.secondary" sx={{ minWidth: 80 }}>
@@ -239,10 +251,12 @@ const FrameworkBrowser: React.FC = () => {
                           </Box>
                         </AccordionDetails>
                       </Accordion>
-                    ))}
-                  </AccordionDetails>
-                </Accordion>
-              ))
+                        ))}
+                      </AccordionDetails>
+                    </Accordion>
+                  </motion.div>
+                ))}
+              </motion.div>
             )
           )}
         </Box>

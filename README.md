@@ -6,7 +6,7 @@
   <a href="#quick-start"><img src="https://img.shields.io/badge/version-3.1.0-2563EB" alt="Version"></a>
   <img src="https://img.shields.io/badge/license-BSL%201.1-orange" alt="License">
   <a href="#compliance-frameworks"><img src="https://img.shields.io/badge/frameworks-SOC%202%20%7C%20ISO%2027001%20%7C%20HIPAA-10B981" alt="Frameworks"></a>
-  <img src="https://img.shields.io/badge/tests-447%20passing-10B981?logo=pytest&logoColor=white" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-456%20passing-10B981?logo=pytest&logoColor=white" alt="Tests">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
   <a href="https://github.com/Egyan07/ComplianceGuard/actions"><img src="https://img.shields.io/github/actions/workflow/status/Egyan07/ComplianceGuard/ci.yml?label=CI&logo=githubactions&logoColor=white" alt="CI"></a>
 </p>
@@ -375,7 +375,7 @@ ComplianceGuard/
 │   │   ├── contexts/AuthContext.tsx     # JWT auth state, login/register/logout
 │   │   ├── contexts/LicenseContext.tsx  # React context for tier state + feature checks
 │   │   ├── services/api.ts             # Unified API (IPC or HTTP)
-│   │   └── test/                       # Vitest test suite (151 tests)
+│   │   └── test/                       # Vitest test suite (160 tests)
 │   ├── e2e/                            # Playwright e2e tests (5 tests)
 │   ├── .eslintrc.cjs
 │   ├── .prettierrc
@@ -519,7 +519,7 @@ python -m pytest tests/integration/ -v
 python -m pytest tests/e2e/ -v --run-e2e
 ```
 
-CI runs all tests on every push via GitHub Actions. **~447 tests passing** — backend: ~247 (213 unit + 26 integration + 8 e2e), frontend: 151 Vitest unit + 29 Electron unit (10 scheduler + 13 engine + 6 sqlite), e2e: 5 Playwright.
+CI runs all tests on every push via GitHub Actions. **~456 tests passing** — backend: ~247 (213 unit + 26 integration + 8 e2e), frontend: 160 Vitest unit + 29 Electron unit (10 scheduler + 13 engine + 6 sqlite), e2e: 5 Playwright.
 
 ## Troubleshooting
 
@@ -602,7 +602,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 | Evidence-to-control mapping (`GET /evidence/items/{id}/controls`) | |
 | Web-mode compliance evaluation (`POST /evaluate-from-evidence`) | |
 | `GET /auth/me`, resend verification, profile update, account deletion | |
-| CI/CD with ~447 tests (~247 backend + 151 frontend + 29 Electron + 5 e2e) | |
+| CI/CD with ~456 tests (~247 backend + 160 frontend + 29 Electron + 5 e2e) | |
 | Alembic migrations + rate limiting | |
 
 ## License

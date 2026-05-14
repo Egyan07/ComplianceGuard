@@ -6,9 +6,9 @@ Sub-components: DashboardHeader, CollectionSummary (see components/dashboard/).
 */
 
 import React, { useState, useEffect } from 'react';
-import { Alert, Box, CircularProgress, Container, Snackbar, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { Alert, Box, Container, Skeleton, Snackbar, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
-import ComplianceScore from './ComplianceScore';
+import ScoreHero from './ScoreHero';
 import EvidenceList from './EvidenceList';
 import EvidenceUpload from './EvidenceUpload';
 import UpgradePrompt from './UpgradePrompt';
@@ -50,8 +50,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   if (state.loading && !state.summary) {
     return (
       <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-          <CircularProgress size={60} />
+        <Box sx={{ display: 'flex', gap: 3, mb: 3 }}>
+          <Box sx={{ flex: 1 }}><Skeleton variant="rounded" height={280} /></Box>
+          <Box sx={{ flex: 1 }}><Skeleton variant="rounded" height={280} /></Box>
+        </Box>
+        <Box>
+          {[0, 1, 2, 3].map(i => (
+            <Skeleton key={i} variant="rounded" height={48} sx={{ mb: 1 }} />
+          ))}
         </Box>
       </Container>
     );
@@ -102,10 +108,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
         <Box sx={{ display: { xs: 'flex', lg: 'flex' }, flexDirection: { xs: 'column', lg: 'row' }, gap: 3 }}>
           <Box sx={{ flex: 1 }}>
-            <ComplianceScore
-              metrics={state.summary?.compliance_metrics || { s3_encryption_compliance: 0, iam_policy_compliance: 0, overall_compliance_score: 0 }}
+            <ScoreHero
               evaluation={state.evaluation}
               loading={state.loading}
+              selectedFramework={selectedFramework}
             />
           </Box>
           <Box sx={{ flex: 1 }}>
