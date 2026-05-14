@@ -1,40 +1,5 @@
-/*
-ComplianceGuard SOC 2 Platform - Main Application Component
-
-Root component with Material-UI theming and navigation between
-Dashboard and Settings views.
-*/
-
-import {
-  ThemeProvider,
-  createTheme,
-  CssBaseline,
-  Box,
-  AppBar,
-  Toolbar,
-  Typography,
-  Container,
-  Paper,
-  IconButton,
-  Tooltip,
-  Chip,
-  CircularProgress
-} from '@mui/material';
-import {
-  Dashboard as DashboardIcon,
-  Settings as SettingsIcon,
-  History,
-  Logout as LogoutIcon,
-  CloudQueue,
-  MenuBook,
-} from '@mui/icons-material';
-import {
-  HashRouter,
-  Routes,
-  Route,
-  useNavigate,
-  useLocation,
-} from 'react-router-dom';
+import { Box, CircularProgress } from '@mui/material';
+import { HashRouter, Routes, Route, useNavigate, useSearchParams } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Dashboard from './components/Dashboard';
 import Settings from './components/Settings';
@@ -43,80 +8,20 @@ import CloudDashboard from './components/CloudDashboard';
 import FrameworkBrowser from './components/FrameworkBrowser';
 import ErrorBoundary from './components/ErrorBoundary';
 import LoginPage from './components/LoginPage';
-import { LicenseProvider, useLicense } from './contexts/LicenseContext';
+import AppShell from './components/layout/AppShell';
+import { LicenseProvider } from './contexts/LicenseContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { VERSION } from './constants';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
 });
 
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#2563EB',
-      dark: '#1E40AF',
-      light: '#3B82F6',
-    },
-    secondary: {
-      main: '#10B981',
-    },
-    background: {
-      default: '#F8FAFC',
-    },
-  },
-  typography: {
-    fontFamily: '"Segoe UI", "Roboto", "Helvetica", "Arial", sans-serif',
-    h4: {
-      fontWeight: 600,
-    },
-    h6: {
-      fontWeight: 500,
-    },
-  },
-  components: {
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-          borderRadius: 8,
-        },
-      },
-    },
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          textTransform: 'none',
-          borderRadius: 8,
-        },
-      },
-    },
-    MuiChip: {
-      styleOverrides: {
-        root: {
-          borderRadius: 6,
-        },
-      },
-    },
-    MuiPaper: {
-      styleOverrides: {
-        root: {
-          borderRadius: 8,
-        },
-      },
-    },
-  },
-});
-
-const NAV_ACTIVE = { color: '#2563EB', backgroundColor: '#EFF6FF' };
-const NAV_IDLE = { color: '#6B7280', backgroundColor: 'transparent' };
-
 function AppContent() {
-  const { tier } = useLicense();
-  const { user, logout, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const isElectron = !!(window as any).electronAPI;
+  const [searchParams] = useSearchParams();
+  const selectedFramework = Math.max(1, Math.min(3, Number(searchParams.get('fw') || '1'))) as 1 | 2 | 3;
 
   if (authLoading) {
     return (
@@ -130,100 +35,32 @@ function AppContent() {
     return <LoginPage />;
   }
 
-  const at = (path: string) => location.pathname === path;
-
   return (
-    <Box sx={{ flexGrow: 1, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <AppBar position="static" elevation={0} sx={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid', borderColor: 'divider' }}>
-        <Toolbar>
-          <Box sx={{ width: 32, height: 32, borderRadius: '8px', backgroundColor: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center', mr: 1.5 }}>
-            <Typography sx={{ color: '#FFFFFF', fontWeight: 700, fontSize: '0.75rem', letterSpacing: '-0.5px' }}>CG</Typography>
-          </Box>
-          <Typography variant="h6" component="div" sx={{ fontWeight: 'bold', letterSpacing: '-0.5px', color: '#111827' }}>
-            ComplianceGuard
-          </Typography>
-          <Chip
-            label={tier === 'pro' ? 'PRO' : 'FREE'}
-            size="small"
-            sx={{ ml: 1.5, height: 20, fontSize: '0.65rem', fontWeight: 600, backgroundColor: tier === 'pro' ? '#D1FAE5' : '#EFF6FF', color: tier === 'pro' ? '#065F46' : '#2563EB', letterSpacing: '1px' }}
-          />
-          <Box sx={{ flexGrow: 1 }} />
-          <Tooltip title="Dashboard">
-            <IconButton onClick={() => navigate('/')} sx={at('/') ? NAV_ACTIVE : NAV_IDLE} style={{ marginRight: 4 }}>
-              <DashboardIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Evaluation History">
-            <IconButton onClick={() => navigate('/history')} sx={at('/history') ? NAV_ACTIVE : NAV_IDLE} style={{ marginRight: 4 }}>
-              <History />
-            </IconButton>
-          </Tooltip>
-          {isElectron && (
-            <Tooltip title="Browse Frameworks">
-              <IconButton onClick={() => navigate('/frameworks')} sx={at('/frameworks') ? NAV_ACTIVE : NAV_IDLE} style={{ marginRight: 4 }}>
-                <MenuBook />
-              </IconButton>
-            </Tooltip>
-          )}
-          {!isElectron && (
-            <Tooltip title="Cloud Dashboard">
-              <IconButton onClick={() => navigate('/cloud')} sx={at('/cloud') ? NAV_ACTIVE : NAV_IDLE} style={{ marginRight: 4 }}>
-                <CloudQueue />
-              </IconButton>
-            </Tooltip>
-          )}
-          <Tooltip title="Settings">
-            <IconButton onClick={() => navigate('/settings')} sx={at('/settings') ? NAV_ACTIVE : NAV_IDLE}>
-              <SettingsIcon />
-            </IconButton>
-          </Tooltip>
-          {user && (
-            <Tooltip title={`Sign out (${user.email})`}>
-              <IconButton onClick={logout} sx={{ color: '#6B7280', ml: 0.5 }}>
-                <LogoutIcon />
-              </IconButton>
-            </Tooltip>
-          )}
-        </Toolbar>
-      </AppBar>
-
-      <Box component="main" sx={{ flexGrow: 1, backgroundColor: 'background.default' }}>
-        <ErrorBoundary>
-          <Routes>
-            <Route path="/" element={<Dashboard onNavigate={navigate} />} />
-            <Route path="/history" element={<EvaluationHistory onNavigate={navigate} />} />
-            <Route path="/cloud" element={<CloudDashboard onNavigate={navigate} />} />
-            <Route path="/frameworks" element={<FrameworkBrowser />} />
-            <Route path="/settings" element={<Settings />} />
-          </Routes>
-        </ErrorBoundary>
-      </Box>
-
-      <Paper square elevation={0} sx={{ py: 1.5, px: 3, backgroundColor: '#F8FAFC', borderTop: '1px solid', borderColor: 'divider' }}>
-        <Container maxWidth="xl">
-          <Typography variant="body2" align="center" sx={{ color: '#9CA3AF', fontSize: '0.75rem' }}>
-            ComplianceGuard v{VERSION} — Collect. Evaluate. Comply.
-          </Typography>
-        </Container>
-      </Paper>
-    </Box>
+    <AppShell selectedFramework={selectedFramework}>
+      <ErrorBoundary>
+        <Routes>
+          <Route path="/" element={<Dashboard onNavigate={navigate} />} />
+          <Route path="/history" element={<EvaluationHistory onNavigate={navigate} />} />
+          <Route path="/cloud" element={<CloudDashboard onNavigate={navigate} />} />
+          <Route path="/frameworks" element={<FrameworkBrowser />} />
+          <Route path="/settings" element={<Settings />} />
+        </Routes>
+      </ErrorBoundary>
+    </AppShell>
   );
 }
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <LicenseProvider>
-            <HashRouter>
-              <AppContent />
-            </HashRouter>
-          </LicenseProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <LicenseProvider>
+          <HashRouter>
+            <AppContent />
+          </HashRouter>
+        </LicenseProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 
