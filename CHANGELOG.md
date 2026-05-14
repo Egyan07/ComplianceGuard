@@ -37,6 +37,11 @@ Bug fixes carried forward from the 3.1.0 routing migration, ten additive feature
 - **YAML bundled with desktop app** — `electron/data/` ships the three control YAML files independently of the backend, so the desktop app works fully offline.
 - **IPC bridge** — `get-framework-controls` handler in the main process lazy-loads and caches each framework on first request. Strips `evidence_mapping` and defaults `risk_level` to `medium` at the boundary.
 
+**UI Polish — Sub-project 2: Score Hero + Skeleton Loading**
+- **ScoreHero card** — animated count-up score (Framer Motion spring), status badge (GOOD STANDING / ON TRACK / NEEDS ATTENTION), and three framework mini-cards for quick switching.
+- **Skeleton loading** — MUI Skeleton shimmer replaces all spinners and text placeholders in Dashboard, EvidenceList, and CollectionSummary.
+- 5 new frontend tests. Total: **~452**.
+
 **UI Polish — Sub-project 1: Design Foundation + Hybrid Layout**
 - **Dual theme system** — Clean Enterprise light mode and Dark Professional dark mode, switching via system preference or manual toggle (persisted to localStorage). Inter font throughout.
 - **Hybrid layout shell** — 44px sticky frosted-glass topbar (logo, dark mode toggle, tier chip) + 200px context-aware sidebar that shows different nav groups per route.
