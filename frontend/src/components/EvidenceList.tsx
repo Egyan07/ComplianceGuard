@@ -6,12 +6,12 @@ source information, and filtering capabilities using Material-UI.
 */
 
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import {
   Card,
   CardContent,
   CardHeader,
   Typography,
-  List,
   Chip,
   Box,
   Collapse,
@@ -44,6 +44,16 @@ interface FilterState {
   source: string;
   searchTerm: string;
 }
+
+const listVariants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.04 } },
+};
+
+const itemVariants = {
+  hidden:  { opacity: 0, x: -8 },
+  visible: { opacity: 1, x: 0, transition: { type: 'spring' as const, stiffness: 200, damping: 25 } },
+};
 
 const EvidenceList: React.FC<EvidenceListProps> = ({
   evidenceItems,
@@ -201,7 +211,12 @@ const EvidenceList: React.FC<EvidenceListProps> = ({
         </Box>
 
         {/* Evidence List */}
-        <List sx={{ maxHeight: 400, overflow: 'auto' }}>
+        <motion.div
+          variants={listVariants}
+          initial="hidden"
+          animate="visible"
+          style={{ maxHeight: 400, overflow: 'auto' }}
+        >
           {filteredItems.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 4 }}>
               <Typography color="text.secondary">
@@ -210,7 +225,7 @@ const EvidenceList: React.FC<EvidenceListProps> = ({
             </Box>
           ) : (
             filteredItems.map((item) => (
-              <React.Fragment key={item.id}>
+              <motion.div key={item.id} variants={itemVariants}>
                 <Box
                   onClick={() => {
                     toggleExpanded(item.id);
@@ -273,10 +288,10 @@ const EvidenceList: React.FC<EvidenceListProps> = ({
                     </Box>
                   </Box>
                 </Collapse>
-              </React.Fragment>
+              </motion.div>
             ))
           )}
-        </List>
+        </motion.div>
       </CardContent>
     </Card>
   );
