@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Button, CircularProgress, Typography } from '@mui/material';
+import MotionButton from '../ui/MotionButton';
 import { Refresh, CloudUpload, Assessment, Upload, PictureAsPdf, CloudSync as CloudSyncIcon } from '@mui/icons-material';
 import { useLicense } from '../../contexts/LicenseContext';
 import { ComplianceEvaluation } from '../../services/api';
@@ -70,9 +71,9 @@ const DashboardHeader: React.FC<Props> = ({
                   {syncingCloud ? 'Syncing...' : 'Sync to Cloud'}
                 </Button>
               )}
-              <Button variant="outlined" color="secondary" startIcon={<Assessment />} onClick={onEvaluate} disabled={evaluating}>
+              <MotionButton variant="outlined" color="secondary" startIcon={<Assessment />} onClick={onEvaluate} disabled={evaluating}>
                 {evaluating ? 'Evaluating...' : 'Evaluate Compliance'}
-              </Button>
+              </MotionButton>
               <Button
                 variant="outlined"
                 startIcon={exportingPDF ? <CircularProgress size={16} /> : <PictureAsPdf />}
@@ -87,9 +88,9 @@ const DashboardHeader: React.FC<Props> = ({
               </Button>
             </>
           )}
-          <Button variant="contained" startIcon={<CloudUpload />} onClick={onCollect} disabled={collectingEvidence}>
+          <MotionButton variant="contained" startIcon={<CloudUpload />} onClick={onCollect} disabled={collectingEvidence}>
             {collectingEvidence ? 'Collecting...' : 'Collect Evidence'}
-          </Button>
+          </MotionButton>
         </Box>
       </Box>
     </Box>

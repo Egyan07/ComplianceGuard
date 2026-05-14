@@ -9,7 +9,7 @@ const MotionButton: React.FC<ButtonProps> = (props) => (
     whileHover={{ scale: 1.02 }}
     whileTap={{ scale: 0.97 }}
     transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-    {...props}
+    {...(props as any)}
   />
 );
 

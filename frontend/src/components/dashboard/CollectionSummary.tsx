@@ -1,5 +1,6 @@
 import React from 'react';
-import { Box, Paper, Skeleton, Typography } from '@mui/material';
+import { Box, Skeleton, Typography } from '@mui/material';
+import MotionCard from '../ui/MotionCard';
 import { EvidenceSummary, ComplianceEvaluation } from '../../services/api';
 
 interface Props {
@@ -9,7 +10,7 @@ interface Props {
 }
 
 const CollectionSummary: React.FC<Props> = ({ summary, evaluation, isElectron }) => (
-  <Paper sx={{ p: 3, height: '100%', minHeight: 400 }}>
+  <MotionCard sx={{ p: 3, height: '100%', minHeight: 400 }}>
     <Typography variant="h6" gutterBottom>
       {isElectron ? 'Local Collection Summary' : 'Collection Summary'}
     </Typography>
@@ -63,7 +64,7 @@ const CollectionSummary: React.FC<Props> = ({ summary, evaluation, isElectron })
         ))}
       </Box>
     )}
-  </Paper>
+  </MotionCard>
 );
 
 export default CollectionSummary;
