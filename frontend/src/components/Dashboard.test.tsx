@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import Dashboard from './Dashboard';
 
 const mockSetSelectedFramework = vi.fn();
@@ -37,28 +38,28 @@ beforeEach(() => {
 
 describe('Dashboard — framework picker', () => {
   it('renders SOC 2 toggle button', () => {
-    render(<Dashboard />);
+    render(<MemoryRouter><Dashboard /></MemoryRouter>);
     expect(screen.getByRole('button', { name: /SOC 2/i })).toBeInTheDocument();
   });
 
   it('renders ISO 27001 toggle button', () => {
-    render(<Dashboard />);
+    render(<MemoryRouter><Dashboard /></MemoryRouter>);
     expect(screen.getByRole('button', { name: /ISO 27001/i })).toBeInTheDocument();
   });
 
   it('renders HIPAA toggle button', () => {
-    render(<Dashboard />);
+    render(<MemoryRouter><Dashboard /></MemoryRouter>);
     expect(screen.getByRole('button', { name: /HIPAA/i })).toBeInTheDocument();
   });
 
   it('calls setSelectedFramework(2) when ISO 27001 is clicked', () => {
-    render(<Dashboard />);
+    render(<MemoryRouter><Dashboard /></MemoryRouter>);
     fireEvent.click(screen.getByRole('button', { name: /ISO 27001/i }));
     expect(mockSetSelectedFramework).toHaveBeenCalledWith(2);
   });
 
   it('calls setSelectedFramework(3) when HIPAA is clicked', () => {
-    render(<Dashboard />);
+    render(<MemoryRouter><Dashboard /></MemoryRouter>);
     fireEvent.click(screen.getByRole('button', { name: /HIPAA/i }));
     expect(mockSetSelectedFramework).toHaveBeenCalledWith(3);
   });

@@ -5,8 +5,9 @@ State and side-effects live in useDashboard.
 Sub-components: DashboardHeader, CollectionSummary (see components/dashboard/).
 */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Alert, Box, CircularProgress, Container, Snackbar, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { useSearchParams } from 'react-router-dom';
 import ComplianceScore from './ComplianceScore';
 import EvidenceList from './EvidenceList';
 import EvidenceUpload from './EvidenceUpload';
@@ -37,6 +38,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     handleEvaluateCompliance, handleExportPDF, handleSyncToCloud, clearMessage,
     selectedFramework, setSelectedFramework,
   } = useDashboard();
+
+  const [searchParams] = useSearchParams();
+  useEffect(() => {
+    const fw = Number(searchParams.get('fw') || '1');
+    if (fw === 1 || fw === 2 || fw === 3) {
+      setSelectedFramework(fw);
+    }
+  }, [searchParams, setSelectedFramework]);
 
   if (state.loading && !state.summary) {
     return (

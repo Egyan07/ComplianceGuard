@@ -39,8 +39,8 @@ const DashboardHeader: React.FC<Props> = ({
           </Typography>
           <Typography variant="body1" color="text.secondary">
             {isElectron
-              ? 'Monitor your SOC 2 compliance status - Desktop Mode'
-              : 'Monitor your SOC 2 compliance status'}
+              ? 'Monitor your compliance status across SOC 2, ISO 27001 and HIPAA'
+              : 'Monitor your compliance status across SOC 2, ISO 27001 and HIPAA'}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
