@@ -368,8 +368,11 @@ ComplianceGuard/
 │   └── system/windows.js               # Windows evidence collector
 ├── frontend/
 │   ├── src/
-│   │   ├── App.tsx                     # Theme, HashRouter nav, auth gate, error boundary
-│   │   ├── components/                 # Dashboard, Score, Evidence, History, Settings, Login
+│   │   ├── App.tsx                     # App entry point — providers, auth gate, error boundary
+│   │   ├── theme.ts                    # Light (Clean Enterprise) + dark (Dark Professional) MUI themes
+│   │   ├── components/                 # Dashboard, ScoreHero, Evidence, History, Settings, Login
+│   │   │   ├── layout/                 # AppShell, Topbar, ContextSidebar, PageTransition
+│   │   │   ├── ui/                     # MotionCard, MotionButton reusable wrappers
 │   │   │   └── dashboard/              # DashboardHeader, CollectionSummary sub-components
 │   │   ├── hooks/useDashboard.ts       # Data fetching + action handlers (react-query)
 │   │   ├── contexts/AuthContext.tsx     # JWT auth state, login/register/logout
@@ -589,7 +592,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 | PDF reports + evaluation history | GCP and Azure cloud evidence |
 | Free / Pro / Enterprise licensing (Ed25519) | Air-gapped Enterprise tier |
 | JWT auth + refresh tokens + login UI | Setup video walkthrough |
-| FastAPI + PostgreSQL + Docker + Nginx | PCI DSS framework |
+| Premium UI — dual theme (light/dark), hybrid layout, Framer Motion animations | PCI DSS framework |
+| FastAPI + PostgreSQL + Docker + Nginx | Evidence status workflow |
 | Cloud sync + multi-machine dashboard | |
 | Email delivery (verification + reset) | |
 | Web mode license enforcement (Ed25519) | |

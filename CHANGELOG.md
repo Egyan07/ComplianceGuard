@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-Bug fixes carried forward from the 3.1.0 routing migration, ten additive features, and two new compliance frameworks. No breaking changes, no schema migrations.
+Multi-framework scoring (desktop + web), premium UI polish (dual theme, hybrid layout, Framer Motion animations), and multiple backend/frontend features. No breaking changes, no schema migrations.
 
 ### Added
 
