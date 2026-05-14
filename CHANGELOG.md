@@ -37,6 +37,13 @@ Bug fixes carried forward from the 3.1.0 routing migration, ten additive feature
 - **YAML bundled with desktop app** — `electron/data/` ships the three control YAML files independently of the backend, so the desktop app works fully offline.
 - **IPC bridge** — `get-framework-controls` handler in the main process lazy-loads and caches each framework on first request. Strips `evidence_mapping` and defaults `risk_level` to `medium` at the boundary.
 
+**UI Polish — Sub-project 1: Design Foundation + Hybrid Layout**
+- **Dual theme system** — Clean Enterprise light mode and Dark Professional dark mode, switching via system preference or manual toggle (persisted to localStorage). Inter font throughout.
+- **Hybrid layout shell** — 44px sticky frosted-glass topbar (logo, dark mode toggle, tier chip) + 200px context-aware sidebar that shows different nav groups per route.
+- **Page transitions** — Framer Motion `opacity + y` fade on every route change (0.18s, non-distracting).
+- **Framework sidebar nav** — Clicking SOC 2 / ISO 27001 / HIPAA in the sidebar sets `?fw=` URL param, synced into Dashboard's framework picker.
+- 12 new frontend Vitest tests. Total: **~447**.
+
 **Web Mode — ISO 27001 & HIPAA Scoring**
 - **`POST /api/v1/iso27001/evaluate-from-evidence`** — auto-scores ISO 27001:2013 compliance from the user's stored evidence items via a 14-type evidence-to-control map. Persists result to `compliance_evaluations` with `framework_id="iso27001_v2013"`.
 - **`POST /api/v1/hipaa/evaluate-from-evidence`** — same for HIPAA Security Rule (`framework_id="hipaa_security_rule"`).
