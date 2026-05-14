@@ -49,8 +49,9 @@ describe('EvidenceList', () => {
   });
 
   it('renders loading state', () => {
-    renderWithTheme(<EvidenceList evidenceItems={[]} loading />);
-    expect(screen.getByText('Loading evidence data...')).toBeInTheDocument();
+    const { container } = renderWithTheme(<EvidenceList evidenceItems={[]} loading />);
+    expect(screen.getByText('Evidence List')).toBeInTheDocument();
+    expect(container.querySelectorAll('.MuiSkeleton-root').length).toBeGreaterThan(0);
   });
 
   it('shows empty message when no items match filter', () => {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, CircularProgress, Paper, Typography } from '@mui/material';
+import { Box, Paper, Skeleton, Typography } from '@mui/material';
 import { EvidenceSummary, ComplianceEvaluation } from '../../services/api';
 
 interface Props {
@@ -57,8 +57,10 @@ const CollectionSummary: React.FC<Props> = ({ summary, evaluation, isElectron })
         )}
       </Box>
     ) : (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-        <CircularProgress />
+      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mt: 2 }}>
+        {[0, 1, 2, 3].map(i => (
+          <Skeleton key={i} variant="rounded" height={70} />
+        ))}
       </Box>
     )}
   </Paper>

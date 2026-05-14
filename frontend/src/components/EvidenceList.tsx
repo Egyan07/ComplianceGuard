@@ -20,7 +20,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  SelectChangeEvent
+  SelectChangeEvent,
+  Skeleton
 } from '@mui/material';
 import {
   Cloud,
@@ -130,7 +131,11 @@ const EvidenceList: React.FC<EvidenceListProps> = ({
       <Card sx={{ height: '100%' }}>
         <CardHeader title="Evidence List" />
         <CardContent>
-          <Typography>Loading evidence data...</Typography>
+          <Box>
+            {[0, 1, 2, 3, 4].map(i => (
+              <Skeleton key={i} variant="rounded" height={52} sx={{ mb: 1 }} />
+            ))}
+          </Box>
         </CardContent>
       </Card>
     );
