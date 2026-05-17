@@ -8,9 +8,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-Multi-framework scoring (desktop + web), premium UI polish (dual theme, hybrid layout, Framer Motion animations), and multiple backend/frontend features. No breaking changes, no schema migrations.
+Multi-framework scoring (desktop + web), full UI overhaul to premium design quality, and multiple backend/frontend features. No breaking changes, no schema migrations.
 
 ### Added
+
+**UI Overhaul — Premium Design System**
+- **Global design system rewrite** (`theme.ts`) — Precise Inter typography scale (h4–overline), full light/dark palettes using Slate/Indigo tokens (text `#0F172A`/`#E2E8F0`, paper `#FFFFFF`/`#1C1F2E`, divider `#E2E8F0`/`rgba(255,255,255,0.08)`), and component overrides for MuiPaper (flat border, no shadow in light mode), MuiButton (gradient contained, consistent 34px height), MuiChip, MuiOutlinedInput, and MuiDivider.
+- **Topbar polish** — Gradient logo box with Apple-style inset highlight, breathing PRO badge glow animation (3s heartbeat via Framer Motion), indigo/violet user avatar gradient, frosted glass topbar with a 1px shadow strip to separate it from content.
+- **Global navigation** — `ContextSidebar` now has a permanent Navigation section (Dashboard / History / Cloud / Frameworks / Settings with MUI icons) always visible on every route. Framer Motion `layoutId="sidebar-active-bg"` creates a sliding active pill that animates smoothly between routes. Sidebar background is now differentiated (`#F1F5F9` light / `#13161F` dark) from the main content area. Version stamp at the bottom.
+- **Section label style** — Sidebar section labels use 0.58rem, 1.8px letter-spacing, uppercase, `text.disabled` — exact Apple sidebar label treatment.
+- **Dashboard header** — Title shortened to "Dashboard" (app name is already in Topbar). Button row restructured into three visual clusters: ghost Refresh / outlined ButtonGroup (Upload · Evaluate · Export PDF) / contained primary Collect Evidence.
+- **ScoreHero** — Score number enlarged to 5rem / 800 weight / `-3px` letter-spacing. Color animates via Framer Motion `animate={{ color }}` from neutral → green/amber/red as the count-up spring settles (0.6s easeOut). Empty state replaced with a purposeful dashed-border call-to-action. Blue `borderTop: 3px solid primary.main` accent stripe anchors the card visually.
+- **CollectionSummary** — Dot-grid texture in light mode via CSS `::before` pseudo-element. Metric numbers at 2.2rem / tight tracking. Metric labels use ALL-CAPS, 0.65rem, 0.8px letter-spacing — Apple/Linear small stat style. Last collection timestamp whispers at `text.disabled`.
+- **Framework mini-cards** — Consistent `borderLeft: 3px solid` (transparent inactive, primary active) to prevent layout shift. Active card tinted with `rgba(37,99,235,0.04)`.
+- **PageTransition** — Tuned to 0.14s with cubic-bezier `[0.25, 0.1, 0.25, 1]` (CSS `ease`) for instant feel on entry.
+- **MotionCard** — Hover lift reduced from `-2px` to `-1px`, spring tuned to stiffness 400 / damping 30 for tighter feel.
+- **EvidenceList** — Row padding tightened to `py: 0.875`. Staggered entry capped at 8 items (max 0.24s delay) so long lists don't animate fully.
+- **EvaluationHistory** — Left border timeline accent (`borderLeft: 2px solid divider`) on each entry. Trend icons scale in on mount via `motion.div`.
+- **FrameworkBrowser** — Tab indicator thinned to 2px with border-radius via `slotProps.indicator`. AccordionSummary gets `borderRadius: 6px`.
+- **Settings** — All section headers use overline typography style (0.6rem, 1.6px letter-spacing, 700 weight, `text.disabled`, uppercase) matching the sidebar section labels — coherent visual language. License key input uses `fontSize: '0.8rem'` monospace.
+- 2 new ContextSidebar tests (global nav items always visible, cloud context section). Total: **~458**.
+
+### Fixed (UI)
+- **Duplicate framework selector** — Removed the `ToggleButtonGroup` (SOC 2 / ISO 27001 / HIPAA tabs) from `Dashboard.tsx`. Framework selection now lives exclusively in the sidebar URL-param flow, eliminating the two-control redundancy.
+- **Dashboard tests** — Rewrote `Dashboard.test.tsx` to reflect URL-param framework sync instead of ToggleButton clicks.
+- **ScoreHero empty state** — Replaced `--` placeholder with a purposeful dashed-border empty state message.
 
 **Auth**
 - **`GET /api/v1/auth/me`** — Returns the authenticated user's profile. Useful for frontends that need to re-hydrate user state without re-logging in.
