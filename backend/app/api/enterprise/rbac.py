@@ -22,7 +22,7 @@ def list_users(
     db: Session = Depends(get_db),
 ):
     """List all active users with their enterprise roles. Enterprise-gated."""
-    users = db.query(User).filter(User.is_active == True).all()
+    users = db.query(User).filter(User.is_active.is_(True)).all()
     role_map = {r.user_id: r.role for r in db.query(UserRole).all()}
     return [
         {
