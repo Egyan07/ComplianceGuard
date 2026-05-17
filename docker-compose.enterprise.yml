@@ -1,0 +1,55 @@
+# ComplianceGuard Enterprise — Air-Gapped Deployment
+# All images loaded locally via enterprise-install.sh — no Docker Hub pulls at runtime.
+# Run: docker compose -f docker-compose.enterprise.yml up -d
+
+services:
+  db:
+    image: complianceguard-postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-complianceguard}
+      POSTGRES_USER: ${POSTGRES_USER:-cguser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cguser}"]
+      interval: 10s
+      retries: 5
+
+  backend:
+    image: complianceguard-backend:${APP_VERSION}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-cguser}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-complianceguard}
+      SECRET_KEY: ${SECRET_KEY}
+      ENVIRONMENT: production
+      ENTERPRISE_MODE: "true"
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://localhost}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8000/health || exit 1"]
+      interval: 15s
+      retries: 5
+
+  frontend:
+    image: complianceguard-frontend:${APP_VERSION}
+    restart: unless-stopped
+
+  nginx:
+    image: complianceguard-nginx:alpine
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - frontend
+    ports:
+      - "${HTTPS_PORT:-443}:443"
+    volumes:
+      - ./nginx.enterprise.conf:/etc/nginx/nginx.conf:ro
+      - ${TLS_CERT_PATH}:/etc/nginx/certs/cert.pem:ro
+      - ${TLS_KEY_PATH}:/etc/nginx/certs/key.pem:ro
+
+volumes:
+  pgdata:
