@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
-## [Unreleased]
+## [3.2.0] — 2026-05-17
 
 Multi-framework scoring (desktop + web), full UI overhaul to premium design quality, multiple backend/frontend features, and **Air-Gapped Enterprise tier**. No breaking changes. Alembic migration adds three Enterprise tables.
 
