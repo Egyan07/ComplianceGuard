@@ -73,3 +73,38 @@ def test_assign_role_success(client):
     r = client.put(f"/api/v1/enterprise/users/{target_uid}/role", json={"role": "auditor"}, headers={"Authorization": f"Bearer {admin_token}"})
     assert r.status_code == 200
     assert r.json()["role"] == "auditor"
+
+
+def test_assign_role_fires_audit_event(client):
+    from app.models.enterprise import AuditLog
+    admin_token, _ = _seed("enterprise", "admin", email="auditadmin@x.com")
+    _, target_uid = _seed("enterprise", None, email="audittarget@x.com")
+    client.put(f"/api/v1/enterprise/users/{target_uid}/role", json={"role": "auditor"}, headers={"Authorization": f"Bearer {admin_token}"})
+    db = _Session()
+    row = db.query(AuditLog).filter(AuditLog.event_type == "role_assigned").first()
+    db.close()
+    assert row is not None
+    assert row.detail_json["target_user_id"] == target_uid
+    assert row.detail_json["role"] == "auditor"
+
+
+def test_assign_role_rejects_invalid_role(client):
+    admin_token, _ = _seed("enterprise", "admin", email="adminbad@x.com")
+    _, target_uid = _seed("enterprise", None, email="targetbad@x.com")
+    r = client.put(f"/api/v1/enterprise/users/{target_uid}/role", json={"role": "superuser"}, headers={"Authorization": f"Bearer {admin_token}"})
+    assert r.status_code == 422
+
+
+def test_assign_role_prevents_last_admin_demotion(client):
+    admin_token, admin_uid = _seed("enterprise", "admin", email="lastadmin@x.com")
+    r = client.put(f"/api/v1/enterprise/users/{admin_uid}/role", json={"role": "auditor"}, headers={"Authorization": f"Bearer {admin_token}"})
+    assert r.status_code == 409
+
+
+def test_assign_role_updates_existing_role(client):
+    """Second PUT on same user should update (not create duplicate row)."""
+    admin_token, _ = _seed("enterprise", "admin", email="adminupdate@x.com")
+    _, target_uid = _seed("enterprise", "auditor", email="targetupdate@x.com")
+    r = client.put(f"/api/v1/enterprise/users/{target_uid}/role", json={"role": "admin"}, headers={"Authorization": f"Bearer {admin_token}"})
+    assert r.status_code == 200
+    assert r.json()["role"] == "admin"
