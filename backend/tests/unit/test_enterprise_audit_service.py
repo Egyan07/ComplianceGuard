@@ -1,4 +1,3 @@
-import os
 import pytest
 from app.services.audit_service import canonical_json, compute_entry_hash, log_event
 from app.models.enterprise import AuditLog
@@ -59,3 +58,13 @@ def test_log_event_first_row_has_null_prev_hash(db):
     log_event(db, "evaluation_run", user_id=None, framework="soc2", score=0.8, detail={})
     row = db.query(AuditLog).first()
     assert row.prev_hash is None
+
+
+def test_log_event_entry_hash_is_reproducible(db):
+    log_event(db, "evaluation_run", framework="soc2", score=0.8, detail={"x": 1})
+    row = db.query(AuditLog).first()
+    recomputed = compute_entry_hash(
+        row.prev_hash, row.event_type, row.user_id, row.framework,
+        row.score, row.detail_json or {}, row.created_at.isoformat(),
+    )
+    assert recomputed == row.entry_hash

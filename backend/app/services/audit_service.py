@@ -1,6 +1,6 @@
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Optional
 
 from sqlalchemy.orm import Session
@@ -21,16 +21,16 @@ def compute_entry_hash(
     detail: dict,
     created_at: str,
 ) -> str:
-    parts = [
-        prev_hash or "",
-        event_type or "",
-        str(user_id) if user_id is not None else "",
-        framework or "",
-        str(score) if score is not None else "",
-        canonical_json(detail) if detail else "{}",
-        created_at,
-    ]
-    payload = "||".join(parts).encode("utf-8")
+    payload_obj = {
+        "prev_hash": prev_hash,
+        "event_type": event_type,
+        "user_id": user_id,
+        "framework": framework,
+        "score": score,
+        "detail": detail if detail else {},
+        "created_at": created_at,
+    }
+    payload = canonical_json(payload_obj).encode("utf-8")
     return hashlib.sha256(payload).hexdigest()
 
 
@@ -44,7 +44,7 @@ def log_event(
 ) -> None:
     last = db.query(AuditLog).order_by(AuditLog.id.desc()).first()
     prev_hash = last.entry_hash if last else None
-    created_at = datetime.now(timezone.utc)
+    created_at = datetime.utcnow()
     created_at_str = created_at.isoformat()
     entry_hash = compute_entry_hash(prev_hash, event_type, user_id, framework, score, detail or {}, created_at_str)
     db.add(AuditLog(
