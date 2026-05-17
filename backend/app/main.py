@@ -29,6 +29,7 @@ from app.api.iso27001 import router as iso27001_router
 from app.api.hipaa import router as hipaa_router
 from app.api.enterprise.audit import router as enterprise_audit_router
 from app.api.enterprise.branding import router as enterprise_branding_router
+from app.api.enterprise.export import router as enterprise_export_router
 from app.api.compliance import router as compliance_router
 from app.api.evidence import router as evidence_router
 from app.api.machines import router as machines_router
@@ -172,6 +173,7 @@ app.include_router(iso27001_router, prefix="/api/v1")
 app.include_router(hipaa_router, prefix="/api/v1")
 app.include_router(enterprise_audit_router, prefix="/api/v1")
 app.include_router(enterprise_branding_router, prefix="/api/v1")
+app.include_router(enterprise_export_router, prefix="/api/v1")
 
 @app.get("/health")
 async def health_check() -> Dict[str, Any]:
