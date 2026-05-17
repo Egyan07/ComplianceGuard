@@ -59,6 +59,7 @@ def verify_audit_chain(
     current_user: User = Depends(require_enterprise),
     db: Session = Depends(get_db),
 ):
+    # TODO: switch to yield_per(1000) for large deployments — unbounded scan OOMs on big tables
     rows = db.query(AuditLog).order_by(AuditLog.id.asc()).all()
     if not rows:
         return {"valid": True, "entries_checked": 0, "first_broken_at": None}

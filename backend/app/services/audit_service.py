@@ -47,6 +47,8 @@ def log_event(
     created_at = datetime.utcnow()
     created_at_str = created_at.isoformat()
     entry_hash = compute_entry_hash(prev_hash, event_type, user_id, framework, score, detail or {}, created_at_str)
+    # INVARIANT: created_at is always set explicitly (not via server_default) so the
+    # hashed created_at_str matches row.created_at.isoformat() on read-back exactly.
     db.add(AuditLog(
         event_type=event_type,
         user_id=user_id,
