@@ -171,6 +171,26 @@ class ComplianceGuardDatabase {
         next_run_at DATETIME,
         status TEXT CHECK(status IN ('active', 'paused', 'completed', 'failed')) DEFAULT 'active',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`,
+
+      `CREATE TABLE IF NOT EXISTS audit_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        event_type TEXT NOT NULL,
+        user_id INTEGER,
+        framework TEXT,
+        score REAL,
+        detail_json TEXT,
+        prev_hash TEXT,
+        entry_hash TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )`,
+
+      `CREATE TABLE IF NOT EXISTS enterprise_config (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        company_name TEXT NOT NULL,
+        logo_path TEXT,
+        report_footer TEXT,
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
       )`
     ];
 
