@@ -13,6 +13,7 @@ from typing import Dict, List, Optional, Any
 from pydantic import BaseModel, Field
 from datetime import datetime, timezone
 import uuid
+import logging
 
 from app.core.soc2_controls import SOC2Control, SOC2Framework, create_soc2_framework
 from app.services.compliance_service import ComplianceService, ComplianceStatus, create_compliance_service
@@ -22,6 +23,8 @@ from app.models.user import User
 from app.models.evaluation import ComplianceEvaluationRecord, ControlAssessmentRecord
 from app.core.evidence_mapping import EVIDENCE_CONTROL_MAP as _EVIDENCE_CONTROL_MAP
 
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/compliance", tags=["compliance"])
 
@@ -264,10 +267,10 @@ async def evaluate_compliance(
                 user_id=getattr(current_user, "id", None),
                 framework=getattr(evaluation, "framework_id", None),
                 score=getattr(evaluation, "overall_score", None),
-                detail={"evaluated_by": getattr(evaluation, "evaluated_by", "system")},
+                detail={"evaluated_by": getattr(evaluation, "evaluated_by", "system"), "evaluation_id": record.evaluation_id},
             )
         except Exception:
-            pass  # audit failure must never break evaluation
+            logger.exception("audit log_event failed for evaluation_run")
 
         return ComplianceEvaluationResponse(
             framework_id=record.framework_id,
@@ -578,10 +581,10 @@ async def evaluate_from_evidence(
                 user_id=getattr(current_user, "id", None),
                 framework=getattr(evaluation, "framework_id", None),
                 score=getattr(evaluation, "overall_score", None),
-                detail={"evaluated_by": getattr(evaluation, "evaluated_by", "system")},
+                detail={"evaluated_by": getattr(evaluation, "evaluated_by", "system"), "evaluation_id": record.evaluation_id},
             )
         except Exception:
-            pass  # audit failure must never break evaluation
+            logger.exception("audit log_event failed for evaluation_run")
 
         return ComplianceEvaluationResponse(
             framework_id=record.framework_id,
