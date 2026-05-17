@@ -256,6 +256,19 @@ async def evaluate_compliance(
         db.commit()
         db.refresh(record)
 
+        try:
+            from app.services.audit_service import log_event as _log_audit
+            _log_audit(
+                db,
+                "evaluation_run",
+                user_id=getattr(current_user, "id", None),
+                framework=getattr(evaluation, "framework_id", None),
+                score=getattr(evaluation, "overall_score", None),
+                detail={"evaluated_by": getattr(evaluation, "evaluated_by", "system")},
+            )
+        except Exception:
+            pass  # audit failure must never break evaluation
+
         return ComplianceEvaluationResponse(
             framework_id=record.framework_id,
             overall_score=record.overall_score,
@@ -556,6 +569,19 @@ async def evaluate_from_evidence(
 
         db.commit()
         db.refresh(record)
+
+        try:
+            from app.services.audit_service import log_event as _log_audit
+            _log_audit(
+                db,
+                "evaluation_run",
+                user_id=getattr(current_user, "id", None),
+                framework=getattr(evaluation, "framework_id", None),
+                score=getattr(evaluation, "overall_score", None),
+                detail={"evaluated_by": getattr(evaluation, "evaluated_by", "system")},
+            )
+        except Exception:
+            pass  # audit failure must never break evaluation
 
         return ComplianceEvaluationResponse(
             framework_id=record.framework_id,

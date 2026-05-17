@@ -43,7 +43,8 @@ import app.models  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
-if settings.sentry_dsn:
+_enterprise_mode = os.getenv("ENTERPRISE_MODE", "false").lower() == "true"
+if settings.sentry_dsn and not _enterprise_mode:
     sentry_sdk.init(
         dsn=settings.sentry_dsn,
         environment=str(settings.environment.value),
@@ -51,6 +52,8 @@ if settings.sentry_dsn:
         traces_sample_rate=settings.sentry_traces_sample_rate,
         send_default_pii=False,  # Do not send PII — compliance requirement
     )
+elif _enterprise_mode:
+    logger.info("ENTERPRISE_MODE=true: Sentry telemetry disabled")
 
 
 def run_migrations() -> None:
