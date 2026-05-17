@@ -74,3 +74,26 @@ async def require_pro(current_user: User = Depends(get_current_user)) -> User:
             detail="This feature requires a Pro license. Activate a license key in Settings.",
         )
     return current_user
+
+
+def require_enterprise(current_user: User = Depends(get_current_user)) -> User:
+    if current_user.license_tier != "enterprise":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This feature requires an Enterprise license.",
+        )
+    return current_user
+
+
+def require_admin(
+    current_user: User = Depends(require_enterprise),
+    db: Session = Depends(get_db),
+) -> User:
+    from app.models.enterprise import UserRole
+    role_row = db.query(UserRole).filter(UserRole.user_id == current_user.id).first()
+    if not role_row or role_row.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This action requires an Enterprise admin role.",
+        )
+    return current_user
