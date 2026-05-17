@@ -2,6 +2,7 @@ const log = require('../logger');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const { logAuditEvent } = require('./audit-service');
 
 class LocalEvidenceProcessor {
   constructor(database, userDataPath) {
@@ -210,6 +211,14 @@ class LocalEvidenceProcessor {
       null,
       { evidence_count: processedEvidence.length }
     );
+
+    try {
+      if (this.db) {
+        logAuditEvent(this.db, 'evidence_collected', {
+          detail: { item_count: processedEvidence.length },
+        });
+      }
+    } catch (_) {}
 
     log.info(`Processed ${processedEvidence.length} evidence items`);
     return processedEvidence;

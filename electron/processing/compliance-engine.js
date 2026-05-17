@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const yaml = require('js-yaml');
 const { FREE_TIER_CONTROL_IDS } = require('../licensing/tier-constants');
+const { logAuditEvent } = require('./audit-service');
 
 class LocalComplianceEngine {
   constructor(database, licenseManager = null) {
@@ -131,6 +132,16 @@ class LocalComplianceEngine {
 
     const evaluationId = await this.db.createEvaluation(frameworkId, evaluationResults);
     evaluationResults.id = evaluationId;
+
+    try {
+      if (this.db) {
+        logAuditEvent(this.db, 'evaluation_run', {
+          framework: String(frameworkId || ''),
+          score: evaluationResults.overall_score,
+          detail: { status: evaluationResults.status, evidence_count: evaluationResults.evidence_count ?? 0 },
+        });
+      }
+    } catch (_) {}
 
     const tier = this.licenseManager ? this.licenseManager.getTier() : 'free';
     evaluationResults.tier = tier;

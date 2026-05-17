@@ -292,8 +292,17 @@ ipcMain.handle('export-pdf-report', async (event, frameworkId = 1) => {
     return { error: 'PDF reports require a Pro license.', upgrade_required: true };
   }
   try {
+    // Load enterprise branding config if license allows
+    let brandingConfig = null;
+    if (licenseManager.isFeatureAllowed('enterprise_pdf_branding')) {
+      const cfg = database.db.prepare('SELECT * FROM enterprise_config LIMIT 1').get();
+      if (cfg) {
+        brandingConfig = { companyName: cfg.company_name, reportFooter: cfg.report_footer };
+      }
+    }
+
     // Generate HTML report
-    const html = await reportGenerator.generateHTMLReport(frameworkId);
+    const html = await reportGenerator.generateHTMLReport(frameworkId, brandingConfig);
 
     // Create a hidden window to render the HTML
     const reportWindow = new BrowserWindow({

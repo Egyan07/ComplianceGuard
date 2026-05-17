@@ -26,7 +26,7 @@ class ReportGenerator {
   /**
    * Generate a full HTML compliance report that Electron can print to PDF.
    */
-  async generateHTMLReport(frameworkId) {
+  async generateHTMLReport(frameworkId, brandingConfig = null) {
     const framework = await this.db.getFrameworkById(frameworkId);
     if (!framework) throw new Error('Framework not found');
 
@@ -38,11 +38,14 @@ class ReportGenerator {
     const overallScore = findings.overall_score || evaluation?.overall_score || 0;
     const status = findings.status || evaluation?.status || 'not_assessed';
 
+    const companyName = brandingConfig?.companyName || 'ComplianceGuard';
+    const reportFooter = brandingConfig?.reportFooter || null;
+
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>ComplianceGuard - ${escapeHtml(framework.name)} Compliance Report</title>
+<title>${escapeHtml(companyName)} — SOC 2 Compliance Report</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -254,7 +257,7 @@ class ReportGenerator {
 
 <!-- Cover Page -->
 <div class="cover">
-  <h1>ComplianceGuard</h1>
+  <h1>${escapeHtml(companyName)}</h1>
   <div class="tagline">Collect. Evaluate. Comply.</div>
   <div class="report-title">${escapeHtml(framework.name)} Compliance Report</div>
   <div class="report-date">Generated: ${now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
@@ -386,8 +389,9 @@ class ReportGenerator {
   </table>
 
   <div class="footer">
-    ComplianceGuard — Collect. Evaluate. Comply.<br>
+    ${escapeHtml(companyName)} — Collect. Evaluate. Comply.<br>
     Report generated on ${now.toISOString()} | Framework: ${escapeHtml(framework.name)} v${escapeHtml(framework.version || '2017')}
+    ${reportFooter ? `<br>${escapeHtml(reportFooter)}` : ''}
   </div>
 </div>
 
