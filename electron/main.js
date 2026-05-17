@@ -13,6 +13,8 @@ const LicenseManager = require('./licensing/license-manager');
 const CloudSync = require('./cloud-sync');
 const { collectWindowsEvidence } = require('./system/windows');
 const scheduler = require('./scheduler');
+const { z } = require('zod');
+const { logAuditEvent } = require('./processing/audit-service');
 
 // Keep a global reference of the window object
 let mainWindow = null;
@@ -513,6 +515,123 @@ ipcMain.handle('run-collection-now', async () => {
   } catch (err) {
     log.error('run-collection-now failed:', err);
     return { error: err.message };
+  }
+});
+
+// Enterprise: get branding config
+ipcMain.handle('get-enterprise-config', async () => {
+  try {
+    if (!licenseManager.isFeatureAllowed('enterprise_pdf_branding')) {
+      return { error: 'Enterprise license required.' };
+    }
+    const row = database.db.prepare('SELECT * FROM enterprise_config LIMIT 1').get();
+    return row || { company_name: null, logo_path: null, report_footer: null };
+  } catch (error) {
+    log.error('get-enterprise-config failed:', error);
+    return { error: error.message };
+  }
+});
+
+// Enterprise: set branding config
+const _brandingSchema = z.object({
+  company_name: z.string().min(1).max(200),
+  logo_path: z.string().max(500).nullable().optional(),
+  report_footer: z.string().max(500).nullable().optional(),
+});
+
+ipcMain.handle('set-enterprise-config', async (event, payload) => {
+  try {
+    if (!licenseManager.isFeatureAllowed('enterprise_pdf_branding')) {
+      return { error: 'Enterprise license required.' };
+    }
+    const parsed = _brandingSchema.safeParse(payload);
+    if (!parsed.success) {
+      return { error: 'Invalid config: ' + parsed.error.message };
+    }
+    const { company_name, logo_path, report_footer } = parsed.data;
+    const existing = database.db.prepare('SELECT id FROM enterprise_config LIMIT 1').get();
+    if (existing) {
+      database.db.prepare('UPDATE enterprise_config SET company_name=?, logo_path=?, report_footer=?, updated_at=datetime("now") WHERE id=?')
+        .run(company_name, logo_path ?? null, report_footer ?? null, existing.id);
+    } else {
+      database.db.prepare('INSERT INTO enterprise_config (company_name, logo_path, report_footer) VALUES (?,?,?)')
+        .run(company_name, logo_path ?? null, report_footer ?? null);
+    }
+    logAuditEvent(database.db, 'enterprise_config_updated', { detail: { company_name } });
+    return { success: true };
+  } catch (error) {
+    log.error('set-enterprise-config failed:', error);
+    return { error: error.message };
+  }
+});
+
+// Enterprise: get audit log (paginated)
+const _auditQuerySchema = z.object({
+  page: z.number().int().min(1).default(1),
+  pageSize: z.number().int().min(1).max(200).default(50),
+  eventType: z.string().optional(),
+});
+
+ipcMain.handle('get-audit-log', async (event, params) => {
+  try {
+    if (!licenseManager.isFeatureAllowed('enterprise_audit_log')) {
+      return { error: 'Enterprise license required.' };
+    }
+    const parsed = _auditQuerySchema.safeParse(params || {});
+    if (!parsed.success) {
+      return { error: 'Invalid params: ' + parsed.error.message };
+    }
+    const { page, pageSize, eventType } = parsed.data;
+    const offset = (page - 1) * pageSize;
+    const rows = eventType
+      ? database.db.prepare('SELECT * FROM enterprise_audit_log WHERE event_type = ? ORDER BY id ASC LIMIT ? OFFSET ?').all(eventType, pageSize, offset)
+      : database.db.prepare('SELECT * FROM enterprise_audit_log ORDER BY id ASC LIMIT ? OFFSET ?').all(pageSize, offset);
+    const total = eventType
+      ? database.db.prepare('SELECT COUNT(*) as n FROM enterprise_audit_log WHERE event_type = ?').get(eventType).n
+      : database.db.prepare('SELECT COUNT(*) as n FROM enterprise_audit_log').get().n;
+    return { total, page, pageSize, entries: rows };
+  } catch (error) {
+    log.error('get-audit-log failed:', error);
+    return { error: error.message };
+  }
+});
+
+// Enterprise: export data as NDJSON to file chosen via system dialog
+ipcMain.handle('export-data', async () => {
+  try {
+    if (!licenseManager.isFeatureAllowed('enterprise_data_export')) {
+      return { error: 'Enterprise license required.' };
+    }
+    // Path comes from dialog — not from renderer input (prevents path injection)
+    const { filePath, canceled } = await dialog.showSaveDialog(mainWindow, {
+      title: 'Export Compliance Data',
+      defaultPath: `complianceguard-export-${Date.now()}.ndjson`,
+      filters: [{ name: 'NDJSON', extensions: ['ndjson'] }],
+    });
+    if (canceled || !filePath) return { canceled: true };
+
+    const stream = fs.createWriteStream(filePath, { encoding: 'utf8' });
+    const write = (obj) => { stream.write(JSON.stringify(obj) + '\n'); };
+
+    write({ type: 'section', name: 'evidence' });
+    for (const row of database.db.prepare('SELECT * FROM evidence_items ORDER BY id ASC').all()) {
+      write({ type: 'evidence', ...row });
+    }
+    write({ type: 'section', name: 'evaluations' });
+    for (const row of database.db.prepare('SELECT * FROM evaluations ORDER BY id ASC').all()) {
+      write({ type: 'evaluation', ...row });
+    }
+    write({ type: 'section', name: 'enterprise_audit_log' });
+    for (const row of database.db.prepare('SELECT * FROM enterprise_audit_log ORDER BY id ASC').all()) {
+      write({ type: 'enterprise_audit_log', ...row });
+    }
+
+    await new Promise((resolve, reject) => { stream.end(resolve); stream.on('error', reject); });
+    logAuditEvent(database.db, 'export_generated', { detail: { file_path: filePath } });
+    return { success: true, file_path: filePath };
+  } catch (error) {
+    log.error('export-data failed:', error);
+    return { error: error.message };
   }
 });
 
