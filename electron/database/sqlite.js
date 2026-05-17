@@ -173,7 +173,7 @@ class ComplianceGuardDatabase {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
 
-      `CREATE TABLE IF NOT EXISTS audit_log (
+      `CREATE TABLE IF NOT EXISTS enterprise_audit_log (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         event_type TEXT NOT NULL,
         user_id INTEGER,
