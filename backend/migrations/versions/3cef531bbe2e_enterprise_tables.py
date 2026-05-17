@@ -50,7 +50,7 @@ def upgrade():
     # Seed first admin from earliest-created user (if any exist)
     op.execute("""
         INSERT INTO user_roles (user_id, role)
-        SELECT id, 'admin' FROM users ORDER BY created_at ASC LIMIT 1
+        SELECT id, 'admin' FROM users ORDER BY created_at ASC, id ASC LIMIT 1
         ON CONFLICT DO NOTHING
     """)
 
