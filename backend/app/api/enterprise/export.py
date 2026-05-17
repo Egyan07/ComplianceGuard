@@ -1,4 +1,5 @@
 import json
+import logging
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
@@ -7,9 +8,13 @@ from app.core.database import get_db
 from app.api.deps import require_enterprise
 from app.models.user import User
 from app.models.enterprise import AuditLog
+from app.models.evidence import EvidenceCollection, EvidenceItem
+from app.models.evaluation import ComplianceEvaluationRecord
 from app.services.audit_service import log_event
 
 router = APIRouter(prefix="/enterprise", tags=["enterprise"])
+
+logger = logging.getLogger(__name__)
 
 
 def _row_to_dict(obj) -> dict:
@@ -23,42 +28,28 @@ def _row_to_dict(obj) -> dict:
 
 
 def _stream_export(db: Session, user: User):
-    # Evidence collections
-    try:
-        from app.models.evidence import EvidenceCollection
-        yield json.dumps({"type": "section", "name": "evidence_collections"}) + "\n"
-        for row in db.query(EvidenceCollection).filter(EvidenceCollection.user_id == user.id).all():
-            yield json.dumps({"type": "evidence_collection", **_row_to_dict(row)}) + "\n"
-    except Exception:
-        pass
-
-    # Evidence items
-    try:
-        from app.models.evidence import EvidenceCollection, EvidenceItem
-        yield json.dumps({"type": "section", "name": "evidence_items"}) + "\n"
-        for row in (
+    """Generator that yields NDJSON lines for all compliance data belonging to `user`."""
+    sections = [
+        ("evidence_collections", lambda: db.query(EvidenceCollection).filter(EvidenceCollection.user_id == user.id).all(), "evidence_collection"),
+        ("evidence_items", lambda: (
             db.query(EvidenceItem)
             .join(EvidenceCollection)
             .filter(EvidenceCollection.user_id == user.id)
             .all()
-        ):
-            yield json.dumps({"type": "evidence_item", **_row_to_dict(row)}) + "\n"
-    except Exception:
-        pass
-
-    # Evaluations
-    try:
-        from app.models.evaluation import ComplianceEvaluationRecord
-        yield json.dumps({"type": "section", "name": "evaluations"}) + "\n"
-        for row in db.query(ComplianceEvaluationRecord).filter(ComplianceEvaluationRecord.user_id == user.id).all():
-            yield json.dumps({"type": "evaluation", **_row_to_dict(row)}) + "\n"
-    except Exception:
-        pass
-
-    # Audit log
-    yield json.dumps({"type": "section", "name": "audit_log"}) + "\n"
-    for row in db.query(AuditLog).order_by(AuditLog.id.asc()).all():
-        yield json.dumps({"type": "audit_log", **_row_to_dict(row)}) + "\n"
+        ), "evidence_item"),
+        ("evaluations", lambda: db.query(ComplianceEvaluationRecord).filter(ComplianceEvaluationRecord.user_id == user.id).all(), "evaluation"),
+        ("audit_log", lambda: db.query(AuditLog).filter(
+            (AuditLog.user_id == user.id) | (AuditLog.user_id.is_(None))
+        ).order_by(AuditLog.id.asc()).all(), "audit_log"),
+    ]
+    for section_name, query_fn, row_type in sections:
+        yield json.dumps({"type": "section", "name": section_name}) + "\n"
+        try:
+            for row in query_fn():
+                yield json.dumps({"type": row_type, **_row_to_dict(row)}, default=str) + "\n"
+        except Exception as exc:
+            logger.exception("Export section '%s' failed", section_name)
+            yield json.dumps({"type": "section_error", "name": section_name, "error": str(exc)}) + "\n"
 
 
 @router.get("/export")

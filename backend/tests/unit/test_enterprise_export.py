@@ -78,3 +78,26 @@ def test_export_generates_audit_event(client):
     row = db.query(AuditLog).filter(AuditLog.event_type == "export_generated").first()
     db.close()
     assert row is not None
+
+
+def test_export_does_not_leak_other_users_audit_rows(client):
+    """Audit rows from another user must not appear in the export."""
+    from app.services.audit_service import log_event as _log
+    token = _seed_enterprise()
+
+    # Create a second user and seed one audit row under their id
+    db = _Session()
+    other = User(email="other@x.com", hashed_password=get_password_hash("p"), is_active=True, is_verified=True, license_tier="enterprise")
+    db.add(other); db.commit(); db.refresh(other)
+    other_id = other.id
+    _log(db, "evaluation_run", user_id=other_id, framework="soc2", detail={"marker": "other_user"})
+    db.close()
+
+    r = client.get("/api/v1/enterprise/export", headers={"Authorization": f"Bearer {token}"})
+    assert r.status_code == 200
+
+    lines = [json.loads(l) for l in r.text.strip().splitlines() if l]
+    audit_rows = [l for l in lines if l.get("type") == "audit_log"]
+    # The other user's audit row should not appear
+    for row in audit_rows:
+        assert row.get("user_id") != other_id, f"Leaked audit row from user {other_id}"
