@@ -41,4 +41,10 @@ export const FEATURE_GATES: Record<string, Record<string, boolean>> = {
   pdf_reports:         { free: false, pro: true, enterprise: true },
   evidence_upload:     { free: false, pro: true, enterprise: true },
   evaluation_history:  { free: false, pro: true, enterprise: true },
+  // Enterprise-only gates — false for all other tiers
+  enterprise_audit_log:    { free: false, pro: false, enterprise: true },
+  enterprise_rbac:         { free: false, pro: false, enterprise: true },
+  enterprise_pdf_branding: { free: false, pro: false, enterprise: true },
+  enterprise_data_export:  { free: false, pro: false, enterprise: true },
+  enterprise_no_telemetry: { free: false, pro: false, enterprise: true },
 };

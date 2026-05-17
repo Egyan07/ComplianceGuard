@@ -40,4 +40,10 @@ FEATURE_GATES = {
     "pdf_reports":         {"free": False, "pro": True, "enterprise": True},
     "evidence_upload":     {"free": False, "pro": True, "enterprise": True},
     "evaluation_history":  {"free": False, "pro": True, "enterprise": True},
+    # Enterprise-only gates — false for all other tiers
+    "enterprise_audit_log":    {"free": False, "pro": False, "enterprise": True},
+    "enterprise_rbac":         {"free": False, "pro": False, "enterprise": True},
+    "enterprise_pdf_branding": {"free": False, "pro": False, "enterprise": True},
+    "enterprise_data_export":  {"free": False, "pro": False, "enterprise": True},
+    "enterprise_no_telemetry": {"free": False, "pro": False, "enterprise": True},
 }
