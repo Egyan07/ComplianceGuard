@@ -42,6 +42,7 @@ import {
 } from '@mui/icons-material';
 import { useLicense } from '../contexts/LicenseContext';
 import { VERSION } from '../constants';
+import EnterprisePanel from './EnterprisePanel';
 
 const Settings: React.FC = () => {
   const isElectron = !!(window as any).electronAPI;
@@ -225,9 +226,9 @@ const Settings: React.FC = () => {
             <VpnKey color="primary" />
             <Typography sx={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'text.disabled' }}>License</Typography>
             <Chip
-              label={tier === 'pro' ? 'PRO' : 'FREE'}
+              label={tier === 'enterprise' ? 'ENTERPRISE' : tier === 'pro' ? 'PRO' : 'FREE'}
               size="small"
-              color={tier === 'pro' ? 'success' : 'default'}
+              color={tier === 'enterprise' ? 'primary' : tier === 'pro' ? 'success' : 'default'}
             />
           </Box>
 
@@ -321,6 +322,8 @@ const Settings: React.FC = () => {
           )}
         </Box>
       </Paper>
+
+      <EnterprisePanel />
 
       {/* Database Section */}
       <Paper sx={{ mb: 3 }}>

@@ -8,7 +8,7 @@ import { FEATURE_GATES } from '../constants';
 const isElectron = !!window.electronAPI;
 
 export interface LicenseInfo {
-  tier: 'free' | 'pro';
+  tier: 'free' | 'pro' | 'enterprise';
   licenseId?: string | null;
   email?: string | null;
   maxMachines?: number;
@@ -19,7 +19,7 @@ export interface LicenseInfo {
 }
 
 interface LicenseContextValue {
-  tier: 'free' | 'pro';
+  tier: 'free' | 'pro' | 'enterprise';
   licenseInfo: LicenseInfo;
   loading: boolean;
   isFeatureAllowed: (feature: string) => boolean;
@@ -69,7 +69,7 @@ export function LicenseProvider({ children }: { children: ReactNode }) {
       getLicenseInfoHttp()
         .then((info) => {
           setLicenseInfo({
-            tier: info.tier === 'pro' ? 'pro' : 'free',
+            tier: info.tier === 'enterprise' ? 'enterprise' : info.tier === 'pro' ? 'pro' : 'free',
             licenseId: info.license_id ?? info.licenseId ?? null,
             email: info.email ?? null,
             maxMachines: info.max_machines ?? info.maxMachines,
@@ -112,7 +112,7 @@ export function LicenseProvider({ children }: { children: ReactNode }) {
       try {
         const result = await activateLicenseHttp(key);
         const info: LicenseInfo = {
-          tier: result.tier === 'pro' ? 'pro' : 'free',
+          tier: result.tier === 'enterprise' ? 'enterprise' : result.tier === 'pro' ? 'pro' : 'free',
           licenseId: result.license_id ?? null,
           email: result.email ?? null,
           expiresAt: result.expires_at ?? null,

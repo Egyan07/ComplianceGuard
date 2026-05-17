@@ -3,6 +3,22 @@ import type { ReactElement } from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material';
 import Settings from './Settings';
+import { useLicense } from '../contexts/LicenseContext';
+
+vi.mock('../contexts/LicenseContext', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../contexts/LicenseContext')>();
+  return {
+    ...actual,
+    useLicense: vi.fn(() => ({
+      tier: 'free',
+      licenseInfo: { licenseId: null, email: null, maxMachines: null, expiresAt: null, daysRemaining: null, isExpired: false, isGracePeriod: false },
+      loading: false,
+      isFeatureAllowed: () => false,
+      activateLicense: vi.fn(),
+      deactivateLicense: vi.fn(),
+    })),
+  };
+});
 
 const theme = createTheme();
 
@@ -132,5 +148,16 @@ describe('Settings', () => {
         expect(screen.getAllByText(/47 items/)[0]).toBeInTheDocument();
       });
     });
+  });
+
+  it('renders ENTERPRISE chip when tier is enterprise', () => {
+    vi.mocked(useLicense).mockReturnValue({
+      tier: 'enterprise',
+      licenseInfo: { licenseId: null, email: null, maxMachines: null, expiresAt: null, daysRemaining: null, isExpired: false, isGracePeriod: false },
+      activateLicense: vi.fn(),
+      deactivateLicense: vi.fn(),
+    } as any);
+    render(<Settings />);
+    expect(screen.getAllByText('ENTERPRISE')[0]).toBeInTheDocument();
   });
 });
