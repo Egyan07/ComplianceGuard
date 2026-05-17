@@ -29,7 +29,7 @@ def test_require_enterprise_raises_403_for_free():
     assert exc.value.status_code == 403
 
 
-def test_require_admin_passes_for_enterprise_admin(monkeypatch):
+def test_require_admin_passes_for_enterprise_admin():
     from sqlalchemy.orm import Session
     user = _make_user("enterprise")
     user.id = 1

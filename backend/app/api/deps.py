@@ -77,6 +77,7 @@ async def require_pro(current_user: User = Depends(get_current_user)) -> User:
 
 
 def require_enterprise(current_user: User = Depends(get_current_user)) -> User:
+    """Require Enterprise license tier. Returns HTTP 403 for free and pro users."""
     if current_user.license_tier != "enterprise":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -89,6 +90,11 @@ def require_admin(
     current_user: User = Depends(require_enterprise),
     db: Session = Depends(get_db),
 ) -> User:
+    """Require Enterprise admin role. Chains require_enterprise first.
+
+    Implemented as sync def (not async) so tests can call it directly without await.
+    FastAPI DI handles sync and async dependencies identically.
+    """
     from app.models.enterprise import UserRole
     role_row = db.query(UserRole).filter(UserRole.user_id == current_user.id).first()
     if not role_row or role_row.role != "admin":
