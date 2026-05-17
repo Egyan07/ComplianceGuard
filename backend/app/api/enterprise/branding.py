@@ -1,6 +1,6 @@
 import base64
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 from typing import Optional
 
@@ -17,10 +17,9 @@ MAX_LOGO_BYTES = 512 * 1024  # 512 KB
 
 
 class BrandingUpdate(BaseModel):
-    company_name: str
+    company_name: str = Field(..., min_length=1, max_length=255)
     logo_base64: Optional[str] = None
-    logo_mime: Optional[str] = None
-    report_footer: Optional[str] = None
+    report_footer: Optional[str] = Field(None, max_length=2000)
 
     @field_validator("logo_base64")
     @classmethod
@@ -33,15 +32,6 @@ class BrandingUpdate(BaseModel):
             raise ValueError("logo_base64 is not valid base64")
         if len(raw) > MAX_LOGO_BYTES:
             raise ValueError(f"Logo exceeds 512 KB limit ({len(raw)} bytes)")
-        return v
-
-    @field_validator("logo_mime")
-    @classmethod
-    def validate_logo_mime(cls, v):
-        if v is None:
-            return v
-        if v not in ALLOWED_MIME:
-            raise ValueError(f"Logo must be PNG or JPEG. SVG is not accepted. Got: {v}")
         return v
 
 
