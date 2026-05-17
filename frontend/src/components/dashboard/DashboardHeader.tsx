@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Button, CircularProgress, Typography } from '@mui/material';
+import { Box, Button, ButtonGroup, CircularProgress, Typography } from '@mui/material';
 import MotionButton from '../ui/MotionButton';
 import { Refresh, CloudUpload, Assessment, Upload, PictureAsPdf, CloudSync as CloudSyncIcon } from '@mui/icons-material';
 import { useLicense } from '../../contexts/LicenseContext';
@@ -35,59 +35,78 @@ const DashboardHeader: React.FC<Props> = ({
     <Box sx={{ mb: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 2 }}>
         <Box>
-          <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold' }} gutterBottom>
-            ComplianceGuard Dashboard
+          <Typography variant="h4" component="h1" gutterBottom>
+            Dashboard
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            {isElectron
-              ? 'Monitor your compliance status across SOC 2, ISO 27001 and HIPAA'
-              : 'Monitor your compliance status across SOC 2, ISO 27001 and HIPAA'}
+            Monitor your compliance status across SOC 2, ISO 27001 and HIPAA
           </Typography>
         </Box>
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-          <Button variant="outlined" startIcon={<Refresh />} onClick={onRefresh} disabled={loading}>
+
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+          <Button
+            variant="text"
+            color="inherit"
+            startIcon={<Refresh />}
+            onClick={onRefresh}
+            disabled={loading}
+            sx={{ color: 'text.secondary' }}
+          >
             Refresh
           </Button>
+
           {isElectron && (
-            <>
-              <Button
-                variant="outlined"
-                startIcon={<Upload />}
-                onClick={() =>
-                  isFeatureAllowed('evidence_upload')
-                    ? onUploadClick()
-                    : onUpgradePrompt('Upload Evidence', 'Manually upload policy documents, screenshots, and compliance evidence mapped to SOC 2 controls.')
-                }
-              >
-                Upload Evidence
-              </Button>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <ButtonGroup variant="outlined" size="small" color="inherit">
+                <Button
+                  startIcon={<Upload />}
+                  onClick={() =>
+                    isFeatureAllowed('evidence_upload')
+                      ? onUploadClick()
+                      : onUpgradePrompt('Upload Evidence', 'Manually upload policy documents, screenshots, and compliance evidence mapped to SOC 2 controls.')
+                  }
+                  sx={{ minWidth: 130, color: 'text.primary' }}
+                >
+                  Upload Evidence
+                </Button>
+                <Button
+                  startIcon={evaluating ? <CircularProgress size={14} /> : <Assessment />}
+                  onClick={onEvaluate}
+                  disabled={evaluating}
+                  sx={{ minWidth: 160, color: 'text.primary' }}
+                >
+                  {evaluating ? 'Evaluating...' : 'Evaluate Compliance'}
+                </Button>
+                <Button
+                  startIcon={exportingPDF ? <CircularProgress size={14} /> : <PictureAsPdf />}
+                  onClick={() =>
+                    isFeatureAllowed('pdf_reports')
+                      ? onExportPDF()
+                      : onUpgradePrompt('PDF Reports', 'Generate audit-ready PDF compliance reports with scores, gaps, and recommendations.')
+                  }
+                  disabled={exportingPDF || (!evaluation && isFeatureAllowed('pdf_reports'))}
+                  sx={{ minWidth: 110, color: 'text.primary' }}
+                >
+                  {exportingPDF ? 'Exporting...' : 'Export PDF'}
+                </Button>
+              </ButtonGroup>
+
               {cloudConnected && (
                 <Button
                   variant="outlined"
-                  startIcon={syncingCloud ? <CircularProgress size={16} /> : <CloudSyncIcon />}
+                  size="small"
+                  color="inherit"
+                  startIcon={syncingCloud ? <CircularProgress size={14} /> : <CloudSyncIcon />}
                   onClick={onSyncCloud}
                   disabled={syncingCloud}
+                  sx={{ color: 'text.primary', borderColor: 'divider' }}
                 >
-                  {syncingCloud ? 'Syncing...' : 'Sync to Cloud'}
+                  {syncingCloud ? 'Syncing...' : 'Sync'}
                 </Button>
               )}
-              <MotionButton variant="outlined" color="secondary" startIcon={<Assessment />} onClick={onEvaluate} disabled={evaluating}>
-                {evaluating ? 'Evaluating...' : 'Evaluate Compliance'}
-              </MotionButton>
-              <Button
-                variant="outlined"
-                startIcon={exportingPDF ? <CircularProgress size={16} /> : <PictureAsPdf />}
-                onClick={() =>
-                  isFeatureAllowed('pdf_reports')
-                    ? onExportPDF()
-                    : onUpgradePrompt('PDF Reports', 'Generate audit-ready PDF compliance reports with scores, gaps, and recommendations.')
-                }
-                disabled={exportingPDF || (!evaluation && isFeatureAllowed('pdf_reports'))}
-              >
-                {exportingPDF ? 'Exporting...' : 'Export PDF'}
-              </Button>
-            </>
+            </Box>
           )}
+
           <MotionButton variant="contained" startIcon={<CloudUpload />} onClick={onCollect} disabled={collectingEvidence}>
             {collectingEvidence ? 'Collecting...' : 'Collect Evidence'}
           </MotionButton>

@@ -14,7 +14,16 @@ const renderAt = (path: string, selectedFramework = 1) =>
   );
 
 describe('ContextSidebar', () => {
-  it('shows FRAMEWORKS section on dashboard route', () => {
+  it('always shows global navigation items', () => {
+    renderAt('/');
+    expect(screen.getByText('Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('History')).toBeInTheDocument();
+    expect(screen.getByText('Settings')).toBeInTheDocument();
+    expect(screen.getByText('Cloud')).toBeInTheDocument();
+    expect(screen.getByText('Frameworks')).toBeInTheDocument();
+  });
+
+  it('shows framework selector on dashboard route', () => {
     renderAt('/');
     expect(screen.getByText('SOC 2')).toBeInTheDocument();
     expect(screen.getByText('ISO 27001')).toBeInTheDocument();
@@ -29,12 +38,18 @@ describe('ContextSidebar', () => {
 
   it('shows FILTER section on /history route', () => {
     renderAt('/history');
-    expect(screen.getByText('All Frameworks')).toBeInTheDocument();
+    expect(screen.getByText('All')).toBeInTheDocument();
   });
 
   it('shows BROWSE section on /frameworks route', () => {
     renderAt('/frameworks');
     expect(screen.getByText('SOC 2')).toBeInTheDocument();
     expect(screen.getByText('ISO 27001')).toBeInTheDocument();
+  });
+
+  it('shows cloud context section on /cloud route', () => {
+    renderAt('/cloud');
+    expect(screen.getByText('Overview')).toBeInTheDocument();
+    expect(screen.getByText('Machines')).toBeInTheDocument();
   });
 });

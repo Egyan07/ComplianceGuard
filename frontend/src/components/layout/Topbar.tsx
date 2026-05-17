@@ -24,10 +24,11 @@ const Topbar: React.FC<TopbarProps> = ({ mode, onToggleMode }) => {
       elevation={0}
       sx={{
         height: 44,
-        backgroundColor: mode === 'light' ? 'rgba(255,255,255,0.85)' : 'rgba(15,17,23,0.85)',
-        backdropFilter: 'blur(8px)',
+        backgroundColor: mode === 'light' ? 'rgba(255,255,255,0.85)' : 'rgba(15,17,23,0.92)',
+        backdropFilter: 'blur(12px)',
         borderBottom: '1px solid',
         borderColor: 'divider',
+        boxShadow: mode === 'light' ? '0 1px 0 rgba(15,23,42,0.06)' : '0 1px 0 rgba(0,0,0,0.3)',
         color: 'text.primary',
         zIndex: 100,
       }}
@@ -36,7 +37,8 @@ const Topbar: React.FC<TopbarProps> = ({ mode, onToggleMode }) => {
         <Box
           sx={{
             width: 28, height: 28, borderRadius: '7px',
-            backgroundColor: 'primary.main',
+            background: 'linear-gradient(145deg, #2563EB 0%, #1E40AF 100%)',
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18), 0 1px 3px rgba(37,99,235,0.4)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0,
           }}
@@ -46,15 +48,17 @@ const Topbar: React.FC<TopbarProps> = ({ mode, onToggleMode }) => {
           </Typography>
         </Box>
 
-        <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'text.primary', letterSpacing: '-0.3px' }}>
+        <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', letterSpacing: '-0.4px', color: 'text.primary' }}>
           ComplianceGuard
         </Typography>
 
-        <Chip
-          label={`v${VERSION}`}
-          size="small"
-          sx={{ height: 16, fontSize: '0.6rem', color: 'text.disabled', bgcolor: 'transparent', border: '1px solid', borderColor: 'divider' }}
-        />
+        <Box sx={{ opacity: 0.45 }}>
+          <Chip
+            label={`v${VERSION}`}
+            size="small"
+            sx={{ height: 16, fontSize: '0.6rem', color: 'text.disabled', bgcolor: 'transparent', border: '1px solid', borderColor: 'divider' }}
+          />
+        </Box>
 
         <Box sx={{ flex: 1 }} />
 
@@ -71,15 +75,21 @@ const Topbar: React.FC<TopbarProps> = ({ mode, onToggleMode }) => {
           </MotionIconButton>
         </Tooltip>
 
-        <Chip
-          label={tier === 'pro' ? 'PRO' : 'FREE'}
-          size="small"
-          sx={{
-            height: 20, fontSize: '0.6rem', fontWeight: 700, letterSpacing: '1px',
-            backgroundColor: tier === 'pro' ? '#D1FAE5' : '#EFF6FF',
-            color: tier === 'pro' ? '#065F46' : '#2563EB',
-          }}
-        />
+        <motion.div
+          animate={{ boxShadow: tier === 'pro' ? ['0 0 0px #10B981', '0 0 8px rgba(16,185,129,0.5)', '0 0 0px #10B981'] : '0 0 0px transparent' }}
+          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+          style={{ borderRadius: 6 }}
+        >
+          <Chip
+            label={tier === 'pro' ? 'PRO' : 'FREE'}
+            size="small"
+            sx={{
+              height: 20, fontSize: '0.6rem', fontWeight: 700, letterSpacing: '1px',
+              backgroundColor: tier === 'pro' ? '#D1FAE5' : '#EFF6FF',
+              color: tier === 'pro' ? '#065F46' : '#2563EB',
+            }}
+          />
+        </motion.div>
 
         {!isElectron && user && (
           <Tooltip title={`Sign out (${user.email})`}>
@@ -87,7 +97,7 @@ const Topbar: React.FC<TopbarProps> = ({ mode, onToggleMode }) => {
               <Box
                 sx={{
                   width: 28, height: 28, borderRadius: '50%',
-                  backgroundColor: '#6B7280',
+                  background: 'linear-gradient(135deg, #6366F1 0%, #7C3AED 100%)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}
               >

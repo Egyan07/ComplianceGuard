@@ -125,6 +125,7 @@ const FrameworkBrowser: React.FC = () => {
         <Tabs
           value={activeTab}
           onChange={handleTabChange}
+          slotProps={{ indicator: { style: { height: 2, borderRadius: 2 } } }}
           sx={{ borderBottom: '1px solid', borderColor: 'divider', px: 2 }}
         >
           {FRAMEWORKS.map(f => <Tab key={f.id} label={f.label} />)}
@@ -188,7 +189,7 @@ const FrameworkBrowser: React.FC = () => {
                       elevation={0}
                       sx={{ border: '1px solid', borderColor: 'divider', mb: 1, '&:before': { display: 'none' } }}
                     >
-                      <AccordionSummary expandIcon={<ExpandMore />}>
+                      <AccordionSummary expandIcon={<ExpandMore />} sx={{ borderRadius: '6px' }}>
                         <Typography sx={{ fontWeight: 500 }}>{category} ({controls.length})</Typography>
                       </AccordionSummary>
                       <AccordionDetails sx={{ p: 0 }}>

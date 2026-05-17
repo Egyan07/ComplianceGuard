@@ -47,12 +47,7 @@ interface FilterState {
 
 const listVariants = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.04 } },
-};
-
-const itemVariants = {
-  hidden:  { opacity: 0, x: -8 },
-  visible: { opacity: 1, x: 0, transition: { type: 'spring' as const, stiffness: 200, damping: 25 } },
+  visible: {},
 };
 
 const EvidenceList: React.FC<EvidenceListProps> = ({
@@ -164,7 +159,6 @@ const EvidenceList: React.FC<EvidenceListProps> = ({
       />
 
       <CardContent>
-        {/* Filters */}
         <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
           <TextField
             size="small"
@@ -172,10 +166,10 @@ const EvidenceList: React.FC<EvidenceListProps> = ({
             name="searchTerm"
             value={filters.searchTerm}
             onChange={handleFilterChange as any}
-            sx={{ minWidth: 200 }}
+            sx={{ minWidth: 200, '& .MuiInputBase-root': { height: 34 } }}
           />
 
-          <FormControl size="small" sx={{ minWidth: 120 }}>
+          <FormControl size="small" sx={{ minWidth: 120, '& .MuiInputBase-root': { height: 34 } }}>
             <InputLabel>Status</InputLabel>
             <Select
               name="status"
@@ -192,7 +186,7 @@ const EvidenceList: React.FC<EvidenceListProps> = ({
             </Select>
           </FormControl>
 
-          <FormControl size="small" sx={{ minWidth: 120 }}>
+          <FormControl size="small" sx={{ minWidth: 120, '& .MuiInputBase-root': { height: 34 } }}>
             <InputLabel>Source</InputLabel>
             <Select
               name="source"
@@ -210,7 +204,6 @@ const EvidenceList: React.FC<EvidenceListProps> = ({
           </FormControl>
         </Box>
 
-        {/* Evidence List */}
         <motion.div
           variants={listVariants}
           initial="hidden"
@@ -224,8 +217,13 @@ const EvidenceList: React.FC<EvidenceListProps> = ({
               </Typography>
             </Box>
           ) : (
-            filteredItems.map((item) => (
-              <motion.div key={item.id} variants={itemVariants}>
+            filteredItems.map((item, index) => (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.12, delay: Math.min(index, 7) * 0.03 }}
+              >
                 <Box
                   onClick={() => {
                     toggleExpanded(item.id);
@@ -236,7 +234,8 @@ const EvidenceList: React.FC<EvidenceListProps> = ({
                     borderColor: 'divider',
                     borderRadius: 1,
                     mb: 1,
-                    p: 2,
+                    py: 0.875,
+                    px: 2,
                     '&:hover': {
                       backgroundColor: 'action.hover'
                     },

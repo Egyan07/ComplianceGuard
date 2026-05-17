@@ -179,7 +179,7 @@ const Settings: React.FC = () => {
         <Box sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             <Shield color="primary" />
-            <Typography variant="h6">About ComplianceGuard</Typography>
+            <Typography sx={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'text.disabled' }}>About ComplianceGuard</Typography>
           </Box>
 
           <List disablePadding>
@@ -223,7 +223,7 @@ const Settings: React.FC = () => {
         <Box sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             <VpnKey color="primary" />
-            <Typography variant="h6">License</Typography>
+            <Typography sx={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'text.disabled' }}>License</Typography>
             <Chip
               label={tier === 'pro' ? 'PRO' : 'FREE'}
               size="small"
@@ -288,7 +288,7 @@ const Settings: React.FC = () => {
                       padding: '10px 12px',
                       border: '1px solid #D1D5DB',
                       borderRadius: '8px',
-                      fontSize: '14px',
+                      fontSize: '0.8rem',
                       fontFamily: 'monospace',
                     }}
                   />
@@ -327,7 +327,7 @@ const Settings: React.FC = () => {
         <Box sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             <Storage color="primary" />
-            <Typography variant="h6">Database</Typography>
+            <Typography sx={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'text.disabled' }}>Database</Typography>
           </Box>
 
           <List disablePadding>
@@ -367,7 +367,7 @@ const Settings: React.FC = () => {
           <Box sx={{ p: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <Cloud color="primary" />
-              <Typography variant="h6">Cloud Sync</Typography>
+              <Typography sx={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'text.disabled' }}>Cloud Sync</Typography>
               {cloudConfig?.connected && (
                 <Chip label="Connected" size="small" color="success" />
               )}
@@ -431,7 +431,7 @@ const Settings: React.FC = () => {
           <Box sx={{ p: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <Schedule color="primary" />
-              <Typography variant="h6">Automatic Collection</Typography>
+              <Typography sx={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'text.disabled' }}>Automatic Collection</Typography>
             </Box>
 
             <List disablePadding>
@@ -517,7 +517,7 @@ const Settings: React.FC = () => {
         <Box sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             <Palette color="primary" />
-            <Typography variant="h6">Display</Typography>
+            <Typography sx={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'text.disabled' }}>Display</Typography>
           </Box>
 
           <List disablePadding>
@@ -544,7 +544,7 @@ const Settings: React.FC = () => {
         <Box sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             <Shield color="primary" />
-            <Typography variant="h6">Compliance Frameworks</Typography>
+            <Typography sx={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'text.disabled' }}>Compliance Frameworks</Typography>
           </Box>
 
           <List disablePadding>

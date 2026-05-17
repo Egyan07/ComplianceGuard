@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Dashboard from './Dashboard';
 
@@ -36,31 +36,42 @@ beforeEach(() => {
   vi.spyOn(console, 'error').mockImplementation(() => {});
 });
 
-describe('Dashboard — framework picker', () => {
-  it('renders SOC 2 toggle button', () => {
+describe('Dashboard — framework URL sync', () => {
+  it('renders without framework toggle buttons', () => {
     render(<MemoryRouter><Dashboard /></MemoryRouter>);
-    expect(screen.getByRole('button', { name: /SOC 2/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /SOC 2/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /ISO 27001/i })).toBeNull();
   });
 
-  it('renders ISO 27001 toggle button', () => {
-    render(<MemoryRouter><Dashboard /></MemoryRouter>);
-    expect(screen.getByRole('button', { name: /ISO 27001/i })).toBeInTheDocument();
-  });
-
-  it('renders HIPAA toggle button', () => {
-    render(<MemoryRouter><Dashboard /></MemoryRouter>);
-    expect(screen.getByRole('button', { name: /HIPAA/i })).toBeInTheDocument();
-  });
-
-  it('calls setSelectedFramework(2) when ISO 27001 is clicked', () => {
-    render(<MemoryRouter><Dashboard /></MemoryRouter>);
-    fireEvent.click(screen.getByRole('button', { name: /ISO 27001/i }));
+  it('syncs fw=2 URL param to setSelectedFramework', () => {
+    render(
+      <MemoryRouter initialEntries={['/?fw=2']}>
+        <Dashboard />
+      </MemoryRouter>
+    );
     expect(mockSetSelectedFramework).toHaveBeenCalledWith(2);
   });
 
-  it('calls setSelectedFramework(3) when HIPAA is clicked', () => {
-    render(<MemoryRouter><Dashboard /></MemoryRouter>);
-    fireEvent.click(screen.getByRole('button', { name: /HIPAA/i }));
+  it('syncs fw=3 URL param to setSelectedFramework', () => {
+    render(
+      <MemoryRouter initialEntries={['/?fw=3']}>
+        <Dashboard />
+      </MemoryRouter>
+    );
     expect(mockSetSelectedFramework).toHaveBeenCalledWith(3);
+  });
+
+  it('defaults to fw=1 when no param', () => {
+    render(<MemoryRouter><Dashboard /></MemoryRouter>);
+    expect(mockSetSelectedFramework).toHaveBeenCalledWith(1);
+  });
+
+  it('ignores invalid fw param values', () => {
+    render(
+      <MemoryRouter initialEntries={['/?fw=99']}>
+        <Dashboard />
+      </MemoryRouter>
+    );
+    expect(mockSetSelectedFramework).not.toHaveBeenCalled();
   });
 });

@@ -6,6 +6,7 @@ status indicators, and the ability to view details of each evaluation.
 */
 
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import {
   Box,
   Container,
@@ -281,7 +282,13 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
 
               return (
                 <React.Fragment key={eval_.id || index}>
-                  <Box sx={{ p: 3, '&:hover': { backgroundColor: 'action.hover' } }}>
+                  <Box
+                    sx={{
+                      p: 3,
+                      borderLeft: '2px solid', borderColor: 'divider', pl: 2,
+                      '&:hover': { backgroundColor: 'action.hover' },
+                    }}
+                  >
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                       {/* Status icon */}
                       {getStatusIcon(eval_.status || findings.status || 'not_assessed')}
@@ -300,7 +307,13 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
                             color={getStatusColor(eval_.status || findings.status || '') as any}
                             variant="outlined"
                           />
-                          {getTrendIcon(index)}
+                          <motion.div
+                            initial={{ scale: 0.8 }}
+                            animate={{ scale: 1 }}
+                            transition={{ duration: 0.12 }}
+                          >
+                            {getTrendIcon(index)}
+                          </motion.div>
                         </Box>
 
                         {/* Control breakdown */}

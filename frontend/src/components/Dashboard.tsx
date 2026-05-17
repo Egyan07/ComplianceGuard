@@ -6,7 +6,7 @@ Sub-components: DashboardHeader, CollectionSummary (see components/dashboard/).
 */
 
 import React, { useState, useEffect } from 'react';
-import { Alert, Box, Container, Skeleton, Snackbar, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { Alert, Box, Container, Skeleton, Snackbar } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
 import ScoreHero from './ScoreHero';
 import EvidenceList from './EvidenceList';
@@ -15,12 +15,6 @@ import UpgradePrompt from './UpgradePrompt';
 import DashboardHeader from './dashboard/DashboardHeader';
 import CollectionSummary from './dashboard/CollectionSummary';
 import { useDashboard } from '../hooks/useDashboard';
-
-const FRAMEWORKS = [
-  { id: 1 as const, label: 'SOC 2' },
-  { id: 2 as const, label: 'ISO 27001' },
-  { id: 3 as const, label: 'HIPAA' },
-];
 
 const isElectron = !!(window as any).electronAPI;
 
@@ -65,23 +59,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-      <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-          Framework:
-        </Typography>
-        <ToggleButtonGroup
-          value={selectedFramework}
-          exclusive
-          size="small"
-          onChange={(_e, v) => { if (v !== null) setSelectedFramework(v); }}
-        >
-          {FRAMEWORKS.map(f => (
-            <ToggleButton key={f.id} value={f.id} sx={{ px: 2, textTransform: 'none' }}>
-              {f.label}
-            </ToggleButton>
-          ))}
-        </ToggleButtonGroup>
-      </Box>
       <DashboardHeader
         loading={state.loading}
         evaluation={state.evaluation}

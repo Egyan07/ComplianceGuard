@@ -24,7 +24,7 @@ const AppShell: React.FC<AppShellProps> = ({ children, selectedFramework = 1 }) 
           <ContextSidebar selectedFramework={selectedFramework} />
           <Box
             component="main"
-            sx={{ flex: 1, overflow: 'auto', p: 3, minHeight: 'calc(100vh - 44px)' }}
+            sx={{ flex: 1, overflow: 'auto', p: 2.5, minHeight: 'calc(100vh - 44px)' }}
           >
             <PageTransition>
               {children}

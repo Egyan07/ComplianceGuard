@@ -43,12 +43,12 @@ describe('ScoreHero', () => {
     expect(container.querySelector('[class*="MuiSkeleton"]')).toBeInTheDocument();
   });
 
-  it('renders -- when no evaluation', () => {
+  it('renders empty state when no evaluation', () => {
     render(
       <ScoreHero evaluation={null} loading={false} selectedFramework={1} />,
       { wrapper }
     );
-    expect(screen.getByText('--')).toBeInTheDocument();
+    expect(screen.getByText(/No evaluation yet/i)).toBeInTheDocument();
   });
 
   it('renders the framework name', () => {
