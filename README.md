@@ -6,7 +6,7 @@
   <a href="#quick-start"><img src="https://img.shields.io/badge/version-3.1.0-2563EB" alt="Version"></a>
   <img src="https://img.shields.io/badge/license-BSL%201.1-orange" alt="License">
   <a href="#compliance-frameworks"><img src="https://img.shields.io/badge/frameworks-SOC%202%20%7C%20ISO%2027001%20%7C%20HIPAA-10B981" alt="Frameworks"></a>
-  <img src="https://img.shields.io/badge/tests-458%20passing-10B981?logo=pytest&logoColor=white" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-530%20passing-10B981?logo=pytest&logoColor=white" alt="Tests">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
   <a href="https://github.com/Egyan07/ComplianceGuard/actions"><img src="https://img.shields.io/github/actions/workflow/status/Egyan07/ComplianceGuard/ci.yml?label=CI&logo=githubactions&logoColor=white" alt="CI"></a>
 </p>
@@ -61,6 +61,7 @@ All collected evidence items in one place — searchable and filterable by statu
 - Security and IT teams preparing for SOC 2, ISO 27001, or HIPAA audits
 - Companies that need endpoint-level evidence, not just cloud infrastructure scanning
 - Teams requiring self-hosting, air-gapped deployment, or strict data residency
+- Government bodies, NHS/healthcare, legal firms, and financial services needing full data sovereignty and tamper-evident compliance audit trails (Enterprise tier)
 
 ## Not a Good Fit If
 
@@ -428,6 +429,12 @@ Free gets you hooked. Pro makes you audit-ready.
 | Evaluation history + trends | — | ✅ | ✅ |
 | PDF audit-ready reports | — | ✅ | ✅ |
 | Cloud dashboard (multi-machine) | — | ✅ | ✅ |
+| Tamper-evident audit log (SHA-256 hash chain) | — | — | ✅ |
+| RBAC (admin + auditor roles) | — | — | ✅ |
+| Custom PDF branding (logo, company name, footer) | — | — | ✅ |
+| Full compliance data export (NDJSON) | — | — | ✅ |
+| Air-gapped Docker deployment bundle | — | — | ✅ |
+| Zero telemetry (ENTERPRISE_MODE) | — | — | ✅ |
 | Machines | 1 | Up to 10 | Unlimited |
 | Users | 1 | Up to 10 | Unlimited |
 | Support | Community | Email | Dedicated |
@@ -476,7 +483,8 @@ All data stays under your control. Zero telemetry.
 | Auth (Web) | JWT access tokens (30 min) + DB-backed revocable refresh tokens (7 days). Bcrypt hashing. Email verification enforced. Password complexity + reset with expiring tokens. `POST /api/v1/auth/logout` revokes the refresh token JTI. |
 | License (Web) | Ed25519 signed keys verified in Python (`cryptography`). `require_pro` dependency returns HTTP 402. License email validated on activation. |
 | Rate Limiting | 5 req/min on login, 3/min on register. Redis shared backend supported via `RATELIMIT_STORAGE_URI`. Nginx rate limiting at proxy layer. |
-| Error Monitoring | Sentry integration on backend (FastAPI + SQLAlchemy) and frontend. `send_default_pii=False`. Silent no-op when DSN unset. |
+| Error Monitoring | Sentry integration on backend (FastAPI + SQLAlchemy) and frontend. `send_default_pii=False`. Silent no-op when DSN unset. Disabled entirely when `ENTERPRISE_MODE=true`. |
+| Enterprise Audit | Tamper-evident audit log with SHA-256 hash chain (`prev_hash` + `entry_hash`). Append-only at API layer; Postgres app user REVOKEd DELETE/UPDATE. Chain verifiable at `GET /api/v1/enterprise/audit-log/verify`. |
 | Proxy | Nginx reverse proxy with CSP, HSTS, Permissions-Policy, X-Frame-Options, X-Content-Type-Options. |
 
 For reporting security vulnerabilities, see [SECURITY.md](SECURITY.md).
@@ -522,7 +530,7 @@ python -m pytest tests/integration/ -v
 python -m pytest tests/e2e/ -v --run-e2e
 ```
 
-CI runs all tests on every push via GitHub Actions. **~458 tests passing** — backend: ~247 (213 unit + 26 integration + 8 e2e), frontend: 162 Vitest unit + 29 Electron unit (10 scheduler + 13 engine + 6 sqlite), e2e: 5 Playwright.
+CI runs all tests on every push via GitHub Actions. **~530 tests passing** — backend: ~287 (253 unit + 26 integration + 8 e2e), frontend: 185 Vitest unit + 38 Electron unit (10 scheduler + 13 engine + 6 sqlite + 9 enterprise), e2e: 5 Playwright.
 
 ## Troubleshooting
 
@@ -590,10 +598,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 | Scheduled automatic collection (Daily/Weekly) | |
 | SOC 2 / ISO 27001 / HIPAA scoring (desktop + web) | macOS and Linux support |
 | PDF reports + evaluation history | GCP and Azure cloud evidence |
-| Free / Pro / Enterprise licensing (Ed25519) | Air-gapped Enterprise tier |
-| JWT auth + refresh tokens + login UI | Setup video walkthrough |
-| Premium UI — full overhaul to Linear/Stripe quality (design system, global nav, score hero, micro-interactions) | PCI DSS framework |
-| FastAPI + PostgreSQL + Docker + Nginx | Evidence status workflow |
+| Free / Pro / Enterprise licensing (Ed25519) | Setup video walkthrough |
+| **Air-gapped Enterprise tier** — tamper-evident audit log (SHA-256 hash chain), RBAC (admin/auditor), custom PDF branding, NDJSON export, Docker offline bundle, hardened TLS Nginx | PCI DSS framework |
+| JWT auth + refresh tokens + login UI | Evidence status workflow |
+| Premium UI — full overhaul to Linear/Stripe quality (design system, global nav, score hero, micro-interactions) | macOS and Linux support |
+| FastAPI + PostgreSQL + Docker + Nginx | GCP and Azure cloud evidence |
 | Cloud sync + multi-machine dashboard | |
 | Email delivery (verification + reset) | |
 | Web mode license enforcement (Ed25519) | |
@@ -606,7 +615,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 | Evidence-to-control mapping (`GET /evidence/items/{id}/controls`) | |
 | Web-mode compliance evaluation (`POST /evaluate-from-evidence`) | |
 | `GET /auth/me`, resend verification, profile update, account deletion | |
-| CI/CD with ~458 tests (~247 backend + 162 frontend + 29 Electron + 5 e2e) | |
+| CI/CD with ~530 tests (~287 backend + 185 frontend + 38 Electron + 5 e2e) | |
 | Alembic migrations + rate limiting | |
 
 ## License

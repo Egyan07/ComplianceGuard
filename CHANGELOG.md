@@ -8,9 +8,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-Multi-framework scoring (desktop + web), full UI overhaul to premium design quality, and multiple backend/frontend features. No breaking changes, no schema migrations.
+Multi-framework scoring (desktop + web), full UI overhaul to premium design quality, multiple backend/frontend features, and **Air-Gapped Enterprise tier**. No breaking changes. Alembic migration adds three Enterprise tables.
 
 ### Added
+
+**Enterprise Tier — Air-Gapped Deployment**
+- **Enterprise feature gates** — Five new gates (`enterprise_audit_log`, `enterprise_rbac`, `enterprise_pdf_branding`, `enterprise_data_export`, `enterprise_no_telemetry`) added to all three constants mirrors (Python/JS/TS). Free and Pro tiers are completely unaffected — all gates evaluate `false` for non-enterprise licenses.
+- **Tamper-evident audit log** — `audit_log` table with SHA-256 hash chain (`prev_hash` + `entry_hash`). Each entry's hash covers all seven fields including score, framework, and user_id — no field can be altered without breaking the chain. `GET /api/v1/enterprise/audit-log/verify` walks the full chain from genesis and returns `{ valid, entries_checked, first_broken_at }`. Append-only at the API layer; Postgres app user is REVOKEd DELETE and UPDATE.
+- **Self-audit events** — `evaluation_run`, `evidence_collected`, `enterprise_config_updated`, `role_assigned`, and `export_generated` events are automatically injected at service call sites, so every compliance-relevant action has an audit trail.
+- **Custom PDF branding** — Enterprise admins can set a company name, logo (PNG/JPEG only — SVG rejected at both MIME and magic-byte layers, 512 KB cap), and report footer via `PUT /api/v1/enterprise/branding`. The Electron PDF generator reads branding from `enterprise_config` and applies it to HTML reports. Free/Pro output is byte-identical to before.
+- **NDJSON streaming data export** — `GET /api/v1/enterprise/export` streams evidence, evaluations, and audit log as newline-delimited JSON (`application/x-ndjson`). Scoped to the authenticated user — no cross-tenant leakage. Electron `export-data` IPC handler saves to a file path chosen via system dialog (no renderer-controlled paths).
+- **RBAC (admin + auditor roles)** — Web-only. `GET /api/v1/enterprise/users` lists all users with roles; `PUT /api/v1/enterprise/users/{user_id}/role` assigns `admin` or `auditor`. Last-admin lockout guard prevents demotion when only one admin exists (HTTP 409). First registered user is seeded as admin by the Alembic migration.
+- **`require_enterprise` and `require_admin` FastAPI deps** — Single chokepoints for Enterprise and admin-role access. All Enterprise endpoints declare one of these; Free/Pro endpoints never reference them.
+- **ENTERPRISE_MODE Sentry guard** — Setting `ENTERPRISE_MODE=true` disables Sentry telemetry at startup. Logged via `logger.info`. Air-gapped deployments never make outbound calls from the application layer.
+- **Docker Enterprise deployment bundle** — `docker-compose.enterprise.yml` uses locally loaded image tags (zero Docker Hub pulls at runtime). `scripts/enterprise-bundle.sh` saves all images to tarballs on an internet-connected machine. `scripts/enterprise-install.sh` loads tarballs, bootstraps `.env`, starts services, and waits for health. `scripts/enterprise-update.sh` does a rolling `--force-recreate` with no registry interaction.
+- **Hardened Nginx config** (`nginx.enterprise.conf`) — TLS 1.2+, strong ECDHE cipher suite, HSTS, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, server version hidden.
+- **Electron Enterprise IPC** — Four new handlers (`get-enterprise-config`, `set-enterprise-config`, `get-audit-log`, `export-data`) with zod schema validation. All payloads validated; the export path comes from the system dialog, never from renderer input. Exposed to the renderer via `preload.js` contextBridge.
+- **`useEnterpriseFeature(gate)` React hook** — Reads from `LicenseContext` and `FEATURE_GATES`. Returns `false` for Free/Pro; Enterprise UI components simply do not render. No conditional logic added to existing components.
+- **`EnterprisePanel` Settings component** — Rendered below the License section when tier is `enterprise`. Contains four sub-sections: Branding (company name + report footer), Audit Log (paginated read-only table), Users & Roles (web only), and Data Export. Invisible to Free and Pro users.
+- **ENTERPRISE chip** — License section in Settings now shows an indigo `ENTERPRISE` chip alongside `PRO` and `FREE`.
+- **Alembic migration `3cef531bbe2e`** — Creates `audit_log`, `enterprise_config`, and `user_roles` tables. Seeds first admin from earliest-created user. Revokes DELETE/UPDATE on `audit_log` for Postgres. Fully idempotent on SQLite (test environments).
 
 **UI Overhaul — Premium Design System**
 - **Global design system rewrite** (`theme.ts`) — Precise Inter typography scale (h4–overline), full light/dark palettes using Slate/Indigo tokens (text `#0F172A`/`#E2E8F0`, paper `#FFFFFF`/`#1C1F2E`, divider `#E2E8F0`/`rgba(255,255,255,0.08)`), and component overrides for MuiPaper (flat border, no shadow in light mode), MuiButton (gradient contained, consistent 34px height), MuiChip, MuiOutlinedInput, and MuiDivider.
