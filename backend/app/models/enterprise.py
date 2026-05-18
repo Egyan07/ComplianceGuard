@@ -1,12 +1,6 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text, JSON
 from sqlalchemy.sql import func
 from app.core.database import Base
-try:
-    from sqlalchemy.dialects.postgresql import JSONB
-    _JSON = JSONB
-except ImportError:
-    from sqlalchemy import JSON
-    _JSON = JSON
 
 
 class AuditLog(Base):
@@ -17,7 +11,7 @@ class AuditLog(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     framework = Column(String, nullable=True)
     score = Column(Float, nullable=True)
-    detail_json = Column(_JSON, nullable=True)
+    detail_json = Column(JSON, nullable=True)
     prev_hash = Column(String(64), nullable=True)
     entry_hash = Column(String(64), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
