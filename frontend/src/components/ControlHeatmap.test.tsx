@@ -71,4 +71,38 @@ describe('ControlHeatmap', () => {
     wrap(<ControlHeatmap controlResults={mockControlResults} isElectron={false} isProTier={false} />);
     expect(screen.getByText(/per-control breakdown requires pro/i)).toBeInTheDocument();
   });
+
+  it('shows Fix script button for automatable non-compliant control in Electron mode', () => {
+    wrap(<ControlHeatmap controlResults={mockControlResults} isElectron={true} isProTier />);
+    // CC6.3 is non_compliant and automatable
+    expect(screen.getAllByText('Fix script').length).toBeGreaterThan(0);
+  });
+
+  it('shows How to fix button for non-automatable non-compliant control', () => {
+    wrap(<ControlHeatmap controlResults={mockControlResults} isElectron={true} isProTier />);
+    // CC6.7 is non_compliant but guidance-only
+    expect(screen.getAllByText('How to fix').length).toBeGreaterThan(0);
+  });
+
+  it('shows How to fix for all failing controls in web mode (no download in web)', () => {
+    wrap(<ControlHeatmap controlResults={mockControlResults} isElectron={false} isProTier />);
+    // In web mode no "Fix script" buttons — only "How to fix"
+    expect(screen.queryByText('Fix script')).not.toBeInTheDocument();
+    expect(screen.getAllByText('How to fix').length).toBeGreaterThan(0);
+  });
+
+  it('clicking Fix script expands the accordion and shows evidence gaps', () => {
+    wrap(<ControlHeatmap controlResults={mockControlResults} isElectron={true} isProTier />);
+    const fixBtns = screen.getAllByText('Fix script');
+    fireEvent.click(fixBtns[0]);
+    expect(screen.getByText(/evidence gaps/i)).toBeInTheDocument();
+  });
+
+  it('clicking the same button again collapses the accordion', () => {
+    wrap(<ControlHeatmap controlResults={mockControlResults} isElectron={true} isProTier />);
+    const fixBtns = screen.getAllByText('Fix script');
+    fireEvent.click(fixBtns[0]);
+    fireEvent.click(fixBtns[0]);
+    expect(screen.queryByText(/evidence gaps/i)).not.toBeInTheDocument();
+  });
 });

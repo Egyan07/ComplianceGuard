@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Paper, Typography, LinearProgress, Chip } from '@mui/material';
+import { Box, Paper, Typography, LinearProgress, Chip, Button } from '@mui/material';
 import type { ControlResult } from '../services/api';
 
 const CONTROL_NAMES: Record<string, string> = {
@@ -31,6 +31,8 @@ const STATUS_CONFIG: Record<StatusKey, { label: string; color: string; bg: strin
   not_assessed:  { label: 'N/A',     color: '#94A3B8', bg: '#F8FAFC', border: '#E2E8F0', barColor: '#CBD5E1' },
 };
 
+const AUTOMATABLE_CONTROLS = new Set(['CC6.1','CC6.2','CC6.3','CC6.5','CC7.1','CC7.2']);
+
 export interface ControlHeatmapProps {
   controlResults: Record<string, ControlResult> | null;
   isElectron: boolean;
@@ -47,8 +49,8 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
   isProTier,
   // onDownloadScript and onRescan used in Task 4 (fix buttons + re-scan flow)
 }) => {
-  void isElectron;
   const [filter, setFilter] = useState<Filter>('all');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const filterRow = (status: StatusKey): boolean => {
     if (filter === 'failing') return status === 'non_compliant';
@@ -119,38 +121,137 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
                   const isFail = status === 'non_compliant';
 
                   return (
-                    <Box
-                      key={id}
-                      sx={{
-                        display: 'flex', alignItems: 'center', gap: 1.25,
-                        px: 1, py: 0.875, borderRadius: 1.5, mb: 0.25,
-                        bgcolor: isFail ? '#FFF8F8' : 'transparent',
-                        '&:hover': { bgcolor: isFail ? '#FFF3F3' : 'action.hover' },
-                      }}
-                    >
-                      <Typography sx={{ fontSize: '0.58rem', fontWeight: 700, color: isFail ? '#DC2626' : 'text.disabled', width: 42, flexShrink: 0 }}>
-                        {id}
-                      </Typography>
-                      <Typography sx={{ fontSize: '0.65rem', fontWeight: isFail ? 600 : 500, color: isFail ? 'text.primary' : 'text.secondary', flex: 1 }}>
-                        {CONTROL_NAMES[id] ?? id}
-                      </Typography>
-                      <Box sx={{ width: 80, flexShrink: 0 }}>
-                        <LinearProgress
-                          variant="determinate"
-                          value={score}
-                          aria-label={`${id} compliance score: ${Math.round(score)} percent`}
-                          sx={{ height: 5, borderRadius: 2, bgcolor: '#F1F5F9', '& .MuiLinearProgress-bar': { bgcolor: cfg.barColor, borderRadius: 2 } }}
+                    <React.Fragment key={id}>
+                      <Box
+                        sx={{
+                          display: 'flex', alignItems: 'center', gap: 1.25,
+                          px: 1, py: 0.875, borderRadius: 1.5, mb: 0.25,
+                          bgcolor: isFail ? '#FFF8F8' : 'transparent',
+                          '&:hover': { bgcolor: isFail ? '#FFF3F3' : 'action.hover' },
+                        }}
+                      >
+                        <Typography sx={{ fontSize: '0.58rem', fontWeight: 700, color: isFail ? '#DC2626' : 'text.disabled', width: 42, flexShrink: 0 }}>
+                          {id}
+                        </Typography>
+                        <Typography sx={{ fontSize: '0.65rem', fontWeight: isFail ? 600 : 500, color: isFail ? 'text.primary' : 'text.secondary', flex: 1 }}>
+                          {CONTROL_NAMES[id] ?? id}
+                        </Typography>
+                        <Box sx={{ width: 80, flexShrink: 0 }}>
+                          <LinearProgress
+                            variant="determinate"
+                            value={score}
+                            aria-label={`${id} compliance score: ${Math.round(score)} percent`}
+                            sx={{ height: 5, borderRadius: 2, bgcolor: '#F1F5F9', '& .MuiLinearProgress-bar': { bgcolor: cfg.barColor, borderRadius: 2 } }}
+                          />
+                        </Box>
+                        <Typography sx={{ fontSize: '0.58rem', color: isFail ? '#FCA5A5' : 'text.disabled', width: 30, textAlign: 'right', flexShrink: 0 }}>
+                          {Math.round(score)}%
+                        </Typography>
+                        <Chip
+                          label={cfg.label}
+                          size="small"
+                          sx={{ fontSize: '0.55rem', fontWeight: 600, height: 20, bgcolor: cfg.bg, color: cfg.color, border: '1px solid', borderColor: cfg.border, flexShrink: 0 }}
                         />
+                        {(status === 'non_compliant' || status === 'partial') && (
+                          isElectron && AUTOMATABLE_CONTROLS.has(id)
+                            ? (
+                              <Button
+                                size="small"
+                                onClick={() => setExpandedId(prev => prev === id ? null : id)}
+                                sx={{
+                                  fontSize: '0.58rem', fontWeight: 600, px: 1.25, py: 0.5, minWidth: 0,
+                                  bgcolor: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE',
+                                  borderRadius: 1.5, flexShrink: 0, textTransform: 'none',
+                                  '&:hover': { bgcolor: '#DBEAFE' },
+                                }}
+                              >
+                                Fix script
+                              </Button>
+                            ) : (
+                              <Button
+                                size="small"
+                                onClick={() => setExpandedId(prev => prev === id ? null : id)}
+                                sx={{
+                                  fontSize: '0.58rem', fontWeight: 600, px: 1.25, py: 0.5, minWidth: 0,
+                                  bgcolor: '#FFFBEB', color: '#B45309', border: '1px solid #FDE68A',
+                                  borderRadius: 1.5, flexShrink: 0, textTransform: 'none',
+                                  '&:hover': { bgcolor: '#FEF3C7' },
+                                }}
+                              >
+                                How to fix
+                              </Button>
+                            )
+                        )}
                       </Box>
-                      <Typography sx={{ fontSize: '0.58rem', color: isFail ? '#FCA5A5' : 'text.disabled', width: 30, textAlign: 'right', flexShrink: 0 }}>
-                        {Math.round(score)}%
-                      </Typography>
-                      <Chip
-                        label={cfg.label}
-                        size="small"
-                        sx={{ fontSize: '0.55rem', fontWeight: 600, height: 20, bgcolor: cfg.bg, color: cfg.color, border: '1px solid', borderColor: cfg.border, flexShrink: 0 }}
-                      />
-                    </Box>
+                      {expandedId === id && (
+                        <Box sx={{ mx: 0.5, mb: 0.75, border: '1px solid', borderColor: 'divider', borderRadius: 2, overflow: 'hidden' }}>
+                          {/* Accordion header */}
+                          <Box sx={{ px: 2, py: 1.25, borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Typography sx={{ fontSize: '0.65rem', fontWeight: 700 }}>
+                                {id} — {CONTROL_NAMES[id]}
+                              </Typography>
+                              {AUTOMATABLE_CONTROLS.has(id) && (
+                                <Chip
+                                  label="PowerShell · Run as Admin"
+                                  size="small"
+                                  sx={{ fontSize: '0.55rem', fontWeight: 600, height: 18, bgcolor: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE' }}
+                                />
+                              )}
+                            </Box>
+                          </Box>
+
+                          {/* Accordion body */}
+                          <Box sx={{ p: 2, display: 'grid', gridTemplateColumns: r?.gaps?.length ? '1fr 1.2fr' : '1fr', gap: 2, bgcolor: '#F8FAFC' }}>
+                            {r?.gaps && r.gaps.length > 0 && (
+                              <Box>
+                                <Typography sx={{ fontSize: '0.55rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'text.disabled', mb: 0.75 }}>
+                                  Evidence gaps
+                                </Typography>
+                                {r.gaps.map((gap: string) => (
+                                  <Box key={gap} sx={{ display: 'flex', gap: 0.75, mb: 0.5 }}>
+                                    <Typography sx={{ fontSize: '0.58rem', color: '#DC2626', fontWeight: 700, flexShrink: 0 }}>✕</Typography>
+                                    <Typography sx={{ fontSize: '0.62rem', color: '#DC2626' }}>{gap.replace(/_/g, ' ')}</Typography>
+                                  </Box>
+                                ))}
+                              </Box>
+                            )}
+                            {AUTOMATABLE_CONTROLS.has(id) ? (
+                              <Box>
+                                <Typography sx={{ fontSize: '0.55rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'text.disabled', mb: 0.75 }}>
+                                  Script preview
+                                </Typography>
+                                <Box sx={{ bgcolor: '#F1F5F9', border: '1px solid', borderColor: 'divider', borderRadius: 1.5, p: 1.5, fontFamily: '"SF Mono","Fira Code",monospace', fontSize: '0.58rem', lineHeight: 1.8, color: '#334155' }}>
+                                  <Box component="span" sx={{ color: '#94A3B8', fontStyle: 'italic', display: 'block' }}>
+                                    {'# ' + id + ' Remediation — run as Administrator'}
+                                  </Box>
+                                  <Box component="span" sx={{ color: '#94A3B8', display: 'block', mt: 0.5 }}>
+                                    (download to see full script)
+                                  </Box>
+                                </Box>
+                              </Box>
+                            ) : (
+                              <Box>
+                                <Typography sx={{ fontSize: '0.55rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'text.disabled', mb: 0.75 }}>
+                                  Steps to fix
+                                </Typography>
+                                <Typography sx={{ fontSize: '0.62rem', color: 'text.secondary' }}>
+                                  Manual action required — see compliance documentation.
+                                </Typography>
+                              </Box>
+                            )}
+                          </Box>
+
+                          {/* Accordion footer */}
+                          <Box sx={{ px: 2, py: 1.25, borderTop: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <Typography sx={{ fontSize: '0.6rem', color: 'text.disabled' }}>
+                              {AUTOMATABLE_CONTROLS.has(id) ? 'Reversible · Requires Admin' : 'Manual action required'}
+                            </Typography>
+                            {/* Download button added in Task 7 (after IPC handler exists) */}
+                          </Box>
+                        </Box>
+                      )}
+                    </React.Fragment>
                   );
                 })}
               </Box>
