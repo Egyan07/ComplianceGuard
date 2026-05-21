@@ -28,6 +28,7 @@ vi.mock('../hooks/useDashboard', () => ({
     handleExportPDF: vi.fn(),
     handleSyncToCloud: vi.fn(),
     clearMessage: vi.fn(),
+    handleRescan: vi.fn(),
   }),
 }));
 
