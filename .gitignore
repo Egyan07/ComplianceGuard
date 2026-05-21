@@ -84,3 +84,4 @@ docs/private/
 *.private.md
 NOTES.md
 ROADMAP-internal.md
+.superpowers/
