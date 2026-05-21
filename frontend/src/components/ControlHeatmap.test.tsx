@@ -1,18 +1,8 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material';
 import ControlHeatmap from './ControlHeatmap';
 import type { ControlResult } from '../services/api';
-
-vi.mock('../contexts/LicenseContext', () => ({
-  useLicense: vi.fn(() => ({
-    tier: 'pro',
-    isFeatureAllowed: () => true,
-    licenseInfo: {},
-    activateLicense: vi.fn(),
-    deactivateLicense: vi.fn(),
-  })),
-}));
 
 const theme = createTheme();
 const wrap = (ui: React.ReactElement) =>
@@ -67,6 +57,14 @@ describe('ControlHeatmap', () => {
     fireEvent.click(screen.getByText('Failing'));
     fireEvent.click(screen.getByText('All'));
     expect(screen.getByText('CC6.1')).toBeInTheDocument();
+  });
+
+  it('filter chip Partial shows only partial controls', () => {
+    wrap(<ControlHeatmap controlResults={mockControlResults} isElectron={false} isProTier />);
+    fireEvent.click(screen.getAllByText('Partial')[0]); // click the filter chip (first match)
+    expect(screen.queryByText('CC6.1')).not.toBeInTheDocument(); // compliant — hidden
+    expect(screen.queryByText('CC6.3')).not.toBeInTheDocument(); // non_compliant — hidden
+    expect(screen.getByText('CC3.1')).toBeInTheDocument();       // partial — visible
   });
 
   it('shows upgrade prompt for free tier', () => {

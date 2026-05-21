@@ -43,9 +43,11 @@ export type RemediationState = 'idle' | 'downloaded' | 'rescanning' | 'verified'
 
 const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
   controlResults,
-  isElectron: _isElectron,
+  isElectron,   // used in Task 4 for fix button rendering
   isProTier,
+  // onDownloadScript and onRescan used in Task 4 (fix buttons + re-scan flow)
 }) => {
+  void isElectron;
   const [filter, setFilter] = useState<Filter>('all');
 
   const filterRow = (status: StatusKey): boolean => {
@@ -100,7 +102,7 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
         ) : (
           CATEGORIES.map(cat => {
             const visibleIds = cat.ids.filter(id => {
-              const status = (controlResults[id]?.status ?? 'not_assessed') as StatusKey;
+              const status: StatusKey = controlResults[id]?.status ?? 'not_assessed';
               return filterRow(status);
             });
             if (visibleIds.length === 0) return null;
@@ -111,9 +113,9 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
                 </Typography>
                 {visibleIds.map(id => {
                   const r = controlResults[id];
-                  const status = (r?.status ?? 'not_assessed') as StatusKey;
+                  const status: StatusKey = r?.status ?? 'not_assessed';
                   const cfg = STATUS_CONFIG[status];
-                  const score = r?.score ?? 0;
+                  const score = Math.max(0, Math.min(100, r?.score ?? 0));
                   const isFail = status === 'non_compliant';
 
                   return (
@@ -136,6 +138,7 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
                         <LinearProgress
                           variant="determinate"
                           value={score}
+                          aria-label={`${id} compliance score: ${Math.round(score)} percent`}
                           sx={{ height: 5, borderRadius: 2, bgcolor: '#F1F5F9', '& .MuiLinearProgress-bar': { bgcolor: cfg.barColor, borderRadius: 2 } }}
                         />
                       </Box>
