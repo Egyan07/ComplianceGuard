@@ -133,10 +133,10 @@ describe('ControlHeatmap', () => {
 
   it('calls onDownloadScript when Download is clicked and shows re-scan button after', async () => {
     const onDownload = vi.fn().mockResolvedValue({ success: true, file_name: 'fix-CC6.3.ps1' });
-    const { rerender } = wrap(<ControlHeatmap controlResults={mockControlResults} isElectron={true} isProTier onDownloadScript={onDownload} onRescan={vi.fn()} />);
+    wrap(<ControlHeatmap controlResults={mockControlResults} isElectron={true} isProTier onDownloadScript={onDownload} onRescan={vi.fn()} />);
     fireEvent.click(screen.getAllByText('Fix script')[0]);
     fireEvent.click(screen.getByText('Download .ps1'));
     await screen.findByText('Re-scan now');
-    expect(onDownload).toHaveBeenCalled();
+    expect(onDownload).toHaveBeenCalledWith(expect.stringMatching(/^CC/));
   });
 });

@@ -128,6 +128,7 @@ export function useDashboard() {
   }, [queryClient, selectedFramework]);
 
   const handleRescan = useCallback(async () => {
+    setState(prev => ({ ...prev, error: null }));
     if (isElectron) {
       const api = (window as any).electronAPI;
       setEvaluating(true);
@@ -135,6 +136,9 @@ export function useDashboard() {
         await api.runCollectionNow();
         const evaluation = await evaluateCompliance(selectedFramework);
         setState(prev => ({ ...prev, evaluation }));
+      } catch (err: any) {
+        setState(prev => ({ ...prev, error: err?.message || 'Re-scan failed.' }));
+        throw err; // ControlHeatmap catches this to set verification_failed
       } finally {
         setEvaluating(false);
         queryClient.invalidateQueries({ queryKey: ['dashboard'] });

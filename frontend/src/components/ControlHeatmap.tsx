@@ -296,6 +296,7 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
                                         try {
                                           await onRescan();
                                           setRemediationStates(prev => ({ ...prev, [id]: 'verified' }));
+                                          setExpandedId(null); // auto-close: control turned green
                                         } catch {
                                           setRemediationStates(prev => ({ ...prev, [id]: 'verification_failed' }));
                                         }
