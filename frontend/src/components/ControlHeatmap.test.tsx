@@ -105,4 +105,22 @@ describe('ControlHeatmap', () => {
     fireEvent.click(fixBtns[0]);
     expect(screen.queryByText(/evidence gaps/i)).not.toBeInTheDocument();
   });
+
+  it('expanding a second row collapses the first', () => {
+    wrap(<ControlHeatmap controlResults={mockControlResults} isElectron={true} isProTier />);
+    const fixBtns = screen.getAllByText('Fix script');
+    const howBtns = screen.getAllByText('How to fix');
+    fireEvent.click(fixBtns[0]);
+    // now expand a different row
+    fireEvent.click(howBtns[0]);
+    // only one accordion should be open — only one "Evidence gaps" (if the how-to row has gaps)
+    // use Reversible text which only appears in the footer of an expanded automatable row
+    expect(screen.queryByText(/reversible/i)).not.toBeInTheDocument();
+  });
+
+  it('shows Reversible · Requires Admin in footer for automatable control', () => {
+    wrap(<ControlHeatmap controlResults={mockControlResults} isElectron={true} isProTier />);
+    fireEvent.click(screen.getAllByText('Fix script')[0]);
+    expect(screen.getByText(/reversible · requires admin/i)).toBeInTheDocument();
+  });
 });

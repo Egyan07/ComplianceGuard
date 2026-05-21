@@ -47,7 +47,7 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
   controlResults,
   isElectron,   // used in Task 4 for fix button rendering
   isProTier,
-  // onDownloadScript and onRescan used in Task 4 (fix buttons + re-scan flow)
+  // onDownloadScript and onRescan wired in Task 7 (IPC handler + re-scan flow)
 }) => {
   const [filter, setFilter] = useState<Filter>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -74,7 +74,7 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
               key={f}
               label={label}
               size="small"
-              onClick={() => setFilter(f)}
+              onClick={() => { setFilter(f); setExpandedId(null); }}
               sx={{
                 fontSize: '0.6rem', fontWeight: 600, height: 24, cursor: 'pointer',
                 bgcolor: filter === f ? '#EFF6FF' : 'transparent',
@@ -119,6 +119,7 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
                   const cfg = STATUS_CONFIG[status];
                   const score = Math.max(0, Math.min(100, r?.score ?? 0));
                   const isFail = status === 'non_compliant';
+                  const isAutomatable = AUTOMATABLE_CONTROLS.has(id);
 
                   return (
                     <React.Fragment key={id}>
@@ -153,10 +154,12 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
                           sx={{ fontSize: '0.55rem', fontWeight: 600, height: 20, bgcolor: cfg.bg, color: cfg.color, border: '1px solid', borderColor: cfg.border, flexShrink: 0 }}
                         />
                         {(status === 'non_compliant' || status === 'partial') && (
-                          isElectron && AUTOMATABLE_CONTROLS.has(id)
+                          isElectron && isAutomatable
                             ? (
                               <Button
                                 size="small"
+                                aria-expanded={expandedId === id}
+                                aria-controls={`accordion-${id}`}
                                 onClick={() => setExpandedId(prev => prev === id ? null : id)}
                                 sx={{
                                   fontSize: '0.58rem', fontWeight: 600, px: 1.25, py: 0.5, minWidth: 0,
@@ -170,6 +173,8 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
                             ) : (
                               <Button
                                 size="small"
+                                aria-expanded={expandedId === id}
+                                aria-controls={`accordion-${id}`}
                                 onClick={() => setExpandedId(prev => prev === id ? null : id)}
                                 sx={{
                                   fontSize: '0.58rem', fontWeight: 600, px: 1.25, py: 0.5, minWidth: 0,
@@ -183,19 +188,25 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
                             )
                         )}
                       </Box>
-                      {expandedId === id && (
-                        <Box sx={{ mx: 0.5, mb: 0.75, border: '1px solid', borderColor: 'divider', borderRadius: 2, overflow: 'hidden' }}>
+                      {expandedId === id && (status === 'non_compliant' || status === 'partial') && (
+                        <Box id={`accordion-${id}`} role="region" aria-label={`${id} remediation details`} sx={{ mx: 0.5, mb: 0.75, border: '1px solid #E2E8F0', borderRadius: 2, overflow: 'hidden' }}>
                           {/* Accordion header */}
                           <Box sx={{ px: 2, py: 1.25, borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               <Typography sx={{ fontSize: '0.65rem', fontWeight: 700 }}>
-                                {id} — {CONTROL_NAMES[id]}
+                                {id} — {CONTROL_NAMES[id] ?? id}
                               </Typography>
-                              {AUTOMATABLE_CONTROLS.has(id) && (
+                              {isAutomatable ? (
                                 <Chip
                                   label="PowerShell · Run as Admin"
                                   size="small"
                                   sx={{ fontSize: '0.55rem', fontWeight: 600, height: 18, bgcolor: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE' }}
+                                />
+                              ) : (
+                                <Chip
+                                  label="Guidance only"
+                                  size="small"
+                                  sx={{ fontSize: '0.55rem', fontWeight: 600, height: 18, bgcolor: '#F8FAFC', color: '#64748B', border: '1px solid #E2E8F0' }}
                                 />
                               )}
                             </Box>
@@ -216,12 +227,12 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
                                 ))}
                               </Box>
                             )}
-                            {AUTOMATABLE_CONTROLS.has(id) ? (
+                            {isAutomatable ? (
                               <Box>
                                 <Typography sx={{ fontSize: '0.55rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'text.disabled', mb: 0.75 }}>
                                   Script preview
                                 </Typography>
-                                <Box sx={{ bgcolor: '#F1F5F9', border: '1px solid', borderColor: 'divider', borderRadius: 1.5, p: 1.5, fontFamily: '"SF Mono","Fira Code",monospace', fontSize: '0.58rem', lineHeight: 1.8, color: '#334155' }}>
+                                <Box sx={{ bgcolor: '#F1F5F9', border: '1px solid #E2E8F0', borderRadius: 1.5, p: 1.5, fontFamily: '"SF Mono","Fira Code",monospace', fontSize: '0.58rem', lineHeight: 1.8, color: '#334155' }}>
                                   <Box component="span" sx={{ color: '#94A3B8', fontStyle: 'italic', display: 'block' }}>
                                     {'# ' + id + ' Remediation — run as Administrator'}
                                   </Box>
@@ -245,7 +256,7 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
                           {/* Accordion footer */}
                           <Box sx={{ px: 2, py: 1.25, borderTop: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <Typography sx={{ fontSize: '0.6rem', color: 'text.disabled' }}>
-                              {AUTOMATABLE_CONTROLS.has(id) ? 'Reversible · Requires Admin' : 'Manual action required'}
+                              {isAutomatable ? 'Reversible · Requires Admin' : 'Manual action required'}
                             </Typography>
                             {/* Download button added in Task 7 (after IPC handler exists) */}
                           </Box>
