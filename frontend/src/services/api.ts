@@ -148,6 +148,14 @@ export interface EvidenceCollectionResult {
   evidence_count?: number;
 }
 
+export interface ControlResult {
+  status: 'compliant' | 'non_compliant' | 'partial' | 'not_assessed';
+  score: number;           // 0–100
+  gaps: string[];          // missing evidence type IDs
+  available_evidence: string[];
+  recommendation?: string;
+}
+
 export interface ComplianceEvaluation {
   framework_id: number;
   framework_name: string;
@@ -161,7 +169,7 @@ export interface ComplianceEvaluation {
   partial_controls: number;
   not_assessed_controls: number;
   category_scores: Record<string, any> | null;
-  control_results: Record<string, any> | null;
+  control_results: Record<string, ControlResult> | null;
   recommendations: Array<Record<string, any>>;
 }
 
