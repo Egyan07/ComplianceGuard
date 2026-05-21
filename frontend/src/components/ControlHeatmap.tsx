@@ -45,12 +45,14 @@ export type RemediationState = 'idle' | 'downloaded' | 'rescanning' | 'verified'
 
 const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
   controlResults,
-  isElectron,   // used in Task 4 for fix button rendering
+  isElectron,
   isProTier,
-  // onDownloadScript and onRescan wired in Task 7 (IPC handler + re-scan flow)
+  onDownloadScript,
+  onRescan,
 }) => {
   const [filter, setFilter] = useState<Filter>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [remediationStates, setRemediationStates] = useState<Record<string, RemediationState>>({});
 
   const filterRow = (status: StatusKey): boolean => {
     if (filter === 'failing') return status === 'non_compliant';
@@ -258,7 +260,60 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
                             <Typography sx={{ fontSize: '0.6rem', color: 'text.disabled' }}>
                               {isAutomatable ? 'Reversible · Requires Admin' : 'Manual action required'}
                             </Typography>
-                            {/* Download button added in Task 7 (after IPC handler exists) */}
+                            {isAutomatable && isElectron && (() => {
+                              const rs = remediationStates[id] ?? 'idle';
+                              if (rs === 'idle' || rs === 'verification_failed') {
+                                return (
+                                  <Button
+                                    size="small"
+                                    variant="contained"
+                                    disabled={!onDownloadScript}
+                                    onClick={async () => {
+                                      if (!onDownloadScript) return;
+                                      const result = await onDownloadScript(id);
+                                      if (result.success) {
+                                        setRemediationStates(prev => ({ ...prev, [id]: 'downloaded' }));
+                                      }
+                                    }}
+                                    sx={{ fontSize: '0.65rem', fontWeight: 600, px: 1.75, py: 0.625, borderRadius: 2, boxShadow: '0 1px 3px rgba(37,99,235,0.3)', textTransform: 'none' }}
+                                  >
+                                    Download .ps1
+                                  </Button>
+                                );
+                              }
+                              if (rs === 'downloaded') {
+                                return (
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <Typography sx={{ fontSize: '0.6rem', color: '#059669' }}>
+                                      Downloaded — run the script, then re-scan
+                                    </Typography>
+                                    <Button
+                                      size="small"
+                                      disabled={!onRescan}
+                                      onClick={async () => {
+                                        if (!onRescan) return;
+                                        setRemediationStates(prev => ({ ...prev, [id]: 'rescanning' }));
+                                        try {
+                                          await onRescan();
+                                          setRemediationStates(prev => ({ ...prev, [id]: 'verified' }));
+                                        } catch {
+                                          setRemediationStates(prev => ({ ...prev, [id]: 'verification_failed' }));
+                                        }
+                                      }}
+                                      sx={{ fontSize: '0.62rem', fontWeight: 600, px: 1.25, py: 0.5, bgcolor: '#F0FDF4', color: '#16A34A', border: '1px solid #BBF7D0', borderRadius: 1.5, textTransform: 'none', '&:hover': { bgcolor: '#DCFCE7' } }}
+                                    >
+                                      Re-scan now
+                                    </Button>
+                                  </Box>
+                                );
+                              }
+                              if (rs === 'rescanning') {
+                                return (
+                                  <Typography sx={{ fontSize: '0.6rem', color: 'text.disabled' }}>Scanning...</Typography>
+                                );
+                              }
+                              return null;
+                            })()}
                           </Box>
                         </Box>
                       )}

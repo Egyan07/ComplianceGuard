@@ -127,6 +127,23 @@ export function useDashboard() {
     }
   }, [queryClient, selectedFramework]);
 
+  const handleRescan = useCallback(async () => {
+    if (isElectron) {
+      const api = (window as any).electronAPI;
+      setEvaluating(true);
+      try {
+        await api.runCollectionNow();
+        const evaluation = await evaluateCompliance(selectedFramework);
+        setState(prev => ({ ...prev, evaluation }));
+      } finally {
+        setEvaluating(false);
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      }
+    } else {
+      await handleEvaluateCompliance();
+    }
+  }, [selectedFramework, handleEvaluateCompliance, queryClient]);
+
   const handleExportPDF = useCallback(async () => {
     if (!isElectron) return;
     setExportingPDF(true);
@@ -213,6 +230,7 @@ export function useDashboard() {
     fetchDashboardData,
     handleCollectEvidence,
     handleEvaluateCompliance,
+    handleRescan,
     handleExportPDF,
     handleSyncToCloud,
     clearMessage,

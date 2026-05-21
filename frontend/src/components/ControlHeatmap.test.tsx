@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material';
 import ControlHeatmap from './ControlHeatmap';
@@ -122,5 +122,21 @@ describe('ControlHeatmap', () => {
     wrap(<ControlHeatmap controlResults={mockControlResults} isElectron={true} isProTier />);
     fireEvent.click(screen.getAllByText('Fix script')[0]);
     expect(screen.getByText(/reversible · requires admin/i)).toBeInTheDocument();
+  });
+
+  it('shows Download .ps1 button in expanded panel when onDownloadScript provided', () => {
+    const onDownload = vi.fn().mockResolvedValue({ success: true, file_name: 'fix-CC6.3.ps1' });
+    wrap(<ControlHeatmap controlResults={mockControlResults} isElectron={true} isProTier onDownloadScript={onDownload} onRescan={vi.fn()} />);
+    fireEvent.click(screen.getAllByText('Fix script')[0]);
+    expect(screen.getByText('Download .ps1')).toBeInTheDocument();
+  });
+
+  it('calls onDownloadScript when Download is clicked and shows re-scan button after', async () => {
+    const onDownload = vi.fn().mockResolvedValue({ success: true, file_name: 'fix-CC6.3.ps1' });
+    const { rerender } = wrap(<ControlHeatmap controlResults={mockControlResults} isElectron={true} isProTier onDownloadScript={onDownload} onRescan={vi.fn()} />);
+    fireEvent.click(screen.getAllByText('Fix script')[0]);
+    fireEvent.click(screen.getByText('Download .ps1'));
+    await screen.findByText('Re-scan now');
+    expect(onDownload).toHaveBeenCalled();
   });
 });
