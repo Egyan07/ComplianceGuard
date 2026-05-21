@@ -12,9 +12,11 @@ import ScoreHero from './ScoreHero';
 import EvidenceList from './EvidenceList';
 import EvidenceUpload from './EvidenceUpload';
 import UpgradePrompt from './UpgradePrompt';
+import ControlHeatmap from './ControlHeatmap';
 import DashboardHeader from './dashboard/DashboardHeader';
 import CollectionSummary from './dashboard/CollectionSummary';
 import { useDashboard } from '../hooks/useDashboard';
+import { useLicense } from '../contexts/LicenseContext';
 
 const isElectron = !!(window as any).electronAPI;
 
@@ -30,8 +32,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     state, collectingEvidence, evaluating, exportingPDF, syncingCloud,
     cloudConnected, fetchDashboardData, handleCollectEvidence,
     handleEvaluateCompliance, handleExportPDF, handleSyncToCloud, clearMessage,
-    selectedFramework, setSelectedFramework,
+    selectedFramework, setSelectedFramework, handleRescan,
   } = useDashboard();
+
+  const { isFeatureAllowed } = useLicense();
 
   const [searchParams] = useSearchParams();
   useEffect(() => {
@@ -102,6 +106,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             onItemClick={() => {}}
           />
         </Box>
+        <ControlHeatmap
+          controlResults={state.evaluation?.control_results ?? null}
+          isElectron={isElectron}
+          isProTier={isFeatureAllowed('per_control_scoring')}
+          onDownloadScript={isElectron ? async (controlId: string) => {
+            const api = (window as any).electronAPI;
+            return api.downloadRemediationScript(controlId);
+          } : undefined}
+          onRescan={handleRescan}
+        />
       </Box>
 
       {isElectron && (
