@@ -65,7 +65,7 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
           </Box>
         </Typography>
         <Box sx={{ display: 'flex', gap: 0.75 }}>
-          {([['all', 'All'], ['failing', 'Failing'], ['partial', 'Partial Only']] as [Filter, string][]).map(([f, label]) => (
+          {([['all', 'All'], ['failing', 'Failing'], ['partial', 'Partial']] as [Filter, string][]).map(([f, label]) => (
             <Chip
               key={f}
               label={label}
