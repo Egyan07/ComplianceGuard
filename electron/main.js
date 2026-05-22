@@ -15,6 +15,7 @@ const { collectWindowsEvidence } = require('./system/windows');
 const scheduler = require('./scheduler');
 const { z } = require('zod');
 const { logAuditEvent } = require('./processing/audit-service');
+const REMEDIATION_SCRIPTS = require('./processing/remediation-scripts');
 
 // Keep a global reference of the window object
 let mainWindow = null;
@@ -645,7 +646,6 @@ ipcMain.handle('export-data', async () => {
 });
 
 // Remediation script download — Control Heatmap feature
-const REMEDIATION_SCRIPTS = require('./processing/remediation-scripts');
 
 ipcMain.handle('download-remediation-script', async (event, controlId) => {
   try {
@@ -672,7 +672,7 @@ ipcMain.handle('download-remediation-script', async (event, controlId) => {
           detail: { control_id: controlId, file_name: path.basename(filePath) },
         });
       }
-    } catch (_) {}
+    } catch (e) { log.error('audit log failed for remediation_script_downloaded:', e); }
 
     return { success: true, file_name: path.basename(filePath) };
   } catch (error) {
