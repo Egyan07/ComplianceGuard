@@ -110,12 +110,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           controlResults={state.evaluation?.control_results ?? null}
           isElectron={isElectron}
           isProTier={isFeatureAllowed('per_control_scoring')}
-          onDownloadScript={isElectron && (window as any).electronAPI?.downloadRemediationScript
-            ? async (controlId: string) => {
-              const api = (window as any).electronAPI;
-              return api.downloadRemediationScript(controlId);
-            }
-            : undefined}
+          onDownloadScript={isElectron ? async (controlId: string) => {
+            const api = (window as any).electronAPI;
+            return api.downloadRemediationScript(controlId);
+          } : undefined}
           onRescan={handleRescan}
         />
       </Box>
