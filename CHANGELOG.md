@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [Unreleased]
+
+### Added
+
+**Control Heatmap — See Your Gaps**
+- New `ControlHeatmap` component mounted on the Dashboard below ScoreHero — shows all 29 SOC 2 controls as detail rows with score bars, status pills (Pass / Partial / Fail), and category groupings (CC, A, C, PI).
+- Filter chips: All / Failing / Partial — instantly narrows the view to actionable controls.
+- Failing rows highlighted with a subtle red background; passing rows are neutral. Empty state when no evaluation has been run.
+- Pro gate: free-tier users see a locked view with an Upgrade to Pro prompt — same pattern as Evaluation History.
+- `ControlResult` type added to `frontend/src/services/api.ts` and `frontend/src/types/electron.d.ts` — `control_results` is now fully typed across both Electron and web modes.
+- Web mode: heatmap renders with empty state (per-control data requires a future backend `evaluation_id` addition — deferred to v3.3).
+
+**Remediation Scripts — Fix Your Gaps**
+- `electron/processing/remediation-scripts.js` — static map of all 29 SOC 2 controls. Six automatable via PowerShell (CC6.1 Windows Firewall, CC6.2 Password Policy, CC6.3 Audit Policy, CC6.5 Network Firewall Rules, CC7.1 Security Event Log, CC7.2 Defender + Windows Update). Twenty-three guidance-only controls with step-by-step remediation instructions.
+- "Fix script" button (blue) on automatable failing controls in Electron mode. "How to fix" button (amber) on all other failing/partial controls. No colorful emojis — clean text labels only.
+- Inline accordion expand: evidence gaps list + light-theme script preview + accordion footer with risk metadata ("Reversible · Requires Admin").
+- `download-remediation-script` IPC handler writes the chosen script to a user-chosen `.ps1` path via `dialog.showSaveDialog`. Path injection prevented — path comes from the dialog, not renderer input.
+- Audit event `remediation_script_downloaded` fires with `{ control_id, file_name }` (basename only — full path never logged; may contain username/machine name). Enterprise-only (gated behind `enterprise_audit_log` feature).
+- Post-download re-scan flow: "Downloaded — run the script, then re-scan" + "Re-scan now" button. On successful re-scan, accordion auto-closes and the row transitions to green.
+- `RemediationState` lifecycle: `idle → downloaded → rescanning → verified | verification_failed`. State is transient (React component state, not persisted).
+- `downloadRemediationScript` typed in `ElectronAPI` interface in `electron.d.ts`.
+
+---
+
 ## [3.2.0] — 2026-05-17
 
 Multi-framework scoring (desktop + web), full UI overhaul to premium design quality, multiple backend/frontend features, and **Air-Gapped Enterprise tier**. No breaking changes. Alembic migration adds three Enterprise tables.

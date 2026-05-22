@@ -6,7 +6,7 @@
   <a href="#quick-start"><img src="https://img.shields.io/badge/version-3.2.0-2563EB" alt="Version"></a>
   <img src="https://img.shields.io/badge/license-BSL%201.1-orange" alt="License">
   <a href="#compliance-frameworks"><img src="https://img.shields.io/badge/frameworks-SOC%202%20%7C%20ISO%2027001%20%7C%20HIPAA-10B981" alt="Frameworks"></a>
-  <img src="https://img.shields.io/badge/tests-530%20passing-10B981?logo=pytest&logoColor=white" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-~560%20passing-10B981?logo=pytest&logoColor=white" alt="Tests">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
   <a href="https://github.com/Egyan07/ComplianceGuard/actions"><img src="https://img.shields.io/github/actions/workflow/status/Egyan07/ComplianceGuard/ci.yml?label=CI&logo=githubactions&logoColor=white" alt="CI"></a>
 </p>
@@ -530,7 +530,7 @@ python -m pytest tests/integration/ -v
 python -m pytest tests/e2e/ -v --run-e2e
 ```
 
-CI runs all tests on every push via GitHub Actions. **~530 tests passing** — backend: ~287 (253 unit + 26 integration + 8 e2e), frontend: 185 Vitest unit + 38 Electron unit (10 scheduler + 13 engine + 6 sqlite + 9 enterprise), e2e: 5 Playwright.
+CI runs all tests on every push via GitHub Actions. **~560 tests passing** — backend: ~287 (253 unit + 26 integration + 8 e2e), frontend: ~203 Vitest unit (185 + 18 heatmap) + 43 Electron unit (10 scheduler + 13 engine + 6 sqlite + 9 enterprise + 5 remediation), e2e: 5 Playwright.
 
 ## Troubleshooting
 
@@ -600,9 +600,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 | PDF reports + evaluation history | GCP and Azure cloud evidence |
 | Free / Pro / Enterprise licensing (Ed25519) | Setup video walkthrough |
 | **Air-gapped Enterprise tier** — tamper-evident audit log (SHA-256 hash chain), RBAC (admin/auditor), custom PDF branding, NDJSON export, Docker offline bundle, hardened TLS Nginx | PCI DSS framework |
-| JWT auth + refresh tokens + login UI | Evidence status workflow |
-| Premium UI — full overhaul to Linear/Stripe quality (design system, global nav, score hero, micro-interactions) | macOS and Linux support |
-| FastAPI + PostgreSQL + Docker + Nginx | GCP and Azure cloud evidence |
+| **Control Heatmap** — per-control score bars, status pills, category groupings; shows all 29 SOC 2 controls at a glance | Evidence status workflow |
+| **Remediation Scripts** — one-click PowerShell download for 6 automatable SOC 2 controls (firewall, password policy, audit policy, event log, Defender); guidance steps for all others; inline accordion with re-scan flow | macOS and Linux support |
+| JWT auth + refresh tokens + login UI | GCP and Azure cloud evidence |
+| Premium UI — full overhaul to Linear/Stripe quality (design system, global nav, score hero, micro-interactions) | |
+| FastAPI + PostgreSQL + Docker + Nginx | |
 | Cloud sync + multi-machine dashboard | |
 | Email delivery (verification + reset) | |
 | Web mode license enforcement (Ed25519) | |

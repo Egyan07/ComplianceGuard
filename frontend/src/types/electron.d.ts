@@ -9,6 +9,7 @@
  */
 
 import type { LicenseInfo } from '../contexts/LicenseContext';
+import type { ControlResult } from '../services/api';
 
 export interface ElectronLicenseAPI {
   getLicenseInfo: () => Promise<LicenseInfo>;
@@ -77,7 +78,7 @@ export interface ComplianceEvaluationResult {
   id: number;
   tier: string;
   category_scores: Record<string, { score: number; weight: number; control_count: number }> | null;
-  control_results: Record<string, unknown> | null;
+  control_results: Record<string, ControlResult> | null;
   recommendations: Array<{ control_id: string; priority: string; recommendation: string; evidence_needed: string[] }>;
   evaluation_date: string;
   error?: string;
@@ -89,6 +90,7 @@ export interface ElectronAPI extends ElectronLicenseAPI {
   getSchedule: () => Promise<ScheduleState>;
   setSchedule: (config: ScheduleConfig) => Promise<{ config: ScheduleConfig; next_run_at: string | null } | { error: string }>;
   runCollectionNow: () => Promise<CollectionResult | { error: string }>;
+  downloadRemediationScript: (controlId: string) => Promise<{ success?: boolean; file_name?: string; canceled?: boolean; error?: string }>;
   // Other IPCs exposed by electron/preload.js. Declared as `unknown` so
   // consumers that need them have to cast with a narrow helper rather than
   // sprinkling `any` everywhere.
