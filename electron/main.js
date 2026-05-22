@@ -644,6 +644,43 @@ ipcMain.handle('export-data', async () => {
   }
 });
 
+// Remediation script download — Control Heatmap feature
+const REMEDIATION_SCRIPTS = require('./processing/remediation-scripts');
+
+ipcMain.handle('download-remediation-script', async (event, controlId) => {
+  try {
+    const entry = REMEDIATION_SCRIPTS[controlId];
+    if (!entry || entry.type !== 'script') {
+      return { error: `No PowerShell script available for control ${controlId}` };
+    }
+
+    const { filePath, canceled } = await dialog.showSaveDialog(mainWindow, {
+      title: `Download Remediation Script — ${controlId}`,
+      defaultPath: `fix-${controlId}.ps1`,
+      filters: [{ name: 'PowerShell Script', extensions: ['ps1'] }],
+    });
+
+    if (canceled || !filePath) return { canceled: true };
+
+    const scriptContent = entry.scriptLines.join('\n') + '\n';
+    fs.writeFileSync(filePath, scriptContent, 'utf8');
+
+    // Audit event — store basename only (never log full path: may contain username/machine name)
+    try {
+      if (licenseManager.isFeatureAllowed('enterprise_audit_log')) {
+        logAuditEvent(database.db, 'remediation_script_downloaded', {
+          detail: { control_id: controlId, file_name: path.basename(filePath) },
+        });
+      }
+    } catch (_) {}
+
+    return { success: true, file_name: path.basename(filePath) };
+  } catch (error) {
+    log.error('download-remediation-script failed:', error);
+    return { error: error.message };
+  }
+});
+
 // ---- App Lifecycle ----
 
 app.whenReady().then(async () => {

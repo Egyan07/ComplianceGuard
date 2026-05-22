@@ -152,6 +152,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setEnterpriseConfig: (payload) => ipcRenderer.invoke('set-enterprise-config', payload),
   getAuditLog: (params) => ipcRenderer.invoke('get-audit-log', params),
   exportData: () => ipcRenderer.invoke('export-data'),
+  downloadRemediationScript: (controlId) => ipcRenderer.invoke('download-remediation-script', controlId),
 });
 
 // Windows-specific APIs (only exposed on Windows)
