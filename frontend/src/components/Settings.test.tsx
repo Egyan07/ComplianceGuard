@@ -60,7 +60,7 @@ describe('Settings', () => {
 
   it('shows SOC 2 as active framework', () => {
     renderWithTheme(<Settings />);
-    expect(screen.getByText('Active')).toBeInTheDocument();
+    expect(screen.getAllByText('Active').length).toBeGreaterThanOrEqual(3);
   });
 
   it('shows display section with dark mode toggle', () => {
@@ -113,8 +113,12 @@ describe('Settings', () => {
 
     it('calls setSchedule when enable toggle is clicked', async () => {
       renderWithTheme(<Settings />);
-      await waitFor(() => screen.getByText('Automatic Collection'));
-      const toggle = screen.getByRole('checkbox', { name: /enable automatic collection/i });
+      // Wait for schedule to load (toggle becomes enabled)
+      await waitFor(() => {
+        const toggle = screen.getByRole('switch', { name: /enable automatic collection/i });
+        expect(toggle).not.toBeDisabled();
+      });
+      const toggle = screen.getByRole('switch', { name: /enable automatic collection/i });
       fireEvent.click(toggle);
       await waitFor(() => {
         expect((window as any).electronAPI.setSchedule).toHaveBeenCalledWith(
