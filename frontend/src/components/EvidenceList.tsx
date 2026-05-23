@@ -208,7 +208,7 @@ const EvidenceList: React.FC<EvidenceListProps> = ({
           variants={listVariants}
           initial="hidden"
           animate="visible"
-          style={{ maxHeight: 400, overflow: 'auto' }}
+          style={{ width: '100%' }}
         >
           {filteredItems.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 4 }}>

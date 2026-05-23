@@ -11,7 +11,6 @@ interface TopbarProps {
   onToggleMode: () => void;
 }
 
-const MotionIconButton = motion(IconButton);
 
 const Topbar: React.FC<TopbarProps> = ({ mode, onToggleMode }) => {
   const { tier } = useLicense();
@@ -63,16 +62,20 @@ const Topbar: React.FC<TopbarProps> = ({ mode, onToggleMode }) => {
         <Box sx={{ flex: 1 }} />
 
         <Tooltip title={mode === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}>
-          <MotionIconButton
+          <IconButton
             size="small"
             onClick={onToggleMode}
             aria-label={mode === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
-            animate={{ rotate: mode === 'dark' ? 180 : 0 }}
-            transition={{ duration: 0.3 }}
             sx={{ color: 'text.secondary' }}
           >
-            {mode === 'light' ? <DarkMode fontSize="small" /> : <LightMode fontSize="small" />}
-          </MotionIconButton>
+            <motion.span
+              animate={{ rotate: mode === 'dark' ? 180 : 0 }}
+              transition={{ duration: 0.3 }}
+              style={{ display: 'flex', alignItems: 'center' }}
+            >
+              {mode === 'light' ? <DarkMode fontSize="small" /> : <LightMode fontSize="small" />}
+            </motion.span>
+          </IconButton>
         </Tooltip>
 
         <motion.div

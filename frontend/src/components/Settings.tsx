@@ -528,7 +528,7 @@ const Settings: React.FC = () => {
               <ListItemIcon><Palette /></ListItemIcon>
               <ListItemText
                 primary="Dark Mode"
-                secondary="Switch between light and dark theme (coming soon)"
+                secondary="Switch between light and dark theme"
               />
               <ListItemSecondaryAction>
                 <Switch
@@ -562,17 +562,17 @@ const Settings: React.FC = () => {
             <ListItem>
               <ListItemText
                 primary="ISO 27001"
-                secondary="Information security management"
+                secondary="Information security management — 47 controls across all 14 Annex A domains"
               />
-              <Chip label="Coming Soon" size="small" variant="outlined" />
+              <Chip label="Active" size="small" color="success" />
             </ListItem>
             <Divider component="li" />
             <ListItem>
               <ListItemText
                 primary="HIPAA"
-                secondary="Health information privacy and security"
+                secondary="Health information privacy and security — 47 safeguards across 45 CFR Part 164"
               />
-              <Chip label="Coming Soon" size="small" variant="outlined" />
+              <Chip label="Active" size="small" color="success" />
             </ListItem>
             <Divider component="li" />
             <ListItem>

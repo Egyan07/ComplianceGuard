@@ -60,7 +60,7 @@ describe('Settings', () => {
 
   it('shows SOC 2 as active framework', () => {
     renderWithTheme(<Settings />);
-    expect(screen.getByText('Active')).toBeInTheDocument();
+    expect(screen.getAllByText('Active').length).toBeGreaterThanOrEqual(3);
   });
 
   it('shows display section with dark mode toggle', () => {
