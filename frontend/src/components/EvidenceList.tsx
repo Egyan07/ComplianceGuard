@@ -147,7 +147,7 @@ const EvidenceList: React.FC<EvidenceListProps> = ({
   }
 
   return (
-    <Card sx={{ height: '100%', minHeight: 500 }}>
+    <Card sx={{ height: '100%' }}>
       <CardHeader
         title="Evidence List"
         subheader={`${filteredItems.length} items`}
@@ -208,7 +208,14 @@ const EvidenceList: React.FC<EvidenceListProps> = ({
           variants={listVariants}
           initial="hidden"
           animate="visible"
-          style={{ width: '100%' }}
+          style={{
+            maxHeight: 380,
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            paddingRight: 2,
+            scrollbarWidth: 'thin',
+            scrollbarColor: 'rgba(100,116,139,0.25) transparent',
+          }}
         >
           {filteredItems.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 4 }}>
