@@ -92,6 +92,8 @@ const FrameworkTabs: React.FC<{ selected: 1|2|3; onChange: (fw: 1|2|3) => void }
       <Box
         key={fw.id}
         component="button"
+        type="button"
+        aria-pressed={selected === fw.id}
         onClick={() => onChange(fw.id)}
         sx={{
           font: 'inherit', cursor: 'pointer', outline: 'none',
@@ -101,6 +103,8 @@ const FrameworkTabs: React.FC<{ selected: 1|2|3; onChange: (fw: 1|2|3) => void }
           bgcolor: selected === fw.id ? '#1d1d1f' : 'transparent',
           color: selected === fw.id ? '#ffffff' : '#707070',
           transition: 'all 0.1s',
+          '&:hover': { color: '#1d1d1f' },
+          '&:focus-visible': { outline: '2px solid #1d1d1f', outlineOffset: 2 },
         }}
       >
         {fw.label}
@@ -112,7 +116,7 @@ const FrameworkTabs: React.FC<{ selected: 1|2|3; onChange: (fw: 1|2|3) => void }
 const ScoreHero: React.FC<{ pts: TrendDisplayPoint[] }> = ({ pts }) => {
   const latest = pts[pts.length - 1];
   const delta = pts.length >= 2 ? pts[pts.length - 1].score - pts[0].score : undefined;
-  const dotColor = latest?.status === 'compliant' ? '#1DB954' : latest?.status === 'partial' ? '#F59E0B' : '#b64400';
+  const dotColor = latest?.status === 'compliant' ? '#34c759' : latest?.status === 'partial' ? '#ff9f0a' : '#b64400';
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', mb: '28px' }}>
@@ -136,7 +140,7 @@ const ScoreHero: React.FC<{ pts: TrendDisplayPoint[] }> = ({ pts }) => {
       {delta !== undefined && (
         <Box sx={{ display: 'flex', gap: '32px', alignItems: 'flex-end', pb: '8px' }}>
           <Box sx={{ textAlign: 'right' }}>
-            <Typography sx={{ fontSize: '14px', fontWeight: 600, letterSpacing: '-0.2px', color: delta >= 0 ? '#1DB954' : '#b64400', fontVariantNumeric: 'tabular-nums' }}>
+            <Typography sx={{ fontSize: '14px', fontWeight: 600, letterSpacing: '-0.2px', color: delta >= 0 ? '#34c759' : '#b64400', fontVariantNumeric: 'tabular-nums' }}>
               {delta >= 0 ? '↑' : '↓'} {delta >= 0 ? '+' : ''}{delta} pts
             </Typography>
             <Typography sx={{ fontSize: '12px', color: '#707070', letterSpacing: '-0.1px', mt: '1px' }}>
@@ -174,9 +178,9 @@ const TrendChart: React.FC<{ pts: TrendDisplayPoint[]; geo: ChartGeometry }> = (
       <line x1="0" y1="18" x2={W} y2="18" stroke="#e8e8ed" strokeWidth="0.8" strokeDasharray="3 4" />
       <line x1="0" y1="36" x2={W} y2="36" stroke="#e8e8ed" strokeWidth="0.8" strokeDasharray="3 4" />
       <line x1="0" y1={H} x2={W} y2={H} stroke="#e8e8ed" strokeWidth="0.8" />
-      <text x="4" y="14" fontSize="10" fill="#1DB954" fontFamily="Inter" fontWeight="600" letterSpacing="0.02em" aria-hidden="true">≥80%</text>
-      <text x="4" y="32" fontSize="10" fill="#F59E0B" fontFamily="Inter" fontWeight="600" letterSpacing="0.02em" aria-hidden="true">≥60%</text>
-      <text x="4" y={H - 4} fontSize="10" fill="#b64400" fontFamily="Inter" fontWeight="600" letterSpacing="0.02em" aria-hidden="true">&lt;60%</text>
+      <text x="4" y="14" fontSize="10" fill="#34c759" fontFamily="Inter" fontWeight="600" letterSpacing="0.02em" aria-hidden="true">≥85%</text>
+      <text x="4" y="32" fontSize="10" fill="#ff9f0a" fontFamily="Inter" fontWeight="600" letterSpacing="0.02em" aria-hidden="true">≥70%</text>
+      <text x="4" y={H - 4} fontSize="10" fill="#b64400" fontFamily="Inter" fontWeight="600" letterSpacing="0.02em" aria-hidden="true">&lt;70%</text>
       {geo.fillPath && <path d={geo.fillPath} fill="url(#trendFill)" />}
       {geo.linePath && (
         <motion.path
@@ -200,7 +204,7 @@ const TrendChart: React.FC<{ pts: TrendDisplayPoint[]; geo: ChartGeometry }> = (
         return (
           <g>
             <rect x={lp.x - 38} y={lp.y - 22} width="76" height="18" rx="9" ry="9" fill="#1d1d1f" />
-            <text x={lp.x} y={lp.y - 10} fontSize="10" fill="#ffffff" fontFamily="Inter" fontWeight="600" textAnchor="middle" letterSpacing="-0.3">
+            <text x={lp.x} y={lp.y - 10} fontSize="10" fill="#ffffff" fontFamily="Inter" fontWeight="600" textAnchor="middle" style={{ letterSpacing: '-0.3px' }}>
               {latest?.score}% · now
             </text>
           </g>
@@ -218,8 +222,8 @@ const TrendChart: React.FC<{ pts: TrendDisplayPoint[]; geo: ChartGeometry }> = (
 );
 
 const STATUS_FILL: Record<TrendPoint['status'], string> = {
-  compliant: '#1d1d1f',
-  partial: '#6e6e73',
+  compliant: '#34c759',
+  partial: '#ff9f0a',
   non_compliant: '#b64400',
 };
 
@@ -238,7 +242,7 @@ const EvaluationTable: React.FC<{ pts: TrendDisplayPoint[] }> = ({ pts }) => (
         <Typography sx={{ fontSize: '15px', fontWeight: 600, letterSpacing: '-0.3px', width: '40px', textAlign: 'right', flexShrink: 0, fontVariantNumeric: 'tabular-nums', color: '#1d1d1f' }}>
           {p.score}%
         </Typography>
-        <Typography sx={{ fontSize: '12px', fontWeight: 500, letterSpacing: '-0.1px', width: '36px', textAlign: 'right', flexShrink: 0, fontVariantNumeric: 'tabular-nums', color: p.delta === undefined ? '#707070' : p.delta > 0 ? '#1DB954' : p.delta < 0 ? '#b64400' : '#707070' }}>
+        <Typography sx={{ fontSize: '12px', fontWeight: 500, letterSpacing: '-0.1px', width: '36px', textAlign: 'right', flexShrink: 0, fontVariantNumeric: 'tabular-nums', color: p.delta === undefined ? '#707070' : p.delta > 0 ? '#34c759' : p.delta < 0 ? '#b64400' : '#707070' }}>
           {p.delta === undefined ? '—' : p.delta > 0 ? `+${p.delta}` : p.delta === 0 ? '—' : `${p.delta}`}
         </Typography>
         <Typography sx={{ fontSize: '12px', fontWeight: 500, letterSpacing: '-0.1px', color: '#707070', width: '110px', textAlign: 'right', flexShrink: 0 }}>
