@@ -91,6 +91,7 @@ export interface ElectronAPI extends ElectronLicenseAPI {
   setSchedule: (config: ScheduleConfig) => Promise<{ config: ScheduleConfig; next_run_at: string | null } | { error: string }>;
   runCollectionNow: () => Promise<CollectionResult | { error: string }>;
   downloadRemediationScript: (controlId: string) => Promise<{ success?: boolean; file_name?: string; canceled?: boolean; error?: string }>;
+  getEvaluationHistory: (frameworkId: number) => Promise<Array<{ id: number; framework_id: number; evaluation_date: string; overall_score: number; status: string; findings: Record<string, unknown> }> | { error: string }>;
   // Other IPCs exposed by electron/preload.js. Declared as `unknown` so
   // consumers that need them have to cast with a narrow helper rather than
   // sprinkling `any` everywhere.
