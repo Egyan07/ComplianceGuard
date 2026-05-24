@@ -17,8 +17,7 @@ import {
   Alert,
   Chip,
   Divider,
-  LinearProgress,
-  Tooltip
+  LinearProgress
 } from '@mui/material';
 import {
   Timeline,
@@ -34,6 +33,9 @@ import {
 } from '@mui/icons-material';
 
 import { useLicense } from '../contexts/LicenseContext';
+import ScoreTrend from './ScoreTrend';
+import { getScoreTrend } from '../services/api';
+import type { TrendPoint } from '../services/api';
 
 const isElectron = !!(window as any).electronAPI;
 
@@ -65,35 +67,43 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
   const [evaluations, setEvaluations] = useState<EvaluationRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedFramework, setSelectedFramework] = useState<1 | 2 | 3>(1);
+  const [trendPoints, setTrendPoints] = useState<TrendPoint[]>([]);
+  const [trendLoading, setTrendLoading] = useState(false);
 
-  const fetchHistory = async () => {
-    if (!isElectron) {
-      setLoading(false);
-      return;
-    }
-
+  const fetchHistory = async (frameworkId: 1 | 2 | 3 = selectedFramework) => {
     setLoading(true);
+    setTrendLoading(true);
     setError(null);
-
     try {
-      const api = (window as any).electronAPI;
-      const history = await api.getEvaluationHistory(1);
-
-      if (history?.error) {
-        setError(history.error);
-      } else {
-        setEvaluations(Array.isArray(history) ? history : []);
+      const trend = await getScoreTrend(frameworkId);
+      setTrendPoints(trend);
+      if (isElectron) {
+        const api = (window as any).electronAPI;
+        const history = await api.getEvaluationHistory(frameworkId);
+        if (history?.error) {
+          setError(history.error);
+        } else {
+          setEvaluations(Array.isArray(history) ? history : []);
+        }
       }
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
+      setTrendLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchHistory();
+    fetchHistory(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    fetchHistory(selectedFramework);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedFramework]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -130,72 +140,6 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
     return <TrendingFlat sx={{ color: '#9E9E9E', fontSize: 20 }} />;
   };
 
-  // Simple score bar chart
-  const ScoreChart: React.FC = () => {
-    if (evaluations.length === 0) return null;
-
-    const recentEvals = evaluations.slice(0, 10).reverse(); // oldest first for chart
-    const maxScore = 100;
-
-    return (
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <TrendingUp color="primary" />
-          Score Trend
-        </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1, height: 180, mt: 2, px: 1 }}>
-          {recentEvals.map((eval_, i) => {
-            const score = Math.round(eval_.overall_score || eval_.findings?.overall_score || 0);
-            const height = Math.max(4, (score / maxScore) * 160);
-
-            return (
-              <Tooltip
-                key={eval_.id || i}
-                title={`${new Date(eval_.evaluation_date).toLocaleDateString()} — ${score}%`}
-              >
-                <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <Typography variant="caption" sx={{ fontWeight: 600, mb: 0.5, color: getScoreColor(score) }}>
-                    {score}%
-                  </Typography>
-                  <Box
-                    sx={{
-                      width: '100%',
-                      maxWidth: 50,
-                      height: height,
-                      backgroundColor: getScoreColor(score),
-                      borderRadius: '4px 4px 0 0',
-                      opacity: 0.85,
-                      transition: 'height 0.3s',
-                      '&:hover': { opacity: 1 }
-                    }}
-                  />
-                  <Typography variant="caption" sx={{ mt: 0.5, color: 'text.secondary', fontSize: '0.65rem' }}>
-                    {new Date(eval_.evaluation_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                  </Typography>
-                </Box>
-              </Tooltip>
-            );
-          })}
-        </Box>
-        {recentEvals.length >= 2 && (
-          <Box sx={{ mt: 1, textAlign: 'center' }}>
-            <Typography variant="caption" color="text.secondary">
-              {recentEvals.length > 2 ? `Last ${recentEvals.length} evaluations` : 'Last 2 evaluations'}
-              {' — '}
-              {(() => {
-                const first = recentEvals[0].overall_score || recentEvals[0].findings?.overall_score || 0;
-                const last = recentEvals[recentEvals.length - 1].overall_score || recentEvals[recentEvals.length - 1].findings?.overall_score || 0;
-                const diff = Math.round(last - first);
-                if (diff > 0) return <span style={{ color: '#66BB6A' }}>+{diff}% improvement</span>;
-                if (diff < 0) return <span style={{ color: '#EF5350' }}>{diff}% decline</span>;
-                return <span>No change</span>;
-              })()}
-            </Typography>
-          </Box>
-        )}
-      </Paper>
-    );
-  };
 
   if (!isFeatureAllowed('evaluation_history')) {
     return (
@@ -222,18 +166,11 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Box>
-          <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold' }}>
-            Evaluation History
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Track your compliance score over time
-          </Typography>
-        </Box>
+        <Box />
         <Button
           variant="outlined"
           startIcon={<Refresh />}
-          onClick={fetchHistory}
+          onClick={() => fetchHistory(selectedFramework)}
           disabled={loading}
         >
           Refresh
@@ -264,8 +201,13 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
         </Paper>
       ) : (
         <>
-          {/* Score Chart */}
-          <ScoreChart />
+          {/* Score Trend */}
+          <ScoreTrend
+            evaluations={trendPoints}
+            loading={trendLoading}
+            selectedFramework={selectedFramework}
+            onFrameworkChange={(fw) => setSelectedFramework(fw)}
+          />
 
           {/* Evaluation List */}
           <Paper>
