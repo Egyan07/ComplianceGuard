@@ -10,6 +10,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+**Compliance Score Trend — Track Your Progress Over Time**
+- New `ScoreTrend` component on the History page replaces the previous basic bar chart with an Apple-quality analytics view.
+- 80px score hero with negative letter-spacing and `tabular-nums` — the current score is the visual centrepiece.
+- Pure SVG line chart with **monotone cubic Bézier interpolation** (Fritsch-Carlson algorithm) — guarantees the curve never overshoots and never implies scores that didn't exist. Critical for audit-grade data visualisation.
+- Compliance zone bands: "Good (≥85%)", "On Track (≥70%)", "Needs Attention (<70%)" shown as subtle horizontal guide lines matching the app's existing status vocabulary.
+- Framework tabs (SOC 2 / ISO 27001 / HIPAA) — switches the chart and evaluation list to the selected framework.
+- Hero stat row: overall improvement delta (↑ +N pts since first evaluation) + evaluation count.
+- Evaluation table in Apple two-column style — date · score bar · percentage · delta · status — sorted latest-first.
+- Empty state when no evaluations: "Run your first evaluation to begin tracking compliance progression over time."
+- Loading skeleton while data is fetching.
+- `TrendPoint` and `TrendDisplayPoint` types added to `api.ts` with `getScoreTrend(frameworkId)` helper for both Electron (IPC) and web (REST) modes.
+- No new backend endpoint — reuses existing `GET /compliance/evaluations/history` and `get-evaluation-history` IPC.
+- Apple design tokens throughout: `#f5f5f7` fog canvas, `#1d1d1f` ink, 28px border-radius cards, zero box-shadow, `#34c759`/`#ff9f0a`/`#b64400` for status colours.
+
+
+
 **Control Heatmap — See Your Gaps**
 - New `ControlHeatmap` component mounted on the Dashboard below ScoreHero — shows all 29 SOC 2 controls as detail rows with score bars, status pills (Pass / Partial / Fail), and category groupings (CC, A, C, PI).
 - Filter chips: All / Failing / Partial — instantly narrows the view to actionable controls.

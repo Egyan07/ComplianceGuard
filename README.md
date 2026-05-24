@@ -602,6 +602,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 | **Air-gapped Enterprise tier** — tamper-evident audit log (SHA-256 hash chain), RBAC (admin/auditor), custom PDF branding, NDJSON export, Docker offline bundle, hardened TLS Nginx | PCI DSS framework |
 | **Control Heatmap** — per-control score bars, status pills, category groupings; shows all 29 SOC 2 controls at a glance | Evidence status workflow |
 | **Remediation Scripts** — one-click PowerShell download for 6 automatable SOC 2 controls (firewall, password policy, audit policy, event log, Defender); guidance steps for all others; inline accordion with re-scan flow | macOS and Linux support |
+| **Compliance Score Trend** — Apple-quality time-series chart on the History page; monotone SVG curve, 80px score hero, zone bands (Good/On Track/Needs Attention), evaluation table with deltas; framework tabs; no chart library | GCP and Azure cloud evidence |
 | JWT auth + refresh tokens + login UI | GCP and Azure cloud evidence |
 | Premium UI — full overhaul to Linear/Stripe quality (design system, global nav, score hero, micro-interactions) | |
 | FastAPI + PostgreSQL + Docker + Nginx | |
