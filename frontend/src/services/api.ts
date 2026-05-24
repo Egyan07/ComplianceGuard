@@ -173,6 +173,57 @@ export interface ComplianceEvaluation {
   recommendations: Array<Record<string, any>>;
 }
 
+// ---- Score Trend ----
+
+export interface TrendPoint {
+  date: string;          // ISO 8601 — always chronologically ascending (invariant enforced by getScoreTrend)
+  score: number;         // 0–100
+  status: 'compliant' | 'partial' | 'non_compliant';
+}
+
+export interface TrendDisplayPoint extends TrendPoint {
+  formattedDate: string;  // e.g. "Jun 1"
+  statusLabel: string;    // "Good Standing" | "On Track" | "Needs Attention"
+  delta?: number;         // undefined for first point; thisScore - previousScore for rest
+}
+
+/**
+ * Returns evaluation history as TrendPoint[], sorted ascending by date.
+ * Electron: reads local SQLite via IPC.
+ * Web: calls GET /api/v1/compliance/evaluations/history.
+ */
+export async function getScoreTrend(frameworkId: 1 | 2 | 3 = 1): Promise<TrendPoint[]> {
+  if (isElectron) {
+    const api = getElectronAPI();
+    const history = await api.getEvaluationHistory(frameworkId);
+    if (!Array.isArray(history)) return [];
+    return history
+      .map((r: any) => ({
+        date: r.evaluation_date,
+        score: Math.round(r.overall_score ?? r.findings?.overall_score ?? 0),
+        status: normaliseStatus(r.status ?? r.findings?.status),
+      }))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }
+  // Web mode
+  const response = await apiClient.get('/compliance/evaluations/history');
+  const rows: any[] = response.data ?? [];
+  return rows
+    .filter((r: any) => r.framework_id === frameworkId || frameworkId === 1)
+    .map((r: any) => ({
+      date: r.evaluation_date,
+      score: Math.round((r.overall_score ?? 0) * (r.overall_score <= 1 ? 100 : 1)),
+      status: normaliseStatus(r.compliance_status ?? r.status),
+    }))
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+}
+
+function normaliseStatus(raw: string | undefined): TrendPoint['status'] {
+  if (raw === 'compliant') return 'compliant';
+  if (raw === 'partial' || raw === 'partial_compliance' || raw === 'at_risk') return 'partial';
+  return 'non_compliant';
+}
+
 // ---- Electron IPC API ----
 
 function getElectronAPI(): any {
