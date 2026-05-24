@@ -6,7 +6,6 @@ status indicators, and the ability to view details of each evaluation.
 */
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import {
   Box,
   Container,
@@ -21,9 +20,6 @@ import {
 } from '@mui/material';
 import {
   Timeline,
-  TrendingUp,
-  TrendingDown,
-  TrendingFlat,
   Assessment,
   Refresh,
   CheckCircle,
@@ -71,7 +67,7 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
   const [trendPoints, setTrendPoints] = useState<TrendPoint[]>([]);
   const [trendLoading, setTrendLoading] = useState(false);
 
-  const fetchHistory = async (frameworkId: 1 | 2 | 3 = selectedFramework) => {
+  const fetchHistory = async (frameworkId: 1 | 2 | 3) => {
     setLoading(true);
     setTrendLoading(true);
     setError(null);
@@ -94,11 +90,6 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
       setTrendLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchHistory(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     fetchHistory(selectedFramework);
@@ -129,17 +120,6 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
     return '#EF5350';
   };
 
-  const getTrendIcon = (index: number) => {
-    if (index >= evaluations.length - 1) return <TrendingFlat sx={{ color: '#9E9E9E', fontSize: 20 }} />;
-
-    const current = evaluations[index].overall_score || evaluations[index].findings?.overall_score || 0;
-    const previous = evaluations[index + 1].overall_score || evaluations[index + 1].findings?.overall_score || 0;
-
-    if (current > previous) return <TrendingUp sx={{ color: '#66BB6A', fontSize: 20 }} />;
-    if (current < previous) return <TrendingDown sx={{ color: '#EF5350', fontSize: 20 }} />;
-    return <TrendingFlat sx={{ color: '#9E9E9E', fontSize: 20 }} />;
-  };
-
 
   if (!isFeatureAllowed('evaluation_history')) {
     return (
@@ -165,8 +145,7 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Box />
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: 3 }}>
         <Button
           variant="outlined"
           startIcon={<Refresh />}
@@ -186,143 +165,143 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
           <CircularProgress size={50} />
         </Box>
       ) : !isElectron ? (
-        <Alert severity="info">
-          Evaluation history requires the desktop application.
-        </Alert>
-      ) : evaluations.length === 0 ? (
-        <Paper sx={{ p: 6, textAlign: 'center' }}>
-          <Assessment sx={{ fontSize: 60, color: 'text.disabled', mb: 2 }} />
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            No evaluations yet
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Go to the Dashboard, collect evidence, and run "Evaluate Compliance" to see results here.
-          </Typography>
-        </Paper>
-      ) : (
         <>
-          {/* Score Trend */}
           <ScoreTrend
             evaluations={trendPoints}
             loading={trendLoading}
             selectedFramework={selectedFramework}
             onFrameworkChange={(fw) => setSelectedFramework(fw)}
           />
-
-          {/* Evaluation List */}
-          <Paper>
-            <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-              <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Timeline color="primary" />
-                All Evaluations ({evaluations.length})
+          <Alert severity="info">
+            Evaluation history requires the desktop application.
+          </Alert>
+        </>
+      ) : (
+        <>
+          <ScoreTrend
+            evaluations={trendPoints}
+            loading={trendLoading}
+            selectedFramework={selectedFramework}
+            onFrameworkChange={(fw) => setSelectedFramework(fw)}
+          />
+          {evaluations.length === 0 ? (
+            <Paper sx={{ p: 6, textAlign: 'center' }}>
+              <Assessment sx={{ fontSize: 60, color: 'text.disabled', mb: 2 }} />
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                No evaluations yet
               </Typography>
-            </Box>
+              <Typography variant="body2" color="text.secondary">
+                Go to the Dashboard, collect evidence, and run "Evaluate Compliance" to see results here.
+              </Typography>
+            </Paper>
+          ) : (
+            <Paper>
+              <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Timeline color="primary" />
+                  All Evaluations ({evaluations.length})
+                </Typography>
+              </Box>
 
-            {evaluations.map((eval_, index) => {
-              const score = Math.round(eval_.overall_score || eval_.findings?.overall_score || 0);
-              const findings = eval_.findings || {};
+              {evaluations.map((eval_, index) => {
+                const score = Math.round(eval_.overall_score || eval_.findings?.overall_score || 0);
+                const findings = eval_.findings || {};
 
-              return (
-                <React.Fragment key={eval_.id || index}>
-                  <Box
-                    sx={{
-                      p: 3,
-                      borderLeft: '2px solid', borderColor: 'divider', pl: 2,
-                      '&:hover': { backgroundColor: 'action.hover' },
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      {/* Status icon */}
-                      {getStatusIcon(eval_.status || findings.status || 'not_assessed')}
+                return (
+                  <React.Fragment key={eval_.id || index}>
+                    <Box
+                      sx={{
+                        p: 3,
+                        borderLeft: '2px solid', borderColor: 'divider', pl: 2,
+                        '&:hover': { backgroundColor: 'action.hover' },
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        {/* Status icon */}
+                        {getStatusIcon(eval_.status || findings.status || 'not_assessed')}
 
-                      {/* Main content */}
-                      <Box sx={{ flex: 1 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                            {new Date(eval_.evaluation_date).toLocaleDateString('en-US', {
-                              year: 'numeric', month: 'long', day: 'numeric'
-                            })}
-                          </Typography>
-                          <Chip
-                            label={(eval_.status || findings.status || 'not assessed').replace(/_/g, ' ').toUpperCase()}
-                            size="small"
-                            color={getStatusColor(eval_.status || findings.status || '') as any}
-                            variant="outlined"
-                          />
-                          <motion.div
-                            initial={{ scale: 0.8 }}
-                            animate={{ scale: 1 }}
-                            transition={{ duration: 0.12 }}
+                        {/* Main content */}
+                        <Box sx={{ flex: 1 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                              {new Date(eval_.evaluation_date).toLocaleDateString('en-US', {
+                                year: 'numeric', month: 'long', day: 'numeric'
+                              })}
+                            </Typography>
+                            <Chip
+                              label={(eval_.status || findings.status || 'not assessed').replace(/_/g, ' ').toUpperCase()}
+                              size="small"
+                              color={getStatusColor(eval_.status || findings.status || '') as any}
+                              variant="outlined"
+                            />
+                          </Box>
+
+                          {/* Control breakdown */}
+                          <Box sx={{ display: 'flex', gap: 3, mt: 1 }}>
+                            <Typography variant="body2" color="text.secondary">
+                              Controls: <strong>{findings.total_controls || 0}</strong>
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: '#66BB6A' }}>
+                              Compliant: <strong>{findings.compliant_controls || 0}</strong>
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: '#FFA726' }}>
+                              Partial: <strong>{findings.partial_controls || 0}</strong>
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: '#EF5350' }}>
+                              Non-compliant: <strong>{findings.non_compliant_controls || 0}</strong>
+                            </Typography>
+                          </Box>
+
+                          {/* Score bar */}
+                          <Box sx={{ mt: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <LinearProgress
+                              variant="determinate"
+                              value={score}
+                              sx={{
+                                flex: 1,
+                                height: 6,
+                                borderRadius: 3,
+                                backgroundColor: 'rgba(0,0,0,0.08)',
+                                '& .MuiLinearProgress-bar': {
+                                  backgroundColor: getScoreColor(score),
+                                  borderRadius: 3
+                                }
+                              }}
+                            />
+                          </Box>
+                        </Box>
+
+                        {/* Score */}
+                        <Box sx={{ textAlign: 'center', minWidth: 80 }}>
+                          <Typography
+                            variant="h4"
+                            sx={{ fontWeight: 700, color: getScoreColor(score), lineHeight: 1 }}
                           >
-                            {getTrendIcon(index)}
-                          </motion.div>
-                        </Box>
-
-                        {/* Control breakdown */}
-                        <Box sx={{ display: 'flex', gap: 3, mt: 1 }}>
-                          <Typography variant="body2" color="text.secondary">
-                            Controls: <strong>{findings.total_controls || 0}</strong>
+                            {score}%
                           </Typography>
-                          <Typography variant="body2" sx={{ color: '#66BB6A' }}>
-                            Compliant: <strong>{findings.compliant_controls || 0}</strong>
+                          <Typography variant="caption" color="text.secondary">
+                            score
                           </Typography>
-                          <Typography variant="body2" sx={{ color: '#FFA726' }}>
-                            Partial: <strong>{findings.partial_controls || 0}</strong>
-                          </Typography>
-                          <Typography variant="body2" sx={{ color: '#EF5350' }}>
-                            Non-compliant: <strong>{findings.non_compliant_controls || 0}</strong>
-                          </Typography>
-                        </Box>
-
-                        {/* Score bar */}
-                        <Box sx={{ mt: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <LinearProgress
-                            variant="determinate"
-                            value={score}
-                            sx={{
-                              flex: 1,
-                              height: 6,
-                              borderRadius: 3,
-                              backgroundColor: 'rgba(0,0,0,0.08)',
-                              '& .MuiLinearProgress-bar': {
-                                backgroundColor: getScoreColor(score),
-                                borderRadius: 3
-                              }
-                            }}
-                          />
                         </Box>
                       </Box>
 
-                      {/* Score */}
-                      <Box sx={{ textAlign: 'center', minWidth: 80 }}>
-                        <Typography
-                          variant="h4"
-                          sx={{ fontWeight: 700, color: getScoreColor(score), lineHeight: 1 }}
-                        >
-                          {score}%
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          score
-                        </Typography>
-                      </Box>
+                      {/* Recommendations count */}
+                      {findings.recommendations && findings.recommendations.length > 0 && (
+                        <Box sx={{ mt: 1.5, ml: 5 }}>
+                          <Typography variant="caption" color="text.secondary">
+                            {findings.recommendations.filter((r: any) => r.priority === 'high').length} high priority
+                            {' / '}
+                            {findings.recommendations.length} total recommendations
+                          </Typography>
+                        </Box>
+                      )}
                     </Box>
-
-                    {/* Recommendations count */}
-                    {findings.recommendations && findings.recommendations.length > 0 && (
-                      <Box sx={{ mt: 1.5, ml: 5 }}>
-                        <Typography variant="caption" color="text.secondary">
-                          {findings.recommendations.filter((r: any) => r.priority === 'high').length} high priority
-                          {' / '}
-                          {findings.recommendations.length} total recommendations
-                        </Typography>
-                      </Box>
-                    )}
-                  </Box>
-                  {index < evaluations.length - 1 && <Divider />}
-                </React.Fragment>
-              );
-            })}
-          </Paper>
+                    {index < evaluations.length - 1 && <Divider />}
+                  </React.Fragment>
+                );
+              })}
+            </Paper>
+          )}
         </>
       )}
     </Container>
