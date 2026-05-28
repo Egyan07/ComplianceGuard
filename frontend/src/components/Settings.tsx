@@ -80,7 +80,6 @@ const Settings: React.FC = () => {
       api.cloudGetConfig().then((cfg: any) => setCloudConfig(cfg));
       api.getSchedule().then((s: any) => setScheduleState(s));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isElectron]);
 
   const handleBackup = async () => {

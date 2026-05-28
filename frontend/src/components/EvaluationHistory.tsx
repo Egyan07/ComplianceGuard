@@ -93,7 +93,6 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
 
   useEffect(() => {
     fetchHistory(selectedFramework);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFramework]);
 
   const getStatusIcon = (status: string) => {
