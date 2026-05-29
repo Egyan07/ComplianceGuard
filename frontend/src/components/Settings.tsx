@@ -72,13 +72,13 @@ const Settings: React.FC = () => {
     if (isElectron) {
       const api = (window as any).electronAPI;
 
-      api.getAppVersion().then((v: string) => setAppVersion(v));
-      api.getSystemInfo().then((info: any) => setSystemInfo(info));
+      api.getAppVersion().then((v: string) => setAppVersion(v)).catch(() => {});
+      api.getSystemInfo().then((info: any) => setSystemInfo(info)).catch(() => {});
       api.getUserSetting('dark_mode', 'false').then((val: string) => {
         setDarkMode(val === 'true');
-      });
-      api.cloudGetConfig().then((cfg: any) => setCloudConfig(cfg));
-      api.getSchedule().then((s: any) => setScheduleState(s));
+      }).catch(() => {});
+      api.cloudGetConfig().then((cfg: any) => setCloudConfig(cfg)).catch(() => {});
+      api.getSchedule().then((s: any) => setScheduleState(s)).catch(() => {});
     }
   }, [isElectron]);
 

@@ -71,6 +71,8 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
     setLoading(true);
     setTrendLoading(true);
     setError(null);
+    setEvaluations([]);
+    setTrendPoints([]);
     try {
       const trend = await getScoreTrend(frameworkId);
       setTrendPoints(trend);

@@ -209,7 +209,7 @@ export async function getScoreTrend(frameworkId: 1 | 2 | 3 = 1): Promise<TrendPo
   const response = await apiClient.get('/compliance/evaluations/history');
   const rows: any[] = response.data ?? [];
   return rows
-    .filter((r: any) => r.framework_id === frameworkId)
+    .filter((r: any) => Number(r.framework_id) === frameworkId)
     .map((r: any) => ({
       date: r.evaluation_date,
       score: Math.round((r.overall_score ?? 0) * (r.overall_score <= 1 ? 100 : 1)),

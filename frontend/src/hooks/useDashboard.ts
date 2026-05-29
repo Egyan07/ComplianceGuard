@@ -206,7 +206,7 @@ export function useDashboard() {
   useEffect(() => {
     if (isElectron) {
       const api = (window as any).electronAPI;
-      api.cloudGetConfig().then((cfg: any) => setCloudConnected(!!cfg?.connected));
+      api.cloudGetConfig().then((cfg: any) => setCloudConnected(!!cfg?.connected)).catch(() => setCloudConnected(false));
     }
   }, []);
 
