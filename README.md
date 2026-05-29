@@ -188,7 +188,7 @@ npm run package    # outputs to dist/
 | **Data residency** | Never leaves your control | Stored on vendor servers |
 | **Self-hosted option** | ✅ Full control | ❌ Cloud only |
 | **Air-gapped networks** | Desktop works completely offline | Requires internet |
-| **Cost** | Free tier available, Pro from $49/mo | $8k–$10k/year |
+| **Cost** | Free tier available, Pro from $399/mo | $8k–$10k/year |
 | **Compliance frameworks** | SOC 2 (29 controls), ISO 27001 (47), HIPAA (47) | SOC 2 only |
 | **Open source** | ✅ BSL 1.1 | ❌ Closed source |
 
@@ -413,17 +413,22 @@ ComplianceGuard is designed for Windows endpoints. The following limitations app
 
 ## Pricing
 
-Free gets you hooked. Pro makes you audit-ready.
+Free gets you hooked. Pro makes you audit-ready. Enterprise makes you untouchable.
+
+> ComplianceGuard fills the endpoint evidence gap that Vanta, Drata, and Sprinto cannot — they scan your cloud, we scan your machines. Use both and your SOC 2 Type II is fully covered.
 
 ### Self-Hosted (You Manage the Server)
 
 | | **Free** | **Pro** | **Enterprise** |
 |---|---|---|---|
-| **Price** | $0 forever | $49/mo | $249/mo + $12/machine |
+| **Price** | $0 forever | $399/mo | $1,299/mo flat |
+| **Billed annually** | — | $4,788/yr | $15,588/yr |
 | Evidence collection (all 8 categories) | ✅ | ✅ | ✅ |
 | SOC 2 controls | 12 core controls | All 29 controls | All 29 controls |
 | Overall compliance score | ✅ | ✅ | ✅ |
 | Per-control scoring + gap details | — | ✅ | ✅ |
+| Control heatmap + remediation scripts | — | ✅ | ✅ |
+| Compliance score trend (Type II timeline) | — | ✅ | ✅ |
 | Remediation recommendations | — | ✅ | ✅ |
 | Upload manual evidence (policies, docs) | — | ✅ | ✅ |
 | Evaluation history + trends | — | ✅ | ✅ |
@@ -437,13 +442,14 @@ Free gets you hooked. Pro makes you audit-ready.
 | Zero telemetry (ENTERPRISE_MODE) | — | — | ✅ |
 | Machines | 1 | Up to 10 | Unlimited |
 | Users | 1 | Up to 10 | Unlimited |
-| Support | Community | Email | Dedicated |
+| Support | Community | Email | Dedicated SLA |
 
 ### Managed Hosting (We Manage the Server)
 
 | | **Pro Managed** | **Enterprise Managed** |
 |---|---|---|
-| **Price** | $79/mo | $449/mo + $18/machine |
+| **Price** | $599/mo | $2,499/mo |
+| **Billed annually** | $7,188/yr | $29,988/yr |
 | Everything in Self-Hosted Pro/Enterprise | ✅ | ✅ |
 | Zero server setup required | ✅ | ✅ |
 | We handle uptime, backups, updates | ✅ | ✅ |
