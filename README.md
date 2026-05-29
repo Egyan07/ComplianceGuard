@@ -40,7 +40,7 @@ How it works: the desktop app collects OS-level evidence → maps it to complian
 
 <video src="https://github.com/user-attachments/assets/ae1dfc02-fac4-4c9e-9736-9cd7b96b22af" controls width="100%"></video>
 
-_A walkthrough of ComplianceGuard in action — collecting endpoint evidence, uploading manual documents, evaluating compliance against SOC 2 controls, exporting a PDF report, and managing a Pro license from Settings._
+_A walkthrough of ComplianceGuard in action — collecting endpoint evidence, evaluating compliance across SOC 2 controls, drilling into the per-control heatmap, downloading a remediation script, tracking score trends over time, and exporting an audit-ready PDF report._
 
 ## Screenshots
 
@@ -48,7 +48,7 @@ _A walkthrough of ComplianceGuard in action — collecting endpoint evidence, up
 
 ![ComplianceGuard Dashboard](assets/screenshots/Dashboard.png)
 
-The dashboard shows your real-time compliance score, per-category breakdowns, and one-click access to collect evidence, run an evaluation, upload manual evidence, and export a PDF report.
+The dashboard shows your real-time compliance score, per-category breakdowns, and one-click access to collect evidence, run an evaluation, upload manual evidence, and export a PDF report. The per-control heatmap below shows exactly which of the 29 SOC 2 controls are passing, partial, or failing — with inline remediation scripts for automatable findings.
 
 ### Evidence List
 
@@ -96,8 +96,6 @@ Contact us to set up a hosted instance. Install the desktop app on your machines
 ### Option A — Windows Installer (Recommended)
 
 Download `ComplianceGuard-Setup.exe` from the [latest release](https://github.com/Egyan07/ComplianceGuard/releases/latest), run the installer, and launch from the Start Menu.
-
-> ⚠️ Windows may show a SmartScreen warning as the installer is not yet code signed. Click **More info → Run anyway** to proceed. Alternatively, download the **portable `.exe`** from the same release — no installation required and no SmartScreen prompt.
 
 > **Requirements:** Windows 10/11 (64-bit)
 
@@ -166,7 +164,7 @@ App at `http://localhost:5173`. Create an account on first run.
 <details>
 <summary>Web — Hosted by Us</summary>
 
-Contact us at [alexisegyan1232@gmail.com](mailto:alexisegyan1232@gmail.com) to set up a managed hosted instance. We handle deployment, uptime, backups, and updates. You just install the desktop app and connect.
+Contact us at [hello@complianceguard.io](mailto:hello@complianceguard.io) to set up a managed hosted instance. We handle deployment, uptime, backups, and updates. You just install the desktop app and connect.
 
 </details>
 
@@ -529,7 +527,7 @@ npm run test:e2e         # Playwright e2e tests
 npm run lint             # ESLint
 npm run format:check     # Prettier
 
-# Backend (197 unit + 26 integration + 8 e2e)
+# Backend (253 unit + 26 integration + 8 e2e)
 cd backend
 python -m pytest tests/unit/ -v
 python -m pytest tests/integration/ -v
@@ -576,7 +574,7 @@ CI runs all tests on every push via GitHub Actions. **~568 tests passing** — b
 > They are on the roadmap. The backend and frontend are already cross-platform. The main work required is porting the Windows-specific evidence collector to macOS and Linux equivalents.
 
 ### How do I get a Pro or Enterprise license key?
-> Contact [alexisegyan1232@gmail.com](mailto:alexisegyan1232@gmail.com) for licensing. Managed hosted instances are also available — we handle deployment and infrastructure for you.
+> Contact [hello@complianceguard.io](mailto:hello@complianceguard.io) for licensing. Managed hosted instances are also available — we handle deployment and infrastructure for you.
 
 ### What is the Cloud Dashboard?
 > The Cloud Dashboard allows you to monitor multiple machines from one centralized web view. Each Windows machine runs the Electron desktop app. Go to Settings > Cloud Sync, enter your web server URL and credentials, and click Sync to Cloud. The web dashboard then shows all machines' compliance scores, last sync time, and fleet-level stats. Available for Pro and Enterprise users.
@@ -600,32 +598,20 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 
 | Done | Up Next |
 |------|---------|
-| Evidence collection (8 categories) | |
-| Scheduled automatic collection (Daily/Weekly) | |
-| SOC 2 / ISO 27001 / HIPAA scoring (desktop + web) | macOS and Linux support |
-| PDF reports + evaluation history | GCP and Azure cloud evidence |
-| Free / Pro / Enterprise licensing (Ed25519) | Setup video walkthrough |
-| **Air-gapped Enterprise tier** — tamper-evident audit log (SHA-256 hash chain), RBAC (admin/auditor), custom PDF branding, NDJSON export, Docker offline bundle, hardened TLS Nginx | PCI DSS framework |
-| **Control Heatmap** — per-control score bars, status pills, category groupings; shows all 29 SOC 2 controls at a glance | Evidence status workflow |
-| **Remediation Scripts** — one-click PowerShell download for 6 automatable SOC 2 controls (firewall, password policy, audit policy, event log, Defender); guidance steps for all others; inline accordion with re-scan flow | macOS and Linux support |
-| **Compliance Score Trend** — Apple-quality time-series chart on the History page; monotone SVG curve, 80px score hero, zone bands (Good/On Track/Needs Attention), evaluation table with deltas; framework tabs; no chart library | GCP and Azure cloud evidence |
-| JWT auth + refresh tokens + login UI | GCP and Azure cloud evidence |
-| Premium UI — full overhaul to Linear/Stripe quality (design system, global nav, score hero, micro-interactions) | |
-| FastAPI + PostgreSQL + Docker + Nginx | |
-| Cloud sync + multi-machine dashboard | |
-| Email delivery (verification + reset) | |
-| Web mode license enforcement (Ed25519) | |
-| Sentry error monitoring (backend + frontend) | |
-| Self-hosted + Managed hosting options | |
-| ISO 27001:2013 framework (47 controls, scoring + read-only API) | |
-| HIPAA Security Rule framework (47 safeguards, scoring + read-only API) | |
-| One-click Railway deploy (`railway.toml`) | |
-| Evidence search + status filter (`GET /evidence/items`) | |
-| Evidence-to-control mapping (`GET /evidence/items/{id}/controls`) | |
-| Web-mode compliance evaluation (`POST /evaluate-from-evidence`) | |
-| `GET /auth/me`, resend verification, profile update, account deletion | |
-| CI/CD with ~568 tests (~287 backend + 211 frontend Vitest + 43 Electron + 5 e2e) | |
-| Alembic migrations + rate limiting | |
+| Evidence collection (8 categories — event logs, registry, services, firewall, users, network, software, file permissions) | macOS and Linux support |
+| SOC 2 Type II (29 controls), ISO 27001:2013 (47 controls), HIPAA Security Rule (47 safeguards) | GCP and Azure cloud evidence |
+| Scheduled automatic evidence collection (Daily/Weekly) | PCI DSS framework |
+| PDF audit-ready reports + evaluation history | Setup video walkthrough |
+| **Control Heatmap** — per-control score bars, status pills, gap details; all 29 SOC 2 controls at a glance | Evidence status workflow |
+| **Remediation Scripts** — one-click PowerShell download for 6 automatable SOC 2 controls; guidance steps for all others; inline re-scan flow | |
+| **Compliance Score Trend** — time-series chart on the History page; compliance zone bands (Good/On Track/Needs Attention); framework tabs | |
+| **Air-gapped Enterprise tier** — tamper-evident SHA-256 hash chain audit log, RBAC, custom PDF branding, NDJSON export, offline Docker bundle, hardened TLS | |
+| Premium UI — Linear/Stripe quality design system, global nav, animated score hero, micro-interactions | |
+| Free / Pro / Enterprise licensing — Ed25519 cryptographic signatures, verified fully offline | |
+| Cloud sync + multi-machine compliance dashboard | |
+| JWT auth, email verification, password reset, rate limiting | |
+| Self-hosted (Docker) + Managed hosting options | |
+| One-click Railway deploy | |
 
 ## License
 
@@ -640,7 +626,7 @@ See [CHANGELOG.md](CHANGELOG.md) for full version history.
   <br><br>
   Built by <a href="https://github.com/Egyan07">Egyan07</a>
   <br><br>
-  <a href="mailto:alexisegyan1232@gmail.com"><img src="https://img.shields.io/badge/Email-Contact_for_Licensing-0d1117?style=for-the-badge&logo=gmail&logoColor=white" alt="Email"></a>
+  <a href="mailto:hello@complianceguard.io"><img src="https://img.shields.io/badge/hello%40complianceguard.io-Contact_for_Licensing-0d1117?style=for-the-badge&logo=gmail&logoColor=white" alt="Email"></a>
   &nbsp;
   <a href="https://github.com/Egyan07/ComplianceGuard/issues">Report a bug</a> · <a href="https://github.com/Egyan07/ComplianceGuard/issues/new">Request a feature</a>
 </p>
