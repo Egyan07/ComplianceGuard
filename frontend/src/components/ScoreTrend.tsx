@@ -201,10 +201,11 @@ const TrendChart: React.FC<{ pts: TrendDisplayPoint[]; geo: ChartGeometry }> = (
       {geo.svgPoints.length > 0 && (() => {
         const lp = geo.svgPoints[geo.svgPoints.length - 1];
         const latest = pts[pts.length - 1];
+        const pillarY = Math.max(22, lp.y);
         return (
           <g>
-            <rect x={lp.x - 38} y={lp.y - 22} width="76" height="18" rx="9" ry="9" fill="#1d1d1f" />
-            <text x={lp.x} y={lp.y - 10} fontSize="10" fill="#ffffff" fontFamily="Inter" fontWeight="600" textAnchor="middle" style={{ letterSpacing: '-0.3px' }}>
+            <rect x={lp.x - 38} y={pillarY - 22} width="76" height="18" rx="9" ry="9" fill="#1d1d1f" />
+            <text x={lp.x} y={pillarY - 10} fontSize="10" fill="#ffffff" fontFamily="Inter" fontWeight="600" textAnchor="middle" style={{ letterSpacing: '-0.3px' }}>
               {latest?.score}% · now
             </text>
           </g>

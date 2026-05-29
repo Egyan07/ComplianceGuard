@@ -33,6 +33,15 @@ const STATUS_CONFIG: Record<StatusKey, { label: string; color: string; bg: strin
 
 const AUTOMATABLE_CONTROLS = new Set(['CC6.1','CC6.2','CC6.3','CC6.5','CC7.1','CC7.2']);
 
+const SCRIPT_ACTIONS: Record<string, string> = {
+  'CC6.1': 'netsh advfirewall set allprofiles state on',
+  'CC6.2': 'secedit /configure — sets password policy (min 12 chars, 90-day expiry)',
+  'CC6.3': 'auditpol /set — enables logon + account management audit events',
+  'CC6.5': 'netsh advfirewall firewall add rule — blocks Telnet/FTP/RDP-public',
+  'CC7.1': 'wevtutil sl Security — sets 100MB log, enables process audit',
+  'CC7.2': 'Set-MpPreference — enables Defender RTP + Windows Update service',
+};
+
 export interface ControlHeatmapProps {
   controlResults: Record<string, ControlResult> | null;
   isElectron: boolean;
@@ -238,8 +247,8 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
                                   <Box component="span" sx={{ color: '#94A3B8', fontStyle: 'italic', display: 'block' }}>
                                     {'# ' + id + ' Remediation — run as Administrator'}
                                   </Box>
-                                  <Box component="span" sx={{ color: '#94A3B8', display: 'block', mt: 0.5 }}>
-                                    (download to see full script)
+                                  <Box component="span" sx={{ color: '#1D4ED8', fontWeight: 600, fontSize: '0.58rem', display: 'block', mt: 0.5 }}>
+                                    {SCRIPT_ACTIONS[id] ?? 'See downloaded .ps1 for full script'}
                                   </Box>
                                 </Box>
                               </Box>
@@ -289,7 +298,7 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
                                     </Typography>
                                     <Button
                                       size="small"
-                                      disabled={!onRescan}
+                                      disabled={!onRescan || remediationStates[id] === 'rescanning'}
                                       onClick={async () => {
                                         if (!onRescan) return;
                                         setRemediationStates(prev => ({ ...prev, [id]: 'rescanning' }));
