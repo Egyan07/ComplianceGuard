@@ -132,7 +132,8 @@ export function LicenseProvider({ children }: { children: ReactNode }) {
     if (!api) return { valid: false, error: 'Electron bridge unavailable' };
     const result = await api.activateLicense(key);
     if (result.valid) {
-      setLicenseInfo(result.payload ?? { tier: 'pro' });
+      // result.payload (getSafeLicenseInfo) omits tier — merge it from result.tier
+      setLicenseInfo({ tier: result.tier ?? 'pro', ...(result.payload ?? {}) });
     }
     return result;
   }, []);
