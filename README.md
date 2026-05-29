@@ -164,7 +164,7 @@ App at `http://localhost:5173`. Create an account on first run.
 <details>
 <summary>Web — Hosted by Us</summary>
 
-Contact us at [hello@complianceguard.io](mailto:hello@complianceguard.io) to set up a managed hosted instance. We handle deployment, uptime, backups, and updates. You just install the desktop app and connect.
+Contact us at [alexisegyan1232@gmail.com](mailto:alexisegyan1232@gmail.com) to set up a managed hosted instance. We handle deployment, uptime, backups, and updates. You just install the desktop app and connect.
 
 </details>
 
@@ -574,7 +574,7 @@ CI runs all tests on every push via GitHub Actions. **~568 tests passing** — b
 > They are on the roadmap. The backend and frontend are already cross-platform. The main work required is porting the Windows-specific evidence collector to macOS and Linux equivalents.
 
 ### How do I get a Pro or Enterprise license key?
-> Contact [hello@complianceguard.io](mailto:hello@complianceguard.io) for licensing. Managed hosted instances are also available — we handle deployment and infrastructure for you.
+> Contact [alexisegyan1232@gmail.com](mailto:alexisegyan1232@gmail.com) for licensing. Managed hosted instances are also available — we handle deployment and infrastructure for you.
 
 ### What is the Cloud Dashboard?
 > The Cloud Dashboard allows you to monitor multiple machines from one centralized web view. Each Windows machine runs the Electron desktop app. Go to Settings > Cloud Sync, enter your web server URL and credentials, and click Sync to Cloud. The web dashboard then shows all machines' compliance scores, last sync time, and fleet-level stats. Available for Pro and Enterprise users.
@@ -626,7 +626,7 @@ See [CHANGELOG.md](CHANGELOG.md) for full version history.
   <br><br>
   Built by <a href="https://github.com/Egyan07">Egyan07</a>
   <br><br>
-  <a href="mailto:hello@complianceguard.io"><img src="https://img.shields.io/badge/hello%40complianceguard.io-Contact_for_Licensing-0d1117?style=for-the-badge&logo=gmail&logoColor=white" alt="Email"></a>
+  <a href="mailto:alexisegyan1232@gmail.com"><img src="https://img.shields.io/badge/Email-Contact_for_Licensing-0d1117?style=for-the-badge&logo=gmail&logoColor=white" alt="Email"></a>
   &nbsp;
   <a href="https://github.com/Egyan07/ComplianceGuard/issues">Report a bug</a> · <a href="https://github.com/Egyan07/ComplianceGuard/issues/new">Request a feature</a>
 </p>
