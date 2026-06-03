@@ -11,7 +11,7 @@ const LocalComplianceEngine = require('./processing/compliance-engine');
 const ReportGenerator = require('./processing/report-generator');
 const LicenseManager = require('./licensing/license-manager');
 const CloudSync = require('./cloud-sync');
-const { collectWindowsEvidence } = require('./system/windows');
+const { collectEvidence } = require('./system/collector');
 const scheduler = require('./scheduler');
 const { z } = require('zod');
 const { logAuditEvent } = require('./processing/audit-service');
@@ -201,10 +201,11 @@ ipcMain.handle('save-report', async (event, data, filename) => {
 });
 
 // Windows evidence collection
+// TODO: rename to 'collect-evidence' in next breaking release (touches preload.js + api.ts + tests)
 ipcMain.handle('collect-windows-evidence', async (event, frameworkId = 1) => {
   try {
-    log.info('Starting Windows evidence collection...');
-    const windowsEvidence = await collectWindowsEvidence();
+    log.info('Starting evidence collection...');
+    const windowsEvidence = await collectEvidence();
 
     const processedEvidence = await evidenceProcessor.processWindowsEvidence(windowsEvidence, frameworkId);
 
