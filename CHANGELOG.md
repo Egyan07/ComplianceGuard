@@ -10,6 +10,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+**macOS Support — Windows and Apple Silicon / Intel**
+- Native macOS evidence collection across all 8 categories: system info (`sw_vers`, `uname`), security settings (`pwpolicy`, `fdesetup`, `csrutil`), event logs (Unified Log via `log show --style compact`), services (Gatekeeper, auto-update), firewall (`/usr/libexec/ApplicationFirewall/socketfilterfw`), user accounts (`dscl`), network (`ifconfig`, `netstat`), software (`/Applications` + `~/Applications` + `system_profiler`), and file permissions on critical paths.
+- Platform-aware dispatcher (`electron/system/collector.js`) — `collectEvidence()` routes to the correct OS collector at runtime; compliance engine and evidence processor require zero changes.
+- Full parity with Windows: same 8 evidence bucket keys, same `Promise.allSettled` error isolation, same scoring output. A macOS evaluation produces the same compliance score structure as a Windows evaluation.
+- `pwpolicy` empty response stored as `{ warning }` not `{ error }` — FileVault and SIP data in the same bucket remains valid evidence.
+- SIP parsed to structured `{ sipStatus: "enabled"|"disabled"|"unknown" }` — never raw text.
+- Unsigned DMG distribution (Intel + Apple Silicon) — no Apple Developer Program required. Gatekeeper bypass: `xattr -cr /Applications/ComplianceGuard.app` or right-click → Open.
+- macOS Quick Start section added to README with step-by-step Gatekeeper bypass instructions.
+
 **Compliance Score Trend — Track Your Progress Over Time**
 - New `ScoreTrend` component on the History page replaces the previous basic bar chart with an Apple-quality analytics view.
 - 80px score hero with negative letter-spacing and `tabular-nums` — the current score is the visual centrepiece.

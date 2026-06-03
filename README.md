@@ -14,7 +14,7 @@
 
 Compliance tools like Vanta, Drata, and Sprinto scan your cloud infrastructure. That's useful — but they can't see what's happening **on the machines themselves**. Password policies, firewall rules, event logs, running services, local user accounts — that evidence lives on the endpoint, not in AWS.
 
-ComplianceGuard lives on the endpoint too. It collects evidence directly from Windows, scores it against SOC 2 Type II, ISO 27001:2013, and HIPAA Security Rule controls, and tells you exactly where the gaps are — across all three frameworks in a single collection pass. Run it as a desktop app or deploy the web version with Docker — everything stays under your control.
+ComplianceGuard lives on the endpoint too. It collects evidence directly from Windows and macOS, scores it against SOC 2 Type II, ISO 27001:2013, and HIPAA Security Rule controls, and tells you exactly where the gaps are — across all three frameworks in a single collection pass. Run it as a desktop app or deploy the web version with Docker — everything stays under your control.
 
 How it works: the desktop app collects OS-level evidence → maps it to compliance controls → scores your readiness → optionally syncs to a multi-machine cloud dashboard.
 
@@ -87,7 +87,7 @@ Contact us to set up a hosted instance. Install the desktop app on your machines
 
 **We manage the server. You own the data. Zero setup required.**
 
-> Either way — the endpoint evidence collected from your Windows machines never leaves your local machine until you explicitly choose to sync it to the dashboard.
+> Either way — the endpoint evidence collected from your machines never leaves your local machine until you explicitly choose to sync it to the dashboard.
 
 ---
 
@@ -211,7 +211,7 @@ They scan the cloud. We scan the machine. Use both and you have covered the full
 
 ## What It Collects
 
-ComplianceGuard pulls 8 categories of evidence from Windows:
+ComplianceGuard pulls 8 categories of evidence from Windows and macOS:
 
 | Category | What's Collected | Maps To |
 |----------|-----------------|---------|
@@ -573,7 +573,7 @@ CI runs all tests on every push via GitHub Actions. **~568 tests passing** — b
 > No. All evidence collection, scoring, and storage happens locally on your machine or on your own hosted infrastructure. There is no telemetry and no data leaves your control.
 
 ### What is the difference between self-hosted and managed?
-> Self-hosted means you run the web dashboard on your own server — Railway, Render, DigitalOcean, or any VPS. Managed means we run it for you. Either way, the endpoint evidence collected from your Windows machines stays local until you explicitly sync it. The difference is who manages the server infrastructure.
+> Self-hosted means you run the web dashboard on your own server — Railway, Render, DigitalOcean, or any VPS. Managed means we run it for you. Either way, the endpoint evidence collected from your machines stays local until you explicitly sync it. The difference is who manages the server infrastructure.
 
 ### Does ComplianceGuard replace a SOC 2 auditor?
 > No. It automates evidence collection and gives you a readiness score, but a formal SOC 2 audit still requires a licensed CPA firm. Think of ComplianceGuard as audit preparation, not audit replacement.
@@ -587,8 +587,11 @@ CI runs all tests on every push via GitHub Actions. **~568 tests passing** — b
 ### Is the source code auditable?
 > Yes. The full source is available in this repository under the Business Source License. You can inspect every line of the evidence collection and scoring logic.
 
-### Will macOS and Linux be supported?
-> They are on the roadmap. The backend and frontend are already cross-platform. The main work required is porting the Windows-specific evidence collector to macOS and Linux equivalents.
+### Is macOS supported?
+> Yes. ComplianceGuard runs natively on macOS (Intel and Apple Silicon) and collects the same 8 categories of evidence using native macOS system commands. Download the unsigned DMG from the latest release and follow the Gatekeeper bypass instructions in Quick Start. Linux support is on the roadmap.
+
+### Will Linux be supported?
+> Linux is on the roadmap. The backend and frontend are already cross-platform. The remaining work is porting the evidence collector to Linux equivalents.
 
 ### How do I get a Pro or Enterprise license key?
 > Contact [alexisegyan1232@gmail.com](mailto:alexisegyan1232@gmail.com) for licensing. Managed hosted instances are also available — we handle deployment and infrastructure for you.
@@ -615,7 +618,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 
 | Done | Up Next |
 |------|---------|
-| Evidence collection (8 categories — event logs, registry, services, firewall, users, network, software, file permissions) | macOS and Linux support |
+| Evidence collection (8 categories — event logs, registry, services, firewall, users, network, software, file permissions) | Linux support |
+| **macOS support** — native evidence collection on Intel + Apple Silicon; unsigned DMG distribution with Gatekeeper bypass | |
 | SOC 2 Type II (29 controls), ISO 27001:2013 (47 controls), HIPAA Security Rule (47 safeguards) | GCP and Azure cloud evidence |
 | Scheduled automatic evidence collection (Daily/Weekly) | PCI DSS framework |
 | PDF audit-ready reports + evaluation history | Setup video walkthrough |
