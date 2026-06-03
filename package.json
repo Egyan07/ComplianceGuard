@@ -13,6 +13,7 @@
     "package": "npm run build && electron-builder --win --x64 --publish never",
     "publish": "npm run build && electron-builder --win --x64 --publish always",
     "package:linux": "npm run build && electron-builder --linux",
+    "package:mac": "npm run build && electron-builder --mac --x64 --arm64 --publish never",
     "package:all": "npm run build && electron-builder --win --x64 --linux --mac",
     "dist": "npm run build && electron-builder",
     "postinstall": "electron-builder install-app-deps",
@@ -79,6 +80,15 @@
     },
     "portable": {
       "artifactName": "${productName}-Portable-${version}.${ext}"
+    },
+    "mac": {
+      "target": [
+        { "target": "dmg", "arch": ["x64", "arm64"] }
+      ],
+      "icon": "resources/icons/icon.icns",
+      "category": "public.app-category.utilities",
+      "identity": null,
+      "gatekeeperAssess": false
     }
   }
 }
