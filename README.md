@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/license-BSL%201.1-orange" alt="License">
   <a href="#compliance-frameworks"><img src="https://img.shields.io/badge/frameworks-SOC%202%20%7C%20ISO%2027001%20%7C%20HIPAA-10B981" alt="Frameworks"></a>
   <img src="https://img.shields.io/badge/tests-~568%20passing-10B981?logo=pytest&logoColor=white" alt="Tests">
-  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
+  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
   <a href="https://github.com/Egyan07/ComplianceGuard/actions"><img src="https://img.shields.io/github/actions/workflow/status/Egyan07/ComplianceGuard/ci.yml?label=CI&logo=githubactions&logoColor=white" alt="CI"></a>
 </p>
 
@@ -66,7 +66,7 @@ All collected evidence items in one place — searchable and filterable by statu
 ## Not a Good Fit If
 
 - You only need cloud compliance — [Vanta](https://www.vanta.com/) or [Drata](https://drata.com/) cover that better
-- Your endpoints run macOS or Linux (Windows only for now — cross-platform is on the roadmap)
+- Your endpoints run Linux (Windows and macOS are supported; Linux is on the roadmap)
 - You want a fully managed SaaS with zero self-hosting involvement
 
 ## Choose Your Privacy Level
@@ -98,6 +98,23 @@ Contact us to set up a hosted instance. Install the desktop app on your machines
 Download `ComplianceGuard-Setup.exe` from the [latest release](https://github.com/Egyan07/ComplianceGuard/releases/latest), run the installer, and launch from the Start Menu.
 
 > **Requirements:** Windows 10/11 (64-bit)
+
+<details>
+<summary>Desktop — macOS (unsigned)</summary>
+
+1. Download `ComplianceGuard-{version}-arm64.dmg` (Apple Silicon) or `-x64.dmg` (Intel)
+   from the [latest release](https://github.com/Egyan07/ComplianceGuard/releases/latest)
+2. Open the DMG and drag ComplianceGuard to Applications
+3. **First launch — Gatekeeper bypass (one time only):**
+   - Right-click the app in Applications → Open → Open Anyway, **or**
+   - Run in Terminal: `xattr -cr /Applications/ComplianceGuard.app`
+4. Launch normally from Applications or Spotlight thereafter
+
+> Code signing will be enabled in a future release, removing this step.
+
+> **Requirements:** macOS 12 Monterey or later · Intel or Apple Silicon
+
+</details>
 
 ### Option B — One-Click Setup (Development)
 
@@ -400,7 +417,7 @@ ComplianceGuard/
 
 ComplianceGuard is designed for Windows endpoints. The following limitations apply in the current release:
 
-- **Windows only** — evidence collection uses PowerShell, WMI, and the Windows registry. macOS and Linux support is on the roadmap.
+- **Windows + macOS** — evidence collection is supported on Windows (PowerShell/WMI) and macOS (system commands). Linux support is on the roadmap.
 - **Automatic scheduling** — Daily or Weekly evidence collection runs automatically while the desktop app is open. Configure in Settings → Automatic Collection.
 - **Per-machine view in desktop mode** — the Electron app shows one machine at a time. Use web mode (self-hosted or managed) with the Cloud Dashboard to monitor multiple machines centrally.
 - **AWS only for cloud evidence** — the web backend collects S3 and IAM evidence from AWS. GCP and Azure are not yet implemented.
