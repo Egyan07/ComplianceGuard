@@ -39,7 +39,7 @@ describe('Settings', () => {
   it('shows version info', () => {
     renderWithTheme(<Settings />);
     expect(screen.getByText('Version')).toBeInTheDocument();
-    expect(screen.getByText('3.3.0')).toBeInTheDocument();
+    expect(screen.getByText('3.3.1')).toBeInTheDocument();
   });
 
   it('shows database section', () => {
@@ -78,7 +78,7 @@ describe('Settings', () => {
   describe('Automatic Collection section (Electron mode)', () => {
     beforeEach(() => {
       (window as any).electronAPI = {
-        getAppVersion: vi.fn().mockResolvedValue('3.3.0'),
+        getAppVersion: vi.fn().mockResolvedValue('3.3.1'),
         getSystemInfo: vi.fn().mockResolvedValue({ platform: 'win32', arch: 'x64', version: 'v20', electronVersion: '28' }),
         getUserSetting: vi.fn().mockResolvedValue('false'),
         cloudGetConfig: vi.fn().mockResolvedValue({ connected: false, serverUrl: null, email: null }),

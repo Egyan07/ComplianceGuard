@@ -10,6 +10,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [3.3.1] — 2026-06-04
+
+### Added
+
+- **macOS download now available** — unsigned DMGs for both Intel (x64) and Apple Silicon (arm64) are now built automatically and attached to each release. Gatekeeper bypass on first launch: `xattr -cr /Applications/ComplianceGuard.app` or right-click → Open. (The macOS app itself shipped in 3.3.0; this release makes it downloadable.)
+
+---
+
 ## [3.3.0] — 2026-06-04
 
 ### Added
