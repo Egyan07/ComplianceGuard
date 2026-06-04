@@ -93,3 +93,29 @@ jobs:
         run: npm run publish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release-mac:
+    name: Release macOS DMG
+    runs-on: macos-latest
+    # Serialized after the Windows release job so both publish into ONE draft
+    # release: 'release' creates the draft + uploads the .exe, then 'release-mac'
+    # finds that draft and uploads the .dmg. Avoids the split-draft race.
+    needs: [backend-tests, lint-and-test, build, release]
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install root dependencies
+        run: npm install
+
+      - name: Install frontend dependencies
+        run: cd frontend && npm ci
+
+      - name: Build and publish
+        run: npm run publish:mac
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
