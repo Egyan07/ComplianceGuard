@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="#quick-start"><img src="https://img.shields.io/badge/version-3.2.0-2563EB" alt="Version"></a>
+  <a href="#quick-start"><img src="https://img.shields.io/badge/version-3.3.1-2563EB" alt="Version"></a>
   <img src="https://img.shields.io/badge/license-BSL%201.1-orange" alt="License">
   <a href="#compliance-frameworks"><img src="https://img.shields.io/badge/frameworks-SOC%202%20%7C%20ISO%2027001%20%7C%20HIPAA-10B981" alt="Frameworks"></a>
   <img src="https://img.shields.io/badge/tests-~568%20passing-10B981?logo=pytest&logoColor=white" alt="Tests">
@@ -102,7 +102,7 @@ Download `ComplianceGuard-Setup.exe` from the [latest release](https://github.co
 <details>
 <summary>Desktop — macOS (unsigned)</summary>
 
-1. Download `ComplianceGuard-{version}-arm64.dmg` (Apple Silicon) or `-x64.dmg` (Intel)
+1. Download `ComplianceGuard-{version}-arm64.dmg` (Apple Silicon) or `ComplianceGuard-{version}.dmg` (Intel)
    from the [latest release](https://github.com/Egyan07/ComplianceGuard/releases/latest)
 2. Open the DMG and drag ComplianceGuard to Applications
 3. **First launch — Gatekeeper bypass (one time only):**
@@ -415,7 +415,7 @@ ComplianceGuard/
 
 ## Limitations
 
-ComplianceGuard is designed for Windows endpoints. The following limitations apply in the current release:
+ComplianceGuard supports Windows and macOS endpoints. The following limitations apply in the current release:
 
 - **Windows + macOS** — evidence collection is supported on Windows (PowerShell/WMI) and macOS (system commands). Linux support is on the roadmap.
 - **Automatic scheduling** — Daily or Weekly evidence collection runs automatically while the desktop app is open. Configure in Settings → Automatic Collection.
