@@ -20,9 +20,37 @@ const KEYS = {
   REFRESH_TOKEN: 'cloud_refresh_token',
 };
 
-async function cloudConnect(database, serverUrl, email, password) {
+/**
+ * Validate a user-supplied server URL before sending credentials to it.
+ * Requires https:// (http:// only for localhost dev) to prevent cleartext
+ * credential transmission and SSRF/credential-exfil to an arbitrary host.
+ * Returns the normalized origin, or throws on an invalid/insecure URL.
+ */
+function validateServerUrl(serverUrl) {
+  if (typeof serverUrl !== 'string' || !serverUrl.trim()) {
+    throw new Error('Server URL is required');
+  }
+  let parsed;
   try {
-    const url = serverUrl.replace(/\/$/, '');
+    parsed = new URL(serverUrl.trim());
+  } catch {
+    throw new Error('Invalid server URL');
+  }
+  const isLocalhost = ['localhost', '127.0.0.1', '[::1]', '::1'].includes(parsed.hostname);
+  if (parsed.protocol !== 'https:' && !(parsed.protocol === 'http:' && isLocalhost)) {
+    throw new Error('Server URL must use https:// (http is only allowed for localhost)');
+  }
+  return parsed.origin;
+}
+
+async function cloudConnect(database, serverUrl, email, password) {
+  let url;
+  try {
+    url = validateServerUrl(serverUrl);
+  } catch (e) {
+    return { error: e.message };
+  }
+  try {
     // FastAPI's /api/auth/login takes OAuth2PasswordRequestForm, i.e.
     // application/x-www-form-urlencoded. Posting JSON here silently returned
     // 422 on every connect attempt in <=v2.9.0.
@@ -144,4 +172,4 @@ async function clearCloudConfig(database) {
   return { disconnected: true };
 }
 
-module.exports = { cloudConnect, cloudSync, getCloudConfig, clearCloudConfig };
+module.exports = { cloudConnect, cloudSync, getCloudConfig, clearCloudConfig, validateServerUrl };
