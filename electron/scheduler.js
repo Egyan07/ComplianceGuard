@@ -1,6 +1,8 @@
 const { powerMonitor, Notification } = require('electron');
 const log = require('./logger');
-const { collectWindowsEvidence } = require('./system/windows');
+// Platform-aware collector (Windows or macOS) — mirrors main.js. Using the
+// Windows collector directly produced hollow/empty evidence on scheduled macOS runs.
+const { collectEvidence } = require('./system/collector');
 
 const FRAMEWORKS = [1, 2, 3];
 const CHECK_INTERVAL_MS = 60_000;
@@ -51,11 +53,11 @@ async function runCollection() {
 
   try {
     log.info('Scheduled evidence collection starting...');
-    const windowsEvidence = await collectWindowsEvidence();
+    const evidence = await collectEvidence();
     let evidenceCount = 0;
 
     for (const frameworkId of FRAMEWORKS) {
-      const items = await _processor.processWindowsEvidence(windowsEvidence, frameworkId);
+      const items = await _processor.processWindowsEvidence(evidence, frameworkId);
       if (frameworkId === 1) evidenceCount = items.length;
     }
 

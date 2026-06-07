@@ -10,13 +10,6 @@ vi.mock('./logger', () => ({
   warn: vi.fn(),
 }));
 
-vi.mock('./system/windows', () => ({
-  collectWindowsEvidence: vi.fn().mockResolvedValue({
-    systemInfo: { hostname: 'test' },
-    firewall: { enabled: true },
-  }),
-}));
-
 import { calcNextRunAt, checkAndRun, start } from './scheduler.js';
 
 const makeDb = (overrides = {}) => ({
@@ -31,6 +24,18 @@ const makeDb = (overrides = {}) => ({
   updateScheduleConfig: vi.fn().mockResolvedValue(undefined),
   updateScheduleResult: vi.fn().mockResolvedValue(undefined),
   ...overrides,
+});
+
+describe('collector wiring (platform routing)', () => {
+  it('uses the platform-aware collector, not the Windows-only collector', () => {
+    // Regression: scheduler must collect via system/collector (which routes to
+    // macOS/Windows), else scheduled macOS runs produce empty evidence.
+    const fs = require('fs');
+    const path = require('path');
+    const src = fs.readFileSync(path.join(__dirname, 'scheduler.js'), 'utf8');
+    expect(src).toMatch(/require\(['"]\.\/system\/collector['"]\)/);
+    expect(src).not.toContain('collectWindowsEvidence');
+  });
 });
 
 describe('calcNextRunAt', () => {
