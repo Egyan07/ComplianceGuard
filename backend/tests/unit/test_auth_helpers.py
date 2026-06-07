@@ -365,6 +365,21 @@ def test_verify_refresh_token_rejects_access_token():
     assert result is None
 
 
+def test_verify_access_token_rejects_refresh_token():
+    """A refresh token must NOT be accepted on the access path.
+
+    Otherwise a stolen/logout-revoked refresh token works as a bearer access
+    token (the access path never consults the revocation table), defeating
+    logout and token-scope boundaries.
+    """
+    from app.core.auth import create_access_token, verify_access_token
+    refresh, _jti = create_refresh_token({"sub": "user@example.com"})
+    assert verify_access_token(refresh) is None
+    # sanity: a real access token still verifies
+    access = create_access_token({"sub": "user@example.com"})
+    assert verify_access_token(access).sub == "user@example.com"
+
+
 def test_verify_refresh_token_rejects_garbage():
     result = verify_refresh_token("not.a.token")
     assert result is None

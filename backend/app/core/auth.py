@@ -80,6 +80,12 @@ def verify_access_token(token: str) -> Optional[TokenPayload]:
     """Verify and decode a JWT access token."""
     try:
         payload = jwt.decode(token, _secret_key(), algorithms=[ALGORITHM])
+        # Reject refresh tokens on the access path. They are signed with the same
+        # key and carry `sub`, so without this a refresh token works as a bearer
+        # access token — bypassing logout/revocation (the access path never
+        # consults the refresh-token table).
+        if payload.get("type") == "refresh":
+            return None
         email: str = payload.get("sub")
         if email is None:
             return None
