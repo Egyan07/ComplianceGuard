@@ -60,8 +60,10 @@ def verify_license_key(key_string: str) -> dict[str, Any]:
     except Exception:
         return {"valid": False, "error": "Invalid key data"}
 
-    # Validate required fields
-    required = {"licenseId", "tier", "expiresAt"}
+    # Validate required fields. `email` is required so web-mode activation can
+    # bind the license to the activating account (see /activate-license); an
+    # email-less key could otherwise be activated by any user (tier escalation).
+    required = {"licenseId", "tier", "expiresAt", "email"}
     missing = required - payload.keys()
     if missing:
         return {"valid": False, "error": f"Incomplete license data: missing {missing}"}

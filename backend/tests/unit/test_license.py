@@ -39,6 +39,26 @@ def test_verify_rejects_bad_signature():
     assert "signature" in result["error"].lower() or "invalid" in result["error"].lower()
 
 
+def test_verify_requires_email_field():
+    """A license payload MUST carry an email so activation can bind it to the
+    activating account. Without this, an (otherwise valid) email-less key could
+    be activated by any user — a tier-escalation path. The required-field check
+    runs before signature verification, so the rejection reason is 'missing
+    email', not a signature error."""
+    payload = json.dumps({
+        "licenseId": "test-001",
+        "tier": "enterprise",
+        "expiresAt": "2030-01-01T00:00:00Z",
+        # NOTE: no "email"
+    }).encode()
+    payload_b64 = base64.urlsafe_b64encode(payload).rstrip(b"=").decode()
+    fake_sig = base64.urlsafe_b64encode(b"\x00" * 64).rstrip(b"=").decode()
+
+    result = verify_license_key(f"{payload_b64}.{fake_sig}")
+    assert result["valid"] is False
+    assert "email" in result["error"].lower(), result["error"]
+
+
 def test_verify_rejects_garbage_payload():
     garbage = base64.urlsafe_b64encode(b"not-json").rstrip(b"=").decode()
     fake_sig = base64.urlsafe_b64encode(b"\x00" * 64).rstrip(b"=").decode()
