@@ -100,7 +100,7 @@ export function LicenseProvider({ children }: { children: ReactNode }) {
 
   const isFeatureAllowed = useCallback((feature: string) => {
     const gate = FEATURE_GATES[feature];
-    if (!gate) return true;
+    if (!gate) return false; // fail-closed: an unknown/typo gate must not unlock a feature
     return gate[licenseInfo.tier] === true;
   }, [licenseInfo.tier]);
 
@@ -132,8 +132,9 @@ export function LicenseProvider({ children }: { children: ReactNode }) {
     if (!api) return { valid: false, error: 'Electron bridge unavailable' };
     const result = await api.activateLicense(key);
     if (result.valid) {
-      // result.payload (getSafeLicenseInfo) omits tier — merge it from result.tier
-      setLicenseInfo({ tier: result.tier ?? 'pro', ...(result.payload ?? {}) });
+      // result.payload (getSafeLicenseInfo) omits tier — merge it from result.tier.
+      // Default to 'free' (never up-grant) if the IPC payload is missing tier.
+      setLicenseInfo({ tier: result.tier ?? 'free', ...(result.payload ?? {}) });
     }
     return result;
   }, []);
