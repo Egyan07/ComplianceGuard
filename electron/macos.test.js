@@ -48,8 +48,12 @@ describe('MacOSEvidenceCollector', () => {
   });
 
   describe('collectSystemInfo', () => {
-    beforeEach(() => {
-      const { exec } = require('child_process');
+    beforeEach(async () => {
+      // Use the ESM import (the vi.fn mock); a CJS require() here bypasses
+      // vi.mock('child_process') and returns the real module, leaving the mock
+      // methods undefined. This resets exec after the "isolates failures" test
+      // sets it to throw.
+      const { exec } = await import('child_process');
       exec.mockImplementation((cmd, opts, callback) => {
         const cb = typeof opts === 'function' ? opts : callback;
         cb(null, { stdout: `mock: ${cmd}`, stderr: '' });
