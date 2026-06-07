@@ -388,3 +388,43 @@ def test_verify_refresh_token_rejects_garbage():
 def test_verify_refresh_token_rejects_empty():
     result = verify_refresh_token("")
     assert result is None
+
+
+def test_reset_password_revokes_refresh_tokens():
+    """A password reset must revoke the user's existing refresh tokens, so the
+    reset actually evicts an attacker who already holds one."""
+    from datetime import datetime, timezone, timedelta
+    from app.models.refresh_token import RefreshToken
+
+    setup = TestSession()
+    try:
+        user = User(
+            email="reset@test.com",
+            hashed_password=get_password_hash("OldPass@123"),
+            first_name="R", last_name="U", is_active=True, is_verified=True,
+            reset_token="reset-tok-123",
+            reset_token_expires=datetime.now(timezone.utc) + timedelta(hours=1),
+        )
+        setup.add(user)
+        setup.commit()
+        setup.refresh(user)
+        setup.add(RefreshToken(
+            jti="jti-active-1", user_id=user.id,
+            expires_at=datetime.now(timezone.utc) + timedelta(days=7),
+        ))
+        setup.commit()
+    finally:
+        setup.close()
+
+    res = TestClient(app).post("/api/v1/auth/reset-password", json={
+        "token": "reset-tok-123", "new_password": "NewPass@123",
+    })
+    assert res.status_code == 200, res.text
+
+    check = TestSession()
+    try:
+        tok = check.query(RefreshToken).filter(RefreshToken.jti == "jti-active-1").first()
+        assert tok is not None
+        assert tok.revoked_at is not None, "refresh token must be revoked after password reset"
+    finally:
+        check.close()

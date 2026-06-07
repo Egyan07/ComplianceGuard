@@ -357,6 +357,13 @@ async def reset_password(
     user.hashed_password = get_password_hash(request_data.new_password)
     user.reset_token = None
     user.reset_token_expires = None
+    # Revoke all of the user's active refresh tokens — a password reset must
+    # evict any attacker already holding a refresh token, otherwise the reset
+    # does not contain the compromise.
+    db.query(RefreshToken).filter(
+        RefreshToken.user_id == user.id,
+        RefreshToken.revoked_at.is_(None),
+    ).update({"revoked_at": datetime.now(timezone.utc)}, synchronize_session=False)
     db.commit()
 
     return {"message": "Password reset successfully"}
