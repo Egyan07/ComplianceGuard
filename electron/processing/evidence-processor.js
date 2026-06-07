@@ -4,6 +4,18 @@ const fs = require('fs');
 const crypto = require('crypto');
 const { logAuditEvent } = require('./audit-service');
 
+// The only directories evidence may be written into. Used both to scaffold the
+// dirs and to validate a (renderer-supplied) category, preventing path traversal.
+const ALLOWED_CATEGORIES = [
+  'Screenshots',
+  'Documents',
+  'SystemLogs',
+  'ConfigFiles',
+  'NetworkConfigs',
+  'SecurityPolicies',
+  'BackupFiles',
+];
+
 class LocalEvidenceProcessor {
   constructor(database, userDataPath) {
     this.db = database;
@@ -16,17 +28,7 @@ class LocalEvidenceProcessor {
   }
 
   ensureEvidenceDirectories() {
-    const directories = [
-      'Screenshots',
-      'Documents',
-      'SystemLogs',
-      'ConfigFiles',
-      'NetworkConfigs',
-      'SecurityPolicies',
-      'BackupFiles'
-    ];
-
-    directories.forEach(dir => {
+    ALLOWED_CATEGORIES.forEach(dir => {
       const dirPath = path.join(this.evidenceStoragePath, dir);
       if (!fs.existsSync(dirPath)) {
         fs.mkdirSync(dirPath, { recursive: true });
@@ -35,20 +37,31 @@ class LocalEvidenceProcessor {
   }
 
   async saveEvidenceFile(fileBuffer, fileName, category, metadata = {}) {
-    const categoryPath = path.join(this.evidenceStoragePath, category);
+    // Sanitize renderer-supplied inputs to prevent path traversal:
+    //  - category must be one of the known dirs (else fall back to Documents)
+    //  - fileName is reduced to its basename (strips ../ and absolute paths)
+    const safeCategory = ALLOWED_CATEGORIES.includes(category) ? category : 'Documents';
+    const safeName = path.basename(fileName) || `evidence_${Date.now()}`;
+    const categoryPath = path.join(this.evidenceStoragePath, safeCategory);
 
     if (!fs.existsSync(categoryPath)) {
       fs.mkdirSync(categoryPath, { recursive: true });
     }
 
     // Ensure unique filename
-    let finalPath = path.join(categoryPath, fileName);
+    let finalPath = path.join(categoryPath, safeName);
     let counter = 1;
     while (fs.existsSync(finalPath)) {
-      const ext = path.extname(fileName);
-      const name = path.basename(fileName, ext);
+      const ext = path.extname(safeName);
+      const name = path.basename(safeName, ext);
       finalPath = path.join(categoryPath, `${name}_${counter}${ext}`);
       counter++;
+    }
+
+    // Defense-in-depth: never write outside the evidence root.
+    const root = path.resolve(this.evidenceStoragePath);
+    if (!path.resolve(finalPath).startsWith(root + path.sep)) {
+      throw new Error('Refusing to write evidence file outside the evidence directory');
     }
 
     fs.writeFileSync(finalPath, fileBuffer);
