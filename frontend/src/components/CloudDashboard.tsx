@@ -100,13 +100,13 @@ const CloudDashboard: React.FC<CloudDashboardProps> = () => {
   }, []);
 
   useEffect(() => {
-    if (tier === 'pro') {
+    if (tier !== 'free') {
       fetchData();
     }
   }, [fetchData, tier]);
 
-  // Pro gate — rendered after hooks
-  if (tier !== 'pro') {
+  // Paid gate (pro + enterprise) — rendered after hooks
+  if (tier === 'free') {
     return (
       <Container maxWidth="xl" sx={{ mt: 4 }}>
         <Paper sx={{ p: 6, textAlign: 'center' }}>

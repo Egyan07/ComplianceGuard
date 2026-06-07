@@ -65,6 +65,13 @@ describe('CloudDashboard', () => {
     expect(screen.getByText(/Cloud Dashboard.*Pro Feature/i)).toBeInTheDocument();
   });
 
+  it('renders the dashboard for enterprise tier (not gated as a pro-only feature)', async () => {
+    (useLicense as ReturnType<typeof vi.fn>).mockReturnValue({ tier: 'enterprise' });
+    render(<CloudDashboard />);
+    await waitFor(() => expect(screen.getByText('PC-001')).toBeInTheDocument());
+    expect(screen.queryByText(/Pro Feature/i)).not.toBeInTheDocument();
+  });
+
   it('shows dash for never-synced machine score', async () => {
     render(<CloudDashboard />);
     await waitFor(() => expect(screen.getByText('PC-003')).toBeInTheDocument());

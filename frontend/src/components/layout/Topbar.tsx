@@ -79,17 +79,17 @@ const Topbar: React.FC<TopbarProps> = ({ mode, onToggleMode }) => {
         </Tooltip>
 
         <motion.div
-          animate={{ boxShadow: tier === 'pro' ? ['0 0 0px #10B981', '0 0 8px rgba(16,185,129,0.5)', '0 0 0px #10B981'] : '0 0 0px transparent' }}
+          animate={{ boxShadow: tier !== 'free' ? ['0 0 0px #10B981', '0 0 8px rgba(16,185,129,0.5)', '0 0 0px #10B981'] : '0 0 0px transparent' }}
           transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
           style={{ borderRadius: 6 }}
         >
           <Chip
-            label={tier === 'pro' ? 'PRO' : 'FREE'}
+            label={tier === 'enterprise' ? 'ENTERPRISE' : tier === 'pro' ? 'PRO' : 'FREE'}
             size="small"
             sx={{
               height: 20, fontSize: '0.6rem', fontWeight: 700, letterSpacing: '1px',
-              backgroundColor: tier === 'pro' ? '#D1FAE5' : '#EFF6FF',
-              color: tier === 'pro' ? '#065F46' : '#2563EB',
+              backgroundColor: tier === 'enterprise' ? '#EDE9FE' : tier === 'pro' ? '#D1FAE5' : '#EFF6FF',
+              color: tier === 'enterprise' ? '#5B21B6' : tier === 'pro' ? '#065F46' : '#2563EB',
             }}
           />
         </motion.div>

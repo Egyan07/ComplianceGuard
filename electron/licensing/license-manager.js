@@ -66,7 +66,8 @@ class LicenseManager {
   }
 
   getControlIds() {
-    return this.tier === 'pro' ? ALL_CONTROL_IDS : FREE_TIER_CONTROL_IDS;
+    // Paid tiers (pro and enterprise) get the full control set; only free is restricted.
+    return this.tier !== 'free' ? ALL_CONTROL_IDS : FREE_TIER_CONTROL_IDS;
   }
 
   isFeatureAllowed(featureName) {

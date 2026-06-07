@@ -2,9 +2,10 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { ThemeProvider } from '@mui/material';
 import { lightTheme } from '../../theme';
 import Topbar from './Topbar';
+import { useLicense } from '../../contexts/LicenseContext';
 
 vi.mock('../../contexts/LicenseContext', () => ({
-  useLicense: () => ({ tier: 'free' }),
+  useLicense: vi.fn(),
 }));
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({ user: null, logout: vi.fn(), loading: false }),
@@ -16,6 +17,10 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 );
 
 describe('Topbar', () => {
+  beforeEach(() => {
+    (useLicense as ReturnType<typeof vi.fn>).mockReturnValue({ tier: 'free' });
+  });
+
   it('renders the ComplianceGuard wordmark', () => {
     render(<Topbar mode="light" onToggleMode={vi.fn()} />, { wrapper });
     expect(screen.getByText('ComplianceGuard')).toBeInTheDocument();
@@ -29,6 +34,12 @@ describe('Topbar', () => {
   it('renders FREE tier chip', () => {
     render(<Topbar mode="light" onToggleMode={vi.fn()} />, { wrapper });
     expect(screen.getByText('FREE')).toBeInTheDocument();
+  });
+
+  it('renders ENTERPRISE tier chip for enterprise tier', () => {
+    (useLicense as ReturnType<typeof vi.fn>).mockReturnValue({ tier: 'enterprise' });
+    render(<Topbar mode="light" onToggleMode={vi.fn()} />, { wrapper });
+    expect(screen.getByText('ENTERPRISE')).toBeInTheDocument();
   });
 
   it('calls onToggleMode when dark mode button is clicked', () => {

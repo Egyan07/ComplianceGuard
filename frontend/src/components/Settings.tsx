@@ -232,7 +232,7 @@ const Settings: React.FC = () => {
             />
           </Box>
 
-          {tier === 'pro' ? (
+          {tier !== 'free' ? (
             <Box>
               <List disablePadding>
                 <ListItem>

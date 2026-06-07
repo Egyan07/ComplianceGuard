@@ -164,4 +164,16 @@ describe('Settings', () => {
     render(<Settings />);
     expect(screen.getAllByText('ENTERPRISE')[0]).toBeInTheDocument();
   });
+
+  it('shows the license details panel (not the free activation box) for enterprise tier', () => {
+    vi.mocked(useLicense).mockReturnValue({
+      tier: 'enterprise',
+      licenseInfo: { licenseId: 'CG-ENT-123', email: 'e@x.com', maxMachines: null, expiresAt: null, daysRemaining: null, isExpired: false, isGracePeriod: false },
+      activateLicense: vi.fn(),
+      deactivateLicense: vi.fn(),
+    } as any);
+    render(<Settings />);
+    expect(screen.getByText(/Deactivate License/i)).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText(/Paste your license key/i)).not.toBeInTheDocument();
+  });
 });
