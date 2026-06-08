@@ -1,5 +1,5 @@
 import { Box, CircularProgress } from '@mui/material';
-import { HashRouter, Routes, Route, useNavigate, useSearchParams } from 'react-router-dom';
+import { HashRouter, Routes, Route, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Dashboard from './components/Dashboard';
 import Settings from './components/Settings';
@@ -8,6 +8,8 @@ import CloudDashboard from './components/CloudDashboard';
 import FrameworkBrowser from './components/FrameworkBrowser';
 import ErrorBoundary from './components/ErrorBoundary';
 import LoginPage from './components/LoginPage';
+import VerifyEmail from './components/VerifyEmail';
+import ResetPassword from './components/ResetPassword';
 import AppShell from './components/layout/AppShell';
 import { LicenseProvider } from './contexts/LicenseContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -21,7 +23,20 @@ function AppContent() {
   const navigate = useNavigate();
   const isElectron = !!(window as any).electronAPI;
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const selectedFramework = Math.max(1, Math.min(3, Number(searchParams.get('fw') || '1'))) as 1 | 2 | 3;
+
+  // Public, no-auth pages reached from email links — must render before the
+  // login gate (the recipient is not signed in).
+  const publicPaths = ['/verify-email', '/reset-password'];
+  if (publicPaths.includes(location.pathname)) {
+    return (
+      <Routes>
+        <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+      </Routes>
+    );
+  }
 
   if (authLoading) {
     return (

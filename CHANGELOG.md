@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Email verification & password reset pages** — the links in verification and password-reset emails now open in-app pages (`#/verify-email`, `#/reset-password`) that complete the action, instead of pointing at a non-functional URL. Both are public (no sign-in required). Email delivery remains opt-in via `EMAIL_ENABLED`.
+
 ---
 
 ## [3.3.1] — 2026-06-04

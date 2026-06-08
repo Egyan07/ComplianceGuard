@@ -44,7 +44,7 @@ async def send_verification_email(email: str, token: str) -> None:
     html = f"""
     <h2>Verify your ComplianceGuard account</h2>
     <p>Click the link below to verify your email address:</p>
-    <p><a href="{settings.app_base_url}/api/auth/verify-email?token={token}">
+    <p><a href="{settings.app_base_url}/#/verify-email?token={token}">
         Verify Email
     </a></p>
     <p>This link does not expire automatically — contact support if you need a new one.</p>
@@ -61,7 +61,7 @@ async def send_password_reset_email(email: str, token: str) -> None:
     html = f"""
     <h2>Reset your ComplianceGuard password</h2>
     <p>Click the link below to set a new password. This link expires in 1 hour.</p>
-    <p><a href="{settings.app_base_url}/api/auth/reset-password?token={token}">
+    <p><a href="{settings.app_base_url}/#/reset-password?token={token}">
         Reset Password
     </a></p>
     <p>If you did not request a password reset, ignore this email.</p>

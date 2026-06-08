@@ -446,6 +446,25 @@ export async function activateLicenseHttp(licenseKey: string): Promise<any> {
   return res.data;
 }
 
+// ---- Email verification / password reset (public, token-based, no auth) ----
+
+function authApiBase(): string {
+  return (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/api\/v1$/, '');
+}
+
+export async function verifyEmailHttp(token: string): Promise<{ message: string }> {
+  const res = await axios.post(`${authApiBase()}/api/v1/auth/verify-email`, { token });
+  return res.data;
+}
+
+export async function resetPasswordHttp(token: string, newPassword: string): Promise<{ message: string }> {
+  const res = await axios.post(`${authApiBase()}/api/v1/auth/reset-password`, {
+    token,
+    new_password: newPassword,
+  });
+  return res.data;
+}
+
 // ---- Cloud Dashboard types ----
 
 export interface FleetStats {
