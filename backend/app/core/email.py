@@ -33,6 +33,7 @@ async def _smtp_send(msg: MIMEMultipart, to: str) -> None:
         password=settings.smtp_password,
         start_tls=settings.smtp_tls,
         use_tls=settings.smtp_ssl,
+        timeout=30,  # bound a hung SMTP server (default is unbounded per-op)
     )
 
 
