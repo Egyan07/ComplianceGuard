@@ -63,6 +63,12 @@ class Settings(BaseSettings):
     database_username: Optional[str] = Field(None)
     database_password: Optional[str] = Field(None)
     database_echo: bool = Field(False)
+    # Postgres connection pool sizing. Total possible connections = workers ×
+    # (db_pool_size + db_max_overflow). Tune to your DB's max_connections.
+    db_pool_size: int = Field(5)
+    db_max_overflow: int = Field(5)
+    db_pool_timeout: int = Field(30)
+    db_pool_recycle: int = Field(1800)
 
     # Test database settings
     test_database_url: Optional[str] = Field(None)
