@@ -615,7 +615,7 @@ async def delete_account(
         )
 
     from app.models.evaluation import ComplianceEvaluationRecord, ControlAssessmentRecord
-    from app.models.evidence import EvidenceCollection
+    from app.models.evidence import EvidenceCollection, EvidenceItem
     from app.models.machine import Machine
     from app.models.aws_credential import AwsCredential
 
@@ -634,6 +634,19 @@ async def delete_account(
     db.query(ComplianceEvaluationRecord).filter(
         ComplianceEvaluationRecord.user_id == user_id
     ).delete(synchronize_session=False)
+
+    # Delete child evidence_items first: the FK has no ON DELETE CASCADE, so on
+    # Postgres a bulk collection delete with existing items raises a
+    # ForeignKeyViolation (account deletion would be impossible — GDPR erasure).
+    coll_ids = [
+        row.id for row in db.query(EvidenceCollection.id)
+        .filter(EvidenceCollection.user_id == user_id)
+        .all()
+    ]
+    if coll_ids:
+        db.query(EvidenceItem).filter(
+            EvidenceItem.collection_id.in_(coll_ids)
+        ).delete(synchronize_session=False)
 
     db.query(EvidenceCollection).filter(
         EvidenceCollection.user_id == user_id
