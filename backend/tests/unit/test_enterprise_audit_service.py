@@ -1,5 +1,5 @@
 import pytest
-from app.services.audit_service import canonical_json, compute_entry_hash, log_event
+from app.services.audit_service import canonical_json, compute_entry_hash, log_event, canonical_timestamp
 from app.models.enterprise import AuditLog
 from sqlalchemy.orm import sessionmaker
 from app.core.database import Base, create_test_database
@@ -65,6 +65,6 @@ def test_log_event_entry_hash_is_reproducible(db):
     row = db.query(AuditLog).first()
     recomputed = compute_entry_hash(
         row.prev_hash, row.event_type, row.user_id, row.framework,
-        row.score, row.detail_json or {}, row.created_at.isoformat(),
+        row.score, row.detail_json or {}, canonical_timestamp(row.created_at),
     )
     assert recomputed == row.entry_hash

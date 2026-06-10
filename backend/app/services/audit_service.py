@@ -1,6 +1,6 @@
 import hashlib
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from sqlalchemy.orm import Session
@@ -10,6 +10,19 @@ from app.models.enterprise import AuditLog
 
 def canonical_json(obj: dict) -> str:
     return json.dumps(obj, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+
+
+def canonical_timestamp(dt: datetime) -> str:
+    """Normalize a datetime to a timezone-stable UTC ISO string for hashing.
+
+    Naive values are assumed UTC. This guarantees the audit hash is identical
+    whether created_at is read back naive (SQLite) or tz-aware (Postgres
+    timestamptz) — without it, verify_audit_chain falsely reports tampering on
+    Postgres.
+    """
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc).isoformat()
 
 
 def compute_entry_hash(
@@ -44,11 +57,11 @@ def log_event(
 ) -> None:
     last = db.query(AuditLog).order_by(AuditLog.id.desc()).first()
     prev_hash = last.entry_hash if last else None
-    created_at = datetime.utcnow()
-    created_at_str = created_at.isoformat()
+    created_at = datetime.now(timezone.utc)
+    # Hash a timezone-canonical string so verify recomputes the same hash whether
+    # the DB returns created_at naive (SQLite) or tz-aware (Postgres timestamptz).
+    created_at_str = canonical_timestamp(created_at)
     entry_hash = compute_entry_hash(prev_hash, event_type, user_id, framework, score, detail or {}, created_at_str)
-    # INVARIANT: created_at is always set explicitly (not via server_default) so the
-    # hashed created_at_str matches row.created_at.isoformat() on read-back exactly.
     db.add(AuditLog(
         event_type=event_type,
         user_id=user_id,

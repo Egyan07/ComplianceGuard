@@ -7,7 +7,7 @@ from app.core.database import get_db
 from app.api.deps import require_enterprise
 from app.models.user import User
 from app.models.enterprise import AuditLog
-from app.services.audit_service import compute_entry_hash
+from app.services.audit_service import compute_entry_hash, canonical_timestamp
 
 router = APIRouter(prefix="/enterprise", tags=["enterprise"])
 
@@ -73,7 +73,7 @@ def verify_audit_chain(
             row.framework,
             row.score,
             row.detail_json or {},
-            row.created_at.isoformat(),
+            canonical_timestamp(row.created_at),
         )
         if row.entry_hash != expected or row.prev_hash != prev_hash:
             return {"valid": False, "entries_checked": i, "first_broken_at": row.id}

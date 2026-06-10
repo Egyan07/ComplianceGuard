@@ -21,7 +21,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app.core.database import Base, create_test_database
 from app.models.enterprise import AuditLog
-from app.services.audit_service import compute_entry_hash, log_event
+from app.services.audit_service import compute_entry_hash, log_event, canonical_timestamp
 from app.api.enterprise.audit import verify_audit_chain
 
 
@@ -55,7 +55,7 @@ def test_audit_chain_detects_forgery(db):
         r.prev_hash = prev
         r.entry_hash = compute_entry_hash(
             prev, r.event_type, r.user_id, r.framework, r.score,
-            r.detail_json or {}, r.created_at.isoformat(),
+            r.detail_json or {}, canonical_timestamp(r.created_at),
         )
         prev = r.entry_hash
     db.commit()
