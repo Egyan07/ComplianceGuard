@@ -1,27 +1,23 @@
 """
-Reproduction of the CRITICAL audit-chain forgeability finding.
+Regression for the (formerly CRITICAL) audit-chain forgeability finding.
 
-The audit "hash chain" (audit_service.compute_entry_hash) is plain, UNKEYED
-SHA-256. verify_audit_chain recomputes hashes with the same public algorithm.
-So an attacker with DB write access can tamper a row, re-chain every subsequent
-row with the same public function, and the chain still validates — there is no
-cryptographic tamper-evidence.
+The audit chain is now HMAC-keyed (audit_service.compute_entry_hash) with a
+secret derived from SECRET_KEY (env, never in the DB). An attacker with DB write
+access but not the secret cannot recompute valid entry hashes — so tampering and
+re-chaining with the public, unkeyed SHA-256 (the best they can do) is DETECTED
+by verify_audit_chain.
 
-This test asserts the DESIRED behavior (tampering is detected). It currently
-FAILS (the forgery is NOT detected), which is the reproduction. It is marked
-xfail(strict=True) so CI stays green now and AUTOMATICALLY fails — telling us to
-remove the marker — once the Phase 3 fix (HMAC/signature with an out-of-DB
-secret) makes forgery detectable.
-
-Prove the failure at runtime with:  pytest --runxfail tests/unit/test_audit_forgery_repro.py
+Before the fix this test xfailed (the unkeyed chain was re-chainable by anyone).
+It now passes: the forgery is detected.
 """
+import hashlib
 
 import pytest
 from sqlalchemy.orm import sessionmaker
 
 from app.core.database import Base, create_test_database
 from app.models.enterprise import AuditLog
-from app.services.audit_service import compute_entry_hash, log_event, canonical_timestamp
+from app.services.audit_service import canonical_json, canonical_timestamp, log_event
 from app.api.enterprise.audit import verify_audit_chain
 
 
@@ -34,36 +30,40 @@ def db():
     Base.metadata.drop_all(bind=engine)
 
 
-@pytest.mark.xfail(
-    reason="Audit chain is unkeyed SHA-256 and is forgeable; fixed by HMAC/signature in Phase 3",
-    strict=True,
-)
+def _attacker_unkeyed_hash(prev_hash, row):
+    """What a DB-write attacker WITHOUT the secret can compute: a plain,
+    unkeyed SHA-256 over the same canonical payload."""
+    payload = canonical_json({
+        "prev_hash": prev_hash,
+        "event_type": row.event_type,
+        "user_id": row.user_id,
+        "framework": row.framework,
+        "score": row.score,
+        "detail": row.detail_json or {},
+        "created_at": canonical_timestamp(row.created_at),
+    }).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
 def test_audit_chain_detects_forgery(db):
-    # 1. Build a legitimate chain.
+    # 1. Build a legitimate (HMAC-keyed) chain.
     log_event(db, "evaluation_run", user_id=1, framework="soc2", score=0.90, detail={"n": 1})
     log_event(db, "export_generated", user_id=1, framework="soc2", score=0.50, detail={"n": 2})
     log_event(db, "role_assigned", user_id=1, framework="soc2", score=0.70, detail={"n": 3})
     assert verify_audit_chain(current_user=None, db=db)["valid"] is True
 
-    # 2. Attacker tampers entry #2 (hides a damning low score) and RE-CHAINS the
-    #    rest using the SAME public hash function verify uses — no secret needed.
+    # 2. Attacker tampers entry #2 and re-chains with the unkeyed public hash
+    #    (no secret available).
     rows = db.query(AuditLog).order_by(AuditLog.id.asc()).all()
     rows[1].score = 1.0
     rows[1].detail_json = {"n": 2, "tampered": True}
     prev = rows[0].entry_hash
     for r in rows[1:]:
         r.prev_hash = prev
-        r.entry_hash = compute_entry_hash(
-            prev, r.event_type, r.user_id, r.framework, r.score,
-            r.detail_json or {}, canonical_timestamp(r.created_at),
-        )
+        r.entry_hash = _attacker_unkeyed_hash(prev, r)
         prev = r.entry_hash
     db.commit()
 
-    # 3. DESIRED: a tamper-evident chain must now report invalid.
-    #    CURRENT (vulnerable): it still reports valid -> this assertion fails -> xfail.
+    # 3. HMAC verify detects the forgery — the unkeyed hashes don't match.
     result = verify_audit_chain(current_user=None, db=db)
-    assert result["valid"] is False, (
-        "Audit chain validated despite forged content — the hash chain provides "
-        "NO tamper-evidence (unkeyed SHA-256, re-chainable by anyone)."
-    )
+    assert result["valid"] is False

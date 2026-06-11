@@ -1,4 +1,5 @@
 import hashlib
+import hmac
 import json
 from datetime import datetime, timezone
 from typing import Optional
@@ -6,11 +7,23 @@ from typing import Optional
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.models.enterprise import AuditLog
 
 
 def canonical_json(obj: dict) -> str:
     return json.dumps(obj, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+
+
+def _audit_key() -> bytes:
+    """Derive the audit-chain HMAC key from the app secret (env, never stored in
+    the DB) with domain separation. This is what makes the chain tamper-EVIDENT:
+    an attacker with DB write access but not the secret cannot recompute valid
+    entry hashes, so any edit/re-chain is detected by verify_audit_chain.
+    """
+    return hashlib.sha256(
+        b"complianceguard-audit-chain-v1:" + settings.secret_key.encode("utf-8")
+    ).digest()
 
 
 def canonical_timestamp(dt: datetime) -> str:
@@ -45,7 +58,9 @@ def compute_entry_hash(
         "created_at": created_at,
     }
     payload = canonical_json(payload_obj).encode("utf-8")
-    return hashlib.sha256(payload).hexdigest()
+    # HMAC (keyed), not a bare hash, so the chain is forgery-resistant: without
+    # the secret an attacker cannot produce a matching entry_hash.
+    return hmac.new(_audit_key(), payload, hashlib.sha256).hexdigest()
 
 
 def log_event(
