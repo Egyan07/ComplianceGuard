@@ -4,7 +4,7 @@ from typing import Optional
 from datetime import datetime
 
 from app.core.database import get_db
-from app.api.deps import require_enterprise
+from app.api.deps import require_admin
 from app.models.user import User
 from app.models.enterprise import AuditLog
 from app.services.audit_service import compute_entry_hash, canonical_timestamp
@@ -20,7 +20,7 @@ def list_audit_log(
     framework: Optional[str] = None,
     date_from: Optional[datetime] = None,
     date_to: Optional[datetime] = None,
-    current_user: User = Depends(require_enterprise),
+    current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     q = db.query(AuditLog)
@@ -56,7 +56,7 @@ def list_audit_log(
 
 @router.get("/audit-log/verify")
 def verify_audit_chain(
-    current_user: User = Depends(require_enterprise),
+    current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     # TODO: switch to yield_per(1000) for large deployments — unbounded scan OOMs on big tables
@@ -85,7 +85,7 @@ def verify_audit_chain(
 @router.get("/audit-log/{entry_id}")
 def get_audit_log_entry(
     entry_id: int,
-    current_user: User = Depends(require_enterprise),
+    current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     from fastapi import HTTPException

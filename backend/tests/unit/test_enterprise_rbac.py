@@ -61,6 +61,14 @@ def test_list_users_returns_users_with_roles(client):
     assert len(r.json()) >= 1
 
 
+def test_list_users_rejects_non_admin_enterprise(client):
+    # A non-admin enterprise user (auditor) must NOT be able to enumerate all
+    # users' emails — the list is admin-only, not merely enterprise-tier.
+    token, _ = _seed("enterprise", "auditor", email="auditor_list@x.com")
+    r = client.get("/api/v1/enterprise/users", headers={"Authorization": f"Bearer {token}"})
+    assert r.status_code == 403
+
+
 def test_assign_role_requires_admin(client):
     token, uid = _seed("enterprise", "auditor")
     r = client.put(f"/api/v1/enterprise/users/{uid}/role", json={"role": "admin"}, headers={"Authorization": f"Bearer {token}"})

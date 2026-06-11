@@ -92,6 +92,20 @@ def test_audit_log_list_requires_enterprise(client, pro_token):
     assert r.status_code == 403
 
 
+def test_audit_log_requires_admin_not_just_enterprise(client):
+    # A non-admin enterprise user (auditor) must NOT read the audit log / PII.
+    db = _Session()
+    u = User(
+        email="auditor_audit@example.com", hashed_password=get_password_hash("pass"),
+        is_active=True, is_verified=True, license_tier="enterprise",
+    )
+    db.add(u); db.commit(); db.refresh(u)
+    db.add(UserRole(user_id=u.id, role="auditor")); db.commit(); db.close()
+    token = create_access_token({"sub": "auditor_audit@example.com"})
+    r = client.get("/api/v1/enterprise/audit-log", headers={"Authorization": f"Bearer {token}"})
+    assert r.status_code == 403
+
+
 def test_audit_log_list_returns_empty_for_new_enterprise(client, ent_token):
     r = client.get("/api/v1/enterprise/audit-log", headers={"Authorization": f"Bearer {ent_token}"})
     assert r.status_code == 200

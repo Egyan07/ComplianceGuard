@@ -4,7 +4,7 @@ from typing import Literal
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.api.deps import require_enterprise, require_admin
+from app.api.deps import require_admin
 from app.models.user import User
 from app.models.enterprise import UserRole
 from app.services.audit_service import log_event
@@ -18,7 +18,7 @@ class RoleUpdate(BaseModel):
 
 @router.get("/users")
 def list_users(
-    current_user: User = Depends(require_enterprise),
+    current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     """List all active users with their enterprise roles. Enterprise-gated."""
