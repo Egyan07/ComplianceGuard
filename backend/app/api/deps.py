@@ -9,6 +9,7 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
 from app.core.auth import verify_access_token
+from app.core.config import settings
 from app.core.database import get_db
 from app.models.user import User
 
@@ -77,7 +78,18 @@ async def require_pro(current_user: User = Depends(get_current_user)) -> User:
 
 
 def require_enterprise(current_user: User = Depends(get_current_user)) -> User:
-    """Require Enterprise license tier. Returns HTTP 403 for free and pro users."""
+    """Require Enterprise license tier on a dedicated Enterprise deployment.
+
+    Enterprise is single-tenant per deployment (air-gapped/dedicated). The shared
+    hosted backend runs with ENTERPRISE_MODE off and must never serve Enterprise
+    features, so multiple customers' enterprise data cannot coexist there (no
+    cross-tenant exposure). Returns HTTP 403 otherwise.
+    """
+    if not settings.enterprise_mode:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Enterprise features are not available on this deployment.",
+        )
     if current_user.license_tier != "enterprise":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

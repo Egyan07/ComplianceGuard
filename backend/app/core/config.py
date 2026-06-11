@@ -137,6 +137,12 @@ class Settings(BaseSettings):
     sentry_dsn: Optional[str] = Field(None)
     sentry_traces_sample_rate: float = Field(0.1)
 
+    # True only on a dedicated/air-gapped Enterprise deployment. Enterprise
+    # features (audit log, RBAC, branding, export) are single-tenant and require
+    # this — they are NOT served on the shared hosted backend, so multiple
+    # customers' enterprise data can never coexist there.
+    enterprise_mode: bool = Field(False)
+
     # Server settings
     host: str = Field("127.0.0.1")
     port: int = Field(8000)

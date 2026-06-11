@@ -6,6 +6,13 @@ from app.core.database import Base, get_db, create_test_database
 from app.models.user import User
 from app.models.enterprise import UserRole
 from app.core.auth import get_password_hash, create_access_token
+from app.core.config import settings
+
+
+@pytest.fixture(autouse=True)
+def _enterprise_mode_on(monkeypatch):
+    # Enterprise endpoints are only served on a dedicated Enterprise deployment.
+    monkeypatch.setattr(settings, "enterprise_mode", True)
 
 
 _engine = None

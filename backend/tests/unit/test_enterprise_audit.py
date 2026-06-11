@@ -6,6 +6,13 @@ from app.core.database import Base, get_db, create_test_database
 from app.models.user import User
 from app.models.enterprise import AuditLog, UserRole
 from app.core.auth import get_password_hash, create_access_token
+from app.core.config import settings
+
+
+@pytest.fixture(autouse=True)
+def _enterprise_mode_on(monkeypatch):
+    # Enterprise endpoints are only served on a dedicated Enterprise deployment.
+    monkeypatch.setattr(settings, "enterprise_mode", True)
 
 
 _engine = None
@@ -123,3 +130,12 @@ def test_audit_log_verify_returns_valid_for_empty_chain(client, ent_token):
 def test_no_delete_endpoint_exists(client, ent_token):
     r = client.delete("/api/v1/enterprise/audit-log/1", headers={"Authorization": f"Bearer {ent_token}"})
     assert r.status_code == 405
+
+
+def test_enterprise_blocked_on_shared_backend(client, ent_token, monkeypatch):
+    # On the shared hosted backend (ENTERPRISE_MODE off), even an enterprise
+    # admin must be denied — Enterprise is single-tenant/dedicated, so its data
+    # can never coexist with other customers' on the shared backend.
+    monkeypatch.setattr(settings, "enterprise_mode", False)
+    r = client.get("/api/v1/enterprise/audit-log", headers={"Authorization": f"Bearer {ent_token}"})
+    assert r.status_code == 403
