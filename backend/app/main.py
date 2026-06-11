@@ -160,7 +160,10 @@ _GIT_SHA = os.getenv("GIT_SHA", "dev")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
-    allow_credentials=True,
+    # Auth is via the Authorization header (bearer tokens), never cookies, so
+    # credentialed cross-origin requests are unnecessary. Keeping this False
+    # avoids credential leakage if CORS_ORIGINS is ever misconfigured.
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

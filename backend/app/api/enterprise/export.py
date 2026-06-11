@@ -24,6 +24,11 @@ def _row_to_dict(obj) -> dict:
         if hasattr(val, "isoformat"):
             val = val.isoformat()
         result[col.name] = val
+    # Strip internal host filesystem paths from evidence data blobs — they leak
+    # server-side paths (and may contain the OS username/machine) to the customer.
+    data = result.get("data")
+    if isinstance(data, dict) and "storage_path" in data:
+        result["data"] = {k: v for k, v in data.items() if k != "storage_path"}
     return result
 
 
@@ -38,8 +43,10 @@ def _stream_export(db: Session, user: User):
             .all()
         ), "evidence_item"),
         ("evaluations", lambda: db.query(ComplianceEvaluationRecord).filter(ComplianceEvaluationRecord.user_id == user.id).all(), "evaluation"),
+        # Only the user's own audit rows — system-wide rows (user_id IS NULL)
+        # belong to other activity and must not be exported into one user's file.
         ("audit_log", lambda: db.query(AuditLog).filter(
-            (AuditLog.user_id == user.id) | (AuditLog.user_id.is_(None))
+            AuditLog.user_id == user.id
         ).order_by(AuditLog.id.asc()).all(), "audit_log"),
     ]
     for section_name, query_fn, row_type in sections:
