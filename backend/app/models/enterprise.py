@@ -1,10 +1,15 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text, JSON
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text, JSON, UniqueConstraint
 from sqlalchemy.sql import func
 from app.core.database import Base
 
 
 class AuditLog(Base):
     __tablename__ = "audit_log"
+    # A non-null prev_hash may appear at most once: two concurrent appends that
+    # both read the same last entry would both try to claim it as predecessor,
+    # forking the chain. The unique constraint makes the loser fail (and retry).
+    # NULLs (the genesis entry) are exempt — SQL treats NULLs as distinct.
+    __table_args__ = (UniqueConstraint("prev_hash", name="uq_audit_log_prev_hash"),)
 
     id = Column(Integer, primary_key=True, index=True)
     event_type = Column(String, nullable=False)
