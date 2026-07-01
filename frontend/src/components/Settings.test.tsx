@@ -111,18 +111,24 @@ describe('Settings', () => {
       });
     });
 
-    it('calls setSchedule when enable toggle is clicked', async () => {
-      renderWithTheme(<Settings />);
-      // Wait for schedule to load (toggle becomes enabled)
-      await waitFor(() => {
-        const toggle = screen.getByRole('switch', { name: /enable automatic collection/i });
-        expect(toggle).not.toBeDisabled();
+    it('calls setSchedule when the enable toggle is clicked', async () => {
+      // Seed an already-enabled schedule so the toggle visibly reflects the
+      // loaded state (checked). The Switch has no `disabled` state, so the old
+      // `not.toBeDisabled()` wait passed instantly and raced the async
+      // getSchedule load — clicking before it resolved made handleScheduleChange
+      // no-op (schedule still null). Waiting for `toBeChecked` guarantees the
+      // load completed before we click, so setSchedule is deterministically hit.
+      (window as any).electronAPI.getSchedule = vi.fn().mockResolvedValue({
+        config: { enabled: true, frequency: 'daily', time: '09:00' },
+        last_run_at: null, next_run_at: null, last_result: null,
       });
-      const toggle = screen.getByRole('switch', { name: /enable automatic collection/i });
+      renderWithTheme(<Settings />);
+      const toggle = await screen.findByRole('switch', { name: /enable automatic collection/i });
+      await waitFor(() => expect(toggle).toBeChecked());
       fireEvent.click(toggle);
       await waitFor(() => {
         expect((window as any).electronAPI.setSchedule).toHaveBeenCalledWith(
-          expect.objectContaining({ enabled: true })
+          expect.objectContaining({ enabled: false })
         );
       });
     });
