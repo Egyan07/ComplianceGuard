@@ -427,10 +427,11 @@ describe('LicenseContext', () => {
       expect(result.current.isFeatureAllowed('per_control_scoring')).toBe(false);
     });
 
-    it('isFeatureAllowed returns true for unknown features', async () => {
+    it('isFeatureAllowed returns false for unknown features (fail-closed)', async () => {
       const { result } = renderHook(() => useLicense(), { wrapper: LicenseWrapper });
       await waitFor(() => expect(result.current.loading).toBe(false));
-      expect(result.current.isFeatureAllowed('ungated_feature')).toBe(true);
+      // An unknown/typo gate must NOT unlock the feature (fail-closed).
+      expect(result.current.isFeatureAllowed('ungated_feature')).toBe(false);
     });
 
     it('activateLicense hits backend in web mode and updates local state', async () => {
@@ -495,11 +496,11 @@ describe('LicenseContext', () => {
       gated.forEach(f => expect(result.current.isFeatureAllowed(f)).toBe(false));
     });
 
-    it('multiple unknown features all return true', async () => {
+    it('multiple unknown features all return false (fail-closed)', async () => {
       const { result } = renderHook(() => useLicense(), { wrapper: LicenseWrapper });
       await waitFor(() => expect(result.current.loading).toBe(false));
       ['custom_feature', 'another_feature', 'yet_another'].forEach(f =>
-        expect(result.current.isFeatureAllowed(f)).toBe(true)
+        expect(result.current.isFeatureAllowed(f)).toBe(false)
       );
     });
   });
