@@ -10,6 +10,10 @@ from datetime import datetime, timezone
 from botocore.exceptions import ClientError, NoCredentialsError, PartialCredentialsError
 from botocore.config import Config
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 # Bounded timeouts + retries so a slow/unreachable AWS endpoint can't hang a
 # request (and, since handlers run on the event loop, the whole worker) for the
 # botocore default of ~60s per call.
@@ -18,9 +22,6 @@ _BOTO_CONFIG = Config(
     read_timeout=30,
     retries={"max_attempts": 3, "mode": "standard"},
 )
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 class AWSEvidenceCollector:

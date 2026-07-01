@@ -2,13 +2,29 @@ import pytest
 from fastapi import HTTPException
 from unittest.mock import MagicMock
 from app.api.deps import require_enterprise, require_admin
+from app.core.config import settings
 from app.models.user import User
+
+
+@pytest.fixture(autouse=True)
+def _enterprise_mode_on(monkeypatch):
+    # Enterprise features require a dedicated deployment (ENTERPRISE_MODE).
+    monkeypatch.setattr(settings, "enterprise_mode", True)
 
 
 def _make_user(tier: str) -> User:
     u = User()
     u.license_tier = tier
     return u
+
+
+def test_require_enterprise_raises_403_when_not_enterprise_mode(monkeypatch):
+    # On the shared hosted backend (ENTERPRISE_MODE off), even an enterprise
+    # user is denied — Enterprise is single-tenant/dedicated.
+    monkeypatch.setattr(settings, "enterprise_mode", False)
+    with pytest.raises(HTTPException) as exc:
+        require_enterprise(_make_user("enterprise"))
+    assert exc.value.status_code == 403
 
 
 def test_require_enterprise_passes_for_enterprise():
