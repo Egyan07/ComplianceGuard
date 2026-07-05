@@ -30,7 +30,7 @@ import {
 
 import { useLicense } from '../contexts/LicenseContext';
 import ScoreTrend from './ScoreTrend';
-import { getScoreTrend } from '../services/api';
+import { getScoreTrend, evaluationHistoryToTrend } from '../services/api';
 import type { TrendPoint } from '../services/api';
 
 const isElectron = !!(window as any).electronAPI;
@@ -74,16 +74,21 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
     setEvaluations([]);
     setTrendPoints([]);
     try {
-      const trend = await getScoreTrend(frameworkId);
-      setTrendPoints(trend);
       if (isElectron) {
+        // Fetch history once and derive the trend locally — getScoreTrend would
+        // otherwise fetch the same history a second time.
         const api = (window as any).electronAPI;
         const history = await api.getEvaluationHistory(frameworkId);
         if (history?.error) {
           setError(history.error);
         } else {
-          setEvaluations(Array.isArray(history) ? history : []);
+          const rows = Array.isArray(history) ? history : [];
+          setEvaluations(rows);
+          setTrendPoints(evaluationHistoryToTrend(rows));
         }
+      } else {
+        const trend = await getScoreTrend(frameworkId);
+        setTrendPoints(trend);
       }
     } catch (err: any) {
       setError(err.message);

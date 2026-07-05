@@ -191,15 +191,7 @@ export interface TrendDisplayPoint extends TrendPoint {
 export async function getScoreTrend(frameworkId: 1 | 2 | 3 = 1): Promise<TrendPoint[]> {
   if (isElectron) {
     const api = getElectronAPI();
-    const history = await api.getEvaluationHistory(frameworkId);
-    if (!Array.isArray(history)) return [];
-    return history
-      .map((r: any) => ({
-        date: r.evaluation_date,
-        score: Math.round(r.overall_score ?? r.findings?.overall_score ?? 0),
-        status: normaliseStatus(r.status ?? r.findings?.status),
-      }))
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    return evaluationHistoryToTrend(await api.getEvaluationHistory(frameworkId));
   }
   // Web mode
   const response = await apiClient.get('/compliance/evaluations/history');
@@ -218,6 +210,19 @@ function normaliseStatus(raw: string | undefined): TrendPoint['status'] {
   if (raw === 'compliant') return 'compliant';
   if (raw === 'partial' || raw === 'partial_compliance' || raw === 'at_risk') return 'partial';
   return 'non_compliant';
+}
+
+// Derive score-trend points from an already-fetched (Electron) evaluation
+// history, so callers that also need the raw history don't fetch it twice.
+export function evaluationHistoryToTrend(history: any[]): TrendPoint[] {
+  if (!Array.isArray(history)) return [];
+  return history
+    .map((r: any) => ({
+      date: r.evaluation_date,
+      score: Math.round(r.overall_score ?? r.findings?.overall_score ?? 0),
+      status: normaliseStatus(r.status ?? r.findings?.status),
+    }))
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 }
 
 // ---- Electron IPC API ----
