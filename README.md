@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="#quick-start"><img src="https://img.shields.io/badge/version-3.3.1-2563EB" alt="Version"></a>
+  <a href="#quick-start"><img src="https://img.shields.io/badge/version-3.4.0-2563EB" alt="Version"></a>
   <img src="https://img.shields.io/badge/license-BSL%201.1-orange" alt="License">
   <a href="#compliance-frameworks"><img src="https://img.shields.io/badge/frameworks-SOC%202%20%7C%20ISO%2027001%20%7C%20HIPAA-10B981" alt="Frameworks"></a>
   <img src="https://img.shields.io/badge/tests-~568%20passing-10B981?logo=pytest&logoColor=white" alt="Tests">
