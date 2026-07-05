@@ -33,4 +33,10 @@ class RefreshToken(Base):
 
     @property
     def is_expired(self) -> bool:
-        return datetime.now(timezone.utc) > self.expires_at
+        # Normalize a possibly-naive expires_at (SQLite reads back naive) to UTC
+        # so the comparison never raises "can't compare offset-naive and
+        # offset-aware datetimes".
+        expires = self.expires_at
+        if expires.tzinfo is None:
+            expires = expires.replace(tzinfo=timezone.utc)
+        return datetime.now(timezone.utc) > expires

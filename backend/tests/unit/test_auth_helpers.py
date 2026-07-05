@@ -428,3 +428,29 @@ def test_reset_password_revokes_refresh_tokens():
         assert tok.revoked_at is not None, "refresh token must be revoked after password reset"
     finally:
         check.close()
+
+
+def test_refresh_token_delivered_as_httponly_cookie(registered_user):
+    """Login sets the refresh token as an HttpOnly cookie; refresh works from the
+    cookie alone (no body); logout clears it. (Web XSS mitigation.)"""
+    c = TestClient(app)
+    login = c.post("/api/v1/auth/login", data={"username": "valid@test.com", "password": "Valid@pass1"})
+    assert login.status_code == 200, login.text
+
+    set_cookie = login.headers.get("set-cookie", "")
+    assert "refresh_token=" in set_cookie
+    assert "httponly" in set_cookie.lower()
+    assert "samesite=strict" in set_cookie.lower()
+
+    # Refresh using ONLY the cookie (TestClient's jar auto-sends it), no body.
+    r = c.post("/api/v1/auth/refresh")
+    assert r.status_code == 200, r.text
+    assert r.json()["access_token"]
+
+    # Logout clears the cookie and the token can no longer refresh.
+    lo = c.post("/api/v1/auth/logout")
+    assert lo.status_code == 200
+    assert 'refresh_token=""' in lo.headers.get("set-cookie", "") or "refresh_token=;" in lo.headers.get("set-cookie", "")
+    c.cookies.clear()
+    r2 = c.post("/api/v1/auth/refresh")
+    assert r2.status_code == 401

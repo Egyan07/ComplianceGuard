@@ -24,7 +24,7 @@ import secrets
 import re
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Response, Cookie
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core.rate_limit import limiter
@@ -51,6 +51,29 @@ from sqlalchemy.orm import Session
 
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
+
+# Refresh token is delivered to web clients as an HttpOnly cookie (not readable
+# by JS → not exfiltratable via XSS). Same-origin only, so SameSite=Strict. It's
+# also still returned in the login/register JSON body for the Electron desktop
+# client, which stores it in the OS keychain (not XSS-exposed).
+REFRESH_COOKIE_NAME = "refresh_token"
+REFRESH_COOKIE_PATH = "/api/v1/auth"
+
+
+def _set_refresh_cookie(response: Response, token: str) -> None:
+    response.set_cookie(
+        key=REFRESH_COOKIE_NAME,
+        value=token,
+        httponly=True,
+        secure=not settings.debug,  # False over http in dev/test; True (https) in prod
+        samesite="strict",
+        path=REFRESH_COOKIE_PATH,
+        max_age=REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
+    )
+
+
+def _clear_refresh_cookie(response: Response) -> None:
+    response.delete_cookie(REFRESH_COOKIE_NAME, path=REFRESH_COOKIE_PATH)
 
 
 def _issue_refresh_token(user_id: int, sub: str, db: Session) -> str:
@@ -109,6 +132,7 @@ class LoginResponse(BaseModel):
 @limiter.limit("5/minute")
 async def login(
     request: Request,
+    response: Response,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Session = Depends(get_db)
 ):
@@ -141,6 +165,7 @@ async def login(
     refresh_token = _issue_refresh_token(user.id, user.email, db)
     db.commit()
 
+    _set_refresh_cookie(response, refresh_token)
     return LoginResponse(
         access_token=access_token,
         refresh_token=refresh_token,
@@ -160,6 +185,7 @@ async def login(
 @limiter.limit("3/minute")
 async def register(
     request: Request,
+    response: Response,
     user_data: UserCreate,
     db: Session = Depends(get_db)
 ):
@@ -226,6 +252,7 @@ async def register(
     refresh_token = _issue_refresh_token(new_user.id, new_user.email, db)
     db.commit()
 
+    _set_refresh_cookie(response, refresh_token)
     return LoginResponse(
         access_token=access_token,
         refresh_token=refresh_token,
@@ -370,8 +397,9 @@ async def reset_password(
 
 
 class RefreshRequest(BaseModel):
-    """Schema for token refresh."""
-    refresh_token: str
+    """Schema for token refresh. Optional: web clients send the refresh token via
+    the HttpOnly cookie instead of the body."""
+    refresh_token: str | None = None
 
 
 class RefreshResponse(BaseModel):
@@ -384,17 +412,25 @@ class RefreshResponse(BaseModel):
 @limiter.limit("10/minute")
 async def refresh_token(
     request: Request,
-    request_data: RefreshRequest,
     db: Session = Depends(get_db),
+    request_data: RefreshRequest | None = None,
+    refresh_cookie: str | None = Cookie(default=None, alias=REFRESH_COOKIE_NAME),
 ):
-    """Exchange a valid refresh token for a new access token."""
+    """Exchange a valid refresh token for a new access token.
+
+    The token comes from the HttpOnly cookie (web) or the JSON body (Electron).
+    """
     _invalid = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid or expired refresh token",
         headers={"WWW-Authenticate": "Bearer"},
     )
 
-    token_data = verify_refresh_token(request_data.refresh_token)
+    token = (request_data.refresh_token if request_data else None) or refresh_cookie
+    if not token:
+        raise _invalid
+
+    token_data = verify_refresh_token(token)
     if token_data is None or token_data.sub is None or token_data.jti is None:
         raise _invalid
 
@@ -420,17 +456,21 @@ async def refresh_token(
 @limiter.limit("20/minute")
 async def logout(
     request: Request,
-    request_data: RefreshRequest,
+    response: Response,
     db: Session = Depends(get_db),
+    request_data: RefreshRequest | None = None,
+    refresh_cookie: str | None = Cookie(default=None, alias=REFRESH_COOKIE_NAME),
 ):
     """
-    Revoke the supplied refresh token.
+    Revoke the supplied refresh token (from the HttpOnly cookie or JSON body) and
+    clear the cookie.
 
     The access token (short-lived) cannot be revoked here — clients must
     simply discard it. The refresh token's jti is marked revoked in the DB
     so it can never be exchanged for a new access token.
     """
-    token_data = verify_refresh_token(request_data.refresh_token)
+    token = (request_data.refresh_token if request_data else None) or refresh_cookie
+    token_data = verify_refresh_token(token) if token else None
     if token_data is not None and token_data.jti:
         db_token = (
             db.query(RefreshToken).filter(RefreshToken.jti == token_data.jti).first()
@@ -438,6 +478,7 @@ async def logout(
         if db_token and not db_token.is_revoked:
             db_token.revoked_at = datetime.now(timezone.utc)
             db.commit()
+    _clear_refresh_cookie(response)
     # Always return 200 — don't leak whether the token existed.
     return {"message": "Logged out successfully"}
 
