@@ -35,19 +35,19 @@ def _row_to_dict(obj) -> dict:
 def _stream_export(db: Session, user: User):
     """Generator that yields NDJSON lines for all compliance data belonging to `user`."""
     sections = [
-        ("evidence_collections", lambda: db.query(EvidenceCollection).filter(EvidenceCollection.user_id == user.id).all(), "evidence_collection"),
+        ("evidence_collections", lambda: db.query(EvidenceCollection).filter(EvidenceCollection.user_id == user.id).yield_per(500), "evidence_collection"),
         ("evidence_items", lambda: (
             db.query(EvidenceItem)
             .join(EvidenceCollection)
             .filter(EvidenceCollection.user_id == user.id)
-            .all()
+            .yield_per(500)
         ), "evidence_item"),
-        ("evaluations", lambda: db.query(ComplianceEvaluationRecord).filter(ComplianceEvaluationRecord.user_id == user.id).all(), "evaluation"),
+        ("evaluations", lambda: db.query(ComplianceEvaluationRecord).filter(ComplianceEvaluationRecord.user_id == user.id).yield_per(500), "evaluation"),
         # Only the user's own audit rows — system-wide rows (user_id IS NULL)
         # belong to other activity and must not be exported into one user's file.
         ("audit_log", lambda: db.query(AuditLog).filter(
             AuditLog.user_id == user.id
-        ).order_by(AuditLog.id.asc()).all(), "audit_log"),
+        ).order_by(AuditLog.id.asc()).yield_per(500), "audit_log"),
     ]
     for section_name, query_fn, row_type in sections:
         yield json.dumps({"type": "section", "name": section_name}) + "\n"

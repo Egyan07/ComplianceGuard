@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy.orm import Session, selectinload
@@ -157,7 +158,9 @@ async def collect_evidence(
                     ),
                     "region_name": cred.region,
                 }
-                bundle = evidence_service.collect_all_evidence(**aws_creds)
+                # Offload the blocking boto3 collection to a threadpool so a slow
+                # AWS endpoint can't pin this async handler's event loop.
+                bundle = await run_in_threadpool(evidence_service.collect_all_evidence, **aws_creds)
             except Exception as crypto_err:
                 logger.error("Failed to decrypt AWS credentials for user %s: %s", current_user.email, crypto_err)
                 raise HTTPException(
@@ -165,7 +168,7 @@ async def collect_evidence(
                     detail="Could not decrypt stored AWS credentials. Re-save them in Settings.",
                 )
         else:
-            bundle = evidence_service.collect_all_evidence()
+            bundle = await run_in_threadpool(evidence_service.collect_all_evidence)
 
         # Persist the collection run
         collection = EvidenceCollection(

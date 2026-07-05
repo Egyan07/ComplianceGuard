@@ -59,13 +59,11 @@ def verify_audit_chain(
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    # TODO: switch to yield_per(1000) for large deployments — unbounded scan OOMs on big tables
-    rows = db.query(AuditLog).order_by(AuditLog.id.asc()).all()
-    if not rows:
-        return {"valid": True, "entries_checked": 0, "first_broken_at": None}
-
+    # Stream rows in batches (audit_log grows unbounded — DELETE is revoked) so
+    # verify doesn't load the whole table into memory at once.
     prev_hash = None
-    for i, row in enumerate(rows):
+    checked = 0
+    for row in db.query(AuditLog).order_by(AuditLog.id.asc()).yield_per(500):
         expected = compute_entry_hash(
             prev_hash,
             row.event_type,
@@ -76,10 +74,11 @@ def verify_audit_chain(
             canonical_timestamp(row.created_at),
         )
         if row.entry_hash != expected or row.prev_hash != prev_hash:
-            return {"valid": False, "entries_checked": i, "first_broken_at": row.id}
+            return {"valid": False, "entries_checked": checked, "first_broken_at": row.id}
         prev_hash = row.entry_hash
+        checked += 1
 
-    return {"valid": True, "entries_checked": len(rows), "first_broken_at": None}
+    return {"valid": True, "entries_checked": checked, "first_broken_at": None}
 
 
 @router.get("/audit-log/{entry_id}")
