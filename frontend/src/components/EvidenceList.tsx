@@ -110,7 +110,7 @@ const EvidenceList: React.FC<EvidenceListProps> = ({
   };
 
   const formatStatus = (status: string) => {
-    return status.replace('_', '-').toUpperCase();
+    return status.replace(/_/g, '-').toUpperCase();
   };
 
   const filteredItems = evidenceItems.filter(item => {
@@ -197,7 +197,7 @@ const EvidenceList: React.FC<EvidenceListProps> = ({
               <MenuItem value="all">All Sources</MenuItem>
               {uniqueSources.map(source => (
                 <MenuItem key={source} value={source}>
-                  {source.replace('_', ' ').toUpperCase()}
+                  {source.replace(/_/g, ' ').toUpperCase()}
                 </MenuItem>
               ))}
             </Select>
@@ -256,7 +256,7 @@ const EvidenceList: React.FC<EvidenceListProps> = ({
                     <Box sx={{ flex: 1 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                         <Typography variant="subtitle2">
-                          {item.type.replace('_', ' ').toUpperCase()}
+                          {item.type.replace(/_/g, ' ').toUpperCase()}
                         </Typography>
                         <Chip
                           size="small"
@@ -266,7 +266,7 @@ const EvidenceList: React.FC<EvidenceListProps> = ({
                         />
                       </Box>
                       <Typography variant="body2" color="text.secondary">
-                        Source: {item.source.replace('_', ' ')} •
+                        Source: {item.source.replace(/_/g, ' ')} •
                         {new Date(item.timestamp).toLocaleDateString()}
                       </Typography>
                     </Box>
