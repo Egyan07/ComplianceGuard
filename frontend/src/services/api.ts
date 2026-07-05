@@ -60,12 +60,6 @@ apiClient.interceptors.response.use(
       !originalRequest.url?.includes('/auth/refresh')
     ) {
       (originalRequest as any)._retried = true;
-      const storedRefresh = localStorage.getItem('refresh_token');
-
-      if (!storedRefresh) {
-        localStorage.removeItem('auth_token');
-        return Promise.reject(error);
-      }
 
       if (isRefreshing) {
         // Queue this request until the in-flight refresh completes or fails
@@ -83,9 +77,12 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
+        // The refresh token rides the HttpOnly cookie (same-origin), so no body
+        // is sent; withCredentials ensures the cookie is included.
         const refreshRes = await axios.post(
           `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/v1/auth/refresh`,
-          { refresh_token: storedRefresh },
+          {},
+          { withCredentials: true },
         );
         const newAccessToken: string = refreshRes.data.access_token;
         localStorage.setItem('auth_token', newAccessToken);
@@ -102,7 +99,6 @@ apiClient.interceptors.response.use(
         pendingRequests.forEach(({ onFailure }) => onFailure(error));
         pendingRequests = [];
         localStorage.removeItem('auth_token');
-        localStorage.removeItem('refresh_token');
         localStorage.removeItem('auth_user');
         onRefreshFailed?.();
         return Promise.reject(error);

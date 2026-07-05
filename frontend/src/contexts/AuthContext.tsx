@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import axios from 'axios';
 import { registerAuthCallbacks } from '../services/api';
 
@@ -29,24 +29,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('auth_token'));
   const [loading, setLoading] = useState(true);
-  // Ref so the axios interceptor in api.ts always reads the latest refresh token
-  const refreshTokenRef = useRef<string | null>(localStorage.getItem('refresh_token'));
 
-  const storeTokens = (accessToken: string, refreshToken: string, userData: User) => {
+  // The refresh token is NOT stored in JS-readable storage — it lives in an
+  // HttpOnly cookie set by the server, so XSS can't exfiltrate it. Only the
+  // short-lived access token + user profile are kept in localStorage.
+  const storeTokens = (accessToken: string, userData: User) => {
     setToken(accessToken);
     setUser(userData);
-    refreshTokenRef.current = refreshToken;
     localStorage.setItem('auth_token', accessToken);
-    localStorage.setItem('refresh_token', refreshToken);
     localStorage.setItem('auth_user', JSON.stringify(userData));
   };
 
   const clearAuth = () => {
     setToken(null);
     setUser(null);
-    refreshTokenRef.current = null;
     localStorage.removeItem('auth_token');
-    localStorage.removeItem('refresh_token');
     localStorage.removeItem('auth_user');
   };
 
@@ -54,12 +51,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const storedToken = localStorage.getItem('auth_token');
     const storedUser = localStorage.getItem('auth_user');
-    const storedRefresh = localStorage.getItem('refresh_token');
     if (storedToken && storedUser) {
       try {
         setToken(storedToken);
         setUser(JSON.parse(storedUser));
-        refreshTokenRef.current = storedRefresh;
       } catch {
         clearAuth();
       }
@@ -76,8 +71,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
 
-    const { access_token, refresh_token, user: userData } = res.data;
-    storeTokens(access_token, refresh_token, userData);
+    const { access_token, user: userData } = res.data;
+    storeTokens(access_token, userData);
   };
 
   const register = async (
@@ -93,8 +88,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       last_name: lastName,
     });
 
-    const { access_token, refresh_token, user: userData } = res.data;
-    storeTokens(access_token, refresh_token, userData);
+    const { access_token, user: userData } = res.data;
+    storeTokens(access_token, userData);
   };
 
   const logout = () => clearAuth();

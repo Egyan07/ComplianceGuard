@@ -142,7 +142,8 @@ describe('AuthContext', () => {
       });
 
       expect(localStorage.getItem('auth_token')).toBe(mockToken);
-      expect(localStorage.getItem('refresh_token')).toBe(mockRefreshToken);
+      // Refresh token is delivered as an HttpOnly cookie now — never localStorage.
+      expect(localStorage.getItem('refresh_token')).toBeNull();
     });
 
     it('stores user in localStorage on success', async () => {
@@ -243,7 +244,8 @@ describe('AuthContext', () => {
       });
 
       expect(localStorage.getItem('auth_token')).toBe(mockToken);
-      expect(localStorage.getItem('refresh_token')).toBe(mockRefreshToken);
+      // Refresh token is delivered as an HttpOnly cookie now — never localStorage.
+      expect(localStorage.getItem('refresh_token')).toBeNull();
     });
 
     it('throws on failed register', async () => {
@@ -361,7 +363,6 @@ describe('AuthContext', () => {
   describe('stored token rehydration', () => {
     it('restores user from localStorage on mount', async () => {
       localStorage.setItem('auth_token', mockToken);
-      localStorage.setItem('refresh_token', mockRefreshToken);
       localStorage.setItem('auth_user', JSON.stringify(mockUser));
 
       const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
