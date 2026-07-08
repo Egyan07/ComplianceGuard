@@ -449,7 +449,7 @@ Free gets you hooked. Pro makes you audit-ready. Enterprise makes you untouchabl
 | Evaluation history + trends | — | ✅ | ✅ |
 | PDF audit-ready reports | — | ✅ | ✅ |
 | Cloud dashboard (multi-machine) | — | ✅ | ✅ |
-| Tamper-evident audit log (SHA-256 hash chain) | — | — | ✅ |
+| Tamper-evident audit log (HMAC-SHA256 hash chain) | — | — | ✅ |
 | RBAC (admin + auditor roles) | — | — | ✅ |
 | Custom PDF branding (logo, company name, footer) | — | — | ✅ |
 | Full compliance data export (NDJSON) | — | — | ✅ |
@@ -501,11 +501,11 @@ All data stays under your control. Zero telemetry.
 | Database | Parameterized queries. Foreign key constraints. Alembic-managed migrations. |
 | Navigation | External URLs blocked. `window.open` denied. |
 | Licensing | Ed25519 signed keys. Only the public key ships with the app. |
-| Auth (Web) | JWT access tokens (30 min) + DB-backed revocable refresh tokens (7 days). Bcrypt hashing. Email verification enforced. Password complexity + reset with expiring tokens. `POST /api/v1/auth/logout` revokes the refresh token JTI. |
+| Auth (Web) | JWT access tokens (30 min) + DB-backed revocable refresh tokens (7 days). The refresh token is delivered as an **HttpOnly, SameSite=Strict cookie** (Secure in prod) so it isn't readable by JS/XSS; the access-token path rejects refresh tokens. Bcrypt hashing. Email verification enforced. Password complexity + reset with expiring tokens; a password reset revokes all of the user's refresh tokens. `POST /api/v1/auth/logout` revokes the refresh token JTI and clears the cookie. |
 | License (Web) | Ed25519 signed keys verified in Python (`cryptography`). `require_pro` dependency returns HTTP 402. License email validated on activation. |
 | Rate Limiting | 5 req/min on login, 3/min on register. Redis shared backend supported via `RATELIMIT_STORAGE_URI`. Nginx rate limiting at proxy layer. |
 | Error Monitoring | Sentry integration on backend (FastAPI + SQLAlchemy) and frontend. `send_default_pii=False`. Silent no-op when DSN unset. Disabled entirely when `ENTERPRISE_MODE=true`. |
-| Enterprise Audit | Tamper-evident audit log with SHA-256 hash chain (`prev_hash` + `entry_hash`). Append-only at API layer; Postgres app user REVOKEd DELETE/UPDATE. Chain verifiable at `GET /api/v1/enterprise/audit-log/verify`. |
+| Enterprise Audit | Tamper-evident audit log with an **HMAC-SHA256 keyed** hash chain (`prev_hash` + `entry_hash`; key derived from the server secret, so a DB-write attacker can't forge it). Append-only at API layer; Postgres app user REVOKEd DELETE/UPDATE. Chain verifiable at `GET /api/v1/enterprise/audit-log/verify`. Enterprise endpoints (audit/RBAC/branding/export) require a dedicated deployment (`ENTERPRISE_MODE=true`) and the admin role — they are never served on the shared hosted backend. |
 | Proxy | Nginx reverse proxy with CSP, HSTS, Permissions-Policy, X-Frame-Options, X-Content-Type-Options. |
 
 For reporting security vulnerabilities, see [SECURITY.md](SECURITY.md).
@@ -517,7 +517,7 @@ For reporting security vulnerabilities, see [SECURITY.md](SECURITY.md).
 ```bash
 npm run dev              # Electron + React dev server
 npm run build            # Build frontend
-npm run package          # Windows installer (.msi + .nsis)
+npm run package          # Windows installers (NSIS + portable .exe)
 ```
 
 ### Web / Backend
@@ -544,14 +544,14 @@ npm run test:e2e         # Playwright e2e tests
 npm run lint             # ESLint
 npm run format:check     # Prettier
 
-# Backend (253 unit + 26 integration + 8 e2e)
+# Backend (281 unit + 35 integration + 8 e2e)
 cd backend
 python -m pytest tests/unit/ -v
 python -m pytest tests/integration/ -v
 python -m pytest tests/e2e/ -v --run-e2e
 ```
 
-CI runs all tests on every push via GitHub Actions. **~568 tests passing** — backend: ~287 (253 unit + 26 integration + 8 e2e), frontend: ~211 Vitest unit (185 + 18 heatmap + 8 score trend) + 43 Electron unit (10 scheduler + 13 engine + 6 sqlite + 9 enterprise + 5 remediation), e2e: 5 Playwright.
+CI runs all tests on every push via GitHub Actions, and the desktop (Electron) test suite now gates releases. Backend: 281 unit + 35 integration + 8 e2e. Frontend: ~208 Vitest unit + ~63 Electron unit. e2e: 5 Playwright.
 
 ## Troubleshooting
 
@@ -626,7 +626,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 | **Control Heatmap** — per-control score bars, status pills, gap details; all 29 SOC 2 controls at a glance | Evidence status workflow |
 | **Remediation Scripts** — one-click PowerShell download for 6 automatable SOC 2 controls; guidance steps for all others; inline re-scan flow | |
 | **Compliance Score Trend** — time-series chart on the History page; compliance zone bands (Good/On Track/Needs Attention); framework tabs | |
-| **Air-gapped Enterprise tier** — tamper-evident SHA-256 hash chain audit log, RBAC, custom PDF branding, NDJSON export, offline Docker bundle, hardened TLS | |
+| **Air-gapped Enterprise tier** — tamper-evident HMAC-SHA256 keyed hash-chain audit log, RBAC, custom PDF branding, NDJSON export, offline Docker bundle, hardened TLS | |
 | Premium UI — Linear/Stripe quality design system, global nav, animated score hero, micro-interactions | |
 | Free / Pro / Enterprise licensing — Ed25519 cryptographic signatures, verified fully offline | |
 | Cloud sync + multi-machine compliance dashboard | |
