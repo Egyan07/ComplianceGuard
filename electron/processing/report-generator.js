@@ -74,22 +74,20 @@ function cgMarkSvg(sizePx) {
 </svg>`;
 }
 
-// Circular readiness-assessment seal (gold rings + curved wording + CG mark + date).
+// Minimal readiness-assessment badge (hairline rings + curved wording + CG mark + date), Apple-style.
 function sealSvg(dateText) {
-  return `<svg viewBox="0 0 200 200" width="150" height="150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ComplianceGuard Readiness Assessment">
-  <defs>
-    <path id="cg-seal-arc" d="M 100,100 m -74,0 a 74,74 0 1,1 148,0 a 74,74 0 1,1 -148,0"/>
-  </defs>
-  <circle cx="100" cy="100" r="94" fill="none" stroke="#C9A227" stroke-width="2"/>
-  <circle cx="100" cy="100" r="86" fill="none" stroke="#C9A227" stroke-width="1"/>
-  <text fill="#C9A227" font-size="12" font-weight="600" letter-spacing="3" font-family="Georgia,'Times New Roman',serif">
-    <textPath href="#cg-seal-arc" startOffset="0">COMPLIANCEGUARD · READINESS ASSESSMENT · </textPath>
-  </text>
-  <g transform="translate(66,58) scale(0.132)">
+  const sys = "-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue','Segoe UI',Helvetica,Arial,sans-serif";
+  return `<svg viewBox="0 0 200 188" width="150" height="141" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ComplianceGuard Readiness Assessment">
+  <circle cx="100" cy="62" r="52" fill="#FFFFFF" stroke="#D2D2D7" stroke-width="1"/>
+  <circle cx="100" cy="62" r="44" fill="none" stroke="#E8E8ED" stroke-width="1"/>
+  <g transform="translate(78,40) scale(0.086)">
     <rect width="512" height="512" rx="112" fill="#2563EB"/>
     <text x="256" y="256" dy="0.35em" font-family="Arial,'Helvetica Neue',Helvetica,sans-serif" font-size="200" font-weight="700" fill="#FFFFFF" text-anchor="middle" letter-spacing="-10">CG</text>
   </g>
-  <text x="100" y="150" text-anchor="middle" font-size="10" fill="#C9A227" font-family="Georgia,'Times New Roman',serif" letter-spacing="1">${escapeHtml(dateText)}</text>
+  <circle cx="130" cy="90" r="14" fill="#2563EB" stroke="#FFFFFF" stroke-width="2.5"/>
+  <path d="M124,90 l4,4 l8,-8.5" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="100" y="148" text-anchor="middle" font-size="11" font-weight="600" letter-spacing="2" fill="#6E6E73" font-family="${sys}">READINESS ASSESSMENT</text>
+  <text x="100" y="166" text-anchor="middle" font-size="9" fill="#86868B" letter-spacing="1" font-family="${sys}">${escapeHtml(dateText)}</text>
 </svg>`;
 }
 
@@ -124,6 +122,8 @@ class ReportGenerator {
     const fingerprint = computeReportFingerprint(evaluation?.findings || null);
     const shortFp = fingerprint ? fingerprint.slice(0, 16) : null;
     const frameworkVersion = escapeHtml(framework.version || '2017');
+    const recByControl = {};
+    (findings.recommendations || []).forEach(r => { if (r && r.control_id) recByControl[r.control_id] = r; });
 
     const html = `<!DOCTYPE html>
 <html lang="en">
@@ -133,81 +133,109 @@ class ReportGenerator {
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   :root {
-    --ink: #1a1a2e; --navy: #0D2540; --blue: #0D47A1; --accent: #1565C0;
-    --gold: #C9A227; --line: #E0E0E0; --serif: Georgia, 'Times New Roman', serif;
-    --sans: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    --ink:#1D1D1F; --sub:#424245; --muted:#6E6E73; --faint:#86868B;
+    --line:#D2D2D7; --hair:#E8E8ED; --surface:#F5F5F7; --card:#FFFFFF;
+    --accent:#2563EB;
+    --sys:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display','Helvetica Neue','Segoe UI',Helvetica,Arial,sans-serif;
   }
-  body { font-family: var(--sans); color: var(--ink); line-height: 1.6; }
+  html, body { background:#fff; }
+  body { font-family:var(--sys); color:var(--ink); line-height:1.55; font-size:14px; -webkit-font-smoothing:antialiased; }
 
-  /* Cover (full-bleed; printToPDF margins are 0) */
+  /* Cover — light & spacious (full-bleed; printToPDF margins are 0) */
   .cover {
-    page-break-after: always; min-height: 100vh;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    background: linear-gradient(135deg, #0D1B2A 0%, #123049 45%, #0A2540 100%);
-    color: #fff; text-align: center; padding: 64px 60px;
+    page-break-after:always; min-height:100vh;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:linear-gradient(180deg,#FFFFFF 0%,#F5F5F7 100%);
+    text-align:center; padding:96px 64px;
   }
-  .cover .brand { margin-bottom: 28px; }
-  .cover .kicker { font-family: var(--serif); font-size: 15px; letter-spacing: 4px; text-transform: uppercase; color: #90CAF9; margin-bottom: 10px; }
-  .cover h1 { font-family: var(--serif); font-size: 44px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 10px; }
-  .cover .company { font-size: 18px; color: #CFD8DC; margin-bottom: 4px; }
-  .cover .framework { font-size: 14px; color: #90A4AE; letter-spacing: 1px; text-transform: uppercase; }
-  .cover .seal { margin: 34px 0; }
+  .cover .brand { margin-bottom:30px; filter:drop-shadow(0 8px 20px rgba(37,99,235,.20)); }
+  .cover .kicker { font-size:12px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:var(--muted); margin-bottom:18px; }
+  .cover h1 { font-size:52px; font-weight:600; letter-spacing:-1.6px; color:var(--ink); margin-bottom:12px; }
+  .cover .company { font-size:17px; color:var(--muted); font-weight:400; }
+  .cover .seal { margin:40px 0 36px; }
   .cover .score-panel {
-    margin-top: 8px; padding: 20px 44px; border-radius: 12px;
-    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18);
+    display:inline-flex; flex-direction:column; align-items:center;
+    padding:26px 54px; border-radius:22px; background:var(--card);
+    border:1px solid var(--hair); box-shadow:0 1px 2px rgba(0,0,0,.04),0 14px 34px rgba(0,0,0,.07);
   }
-  .cover .score-value { font-size: 60px; font-weight: 700; color: ${scoreColor(overallScore)}; }
-  .cover .score-label { font-size: 13px; color: #B0BEC5; text-transform: uppercase; letter-spacing: 2px; }
-  .cover .meta { margin-top: 30px; font-size: 12px; color: #90A4AE; letter-spacing: 1px; }
+  .cover .score-value { font-size:66px; font-weight:600; letter-spacing:-2px; line-height:1; color:${scoreColor(overallScore)}; }
+  .cover .score-label { margin-top:8px; font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:1.6px; }
+  .cover .meta { margin-top:42px; font-size:11.5px; color:var(--faint); letter-spacing:.3px; }
 
   /* Statement page */
-  .statement { page-break-after: always; padding: 0.7in 0.75in; }
-  .statement .head { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid var(--line); padding-bottom: 16px; margin-bottom: 24px; }
-  .statement h2, .content h2 { font-family: var(--serif); font-size: 24px; font-weight: 700; color: var(--navy); }
-  .statement p { margin: 12px 0; }
-  .statement .disclaimer { font-style: italic; color: #555; background: #FBFBF6; border-left: 3px solid var(--gold); padding: 12px 16px; margin: 20px 0; }
-  .statement .integrity { font-family: var(--sans); font-size: 12px; color: #666; margin-top: 18px; word-break: break-all; }
-  .statement .integrity code { font-family: 'Courier New', monospace; color: var(--navy); }
+  .statement { page-break-after:always; padding:0.85in 0.8in; }
+  .statement .head { display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); padding-bottom:18px; margin-bottom:30px; }
+  .statement .head .rid { text-align:right; font-size:11px; color:var(--muted); line-height:1.5; }
+  h2 { font-size:22px; font-weight:600; letter-spacing:-.5px; color:var(--ink); }
+  .statement p { margin:14px 0; color:var(--sub); font-size:14.5px; }
+  .statement .disclaimer { color:var(--sub); background:var(--surface); border:1px solid var(--hair); border-radius:14px; padding:16px 18px; margin:24px 0; font-size:13.5px; }
+  .statement .integrity { font-size:12px; color:var(--muted); margin-top:22px; word-break:break-all; }
+  .statement .integrity code { font-family:'SF Mono','SFMono-Regular',Menlo,Consolas,monospace; color:var(--ink); background:var(--surface); padding:2px 6px; border-radius:6px; }
 
   /* Content pages */
-  .content { padding: 0.6in 0.6in; }
-  .content h2 { border-bottom: 2px solid #E3F2FD; padding-bottom: 8px; margin: 28px 0 16px; break-after: avoid; }
-  .content h3 { font-family: var(--serif); font-size: 16px; color: var(--accent); margin: 20px 0 10px; break-after: avoid; }
+  .content { padding:0.7in 0.7in; }
+  .content h2 { margin:36px 0 18px; padding-bottom:10px; border-bottom:1px solid var(--line); break-after:avoid; }
+  .content h2:first-child { margin-top:0; }
+  .content p { color:var(--sub); }
 
-  .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 16px 0 24px; }
-  .summary-card { background: #F5F7FA; border-radius: 8px; padding: 16px; text-align: center; border-left: 4px solid var(--accent); page-break-inside: avoid; }
-  .summary-card.compliant { border-left-color: #66BB6A; }
-  .summary-card.partial { border-left-color: #FFA726; }
-  .summary-card.non-compliant { border-left-color: #EF5350; }
-  .summary-card .value { font-size: 30px; font-weight: 700; }
-  .summary-card .label { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1px; }
+  .summary-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin:18px 0 28px; }
+  .summary-card { background:var(--card); border:1px solid var(--hair); border-radius:16px; padding:18px 16px; text-align:center; box-shadow:0 1px 2px rgba(0,0,0,.04),0 6px 16px rgba(0,0,0,.04); page-break-inside:avoid; }
+  .summary-card .dot { display:inline-block; width:7px; height:7px; border-radius:50%; margin-bottom:10px; background:var(--faint); }
+  .summary-card.total .dot { background:var(--accent); }
+  .summary-card.compliant .dot { background:#34C759; }
+  .summary-card.partial .dot { background:#FF9500; }
+  .summary-card.non-compliant .dot { background:#FF3B30; }
+  .summary-card .value { font-size:30px; font-weight:600; letter-spacing:-1px; color:var(--ink); }
+  .summary-card .label { margin-top:4px; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; }
 
-  table { width: 100%; border-collapse: collapse; margin: 12px 0 24px; font-size: 13px; }
-  thead { display: table-header-group; }
-  th { background: var(--blue); color: #fff; padding: 10px 12px; text-align: left; font-weight: 500; }
-  td { padding: 8px 12px; border-bottom: 1px solid var(--line); }
-  tr { page-break-inside: avoid; }
-  tr:nth-child(even) { background: #FAFAFA; }
+  table { width:100%; border-collapse:collapse; margin:14px 0 26px; font-size:13px; }
+  thead { display:table-header-group; }
+  th { text-align:left; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); padding:0 14px 10px; border-bottom:1px solid var(--line); }
+  td { padding:11px 14px; border-bottom:1px solid var(--hair); color:var(--sub); }
+  tr { page-break-inside:avoid; }
+  td strong { color:var(--ink); font-weight:600; }
 
-  .status { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
-  .status.compliant { background: #E8F5E9; color: #2E7D32; }
-  .status.partial { background: #FFF3E0; color: #E65100; }
-  .status.non_compliant, .status.non-compliant { background: #FFEBEE; color: #C62828; }
-  .status.not_assessed, .status.not-assessed { background: #F5F5F5; color: #757575; }
+  .status { display:inline-block; padding:3px 11px; border-radius:980px; font-size:11px; font-weight:600; }
+  .status.compliant { background:rgba(52,199,89,.12); color:#248A3D; }
+  .status.partial { background:rgba(255,149,0,.14); color:#B25000; }
+  .status.non_compliant, .status.non-compliant { background:rgba(255,59,48,.12); color:#C4231A; }
+  .status.not_assessed, .status.not-assessed { background:var(--surface); color:var(--muted); }
 
-  .score-bar { display: flex; align-items: center; gap: 8px; }
-  .score-bar-bg { flex: 1; height: 8px; background: #E0E0E0; border-radius: 4px; overflow: hidden; }
-  .score-bar-fill { height: 100%; border-radius: 4px; }
+  .score-bar { display:flex; align-items:center; gap:8px; }
+  .score-bar-bg { flex:1; height:6px; background:var(--hair); border-radius:980px; overflow:hidden; }
+  .score-bar-fill { height:100%; border-radius:980px; }
 
-  .recommendation { background: #FFF8E1; border-left: 4px solid #FFA726; padding: 12px 16px; margin: 8px 0; border-radius: 0 4px 4px 0; page-break-inside: avoid; }
-  .recommendation.high { background: #FFEBEE; border-left-color: #EF5350; }
-  .recommendation .priority { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; color: #E65100; }
-  .recommendation.high .priority { color: #C62828; }
+  /* Scope block */
+  .scope-grid { display:grid; grid-template-columns:1fr 1fr; gap:0; margin:18px 0 6px; border:1px solid var(--hair); border-radius:14px; overflow:hidden; }
+  .scope-grid .row { display:flex; justify-content:space-between; gap:16px; padding:12px 16px; border-bottom:1px solid var(--hair); font-size:13px; }
+  .scope-grid .row:nth-last-child(-n+2) { border-bottom:none; }
+  .scope-grid .row .k { color:var(--muted); }
+  .scope-grid .row .v { color:var(--ink); font-weight:600; text-align:right; }
 
-  .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 11px; color: #999; text-align: center; }
-  .footer .rid { color: #666; }
+  /* Detailed per-control block (auditor view) */
+  .control { border:1px solid var(--hair); border-radius:16px; padding:18px 20px; margin:14px 0; box-shadow:0 1px 2px rgba(0,0,0,.04); page-break-inside:avoid; }
+  .control-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
+  .control-head .cid { font-size:12px; font-weight:700; color:var(--accent); letter-spacing:.3px; }
+  .control-head .ctitle { font-size:15px; font-weight:600; color:var(--ink); margin-top:2px; }
+  .control-head .ccat { font-size:11px; color:var(--faint); text-transform:uppercase; letter-spacing:.6px; margin-top:3px; }
+  .control-head .cright { text-align:right; white-space:nowrap; }
+  .control-head .cscore { display:block; margin-top:6px; font-size:18px; font-weight:600; letter-spacing:-.5px; color:var(--ink); }
+  .control .cobj { margin:12px 0 4px; font-size:13.5px; color:var(--sub); }
+  .control-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:14px; }
+  .mini-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); margin-bottom:8px; }
+  .ev-item { display:flex; align-items:baseline; gap:8px; padding:5px 0; border-bottom:1px solid var(--hair); font-size:12.5px; }
+  .ev-item:last-child { border-bottom:none; }
+  .ev-item .et { color:var(--ink); }
+  .ev-item .em { color:var(--faint); font-size:11px; white-space:nowrap; }
+  .ev-none { font-size:12.5px; color:var(--faint); font-style:italic; }
+  .gap-chip { display:inline-block; margin:0 6px 6px 0; padding:3px 10px; border-radius:980px; background:rgba(255,59,48,.10); color:#C4231A; font-size:11.5px; }
+  .control .rem { margin-top:14px; padding-top:12px; border-top:1px solid var(--hair); font-size:12.5px; color:var(--sub); }
+  .control .rem .rl { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); margin-bottom:4px; }
 
-  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+  .footer { margin-top:48px; padding-top:18px; border-top:1px solid var(--line); font-size:11px; color:var(--faint); text-align:center; line-height:1.7; }
+  .footer .rid { color:var(--muted); }
+
+  @media print { body { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
 </style>
 </head>
 <body>
@@ -228,7 +256,7 @@ class ReportGenerator {
 <div class="statement">
   <div class="head">
     ${brandMark}
-    <div style="text-align:right;font-size:12px;color:#666">${escapeHtml(reportId)}<br>${escapeHtml(dateText)}</div>
+    <div class="rid">${escapeHtml(reportId)}<br>${escapeHtml(dateText)}</div>
   </div>
   <h2>Assessment Statement</h2>
   <p>This document presents a readiness self-assessment of <strong>${escapeHtml(companyName)}</strong> against the
@@ -237,6 +265,15 @@ class ReportGenerator {
   <p><strong>Methodology.</strong> ComplianceGuard automatically collects evidence from connected sources and evaluates
   it against each control. The overall readiness score reflects the proportion of controls with sufficient supporting
   evidence. A total of <strong>${evidence.length} evidence item(s)</strong> were considered.</p>
+  <h2 style="margin-top:28px">Scope of Assessment</h2>
+  <div class="scope-grid">
+    <div class="row"><span class="k">Entity</span><span class="v">${escapeHtml(companyName)}</span></div>
+    <div class="row"><span class="k">Framework</span><span class="v">${escapeHtml(framework.name)} v${frameworkVersion}</span></div>
+    <div class="row"><span class="k">Controls in scope</span><span class="v">${numOr0(findings.total_controls)}</span></div>
+    <div class="row"><span class="k">Evidence items</span><span class="v">${evidence.length}</span></div>
+    <div class="row"><span class="k">Assessment date (as of)</span><span class="v">${escapeHtml(dateText)}</span></div>
+    <div class="row"><span class="k">Overall readiness</span><span class="v">${Math.round(overallScore)}%</span></div>
+  </div>
   <div class="disclaimer">This is a readiness self-assessment generated by ComplianceGuard and is not a SOC 2 attestation issued by a licensed CPA firm.</div>
   ${shortFp ? `<div class="integrity"><strong>Report fingerprint (SHA-256):</strong> <code>${escapeHtml(fingerprint)}</code><br>This fingerprint uniquely identifies this report's evaluation data; any change to the underlying results alters it.</div>` : ''}
 </div>
@@ -244,10 +281,10 @@ class ReportGenerator {
 <div class="content">
   <h2>Executive Summary</h2>
   <div class="summary-grid">
-    <div class="summary-card total"><div class="value">${numOr0(findings.total_controls)}</div><div class="label">Total Controls</div></div>
-    <div class="summary-card compliant"><div class="value" style="color:#2E7D32">${numOr0(findings.compliant_controls)}</div><div class="label">Compliant</div></div>
-    <div class="summary-card partial"><div class="value" style="color:#E65100">${numOr0(findings.partial_controls)}</div><div class="label">Partial</div></div>
-    <div class="summary-card non-compliant"><div class="value" style="color:#C62828">${numOr0(findings.non_compliant_controls)}</div><div class="label">Non-Compliant</div></div>
+    <div class="summary-card total"><span class="dot"></span><div class="value">${numOr0(findings.total_controls)}</div><div class="label">Total Controls</div></div>
+    <div class="summary-card compliant"><span class="dot"></span><div class="value">${numOr0(findings.compliant_controls)}</div><div class="label">Compliant</div></div>
+    <div class="summary-card partial"><span class="dot"></span><div class="value">${numOr0(findings.partial_controls)}</div><div class="label">Partial</div></div>
+    <div class="summary-card non-compliant"><span class="dot"></span><div class="value">${numOr0(findings.non_compliant_controls)}</div><div class="label">Non-Compliant</div></div>
   </div>
 
   <p>The evaluation covers <strong>${numOr0(findings.total_controls)} controls</strong> across the
@@ -275,31 +312,39 @@ class ReportGenerator {
   </table>` : ''}
 
   ${findings.control_results ? `
-  <h2>Control Assessment Details</h2>
-  <table>
-    <thead><tr><th>Control ID</th><th>Title</th><th>Score</th><th>Status</th><th>Evidence</th><th>Gaps</th></tr></thead>
-    <tbody>
-      ${Object.entries(findings.control_results).map(([id, ctrl]) => `<tr>
-        <td><strong>${escapeHtml(id)}</strong></td>
-        <td>${escapeHtml(ctrl.control_title || '')}</td>
-        <td>${numOr0(ctrl.score)}%</td>
-        <td><span class="status ${escapeHtml(ctrl.status)}">${escapeHtml(ctrl.status || '').replace(/_/g, ' ')}</span></td>
-        <td>${numOr0(ctrl.evidence_count)}</td>
-        <td>${(ctrl.gaps || []).length}</td>
-      </tr>`).join('')}
-    </tbody>
-  </table>` : ''}
+  <h2>Control Assessment Detail</h2>
+  ${Object.entries(findings.control_results).map(([id, ctrl]) => {
+    const evList = ctrl.evidence_details || [];
+    const gaps = ctrl.gaps || [];
+    const rec = recByControl[id];
+    return `<div class="control">
+      <div class="control-head">
+        <div>
+          <span class="cid">${escapeHtml(id)}</span>
+          <div class="ctitle">${escapeHtml(ctrl.control_title || '')}</div>
+          ${ctrl.control_category ? `<div class="ccat">Category ${escapeHtml(ctrl.control_category)}</div>` : ''}
+        </div>
+        <div class="cright">
+          <span class="status ${escapeHtml(ctrl.status)}">${escapeHtml(ctrl.status || '').replace(/_/g, ' ')}</span>
+          <span class="cscore">${numOr0(ctrl.score)}%</span>
+        </div>
+      </div>
+      ${ctrl.control_description ? `<p class="cobj">${escapeHtml(ctrl.control_description)}</p>` : ''}
+      <div class="control-grid">
+        <div>
+          <div class="mini-label">Evidence on file (${numOr0(ctrl.evidence_count)})</div>
+          ${evList.length ? evList.map(e => `<div class="ev-item"><span class="et">${escapeHtml(e.title || e.type || 'Evidence')}</span><span class="em">${escapeHtml((e.type || '').replace(/_/g, ' '))}${e.collected_at ? ' · ' + escapeHtml(new Date(e.collected_at).toLocaleDateString()) : ''}</span></div>`).join('') : '<div class="ev-none">No evidence collected for this control.</div>'}
+        </div>
+        <div>
+          <div class="mini-label">Evidence still required (${gaps.length})</div>
+          ${gaps.length ? gaps.map(g => `<span class="gap-chip">${escapeHtml(String(g).replace(/_/g, ' '))}</span>`).join('') : '<div class="ev-none">All required evidence types satisfied.</div>'}
+        </div>
+      </div>
+      ${rec ? `<div class="rem"><div class="rl">Remediation — ${escapeHtml(rec.priority || 'medium')} priority</div>${escapeHtml(rec.recommendation || '')}</div>` : ''}
+    </div>`;
+  }).join('')}` : ''}
 
-  ${findings.recommendations && findings.recommendations.length > 0 ? `
-  <h2>Recommendations</h2>
-  ${findings.recommendations.map(rec => `
-    <div class="recommendation ${escapeHtml(rec.priority || 'medium')}">
-      <div class="priority">${escapeHtml(rec.priority || 'medium')} priority — ${escapeHtml(rec.control_id)}</div>
-      <div>${escapeHtml(rec.recommendation)}</div>
-      ${rec.evidence_needed && rec.evidence_needed.length > 0 ? `<div style="margin-top:6px;font-size:12px;color:#666"><strong>Evidence needed:</strong> ${rec.evidence_needed.map(e => escapeHtml(e)).join(', ')}</div>` : ''}
-    </div>`).join('')}` : ''}
-
-  <h2>Evidence Summary</h2>
+  <h2>Evidence Register</h2>
   <table>
     <thead><tr><th>#</th><th>Title</th><th>Type</th><th>Control</th><th>Collected</th></tr></thead>
     <tbody>

@@ -115,10 +115,10 @@ describe('generateHTMLReport', () => {
     expect(html).not.toMatch(/Report fingerprint \(SHA-256\)/);
   });
 
-  it('uses the serif heading stack and print-break rules', async () => {
+  it('uses the Apple system font stack and print-break rules', async () => {
     const html = await makeGen({ overall_score: 50 }).generateHTMLReport(1);
-    expect(html).toContain("Georgia, 'Times New Roman', serif");
-    expect(html).toContain('page-break-inside: avoid');
+    expect(html).toContain('-apple-system');
+    expect(html).toContain('page-break-inside:avoid');
   });
 
   it('escapes HTML in string fields (no raw markup injection)', async () => {
