@@ -299,7 +299,7 @@ ipcMain.handle('export-pdf-report', async (event, frameworkId = 1) => {
     if (licenseManager.isFeatureAllowed('enterprise_pdf_branding')) {
       const cfg = database.db.prepare('SELECT * FROM enterprise_config LIMIT 1').get();
       if (cfg) {
-        brandingConfig = { companyName: cfg.company_name, reportFooter: cfg.report_footer };
+        brandingConfig = { companyName: cfg.company_name, reportFooter: cfg.report_footer, logoBase64: cfg.logo_base64 };
       }
     }
 
