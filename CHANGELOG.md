@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Premium report redesign** — the exported report is now a polished "SOC 2 Readiness Assessment" PDF: a refined cover with the ComplianceGuard mark and a readiness seal, a formal assessment-statement page (scope, methodology, and a plain readiness-vs-attestation disclaimer), a recomputable SHA-256 report fingerprint for integrity, and upgraded typography and print layout.
+
 ---
 
 ## [3.4.0] — 2026-07-05
