@@ -159,6 +159,7 @@ class LocalComplianceEngine {
     const result = {
       control_id: control.id,
       control_title: control.title,
+      control_description: control.description || '',
       control_category: control.category,
       required_evidence: control.evidenceTypes,
       available_evidence: [],
