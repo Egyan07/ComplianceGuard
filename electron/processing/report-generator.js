@@ -1,6 +1,8 @@
 const log = require('../logger');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
+const { canonicalJson } = require('./audit-service');
 
 /**
  * Generates compliance reports in multiple formats.
@@ -18,6 +20,74 @@ function escapeHtml(value) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+
+function buildReportId(frameworkId, date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  const n = Number.parseInt(frameworkId, 10);
+  const safe = Number.isFinite(n) ? n : 0;
+  const idPart = safe <= 999 ? String(safe).padStart(3, '0') : String(safe);
+  return `CG-SOC2-${y}${m}${d}-${idPart}`;
+}
+
+function scoreColor(score) {
+  return score >= 90 ? '#66BB6A' : score >= 70 ? '#FFA726' : '#EF5350';
+}
+
+function computeReportFingerprint(findings) {
+  if (!findings || typeof findings !== 'object' || Object.keys(findings).length === 0) {
+    return null;
+  }
+  return crypto.createHash('sha256').update(canonicalJson(findings), 'utf8').digest('hex');
+}
+
+function resolveLogoDataUrl(logoBase64) {
+  if (!logoBase64 || typeof logoBase64 !== 'string') return null;
+  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(logoBase64)) return null;
+  let raw;
+  try {
+    raw = Buffer.from(logoBase64, 'base64');
+  } catch {
+    return null;
+  }
+  let mime = null;
+  if (raw.length >= 8 && raw[0] === 0x89 && raw[1] === 0x50 && raw[2] === 0x4e && raw[3] === 0x47) {
+    mime = 'image/png';
+  } else if (raw.length >= 2 && raw[0] === 0xff && raw[1] === 0xd8) {
+    mime = 'image/jpeg';
+  }
+  if (!mime) return null;
+  return `data:${mime};base64,${logoBase64}`;
+}
+
+// ComplianceGuard mark: blue rounded square + white "CG" (source: resources/icons/icon.svg)
+function cgMarkSvg(sizePx) {
+  return `<svg viewBox="0 0 512 512" width="${sizePx}" height="${sizePx}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ComplianceGuard">
+  <rect width="512" height="512" rx="112" fill="#2563EB"/>
+  <text x="256" y="256" dy="0.35em" font-family="Arial,'Helvetica Neue',Helvetica,sans-serif" font-size="200" font-weight="700" fill="#FFFFFF" text-anchor="middle" letter-spacing="-10">CG</text>
+</svg>`;
+}
+
+// Circular readiness-assessment seal (gold rings + curved wording + CG mark + date).
+function sealSvg(dateText) {
+  return `<svg viewBox="0 0 200 200" width="150" height="150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ComplianceGuard Readiness Assessment">
+  <defs>
+    <path id="cg-seal-arc" d="M 100,100 m -74,0 a 74,74 0 1,1 148,0 a 74,74 0 1,1 -148,0"/>
+  </defs>
+  <circle cx="100" cy="100" r="94" fill="none" stroke="#C9A227" stroke-width="2"/>
+  <circle cx="100" cy="100" r="86" fill="none" stroke="#C9A227" stroke-width="1"/>
+  <text fill="#C9A227" font-size="12" font-weight="600" letter-spacing="3" font-family="Georgia,'Times New Roman',serif">
+    <textPath href="#cg-seal-arc" startOffset="0">COMPLIANCEGUARD · READINESS ASSESSMENT · </textPath>
+  </text>
+  <g transform="translate(66,58) scale(0.132)">
+    <rect width="512" height="512" rx="112" fill="#2563EB"/>
+    <text x="256" y="256" dy="0.35em" font-family="Arial,'Helvetica Neue',Helvetica,sans-serif" font-size="200" font-weight="700" fill="#FFFFFF" text-anchor="middle" letter-spacing="-10">CG</text>
+  </g>
+  <text x="100" y="150" text-anchor="middle" font-size="10" fill="#C9A227" font-family="Georgia,'Times New Roman',serif" letter-spacing="1">${escapeHtml(dateText)}</text>
+</svg>`;
+}
+
 class ReportGenerator {
   constructor(database) {
     this.db = database;
@@ -403,3 +473,10 @@ class ReportGenerator {
 }
 
 module.exports = ReportGenerator;
+module.exports.ReportGenerator = ReportGenerator;
+module.exports.buildReportId = buildReportId;
+module.exports.scoreColor = scoreColor;
+module.exports.computeReportFingerprint = computeReportFingerprint;
+module.exports.resolveLogoDataUrl = resolveLogoDataUrl;
+module.exports.cgMarkSvg = cgMarkSvg;
+module.exports.sealSvg = sealSvg;
