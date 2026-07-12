@@ -7,6 +7,7 @@ import {
   cgMarkSvg,
   sealSvg,
 } from './processing/report-generator.js';
+import ReportGenerator from './processing/report-generator.js';
 
 describe('buildReportId', () => {
   it('formats date and zero-pads integer framework id', () => {
@@ -68,5 +69,55 @@ describe('svg marks', () => {
     expect(svg).toContain('READINESS ASSESSMENT');
     expect(svg).toContain('July 10, 2026');
     expect(svg).not.toMatch(/verified|certified/i);
+  });
+});
+
+function makeGen(findings, { evidence = [], framework = { name: 'SOC 2', version: '2017' } } = {}) {
+  const db = {
+    getFrameworkById: async () => framework,
+    getLatestEvaluation: async () => (findings === undefined ? null : { findings, overall_score: findings?.overall_score, status: findings?.status }),
+    getEvidenceByFramework: async () => evidence,
+  };
+  return new ReportGenerator(db);
+}
+
+describe('generateHTMLReport', () => {
+  it('renders the readiness title, seal wording, and disclaimer, with no attestation claim', async () => {
+    const html = await makeGen({ overall_score: 82, status: 'partial', total_controls: 10 }).generateHTMLReport(1);
+    expect(html).toContain('SOC 2 Readiness Assessment');
+    expect(html).toContain('READINESS ASSESSMENT');
+    expect(html.replace(/\s+/g, ' ')).toContain('is not a SOC 2 attestation issued by a licensed CPA firm');
+    expect(html).not.toMatch(/\bVerified\b|\bCertified\b/);
+  });
+
+  it('shows the report id and a report fingerprint when findings exist', async () => {
+    const html = await makeGen({ overall_score: 82, status: 'partial' }).generateHTMLReport(1);
+    expect(html).toMatch(/CG-SOC2-\d{8}-001/);
+    expect(html).toMatch(/Report fingerprint \(SHA-256\)/);
+  });
+
+  it('uses a valid Enterprise logo in place of the CG mark', async () => {
+    const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00]).toString('base64');
+    const html = await makeGen({ overall_score: 90 }).generateHTMLReport(1, { companyName: 'Acme', logoBase64: png });
+    expect(html).toContain(`data:image/png;base64,${png}`);
+    expect(html).toContain('Acme');
+  });
+
+  it('falls back to the CG mark for an invalid logo and does not emit a raw data url', async () => {
+    const html = await makeGen({ overall_score: 90 }).generateHTMLReport(1, { companyName: 'Acme', logoBase64: 'bad*data' });
+    expect(html).not.toContain('data:image');
+    expect(html).toContain('>CG<');
+  });
+
+  it('does not crash and omits the fingerprint when there is no evaluation', async () => {
+    const html = await makeGen(undefined).generateHTMLReport(1);
+    expect(html).toContain('SOC 2 Readiness Assessment');
+    expect(html).not.toMatch(/Report fingerprint \(SHA-256\)/);
+  });
+
+  it('uses the serif heading stack and print-break rules', async () => {
+    const html = await makeGen({ overall_score: 50 }).generateHTMLReport(1);
+    expect(html).toContain("Georgia, 'Times New Roman', serif");
+    expect(html).toContain('page-break-inside: avoid');
   });
 });
