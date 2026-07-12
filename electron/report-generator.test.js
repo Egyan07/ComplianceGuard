@@ -120,4 +120,20 @@ describe('generateHTMLReport', () => {
     expect(html).toContain("Georgia, 'Times New Roman', serif");
     expect(html).toContain('page-break-inside: avoid');
   });
+
+  it('escapes HTML in string fields (no raw markup injection)', async () => {
+    const findings = {
+      overall_score: 80,
+      control_results: { 'CC1.1': { control_title: '<script>alert(1)</script>', status: 'partial', score: 50, evidence_count: 1, gaps: [] } },
+    };
+    const html = await makeGen(findings).generateHTMLReport(1);
+    expect(html).not.toContain('<script>alert(1)</script>');
+    expect(html).toContain('&lt;script&gt;');
+  });
+
+  it('coerces non-numeric numeric fields to 0 without emitting raw HTML', async () => {
+    const findings = { overall_score: 80, total_controls: '<b>x</b>' };
+    const html = await makeGen(findings).generateHTMLReport(1);
+    expect(html).not.toContain('<b>x</b>');
+  });
 });
