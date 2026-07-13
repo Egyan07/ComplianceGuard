@@ -195,3 +195,35 @@ describe('generateHTMLReport — framework-driven title & TSC mapping', () => {
     expect(html).not.toContain('Trust Services Criteria');
   });
 });
+
+describe('generateHTMLReport — remediation owners & roadmap', () => {
+  function genWithPlan(findings, plan) {
+    const db = {
+      getFrameworkById: async () => ({ name: 'SOC 2', version: '2017' }),
+      getLatestEvaluation: async () => ({ findings, overall_score: findings.overall_score, status: findings.status }),
+      getEvidenceByFramework: async () => [],
+      getRemediationPlan: async () => plan,
+    };
+    return new ReportGenerator(db);
+  }
+  const findings = {
+    overall_score: 60,
+    control_results: {
+      'CC6.1': { control_title: 'Access Controls', control_category: 'CC', status: 'partial', score: 60, evidence_count: 1, evidence_details: [], gaps: ['mfa_log'] },
+      'A1.2': { control_title: 'Recovery', control_category: 'A', status: 'non_compliant', score: 20, evidence_count: 0, evidence_details: [], gaps: ['dr_test'] },
+    },
+  };
+  it('renders owner and target date per control and a Remediation Roadmap', async () => {
+    const plan = { 'CC6.1': { owner: 'Jane Smith', target_date: '2026-09-30', notes: 'ticket JIRA-42' } };
+    const html = await genWithPlan(findings, plan).generateHTMLReport(1);
+    expect(html).toContain('Remediation Roadmap');
+    expect(html).toContain('Jane Smith');
+    expect(html).toContain('2026-09-30');
+    expect(html).toContain('ticket JIRA-42');
+  });
+  it('omits the roadmap when no controls have gaps or plan entries', async () => {
+    const clean = { overall_score: 100, control_results: { 'CC1.1': { control_title: 'X', status: 'compliant', score: 100, evidence_count: 2, evidence_details: [], gaps: [] } } };
+    const html = await genWithPlan(clean, {}).generateHTMLReport(1);
+    expect(html).not.toContain('Remediation Roadmap');
+  });
+});

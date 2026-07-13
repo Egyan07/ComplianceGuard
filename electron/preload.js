@@ -150,6 +150,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Enterprise features
   getEnterpriseConfig: () => ipcRenderer.invoke('get-enterprise-config'),
   setEnterpriseConfig: (payload) => ipcRenderer.invoke('set-enterprise-config', payload),
+  getRemediationPlan: (frameworkId) => ipcRenderer.invoke('get-remediation-plan', frameworkId),
+  setRemediation: (payload) => ipcRenderer.invoke('set-remediation', payload),
   getAuditLog: (params) => ipcRenderer.invoke('get-audit-log', params),
   exportData: () => ipcRenderer.invoke('export-data'),
   downloadRemediationScript: (controlId) => {

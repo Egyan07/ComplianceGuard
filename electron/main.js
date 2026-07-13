@@ -591,6 +591,45 @@ ipcMain.handle('set-enterprise-config', async (event, payload) => {
   }
 });
 
+// Remediation plan (owner + target date per control) — available where PDF reports are (Pro+)
+ipcMain.handle('get-remediation-plan', async (event, frameworkId = 1) => {
+  if (!licenseManager.isFeatureAllowed('pdf_reports')) {
+    return { error: 'Remediation planning requires a Pro license.', upgrade_required: true };
+  }
+  try {
+    return { plan: await database.getRemediationPlan(frameworkId) };
+  } catch (error) {
+    log.error('get-remediation-plan failed:', error);
+    return { error: error.message };
+  }
+});
+
+const _remediationSchema = z.object({
+  framework_id: z.number().int().positive().default(1),
+  control_id: z.string().min(1).max(64),
+  owner: z.string().max(200).nullable().optional(),
+  target_date: z.string().max(40).nullable().optional(),
+  notes: z.string().max(2000).nullable().optional(),
+});
+
+ipcMain.handle('set-remediation', async (event, payload) => {
+  if (!licenseManager.isFeatureAllowed('pdf_reports')) {
+    return { error: 'Remediation planning requires a Pro license.', upgrade_required: true };
+  }
+  const parsed = _remediationSchema.safeParse(payload);
+  if (!parsed.success) {
+    return { error: 'Invalid remediation input: ' + parsed.error.message };
+  }
+  try {
+    const { framework_id, control_id, owner, target_date, notes } = parsed.data;
+    await database.setRemediation(framework_id, control_id, { owner: owner ?? null, target_date: target_date ?? null, notes: notes ?? null });
+    return { success: true };
+  } catch (error) {
+    log.error('set-remediation failed:', error);
+    return { error: error.message };
+  }
+});
+
 // Enterprise: get audit log (paginated)
 const _auditQuerySchema = z.object({
   page: z.number().int().min(1).default(1),

@@ -135,6 +135,15 @@ class ReportGenerator {
     const evidence = await this.db.getEvidenceByFramework(frameworkId);
     const findings = evaluation?.findings || {};
 
+    let remediationPlan = {};
+    if (typeof this.db.getRemediationPlan === 'function') {
+      try {
+        remediationPlan = (await this.db.getRemediationPlan(frameworkId)) || {};
+      } catch {
+        remediationPlan = {};
+      }
+    }
+
     const now = new Date();
     const dateText = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     const overallScore = findings.overall_score || evaluation?.overall_score || 0;
@@ -265,6 +274,8 @@ class ReportGenerator {
   .gap-chip { display:inline-block; margin:0 6px 6px 0; padding:3px 10px; border-radius:980px; background:rgba(255,59,48,.10); color:#C4231A; font-size:11.5px; }
   .control .rem { margin-top:14px; padding-top:12px; border-top:1px solid var(--hair); font-size:12.5px; color:var(--sub); }
   .control .rem .rl { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); margin-bottom:4px; }
+  .control .rem .rem-meta { margin-top:6px; font-size:11.5px; font-weight:600; color:var(--ink); }
+  .control .rem .rem-notes { margin-top:3px; font-size:12px; color:var(--muted); }
 
   .footer { margin-top:48px; padding-top:18px; border-top:1px solid var(--line); font-size:11px; color:var(--faint); text-align:center; line-height:1.7; }
   .footer .rid { color:var(--muted); }
@@ -354,12 +365,48 @@ ${systemDescription ? `
     </tbody>
   </table>` : ''}
 
+  ${(() => {
+    if (!findings.control_results) return '';
+    const prio = (p) => ({ high: 0, medium: 1, low: 2 }[p] ?? 1);
+    const rows = Object.entries(findings.control_results)
+      .map(([id, c]) => ({ id, title: c.control_title || '', status: c.status, gaps: (c.gaps || []).length, rec: recByControl[id], plan: remediationPlan[id] || {} }))
+      .filter((r) => r.gaps > 0 || r.plan.owner || r.plan.target_date);
+    if (!rows.length) return '';
+    rows.sort((a, b) => {
+      const ad = a.plan.target_date || '', bd = b.plan.target_date || '';
+      if (ad && bd && ad !== bd) return ad < bd ? -1 : 1;
+      if (ad && !bd) return -1;
+      if (!ad && bd) return 1;
+      return prio(a.rec && a.rec.priority) - prio(b.rec && b.rec.priority);
+    });
+    return `<h2>Remediation Roadmap</h2>
+  <p style="margin-bottom:6px">Controls with open evidence gaps, prioritized. Owners and target dates are managed in report settings.</p>
+  <table>
+    <thead><tr><th>Control</th><th>Priority</th><th>Owner</th><th>Target date</th><th>Status</th></tr></thead>
+    <tbody>
+      ${rows.map((r) => `<tr>
+        <td><strong>${escapeHtml(r.id)}</strong> ${escapeHtml(r.title)}</td>
+        <td>${escapeHtml((r.rec && r.rec.priority) || '—')}</td>
+        <td>${escapeHtml(r.plan.owner || '—')}</td>
+        <td>${escapeHtml(r.plan.target_date || '—')}</td>
+        <td><span class="status ${escapeHtml(r.status)}">${escapeHtml((r.status || '').replace(/_/g, ' '))}</span></td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+  })()}
+
   ${findings.control_results ? `
   <h2>Control Assessment Detail</h2>
   ${Object.entries(findings.control_results).map(([id, ctrl]) => {
     const evList = ctrl.evidence_details || [];
     const gaps = ctrl.gaps || [];
     const rec = recByControl[id];
+    const plan = remediationPlan[id] || {};
+    const planMeta = [
+      plan.owner ? `Owner: ${escapeHtml(plan.owner)}` : '',
+      plan.target_date ? `Target: ${escapeHtml(plan.target_date)}` : '',
+    ].filter(Boolean).join(' · ');
+    const hasRem = rec || plan.owner || plan.target_date || plan.notes;
     return `<div class="control">
       <div class="control-head">
         <div>
@@ -383,7 +430,12 @@ ${systemDescription ? `
           ${gaps.length ? gaps.map(g => `<span class="gap-chip">${escapeHtml(String(g).replace(/_/g, ' '))}</span>`).join('') : '<div class="ev-none">All required evidence types satisfied.</div>'}
         </div>
       </div>
-      ${rec ? `<div class="rem"><div class="rl">Remediation — ${escapeHtml(rec.priority || 'medium')} priority</div>${escapeHtml(rec.recommendation || '')}</div>` : ''}
+      ${hasRem ? `<div class="rem">
+        <div class="rl">Remediation${rec && rec.priority ? ` — ${escapeHtml(rec.priority)} priority` : ''}</div>
+        ${rec ? `<div>${escapeHtml(rec.recommendation || '')}</div>` : ''}
+        ${planMeta ? `<div class="rem-meta">${planMeta}</div>` : ''}
+        ${plan.notes ? `<div class="rem-notes">${escapeHtml(plan.notes)}</div>` : ''}
+      </div>` : ''}
     </div>`;
   }).join('')}` : ''}
 
@@ -403,9 +455,9 @@ ${systemDescription ? `
   </table>
 
   <div class="footer">
-    ${escapeHtml(companyName)} — Collect. Evaluate. Comply.<br>
-    <span class="rid">${escapeHtml(reportId)}${shortFp ? ` · ${escapeHtml(shortFp)}…` : ''} · Framework: ${escapeHtml(framework.name)} v${frameworkVersion}</span><br>
-    Confidential — prepared for internal use.
+    <strong>${escapeHtml(companyName)}</strong> · ${escapeHtml(framework.name)} v${frameworkVersion} Readiness Assessment<br>
+    <span class="rid">${escapeHtml(reportId)}${shortFp ? ` · ${escapeHtml(shortFp)}…` : ''}</span><br>
+    Confidential — prepared for internal use. Generated by ComplianceGuard.
     ${reportFooter ? `<br>${escapeHtml(reportFooter)}` : ''}
   </div>
 </div>

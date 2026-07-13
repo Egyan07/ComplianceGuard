@@ -17,6 +17,15 @@ const EnterprisePanel: React.FC = () => {
   const [savingBranding, setSavingBranding] = useState(false);
   const [brandingMsg, setBrandingMsg] = useState<string | null>(null);
 
+  // Remediation plan (owner + target date per control)
+  const [remRows, setRemRows] = useState<any[]>([]);
+  const [remControl, setRemControl] = useState('');
+  const [remOwner, setRemOwner] = useState('');
+  const [remDate, setRemDate] = useState('');
+  const [remNotes, setRemNotes] = useState('');
+  const [remSaving, setRemSaving] = useState(false);
+  const [remMsg, setRemMsg] = useState<string | null>(null);
+
   const [auditEntries, setAuditEntries] = useState<any[]>([]);
   const [auditLoading, setAuditLoading] = useState(false);
 
@@ -34,8 +43,48 @@ const EnterprisePanel: React.FC = () => {
           setSystemDescription(cfg.system_description || '');
         }
       });
+      api.getRemediationPlan(1).then((res: any) => {
+        if (res && res.plan) {
+          setRemRows(Object.entries(res.plan).map(([control_id, v]: [string, any]) => ({ control_id, ...v })));
+        }
+      });
     }
   }, [hasEnterprise]);
+
+  const refreshRemediation = async () => {
+    const api = (window as any).electronAPI;
+    const res = await api.getRemediationPlan(1);
+    if (res && res.plan) {
+      setRemRows(Object.entries(res.plan).map(([control_id, v]: [string, any]) => ({ control_id, ...v })));
+    }
+  };
+
+  const handleSaveRemediation = async () => {
+    if (!remControl.trim()) return;
+    setRemSaving(true);
+    setRemMsg(null);
+    try {
+      const api = (window as any).electronAPI;
+      const result = await api.setRemediation({
+        framework_id: 1,
+        control_id: remControl.trim(),
+        owner: remOwner || null,
+        target_date: remDate || null,
+        notes: remNotes || null,
+      });
+      if (result?.error) {
+        setRemMsg(`Error: ${result.error}`);
+      } else {
+        setRemMsg('Remediation saved.');
+        setRemControl(''); setRemOwner(''); setRemDate(''); setRemNotes('');
+        await refreshRemediation();
+      }
+    } catch {
+      setRemMsg('Failed to save remediation.');
+    } finally {
+      setRemSaving(false);
+    }
+  };
 
   if (!hasEnterprise) return null;
 
@@ -102,6 +151,45 @@ const EnterprisePanel: React.FC = () => {
             </Button>
             {brandingMsg && <Alert severity={brandingMsg.startsWith('Error') ? 'error' : 'success'} sx={{ py: 0 }}>{brandingMsg}</Alert>}
           </Box>
+        </Box>
+      </Paper>
+
+      {/* Remediation Plan */}
+      <Paper sx={{ mb: 3 }}>
+        <Box sx={{ p: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+            <Security color="primary" />
+            <Typography sx={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'text.disabled' }}>Remediation Plan</Typography>
+          </Box>
+          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', mb: 1.5 }}>
+            Assign an owner and target date to a control. These appear in the report's Remediation Roadmap and per-control detail.
+          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+            <TextField size="small" label="Control ID (e.g. CC6.1)" value={remControl} onChange={e => setRemControl(e.target.value)} />
+            <TextField size="small" label="Owner" value={remOwner} onChange={e => setRemOwner(e.target.value)} />
+            <TextField size="small" label="Target date (e.g. 2026-09-30)" value={remDate} onChange={e => setRemDate(e.target.value)} />
+            <TextField size="small" label="Notes (optional)" value={remNotes} onChange={e => setRemNotes(e.target.value)} multiline minRows={2} />
+            <Button variant="contained" size="small" disabled={remSaving || !remControl.trim()} onClick={handleSaveRemediation}>
+              {remSaving ? 'Saving…' : 'Save Remediation'}
+            </Button>
+            {remMsg && <Alert severity={remMsg.startsWith('Error') ? 'error' : 'success'} sx={{ py: 0 }}>{remMsg}</Alert>}
+          </Box>
+          {remRows.length > 0 && (
+            <List disablePadding dense sx={{ mt: 2 }}>
+              {remRows.map((r, i) => (
+                <React.Fragment key={r.control_id ?? i}>
+                  <ListItem sx={{ py: 0.5 }}>
+                    <ListItemText
+                      primary={`${r.control_id} — ${r.owner || 'unassigned'}`}
+                      secondary={`Target: ${r.target_date || '—'}${r.notes ? ` · ${r.notes}` : ''}`}
+                      slotProps={{ primary: { sx: { fontSize: '0.8rem' } }, secondary: { sx: { fontSize: '0.7rem' } } }}
+                    />
+                  </ListItem>
+                  {i < remRows.length - 1 && <Divider component="li" />}
+                </React.Fragment>
+              ))}
+            </List>
+          )}
         </Box>
       </Paper>
 

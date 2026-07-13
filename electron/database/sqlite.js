@@ -192,6 +192,17 @@ class ComplianceGuardDatabase {
         report_footer TEXT,
         system_description TEXT,
         updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )`,
+
+      `CREATE TABLE IF NOT EXISTS control_remediation (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        framework_id INTEGER NOT NULL,
+        control_id TEXT NOT NULL,
+        owner TEXT,
+        target_date TEXT,
+        notes TEXT,
+        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+        UNIQUE(framework_id, control_id)
       )`
     ];
 
@@ -394,6 +405,29 @@ class ComplianceGuardDatabase {
       row.controls = JSON.parse(row.controls_json);
     }
     return row || null;
+  }
+
+  async getRemediationPlan(frameworkId) {
+    const rows = await this.all(
+      'SELECT control_id, owner, target_date, notes FROM control_remediation WHERE framework_id = ?',
+      [frameworkId]
+    );
+    const map = {};
+    for (const r of rows) {
+      map[r.control_id] = { owner: r.owner, target_date: r.target_date, notes: r.notes };
+    }
+    return map;
+  }
+
+  async setRemediation(frameworkId, controlId, { owner = null, target_date = null, notes = null } = {}) {
+    await this.run(
+      `INSERT INTO control_remediation (framework_id, control_id, owner, target_date, notes, updated_at)
+       VALUES (?, ?, ?, ?, ?, datetime('now'))
+       ON CONFLICT(framework_id, control_id) DO UPDATE SET
+         owner=excluded.owner, target_date=excluded.target_date, notes=excluded.notes, updated_at=datetime('now')`,
+      [frameworkId, controlId, owner, target_date, notes]
+    );
+    return { success: true };
   }
 
   async getAllFrameworks() {
