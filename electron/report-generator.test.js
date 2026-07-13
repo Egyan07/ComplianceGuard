@@ -6,6 +6,8 @@ import {
   resolveLogoDataUrl,
   cgMarkSvg,
   sealSvg,
+  criterionName,
+  criteriaInScope,
 } from './processing/report-generator.js';
 import ReportGenerator from './processing/report-generator.js';
 
@@ -135,5 +137,52 @@ describe('generateHTMLReport', () => {
     const findings = { overall_score: 80, total_controls: '<b>x</b>' };
     const html = await makeGen(findings).generateHTMLReport(1);
     expect(html).not.toContain('<b>x</b>');
+  });
+});
+
+describe('criterionName / criteriaInScope', () => {
+  it('maps known SOC 2 TSC codes and falls back to the raw code', () => {
+    expect(criterionName('CC')).toBe('Security (Common Criteria)');
+    expect(criterionName('A')).toBe('Availability');
+    expect(criterionName('PI')).toBe('Processing Integrity');
+    expect(criterionName('ZZ')).toBe('ZZ');
+    expect(criterionName(null)).toBe('');
+  });
+  it('derives in-scope criteria from category_scores keys', () => {
+    expect(criteriaInScope({ category_scores: { CC: {}, A: {} } })).toEqual(['CC', 'A']);
+  });
+  it('falls back to distinct control_result categories', () => {
+    const findings = { control_results: { 'CC1.1': { control_category: 'CC' }, 'A1.2': { control_category: 'A' }, 'CC6.1': { control_category: 'CC' } } };
+    expect(criteriaInScope(findings)).toEqual(['CC', 'A']);
+  });
+  it('returns empty when nothing to derive from', () => {
+    expect(criteriaInScope({})).toEqual([]);
+  });
+});
+
+describe('generateHTMLReport — framework-driven title & TSC mapping', () => {
+  function gen(findings, frameworkName) {
+    const db = {
+      getFrameworkById: async () => ({ name: frameworkName, version: '2022' }),
+      getLatestEvaluation: async () => ({ findings, overall_score: findings.overall_score, status: findings.status }),
+      getEvidenceByFramework: async () => [],
+    };
+    return new ReportGenerator(db);
+  }
+  it('titles the report from the framework, not hardcoded SOC 2', async () => {
+    const html = await gen({ overall_score: 70 }, 'ISO 27001').generateHTMLReport(1);
+    expect(html).toContain('ISO 27001 Readiness Assessment');
+    expect(html).not.toContain('SOC 2 Readiness Assessment');
+  });
+  it('renders friendly Trust Services Criteria names for SOC 2', async () => {
+    const html = await gen({ overall_score: 88, category_scores: { CC: { score: 90, control_count: 5 }, A: { score: 80, control_count: 3 } } }, 'SOC 2').generateHTMLReport(1);
+    expect(html).toContain('Trust Services Criteria');
+    expect(html).toContain('Security (Common Criteria)');
+    expect(html).toContain('Availability');
+  });
+  it('uses generic "Control Domains" wording for non-SOC frameworks', async () => {
+    const html = await gen({ overall_score: 60, category_scores: { 'A.5': { score: 60, control_count: 4 } } }, 'ISO 27001').generateHTMLReport(1);
+    expect(html).toContain('Control Domains');
+    expect(html).not.toContain('Trust Services Criteria');
   });
 });
