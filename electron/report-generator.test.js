@@ -227,3 +227,25 @@ describe('generateHTMLReport — remediation owners & roadmap', () => {
     expect(html).not.toContain('Remediation Roadmap');
   });
 });
+
+describe('generateHTMLReport — engagement type (Type I/II) & period', () => {
+  it('shows Type II engagement + assessment period + operating-effectiveness framing', async () => {
+    const html = await makeGen({ overall_score: 80, total_controls: 5 }).generateHTMLReport(1, {
+      companyName: 'Acme', reportType: 'type_2', periodStart: '2026-01-01', periodEnd: '2026-06-30',
+    });
+    expect(html).toContain('Type II');
+    expect(html).toContain('Assessment period');
+    expect(html).toContain('2026-01-01 – 2026-06-30');
+    expect(html).toContain('operating effectiveness');
+    expect(html).toContain('performed by the auditor, not by ComplianceGuard');
+  });
+  it('shows Type I design framing without a period', async () => {
+    const html = await makeGen({ overall_score: 80 }).generateHTMLReport(1, { companyName: 'Acme', reportType: 'type_1' });
+    expect(html).toContain('Type I');
+    expect(html).toContain('Assessment date (as of)');
+  });
+  it('defaults to point-in-time when no engagement type set', async () => {
+    const html = await makeGen({ overall_score: 80 }).generateHTMLReport(1);
+    expect(html).toContain('Readiness (point-in-time)');
+  });
+});

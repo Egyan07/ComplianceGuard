@@ -191,6 +191,9 @@ class ComplianceGuardDatabase {
         logo_path TEXT,
         report_footer TEXT,
         system_description TEXT,
+        report_type TEXT,
+        period_start TEXT,
+        period_end TEXT,
         updated_at TEXT NOT NULL DEFAULT (datetime('now'))
       )`,
 
@@ -234,13 +237,15 @@ class ComplianceGuardDatabase {
       }
     }
 
-    // Migrate: add enterprise_config.system_description if missing (idempotent)
-    try {
-      this.db.exec('ALTER TABLE enterprise_config ADD COLUMN system_description TEXT');
-    } catch (err) {
-      if (!/duplicate column name/i.test(err.message)) {
-        log.error('enterprise_config system_description migration failed:', err);
-        throw err;
+    // Migrate: add enterprise_config report-detail columns if missing (idempotent)
+    for (const col of ['system_description TEXT', 'report_type TEXT', 'period_start TEXT', 'period_end TEXT']) {
+      try {
+        this.db.exec(`ALTER TABLE enterprise_config ADD COLUMN ${col}`);
+      } catch (err) {
+        if (!/duplicate column name/i.test(err.message)) {
+          log.error('enterprise_config migration failed for', col, '-', err.message);
+          throw err;
+        }
       }
     }
 

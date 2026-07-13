@@ -14,6 +14,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Auditor-grade control detail** — the report now presents each control in full: its objective, the specific evidence collected against it (with dates), the evidence still required, and prioritized remediation — plus a complete evidence register.
 - **Trust Services Criteria** — the report now maps controls to their SOC 2 Trust Services Criteria (Security, Availability, Confidentiality, Processing Integrity, Privacy), lists the criteria in scope, and titles itself from the framework being assessed.
 - **System Description** — you can now enter a system description (infrastructure, software, people, data, subservice organizations) in report settings; it renders as a dedicated SOC 2-style section in the report.
+- **Remediation ownership** — assign an owner and target date to any control; the report now shows them per control and in a prioritized Remediation Roadmap.
+- **Engagement type & period** — choose SOC 2 Type I or Type II with an assessment period in report settings; the report reflects the engagement type, shows the period, and frames evidence for operating-effectiveness readiness.
 
 ---
 

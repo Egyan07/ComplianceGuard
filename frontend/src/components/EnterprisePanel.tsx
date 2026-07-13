@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box, Paper, Typography, Button, TextField, Divider, List,
-  ListItem, ListItemText, Chip, CircularProgress, Alert,
+  ListItem, ListItemText, Chip, CircularProgress, Alert, MenuItem,
 } from '@mui/material';
 import { Security, History, Download, Group } from '@mui/icons-material';
 import { useEnterpriseFeature } from '../hooks/useEnterpriseFeature';
@@ -14,6 +14,9 @@ const EnterprisePanel: React.FC = () => {
   const [companyName, setCompanyName] = useState('');
   const [reportFooter, setReportFooter] = useState('');
   const [systemDescription, setSystemDescription] = useState('');
+  const [reportType, setReportType] = useState('');
+  const [periodStart, setPeriodStart] = useState('');
+  const [periodEnd, setPeriodEnd] = useState('');
   const [savingBranding, setSavingBranding] = useState(false);
   const [brandingMsg, setBrandingMsg] = useState<string | null>(null);
 
@@ -41,6 +44,9 @@ const EnterprisePanel: React.FC = () => {
           setCompanyName(cfg.company_name || '');
           setReportFooter(cfg.report_footer || '');
           setSystemDescription(cfg.system_description || '');
+          setReportType(cfg.report_type || '');
+          setPeriodStart(cfg.period_start || '');
+          setPeriodEnd(cfg.period_end || '');
         }
       });
       api.getRemediationPlan(1).then((res: any) => {
@@ -94,7 +100,14 @@ const EnterprisePanel: React.FC = () => {
     try {
       if (isElectron) {
         const api = (window as any).electronAPI;
-        const result = await api.setEnterpriseConfig({ company_name: companyName, report_footer: reportFooter, system_description: systemDescription });
+        const result = await api.setEnterpriseConfig({
+          company_name: companyName,
+          report_footer: reportFooter,
+          system_description: systemDescription,
+          report_type: reportType || null,
+          period_start: periodStart || null,
+          period_end: periodEnd || null,
+        });
         setBrandingMsg(result?.error ? `Error: ${result.error}` : 'Branding saved.');
       }
     } catch {
@@ -146,6 +159,17 @@ const EnterprisePanel: React.FC = () => {
             <TextField size="small" label="Company Name" value={companyName} onChange={e => setCompanyName(e.target.value)} />
             <TextField size="small" label="Report Footer (optional)" value={reportFooter} onChange={e => setReportFooter(e.target.value)} />
             <TextField size="small" label="System Description (for SOC 2 report — infrastructure, software, people, data, subservice orgs)" value={systemDescription} onChange={e => setSystemDescription(e.target.value)} multiline minRows={4} />
+            <TextField size="small" select label="Engagement type" value={reportType} onChange={e => setReportType(e.target.value)}>
+              <MenuItem value="">Point-in-time (default)</MenuItem>
+              <MenuItem value="type_1">SOC 2 Type I (design)</MenuItem>
+              <MenuItem value="type_2">SOC 2 Type II (design & operating effectiveness)</MenuItem>
+            </TextField>
+            {reportType === 'type_2' && (
+              <Box sx={{ display: 'flex', gap: 1.5 }}>
+                <TextField size="small" label="Period start (e.g. 2026-01-01)" value={periodStart} onChange={e => setPeriodStart(e.target.value)} fullWidth />
+                <TextField size="small" label="Period end (e.g. 2026-06-30)" value={periodEnd} onChange={e => setPeriodEnd(e.target.value)} fullWidth />
+              </Box>
+            )}
             <Button variant="contained" size="small" disabled={savingBranding || !companyName} onClick={handleSaveBranding}>
               {savingBranding ? 'Saving…' : 'Save Branding'}
             </Button>
