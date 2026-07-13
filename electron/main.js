@@ -299,7 +299,21 @@ ipcMain.handle('export-pdf-report', async (event, frameworkId = 1) => {
     if (licenseManager.isFeatureAllowed('enterprise_pdf_branding')) {
       const cfg = database.db.prepare('SELECT * FROM enterprise_config LIMIT 1').get();
       if (cfg) {
-        brandingConfig = { companyName: cfg.company_name, reportFooter: cfg.report_footer, logoBase64: cfg.logo_base64 };
+        // The local config stores the logo as a file path; read + base64-encode it for the report.
+        let logoBase64 = null;
+        if (cfg.logo_path) {
+          try {
+            logoBase64 = fs.readFileSync(cfg.logo_path).toString('base64');
+          } catch (err) {
+            log.warn('Could not read enterprise logo at', cfg.logo_path, '-', err.message);
+          }
+        }
+        brandingConfig = {
+          companyName: cfg.company_name,
+          reportFooter: cfg.report_footer,
+          logoBase64,
+          systemDescription: cfg.system_description || null,
+        };
       }
     }
 
@@ -548,6 +562,7 @@ const _brandingSchema = z.object({
   company_name: z.string().min(1).max(200),
   logo_path: z.string().max(500).nullable().optional(),
   report_footer: z.string().max(500).nullable().optional(),
+  system_description: z.string().max(8000).nullable().optional(),
 });
 
 ipcMain.handle('set-enterprise-config', async (event, payload) => {
@@ -559,14 +574,14 @@ ipcMain.handle('set-enterprise-config', async (event, payload) => {
     if (!parsed.success) {
       return { error: 'Invalid config: ' + parsed.error.message };
     }
-    const { company_name, logo_path, report_footer } = parsed.data;
+    const { company_name, logo_path, report_footer, system_description } = parsed.data;
     const existing = database.db.prepare('SELECT id FROM enterprise_config LIMIT 1').get();
     if (existing) {
-      database.db.prepare('UPDATE enterprise_config SET company_name=?, logo_path=?, report_footer=?, updated_at=datetime("now") WHERE id=?')
-        .run(company_name, logo_path ?? null, report_footer ?? null, existing.id);
+      database.db.prepare('UPDATE enterprise_config SET company_name=?, logo_path=?, report_footer=?, system_description=?, updated_at=datetime("now") WHERE id=?')
+        .run(company_name, logo_path ?? null, report_footer ?? null, system_description ?? null, existing.id);
     } else {
-      database.db.prepare('INSERT INTO enterprise_config (company_name, logo_path, report_footer) VALUES (?,?,?)')
-        .run(company_name, logo_path ?? null, report_footer ?? null);
+      database.db.prepare('INSERT INTO enterprise_config (company_name, logo_path, report_footer, system_description) VALUES (?,?,?,?)')
+        .run(company_name, logo_path ?? null, report_footer ?? null, system_description ?? null);
     }
     logAuditEvent(database.db, 'enterprise_config_updated', { detail: { company_name } });
     return { success: true };

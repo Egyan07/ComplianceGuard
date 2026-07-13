@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **Premium report redesign** — the exported report is now a polished "SOC 2 Readiness Assessment" PDF with a clean, light Apple-style design: a spacious cover with the ComplianceGuard mark and a minimal readiness emblem, an assessment-statement page with a scope summary, methodology, and a plain readiness-vs-attestation disclaimer, and a recomputable SHA-256 report fingerprint for integrity.
 - **Auditor-grade control detail** — the report now presents each control in full: its objective, the specific evidence collected against it (with dates), the evidence still required, and prioritized remediation — plus a complete evidence register.
+- **Trust Services Criteria** — the report now maps controls to their SOC 2 Trust Services Criteria (Security, Availability, Confidentiality, Processing Integrity, Privacy), lists the criteria in scope, and titles itself from the framework being assessed.
+- **System Description** — you can now enter a system description (infrastructure, software, people, data, subservice organizations) in report settings; it renders as a dedicated SOC 2-style section in the report.
 
 ---
 

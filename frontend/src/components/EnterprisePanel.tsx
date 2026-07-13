@@ -13,6 +13,7 @@ const EnterprisePanel: React.FC = () => {
 
   const [companyName, setCompanyName] = useState('');
   const [reportFooter, setReportFooter] = useState('');
+  const [systemDescription, setSystemDescription] = useState('');
   const [savingBranding, setSavingBranding] = useState(false);
   const [brandingMsg, setBrandingMsg] = useState<string | null>(null);
 
@@ -30,6 +31,7 @@ const EnterprisePanel: React.FC = () => {
         if (cfg && !cfg.error) {
           setCompanyName(cfg.company_name || '');
           setReportFooter(cfg.report_footer || '');
+          setSystemDescription(cfg.system_description || '');
         }
       });
     }
@@ -43,7 +45,7 @@ const EnterprisePanel: React.FC = () => {
     try {
       if (isElectron) {
         const api = (window as any).electronAPI;
-        const result = await api.setEnterpriseConfig({ company_name: companyName, report_footer: reportFooter });
+        const result = await api.setEnterpriseConfig({ company_name: companyName, report_footer: reportFooter, system_description: systemDescription });
         setBrandingMsg(result?.error ? `Error: ${result.error}` : 'Branding saved.');
       }
     } catch {
@@ -94,6 +96,7 @@ const EnterprisePanel: React.FC = () => {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
             <TextField size="small" label="Company Name" value={companyName} onChange={e => setCompanyName(e.target.value)} />
             <TextField size="small" label="Report Footer (optional)" value={reportFooter} onChange={e => setReportFooter(e.target.value)} />
+            <TextField size="small" label="System Description (for SOC 2 report — infrastructure, software, people, data, subservice orgs)" value={systemDescription} onChange={e => setSystemDescription(e.target.value)} multiline minRows={4} />
             <Button variant="contained" size="small" disabled={savingBranding || !companyName} onClick={handleSaveBranding}>
               {savingBranding ? 'Saving…' : 'Save Branding'}
             </Button>

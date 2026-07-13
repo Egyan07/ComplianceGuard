@@ -138,6 +138,15 @@ describe('generateHTMLReport', () => {
     const html = await makeGen(findings).generateHTMLReport(1);
     expect(html).not.toContain('<b>x</b>');
   });
+
+  it('renders a System Description section only when provided, and escapes it', async () => {
+    const withDesc = await makeGen({ overall_score: 80 }).generateHTMLReport(1, { companyName: 'Acme', systemDescription: 'Acme runs a multi-tenant SaaS on AWS. <b>x</b>' });
+    expect(withDesc).toContain('System Description');
+    expect(withDesc).toContain('multi-tenant SaaS on AWS');
+    expect(withDesc).not.toContain('<b>x</b>');
+    const without = await makeGen({ overall_score: 80 }).generateHTMLReport(1);
+    expect(without).not.toContain('System Description');
+  });
 });
 
 describe('criterionName / criteriaInScope', () => {

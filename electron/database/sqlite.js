@@ -190,6 +190,7 @@ class ComplianceGuardDatabase {
         company_name TEXT NOT NULL,
         logo_path TEXT,
         report_footer TEXT,
+        system_description TEXT,
         updated_at TEXT NOT NULL DEFAULT (datetime('now'))
       )`
     ];
@@ -218,6 +219,16 @@ class ComplianceGuardDatabase {
     } catch (err) {
       if (!/duplicate column name/i.test(err.message)) {
         log.error('scheduled_tasks migration failed:', err);
+        throw err;
+      }
+    }
+
+    // Migrate: add enterprise_config.system_description if missing (idempotent)
+    try {
+      this.db.exec('ALTER TABLE enterprise_config ADD COLUMN system_description TEXT');
+    } catch (err) {
+      if (!/duplicate column name/i.test(err.message)) {
+        log.error('enterprise_config system_description migration failed:', err);
         throw err;
       }
     }
