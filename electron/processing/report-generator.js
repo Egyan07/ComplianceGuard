@@ -164,6 +164,7 @@ class ReportGenerator {
 <title>${escapeHtml(companyName)} — ${escapeHtml(reportTitle)}</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
+  @page { size: 8.5in 11in; margin: 0; }
   :root {
     --ink:#1D1D1F; --sub:#424245; --muted:#6E6E73; --faint:#86868B;
     --line:#D2D2D7; --hair:#E8E8ED; --surface:#F5F5F7; --card:#FFFFFF;
@@ -175,7 +176,7 @@ class ReportGenerator {
 
   /* Cover — light & spacious (full-bleed; printToPDF margins are 0) */
   .cover {
-    page-break-after:always; min-height:100vh;
+    page-break-after:always; min-height:10.9in;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     background:linear-gradient(180deg,#FFFFFF 0%,#F5F5F7 100%);
     text-align:center; padding:96px 64px;
