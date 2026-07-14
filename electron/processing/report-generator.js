@@ -215,8 +215,10 @@ class ReportGenerator {
   .cover .score-label { margin-top:8px; font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:1.6px; }
   .cover .meta { margin-top:42px; font-size:11.5px; color:var(--faint); letter-spacing:.3px; }
 
-  /* Statement page */
-  .statement { page-break-after:always; padding:0.85in 0.8in; }
+  /* Statement / narrative sections — flow after the cover, no forced full-page breaks */
+  .statement { padding:0.55in 0.7in 0; }
+  .statement + .statement, .statement + .content { padding-top:0.1in; }
+  .statement h2 { margin-top:8px; }
   .statement .head { display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); padding-bottom:18px; margin-bottom:30px; }
   .statement .head .rid { text-align:right; font-size:11px; color:var(--muted); line-height:1.5; }
   h2 { font-size:22px; font-weight:600; letter-spacing:-.5px; color:var(--ink); }
