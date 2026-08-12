@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import REMEDIATION_SCRIPTS from './processing/remediation-scripts.js';
 
-const AUTOMATABLE = ['CC6.1','CC6.2','CC6.3','CC6.5','CC7.1','CC7.2'];
+const AUTOMATABLE = ['CC6.1','CC6.2','CC6.3','CC7.1','A3.2','A1.5'];
 
 describe('remediation-scripts', () => {
-  it('has entries for all 29 SOC 2 controls', () => {
-    expect(Object.keys(REMEDIATION_SCRIPTS).length).toBe(29);
+  it('has entries for all 54 SOC 2 controls', () => {
+    expect(Object.keys(REMEDIATION_SCRIPTS).length).toBe(54);
   });
 
   it('all automatable controls have non-empty scriptLines', () => {

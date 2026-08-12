@@ -102,8 +102,8 @@ def test_controls_for_known_type(auth_client):
     assert resp.status_code == 200
     data = resp.json()
     assert data["evidence_type"] == "firewall"
-    assert "CC6.5" in data["controls"]
-    assert data["controls"]["CC6.5"] == 0.9
+    assert "A3.2" in data["controls"]
+    assert data["controls"]["A3.2"] == 0.9
 
 
 def test_controls_for_unmapped_type(auth_client):

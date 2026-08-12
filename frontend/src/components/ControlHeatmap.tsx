@@ -3,22 +3,32 @@ import { Box, Paper, Typography, LinearProgress, Chip, Button } from '@mui/mater
 import type { ControlResult } from '../services/api';
 
 const CONTROL_NAMES: Record<string, string> = {
-  'CC1.1':'Control Environment','CC1.2':'Board Independence','CC2.1':'Communication & Information',
-  'CC3.1':'Risk Assessment','CC4.1':'Monitoring','CC5.1':'Control Activities',
-  'CC6.1':'Logical Access Controls','CC6.2':'Authentication','CC6.3':'Authorization Controls',
-  'CC6.4':'Segregation of Duties','CC6.5':'Network Security','CC6.6':'Physical Access',
-  'CC6.7':'Data Transmission','CC7.1':'Event Logging','CC7.2':'Vulnerability Management',
-  'CC8.1':'Change Management','CC9.1':'Risk Mitigation',
-  'A1.1':'System Availability','A1.2':'Environmental Protection','A1.3':'Capacity Management','A1.4':'Backup & Recovery',
-  'C1.1':'Data Classification','C1.2':'Data Protection','C1.3':'Data Disposal','C1.4':'Disclosure Controls',
-  'PI1.1':'Processing Accuracy','PI1.2':'Input Controls','PI1.3':'Error Detection','PI1.4':'Output Review',
+  'CC1.1':'Control Environment','CC1.2':'Board Independence','CC1.3':'Management Philosophy',
+  'CC2.1':'Communication & Information','CC2.2':'Information Quality','CC2.3':'External Communication',
+  'CC3.1':'Risk Assessment Process','CC3.2':'Risk Identification','CC3.3':'Risk Analysis',
+  'CC4.1':'Monitoring Activities','CC4.2':'Separate Evaluations',
+  'CC5.1':'Control Activities','CC5.2':'Control Activities Development',
+  'CC6.1':'Logical Access Controls','CC6.2':'Authentication','CC6.3':'Authorization',
+  'CC7.1':'System Operations','CC8.1':'Change Management','CC9.1':'Risk Mitigation',
+  'A1.1':'Availability Policies','A1.2':'Capacity Management','A1.3':'Backup & Recovery','A1.4':'Incident Response','A1.5':'System Performance Monitoring',
+  'A2.1':'Environmental Controls','A2.2':'Facility Access',
+  'A3.1':'Network Security','A3.2':'Firewall Management',
+  'C1.1':'Confidentiality Policies','C1.2':'Data Classification','C1.3':'Encryption Controls','C1.4':'Data Masking',
+  'C2.1':'Confidentiality Agreements','C2.2':'Data Retention','C2.3':'Data Disposal',
+  'C3.1':'Third Party Confidentiality','C3.2':'Confidentiality Monitoring',
+  'PI1.1':'Processing Integrity Controls','PI1.2':'Quality Assurance','PI1.3':'Input Validation','PI1.4':'Processing Controls','PI1.5':'Output Validation',
+  'PI2.1':'Error Handling','PI2.2':'Transaction Integrity',
+  'PI3.1':'Processing Monitoring','PI3.2':'Exception Reporting',
+  'CA1.1':'Confidentiality & Availability Mgmt','CA1.2':'Incident Response','CA1.3':'Security Awareness Training','CA1.4':'Physical Security',
+  'CA1.5':'Vendor Management','CA1.6':'Change Management','CA1.7':'Business Continuity','CA1.8':'Security Monitoring',
 };
 
 const CATEGORIES: { label: string; ids: string[] }[] = [
-  { label: 'Common Criteria (CC)', ids: ['CC1.1','CC1.2','CC2.1','CC3.1','CC4.1','CC5.1','CC6.1','CC6.2','CC6.3','CC6.4','CC6.5','CC6.6','CC6.7','CC7.1','CC7.2','CC8.1','CC9.1'] },
-  { label: 'Availability (A)',     ids: ['A1.1','A1.2','A1.3','A1.4'] },
-  { label: 'Confidentiality (C)', ids: ['C1.1','C1.2','C1.3','C1.4'] },
-  { label: 'Processing Integrity (PI)', ids: ['PI1.1','PI1.2','PI1.3','PI1.4'] },
+  { label: 'Common Criteria (CC)', ids: ['CC1.1','CC1.2','CC1.3','CC2.1','CC2.2','CC2.3','CC3.1','CC3.2','CC3.3','CC4.1','CC4.2','CC5.1','CC5.2','CC6.1','CC6.2','CC6.3','CC7.1','CC8.1','CC9.1'] },
+  { label: 'Availability (A)',     ids: ['A1.1','A1.2','A1.3','A1.4','A1.5','A2.1','A2.2','A3.1','A3.2'] },
+  { label: 'Confidentiality (C)', ids: ['C1.1','C1.2','C1.3','C1.4','C2.1','C2.2','C2.3','C3.1','C3.2'] },
+  { label: 'Processing Integrity (PI)', ids: ['PI1.1','PI1.2','PI1.3','PI1.4','PI1.5','PI2.1','PI2.2','PI3.1','PI3.2'] },
+  { label: 'Confidentiality & Availability (CA)', ids: ['CA1.1','CA1.2','CA1.3','CA1.4','CA1.5','CA1.6','CA1.7','CA1.8'] },
 ];
 
 type Filter = 'all' | 'failing' | 'partial';
@@ -31,15 +41,15 @@ const STATUS_CONFIG: Record<StatusKey, { label: string; color: string; bg: strin
   not_assessed:  { label: 'N/A',     color: '#94A3B8', bg: '#F8FAFC', border: '#E2E8F0', barColor: '#CBD5E1' },
 };
 
-const AUTOMATABLE_CONTROLS = new Set(['CC6.1','CC6.2','CC6.3','CC6.5','CC7.1','CC7.2']);
+const AUTOMATABLE_CONTROLS = new Set(['CC6.1','CC6.2','CC6.3','CC7.1','A3.2','A1.5']);
 
 const SCRIPT_ACTIONS: Record<string, string> = {
   'CC6.1': 'netsh advfirewall set allprofiles state on',
   'CC6.2': 'secedit /configure — sets password policy (min 12 chars, 90-day expiry)',
   'CC6.3': 'auditpol /set — enables logon + account management audit events',
-  'CC6.5': 'netsh advfirewall firewall add rule — blocks Telnet/FTP/RDP-public',
   'CC7.1': 'wevtutil sl Security — sets 100MB log, enables process audit',
-  'CC7.2': 'Set-MpPreference — enables Defender RTP + Windows Update service',
+  'A3.2': 'netsh advfirewall firewall add rule — blocks Telnet/FTP/RDP-public',
+  'A1.5': 'Set-MpPreference — enables Defender RTP + Windows Update service',
 };
 
 export interface ControlHeatmapProps {
@@ -76,7 +86,7 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
         <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: 'text.primary', display: 'flex', alignItems: 'center', gap: 1 }}>
           Controls
           <Box component="span" sx={{ fontSize: '0.6rem', color: 'text.disabled', fontWeight: 400 }}>
-            SOC 2 Type II · 29 controls
+            SOC 2 Type II · 54 controls
           </Box>
         </Typography>
         <Box sx={{ display: 'flex', gap: 0.75 }}>

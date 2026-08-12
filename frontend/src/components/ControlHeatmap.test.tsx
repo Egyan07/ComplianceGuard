@@ -11,7 +11,7 @@ const wrap = (ui: React.ReactElement) =>
 const mockControlResults: Record<string, ControlResult> = {
   'CC6.1': { status: 'compliant',     score: 90, gaps: [],                 available_evidence: ['firewall_configs'] },
   'CC6.3': { status: 'non_compliant', score: 18, gaps: ['event_logs'],     available_evidence: [] },
-  'CC6.7': { status: 'non_compliant', score: 25, gaps: ['network_configs'],available_evidence: [] },
+  'A3.1': { status: 'non_compliant', score: 25, gaps: ['network_configs'],available_evidence: [] },
   'CC3.1': { status: 'partial',       score: 55, gaps: ['policy_document'],available_evidence: ['audit_reports'] },
   'A1.1':  { status: 'compliant',     score: 95, gaps: [],                 available_evidence: ['system_configs'] },
 };
@@ -80,7 +80,7 @@ describe('ControlHeatmap', () => {
 
   it('shows How to fix button for non-automatable non-compliant control', () => {
     wrap(<ControlHeatmap controlResults={mockControlResults} isElectron={true} isProTier />);
-    // CC6.7 is non_compliant but guidance-only
+    // A3.1 is non_compliant but guidance-only
     expect(screen.getAllByText('How to fix').length).toBeGreaterThan(0);
   });
 

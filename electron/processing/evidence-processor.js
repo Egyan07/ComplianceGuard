@@ -164,11 +164,11 @@ class LocalEvidenceProcessor {
       processedEvidence.push(id);
     }
 
-    // Process firewall -> CC6.5
+    // Process firewall -> A3.2 (Firewall Management)
     if (windowsEvidence.firewall && !windowsEvidence.firewall.error) {
       const id = await this.db.addEvidence({
         framework_id: frameworkId,
-        control_id: 'CC6.5',
+        control_id: 'A3.2',
         evidence_type: 'firewall_configs',
         title: 'Windows Firewall Status',
         description: 'Windows Firewall configuration and profile status',
@@ -179,11 +179,11 @@ class LocalEvidenceProcessor {
       processedEvidence.push(id);
     }
 
-    // Process network -> CC6.5
+    // Process network -> A3.1 (Network Security)
     if (windowsEvidence.network && !windowsEvidence.network.error) {
       const id = await this.db.addEvidence({
         framework_id: frameworkId,
-        control_id: 'CC6.5',
+        control_id: 'A3.1',
         evidence_type: 'network_configs',
         title: 'Network Configuration',
         description: 'Network interfaces, open ports, and routing configuration',

@@ -275,7 +275,7 @@ const Settings: React.FC = () => {
           ) : (
             <Box>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Enter a Pro license key to unlock all 29 controls, PDF reports, evaluation history, and more.
+                Enter a Pro license key to unlock all 54 controls, PDF reports, evaluation history, and more.
               </Typography>
               <Box sx={{ display: 'flex', gap: 1 }}>
                 <Box sx={{ flex: 1 }}>
@@ -554,7 +554,7 @@ const Settings: React.FC = () => {
             <ListItem>
               <ListItemText
                 primary="SOC 2 Type II"
-                secondary="AICPA Trust Services Criteria — 29 controls across CC, Availability, Confidentiality, and Processing Integrity"
+                secondary="AICPA Trust Services Criteria — 54 controls across CC, Availability, Confidentiality, Processing Integrity, and Confidentiality & Availability"
               />
               <Chip label="Active" size="small" color="success" />
             </ListItem>

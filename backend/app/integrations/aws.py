@@ -155,8 +155,8 @@ class AWSEvidenceCollector:
                 'encryption_compliance_rate': round(compliance_rate, 2),
                 'aws_region': self.region_name,
                 'soc2_criteria': [
-                    'CC6.1 - Logical and Physical Access Controls',
-                    'CC6.7 - Data Transmission and Disposal'
+                    'C1.3 - Encryption Controls',
+                    'C1.2 - Data Classification'
                 ]
             }
 
@@ -277,9 +277,9 @@ class AWSEvidenceCollector:
                 'compliance_rate': round(compliance_rate, 2),
                 'aws_region': self.region_name,
                 'soc2_criteria': [
-                    'CC6.1 - Logical and Physical Access Controls',
-                    'CC6.2 - User Access Management',
-                    'CC6.3 - User Access Revocation'
+                    'CC6.1 - Logical Access Controls',
+                    'CC6.2 - Authentication',
+                    'CC6.3 - Authorization'
                 ]
             }
 

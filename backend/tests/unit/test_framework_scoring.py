@@ -10,7 +10,7 @@ class _Item:
 
 SAMPLE_MAP = {
     "event_logs": {"CC7.1": 0.9, "CC4.1": 0.8},
-    "firewall":   {"CC6.5": 0.9},
+    "firewall":   {"A3.2": 0.9},
 }
 
 
@@ -26,6 +26,10 @@ class TestScoreFromMap:
         assert result["CC7.1"]["score"] == 0.9
         assert result["CC4.1"]["score"] == 0.8
         assert "event_logs" in result["CC7.1"]["evidence_provided"]
+
+    def test_firewall_maps_to_network_control(self):
+        result = score_from_map([_Item("firewall")], SAMPLE_MAP)
+        assert result["A3.2"]["score"] == 0.9
 
     def test_max_score_wins_when_same_control_appears_twice(self):
         two_map = {

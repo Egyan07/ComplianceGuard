@@ -61,10 +61,10 @@ describe('UpgradePrompt', () => {
     it('renders with different feature and description', () => {
       renderPrompt({
         feature: 'All Controls',
-        description: 'Unlock all 29 SOC 2 controls.',
+        description: 'Unlock all 54 SOC 2 controls.',
       });
       expect(screen.getByText('All Controls — Pro Feature')).toBeInTheDocument();
-      expect(screen.getByText('Unlock all 29 SOC 2 controls.')).toBeInTheDocument();
+      expect(screen.getByText('Unlock all 54 SOC 2 controls.')).toBeInTheDocument();
     });
   });
 

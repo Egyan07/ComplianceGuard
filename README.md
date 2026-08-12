@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="#quick-start"><img src="https://img.shields.io/badge/version-3.5.0-2563EB" alt="Version"></a>
+  <a href="#quick-start"><img src="https://img.shields.io/badge/version-3.5.1-2563EB" alt="Version"></a>
   <img src="https://img.shields.io/badge/license-BSL%201.1-orange" alt="License">
   <a href="#compliance-frameworks"><img src="https://img.shields.io/badge/frameworks-SOC%202%20%7C%20ISO%2027001%20%7C%20HIPAA-10B981" alt="Frameworks"></a>
   <img src="https://img.shields.io/badge/tests-~568%20passing-10B981?logo=pytest&logoColor=white" alt="Tests">
@@ -48,7 +48,7 @@ _A walkthrough of ComplianceGuard in action — collecting endpoint evidence, ev
 
 ![ComplianceGuard Dashboard](assets/screenshots/Dashboard.png)
 
-The dashboard shows your real-time compliance score, per-category breakdowns, and one-click access to collect evidence, run an evaluation, upload manual evidence, and export a PDF report. The per-control heatmap below shows exactly which of the 29 SOC 2 controls are passing, partial, or failing — with inline remediation scripts for automatable findings.
+The dashboard shows your real-time compliance score, per-category breakdowns, and one-click access to collect evidence, run an evaluation, upload manual evidence, and export a PDF report. The per-control heatmap below shows exactly which of the 54 SOC 2 controls are passing, partial, or failing — with inline remediation scripts for automatable findings.
 
 ### Evidence List
 
@@ -203,8 +203,8 @@ npm run package    # outputs to dist/
 | **Data residency** | Never leaves your control | Stored on vendor servers |
 | **Self-hosted option** | ✅ Full control | ❌ Cloud only |
 | **Air-gapped networks** | Desktop works completely offline | Requires internet |
-| **Cost** | Free tier available, Pro from $399/mo | $8k–$10k/year |
-| **Compliance frameworks** | SOC 2 (29 controls), ISO 27001 (47), HIPAA (47) | SOC 2 only |
+| **Cost** | Free tier available, Pro from $149/mo | $8k–$10k/year |
+| **Compliance frameworks** | SOC 2 (54 controls), ISO 27001 (47), HIPAA (47) | SOC 2 only |
 | **Open source** | ✅ BSL 1.1 | ❌ Closed source |
 
 They scan the cloud. We scan the machine. Use both and you have covered the full stack.
@@ -217,11 +217,11 @@ ComplianceGuard pulls 8 categories of evidence from Windows and macOS:
 |----------|-----------------|---------|
 | Event Logs | Security, System, Application logs | CC7.1, CC4.1 |
 | Security Settings | Password policies, audit policies, registry options | CC6.1, CC6.2, CC6.3 |
-| Services | Defender, Windows Update, Firewall, Event Log status | A1.1, CC7.2 |
-| Firewall | Domain, Private, Public profile configuration | CC6.5 |
-| User Accounts | Local accounts, admin group membership | CC6.2, CC6.4 |
-| Network | Interfaces, open ports, routing tables | CC6.5, CC6.7 |
-| Software | Registry-based inventory of installed programs | CC7.2, CC8.1 |
+| Services | Defender, Windows Update, Firewall, Event Log status | A1.1, CC7.1 |
+| Firewall | Domain, Private, Public profile configuration | A3.2, A3.1 |
+| User Accounts | Local accounts, admin group membership | CC6.2, CC6.3 |
+| Network | Interfaces, open ports, routing tables | A3.1, A1.1 |
+| Software | Registry-based inventory of installed programs | CC8.1, CC7.1 |
 | File Permissions | ACLs on critical system paths | CC6.1, CC6.3 |
 
 Each evidence item is SHA-256 hashed for integrity and stored with full audit logging.
@@ -230,66 +230,99 @@ Each evidence item is SHA-256 hashed for integrity and stored with full audit lo
 
 ### SOC 2 Controls
 
-29 controls across 4 categories. Each is scored by evidence coverage with configurable weights.
+54 controls across 5 categories, scored by evidence coverage with equal weighting.
 
 <details>
-<summary><strong>Common Criteria (CC) — 17 controls</strong></summary>
+<summary><strong>Common Criteria (CC) — 19 controls</strong></summary>
 
-| ID | Control | Weight |
-|----|---------|--------|
-| CC1.1 | Integrity and Ethical Values | 15% |
-| CC1.2 | Board Independence | 10% |
-| CC2.1 | Internal Communication | 10% |
-| CC3.1 | Risk Assessment | 12% |
-| CC4.1 | Monitoring | 13% |
-| CC5.1 | Control Activities | 15% |
-| CC6.1 | Logical Access Controls | 20% |
-| CC6.2 | Authentication | 18% |
-| CC6.3 | Authorization | 18% |
-| CC6.4 | Segregation of Duties | 15% |
-| CC6.5 | Network Security | 17% |
-| CC6.6 | Physical Access | 12% |
-| CC6.7 | Data Transmission | 15% |
-| CC7.1 | Event Logging | 18% |
-| CC7.2 | Vulnerability Management | 16% |
-| CC8.1 | Change Management | 14% |
-| CC9.1 | Risk Mitigation | 12% |
+| ID | Control |
+|----|---------|
+| CC1.1 | Control Environment |
+| CC1.2 | Board Independence |
+| CC1.3 | Management Philosophy |
+| CC2.1 | Communication and Information |
+| CC2.2 | Information Quality |
+| CC2.3 | External Communication |
+| CC3.1 | Risk Assessment Process |
+| CC3.2 | Risk Identification |
+| CC3.3 | Risk Analysis |
+| CC4.1 | Monitoring Activities |
+| CC4.2 | Separate Evaluations |
+| CC5.1 | Control Activities |
+| CC5.2 | Control Activities Development |
+| CC6.1 | Logical Access Controls |
+| CC6.2 | Authentication |
+| CC6.3 | Authorization |
+| CC7.1 | System Operations |
+| CC8.1 | Change Management |
+| CC9.1 | Risk Mitigation |
 
 </details>
 
 <details>
-<summary><strong>Availability (A) — 4 controls</strong></summary>
+<summary><strong>Availability (A) — 9 controls</strong></summary>
 
-| ID | Control | Weight |
-|----|---------|--------|
-| A1.1 | System Availability | 25% |
-| A1.2 | Environmental Protection | 20% |
-| A1.3 | Capacity Management | 20% |
-| A1.4 | Backup and Recovery | 35% |
-
-</details>
-
-<details>
-<summary><strong>Confidentiality (C) — 4 controls</strong></summary>
-
-| ID | Control | Weight |
-|----|---------|--------|
-| C1.1 | Data Classification | 25% |
-| C1.2 | Data Protection | 30% |
-| C1.3 | Data Disposal | 20% |
-| C1.4 | Disclosure Controls | 25% |
+| ID | Control |
+|----|---------|
+| A1.1 | Availability Policies and Procedures |
+| A1.2 | Capacity Management |
+| A1.3 | Backup and Recovery |
+| A1.4 | Incident Response |
+| A1.5 | System Performance Monitoring |
+| A2.1 | Environmental Controls |
+| A2.2 | Facility Access |
+| A3.1 | Network Security |
+| A3.2 | Firewall Management |
 
 </details>
 
 <details>
-<summary><strong>Processing Integrity (PI) — 4 controls</strong></summary>
+<summary><strong>Confidentiality (C) — 9 controls</strong></summary>
 
-| ID | Control | Weight |
-|----|---------|--------|
-| PI1.1 | Processing Accuracy | 25% |
-| PI1.2 | Input Controls | 25% |
-| PI1.3 | Error Detection | 25% |
-| PI1.4 | Output Review | 25% |
+| ID | Control |
+|----|---------|
+| C1.1 | Confidentiality Policies |
+| C1.2 | Data Classification |
+| C1.3 | Encryption Controls |
+| C1.4 | Data Masking |
+| C2.1 | Confidentiality Agreements |
+| C2.2 | Data Retention |
+| C2.3 | Data Disposal |
+| C3.1 | Third Party Confidentiality |
+| C3.2 | Confidentiality Monitoring |
+
+</details>
+
+<details>
+<summary><strong>Processing Integrity (PI) — 9 controls</strong></summary>
+
+| ID | Control |
+|----|---------|
+| PI1.1 | Processing Integrity Controls |
+| PI1.2 | Quality Assurance |
+| PI1.3 | Input Validation |
+| PI1.4 | Processing Controls |
+| PI1.5 | Output Validation |
+| PI2.1 | Error Handling |
+| PI2.2 | Transaction Integrity |
+| PI3.1 | Processing Monitoring |
+| PI3.2 | Exception Reporting |
+
+</details>
+
+<details>
+<summary><strong>Confidentiality & Availability (CA) — 8 controls</strong></summary>
+
+| ID | Control |
+|----|---------|
+| CA1.1 | Confidentiality and Availability Management |
+| CA1.2 | Incident Response |
+| CA1.3 | Security Awareness Training |
+| CA1.4 | Physical Security |
+| CA1.5 | Vendor Management |
+| CA1.6 | Change Management |
+| CA1.7 | Business Continuity |
+| CA1.8 | Security Monitoring |
 
 </details>
 
@@ -421,7 +454,7 @@ ComplianceGuard supports Windows and macOS endpoints. The following limitations 
 - **Automatic scheduling** — Daily or Weekly evidence collection runs automatically while the desktop app is open. Configure in Settings → Automatic Collection.
 - **Per-machine view in desktop mode** — the Electron app shows one machine at a time. Use web mode (self-hosted or managed) with the Cloud Dashboard to monitor multiple machines centrally.
 - **AWS only for cloud evidence** — the web backend collects S3 and IAM evidence from AWS. GCP and Azure are not yet implemented.
-- **PCI DSS not yet implemented** — SOC 2 Type II (29 controls), ISO 27001:2013 (47 controls), and HIPAA Security Rule (47 safeguards) are all available. PCI DSS is planned.
+- **PCI DSS not yet implemented** — SOC 2 Type II (54 controls), ISO 27001:2013 (47 controls), and HIPAA Security Rule (47 safeguards) are all available. PCI DSS is planned.
 - **Single machine in free tier** — the free tier is limited to one machine. Pro supports up to 10, Enterprise is unlimited.
 - **No real-time monitoring** — ComplianceGuard takes point-in-time snapshots, not continuous streams.
 - **PDF reports require Pro** — the free tier shows your overall score but does not generate audit-ready PDF exports.
@@ -436,10 +469,10 @@ Free gets you hooked. Pro makes you audit-ready. Enterprise makes you untouchabl
 
 | | **Free** | **Pro** | **Enterprise** |
 |---|---|---|---|
-| **Price** | $0 forever | $399/mo | $1,299/mo flat |
-| **Billed annually** | — | $4,788/yr | $15,588/yr |
+| **Price** | $0 forever | $149/mo | $599/mo flat |
+| **Billed annually** | — | $1,788/yr | $7,188/yr |
 | Evidence collection (all 8 categories) | ✅ | ✅ | ✅ |
-| SOC 2 controls | 12 core controls | All 29 controls | All 29 controls |
+| SOC 2 controls | 12 core controls | All 54 controls | All 54 controls |
 | Overall compliance score | ✅ | ✅ | ✅ |
 | Per-control scoring + gap details | — | ✅ | ✅ |
 | Control heatmap + remediation scripts | — | ✅ | ✅ |
@@ -463,8 +496,8 @@ Free gets you hooked. Pro makes you audit-ready. Enterprise makes you untouchabl
 
 | | **Pro Managed** | **Enterprise Managed** |
 |---|---|---|
-| **Price** | $599/mo | $2,499/mo |
-| **Billed annually** | $7,188/yr | $29,988/yr |
+| **Price** | Contact us | Contact us |
+| **Billed annually** | — | — |
 | Everything in Self-Hosted Pro/Enterprise | ✅ | ✅ |
 | Zero server setup required | ✅ | ✅ |
 | We handle uptime, backups, updates | ✅ | ✅ |
@@ -579,7 +612,7 @@ CI runs all tests on every push via GitHub Actions, and the desktop (Electron) t
 > No. It automates evidence collection and gives you a readiness score, but a formal SOC 2 audit still requires a licensed CPA firm. Think of ComplianceGuard as audit preparation, not audit replacement.
 
 ### Can I use the free tier for a real audit?
-> The free tier is useful for assessing your current posture. For an actual audit you will need Pro, which unlocks the full 29-control breakdown, gap details, remediation recommendations, and PDF exports that auditors expect.
+> The free tier is useful for assessing your current posture. For an actual audit you will need Pro, which unlocks the full 54-control breakdown, gap details, remediation recommendations, and PDF exports that auditors expect.
 
 ### What happens to my data if I stop using ComplianceGuard?
 > Your data is stored in a local SQLite file (Desktop mode) or your own PostgreSQL instance (Web mode). Uninstalling the app or deleting the database file removes all data permanently.
@@ -620,10 +653,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 |------|---------|
 | Evidence collection (8 categories — event logs, registry, services, firewall, users, network, software, file permissions) | Linux support |
 | **macOS support** — native evidence collection on Intel + Apple Silicon; unsigned DMG distribution with Gatekeeper bypass | |
-| SOC 2 Type II (29 controls), ISO 27001:2013 (47 controls), HIPAA Security Rule (47 safeguards) | GCP and Azure cloud evidence |
+| SOC 2 Type II (54 controls), ISO 27001:2013 (47 controls), HIPAA Security Rule (47 safeguards) | GCP and Azure cloud evidence |
 | Scheduled automatic evidence collection (Daily/Weekly) | PCI DSS framework |
 | PDF audit-ready reports + evaluation history | Setup video walkthrough |
-| **Control Heatmap** — per-control score bars, status pills, gap details; all 29 SOC 2 controls at a glance | Evidence status workflow |
+| **Control Heatmap** — per-control score bars, status pills, gap details; all 54 SOC 2 controls at a glance | Evidence status workflow |
 | **Remediation Scripts** — one-click PowerShell download for 6 automatable SOC 2 controls; guidance steps for all others; inline re-scan flow | |
 | **Compliance Score Trend** — time-series chart on the History page; compliance zone bands (Good/On Track/Needs Attention); framework tabs | |
 | **Air-gapped Enterprise tier** — tamper-evident HMAC-SHA256 keyed hash-chain audit log, RBAC, custom PDF branding, NDJSON export, offline Docker bundle, hardened TLS | |

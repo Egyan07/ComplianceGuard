@@ -38,7 +38,7 @@ const UpgradePrompt: React.FC<UpgradePromptProps> = ({
         </Typography>
         <Box sx={{ mt: 2, p: 2, backgroundColor: '#EFF6FF', borderRadius: 2 }}>
           <Typography variant="body2" sx={{ color: '#1E40AF', fontWeight: 500 }}>
-            Upgrade to Pro to unlock all 29 controls, PDF reports,
+            Upgrade to Pro to unlock all 54 controls, PDF reports,
             evaluation history, and more.
           </Typography>
         </Box>

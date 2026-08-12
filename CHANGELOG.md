@@ -10,6 +10,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [3.5.1] — 2026-08-12
+
+### Fixed
+
+- **SOC 2 control count consistency** — README, desktop tier constants, the web evidence-to-control map, and the remediation scripts now match the actual 54-control framework in `soc2_controls.yaml`. Previously the README and `ALL_CONTROL_IDS` claimed 29 controls, so Pro/Enterprise desktop users were only scored against 29 of 54 controls, and several evidence types mapped to control IDs that no longer exist.
+- **Pricing updated in README** to match the website (Pro $149/mo, Enterprise $599/mo).
+
+---
+
 ## [3.5.0] — 2026-07-14
 
 ### Changed
