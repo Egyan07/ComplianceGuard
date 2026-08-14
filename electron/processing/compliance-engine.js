@@ -18,6 +18,7 @@ class LocalComplianceEngine {
       1: { name: 'SOC 2 Type II',       file: 'soc2_controls.yaml' },
       2: { name: 'ISO 27001:2013',       file: 'iso27001_controls.yaml' },
       3: { name: 'HIPAA Security Rule',  file: 'hipaa_controls.yaml' },
+      4: { name: 'GDPR',                 file: 'gdpr_controls.yaml' },
     };
 
     const frameworks = {};
@@ -64,9 +65,13 @@ class LocalComplianceEngine {
       recommendations: []
     };
 
-    const allowedIds = this.licenseManager
-      ? this.licenseManager.getControlIds()
-      : FREE_TIER_CONTROL_IDS;
+    // The license control-ID lists (FREE_TIER_CONTROL_IDS / ALL_CONTROL_IDS) are
+    // SOC 2-specific, so they gate SOC 2 evaluation only. Other frameworks are
+    // governed by feature flags (all_controls, etc.) rather than an ID allowlist.
+    const fid = Number(frameworkId);
+    const allowedIds = fid === 1
+      ? (this.licenseManager ? this.licenseManager.getControlIds() : FREE_TIER_CONTROL_IDS)
+      : null;
 
     const byCategory = {};
     for (const control of fw.controls) {

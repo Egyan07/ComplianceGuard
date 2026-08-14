@@ -2,49 +2,34 @@
  * Cross-repo single source of truth for versioning, machine limits, tier
  * gates, and enumerations — React frontend mirror.
  *
- * Mirrored verbatim on the Python side in backend/app/core/constants.py
- * and in the desktop main process at electron/licensing/tier-constants.js.
- * Any edit here MUST also be made in both of those files or the frontend
- * will drift from the backend and the Electron app.
+ * The values live in a single shared JSON file at the repo root
+ * (shared/constants.json) and are imported at build time, so the React,
+ * Electron (CJS), and Python mirrors can never drift.
  *
- * Values are duplicated instead of imported because the three environments
- * have different module systems (Python / CommonJS / ES modules) and we
- * don't want the bundler to depend on a JSON shim.
- *
- * Checklist for an edit:
- *   1. Update this file.
- *   2. Update backend/app/core/constants.py to match.
- *   3. Update electron/licensing/tier-constants.js to match.
- *   4. If VERSION changed, bump:
- *       - package.json (repo root)
- *       - frontend/package.json
+ * TypeScript literal types are re-derived here from the JSON values so the
+ * rest of the app keeps full type safety (LicenseTier, ComplianceLevel).
  */
 
-export const VERSION = '3.5.1';
+import sharedConstants from '../../shared/constants.json';
 
-export const VALID_LICENSE_TIERS = ['free', 'pro', 'enterprise'] as const;
-export const VALID_COMPLIANCE_LEVELS = ['compliant', 'at_risk', 'critical'] as const;
+export const VERSION: string = sharedConstants.VERSION;
 
-export type LicenseTier = typeof VALID_LICENSE_TIERS[number];
-export type ComplianceLevel = typeof VALID_COMPLIANCE_LEVELS[number];
+export const VALID_LICENSE_TIERS = sharedConstants.VALID_LICENSE_TIERS as unknown as readonly [
+  'free',
+  'pro',
+  'enterprise',
+];
+export const VALID_COMPLIANCE_LEVELS = sharedConstants.VALID_COMPLIANCE_LEVELS as unknown as readonly [
+  'compliant',
+  'at_risk',
+  'critical',
+];
 
-export const MACHINE_LIMITS: Record<LicenseTier, number | null> = {
-  free: 1,
-  pro: 10,
-  enterprise: null,
-};
+export type LicenseTier = (typeof VALID_LICENSE_TIERS)[number];
+export type ComplianceLevel = (typeof VALID_COMPLIANCE_LEVELS)[number];
 
-export const FEATURE_GATES: Record<string, Record<string, boolean>> = {
-  all_controls:        { free: false, pro: true, enterprise: true },
-  per_control_scoring: { free: false, pro: true, enterprise: true },
-  remediation:         { free: false, pro: true, enterprise: true },
-  pdf_reports:         { free: false, pro: true, enterprise: true },
-  evidence_upload:     { free: false, pro: true, enterprise: true },
-  evaluation_history:  { free: false, pro: true, enterprise: true },
-  // Enterprise-only gates — false for all other tiers
-  enterprise_audit_log:    { free: false, pro: false, enterprise: true },
-  enterprise_rbac:         { free: false, pro: false, enterprise: true },
-  enterprise_pdf_branding: { free: false, pro: false, enterprise: true },
-  enterprise_data_export:  { free: false, pro: false, enterprise: true },
-  enterprise_no_telemetry: { free: false, pro: false, enterprise: true },
-};
+export const MACHINE_LIMITS: Record<LicenseTier, number | null> =
+  sharedConstants.MACHINE_LIMITS;
+
+export const FEATURE_GATES: Record<string, Record<string, boolean>> =
+  sharedConstants.FEATURE_GATES;

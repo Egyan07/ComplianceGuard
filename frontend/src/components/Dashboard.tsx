@@ -17,8 +17,9 @@ import DashboardHeader from './dashboard/DashboardHeader';
 import CollectionSummary from './dashboard/CollectionSummary';
 import { useDashboard } from '../hooks/useDashboard';
 import { useLicense } from '../contexts/LicenseContext';
+import { getElectronAPI, isElectronMode } from '../services/electron';
 
-const isElectron = !!(window as any).electronAPI;
+const isElectron = isElectronMode();
 
 interface DashboardProps {
   onNavigate?: (page: string) => void;
@@ -111,7 +112,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           isElectron={isElectron}
           isProTier={isFeatureAllowed('per_control_scoring')}
           onDownloadScript={isElectron ? async (controlId: string) => {
-            const api = (window as any).electronAPI;
+            const api = getElectronAPI();
             return api.downloadRemediationScript(controlId);
           } : undefined}
           onRescan={handleRescan}

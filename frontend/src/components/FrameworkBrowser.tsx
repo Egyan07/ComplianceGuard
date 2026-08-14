@@ -29,6 +29,7 @@ const FRAMEWORKS = [
   { id: 1, label: 'SOC 2' },
   { id: 2, label: 'ISO 27001' },
   { id: 3, label: 'HIPAA' },
+  { id: 4, label: 'GDPR' },
 ] as const;
 
 const RISK_CHIP_SX: Record<string, object> = {
@@ -67,7 +68,7 @@ const FrameworkBrowser: React.FC = () => {
   const [frameworks, setFrameworks] = useState<Record<number, FrameworkData | FrameworkDataError>>({});
   const [loading, setLoading] = useState<Record<number, boolean>>({});
 
-  const api = (window as any).electronAPI;
+  const api = window.electronAPI;
   const currentFrameworkId = FRAMEWORKS[activeTab].id;
 
   useEffect(() => {

@@ -18,11 +18,12 @@ function makeLicense(tier = 'pro') {
 
 describe('LocalComplianceEngine', () => {
   describe('_loadFrameworks()', () => {
-    it('loads all three frameworks', () => {
+    it('loads all four frameworks', () => {
       const engine = new LocalComplianceEngine(makeDb());
       expect(engine.frameworks[1]).toBeDefined();
       expect(engine.frameworks[2]).toBeDefined();
       expect(engine.frameworks[3]).toBeDefined();
+      expect(engine.frameworks[4]).toBeDefined();
     });
 
     it('SOC 2 framework has controls', () => {
@@ -38,6 +39,11 @@ describe('LocalComplianceEngine', () => {
     it('HIPAA framework has controls', () => {
       const engine = new LocalComplianceEngine(makeDb());
       expect(engine.frameworks[3].controls.length).toBeGreaterThan(0);
+    });
+
+    it('GDPR framework has controls', () => {
+      const engine = new LocalComplianceEngine(makeDb());
+      expect(engine.frameworks[4].controls.length).toBeGreaterThan(0);
     });
 
     it('every control has a non-empty evidenceTypes array', () => {
@@ -139,6 +145,32 @@ describe('LocalComplianceEngine', () => {
       const result = await engine.evaluateCompliance(3);
       expect(result.framework_id).toBe(3);
       expect(result.framework_name).toBe('HIPAA Security Rule');
+      expect(result.overall_score).toBeGreaterThan(0);
+    });
+
+    it('uses GDPR controls when frameworkId=4', async () => {
+      const db = makeDb([
+        { id: 1, control_id: 'CC6.2', evidence_type: 'event_logs', title: 'Logs', collected_at: new Date().toISOString() },
+      ]);
+      const engine = new LocalComplianceEngine(db, makeLicense());
+      const result = await engine.evaluateCompliance(4);
+      expect(result.framework_id).toBe(4);
+      expect(result.framework_name).toBe('GDPR');
+      expect(result.total_controls).toBeGreaterThan(0);
+      expect(result.overall_score).toBeGreaterThan(0);
+    });
+
+    it('does not gate non-SOC2 frameworks with the SOC2 ID allowlist', async () => {
+      // A real LicenseManager returns SOC 2 control IDs for every tier; the
+      // allowlist must only apply to SOC 2 (framework 1) so GDPR still scores.
+      const license = makeLicense();
+      license.getControlIds.mockReturnValue(['CC1.1', 'CC6.1', 'A1.1']);
+      const db = makeDb([
+        { id: 1, control_id: 'CC6.2', evidence_type: 'event_logs', title: 'Logs', collected_at: new Date().toISOString() },
+      ]);
+      const engine = new LocalComplianceEngine(db, license);
+      const result = await engine.evaluateCompliance(4);
+      expect(result.total_controls).toBeGreaterThan(0);
       expect(result.overall_score).toBeGreaterThan(0);
     });
 

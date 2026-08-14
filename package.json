@@ -18,7 +18,8 @@
     "package:all": "npm run build && electron-builder --win --x64 --linux --mac",
     "dist": "npm run build && electron-builder",
     "postinstall": "electron-builder install-app-deps",
-    "test:scheduler": "npx vitest run --config vitest.config.electron.cjs"
+    "test:scheduler": "npx vitest run --config vitest.config.electron.cjs",
+    "pretest:scheduler": "npm rebuild better-sqlite3"
   },
   "dependencies": {
     "better-sqlite3": "^9.4.3",
@@ -45,6 +46,7 @@
     "files": [
       "electron/**/*",
       "frontend/dist/**/*",
+      "shared/**/*",
       "!**/*.map",
       "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
       "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",

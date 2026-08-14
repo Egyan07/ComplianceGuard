@@ -5,10 +5,11 @@ import type { TrendPoint, TrendDisplayPoint } from '../services/api';
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
-const FRAMEWORKS: { id: 1 | 2 | 3; label: string }[] = [
+const FRAMEWORKS: { id: 1 | 2 | 3 | 4; label: string }[] = [
   { id: 1, label: 'SOC 2' },
   { id: 2, label: 'ISO 27001' },
   { id: 3, label: 'HIPAA' },
+  { id: 4, label: 'GDPR' },
 ];
 
 const W = 820, H = 120, PAD = 40;
@@ -86,7 +87,7 @@ function buildGeometry(pts: TrendDisplayPoint[]): ChartGeometry {
 
 // ── Sub-components ──────────────────────────────────────────────────────────
 
-const FrameworkTabs: React.FC<{ selected: 1|2|3; onChange: (fw: 1|2|3) => void }> = ({ selected, onChange }) => (
+const FrameworkTabs: React.FC<{ selected: 1|2|3|4; onChange: (fw: 1|2|3|4) => void }> = ({ selected, onChange }) => (
   <Box sx={{ display: 'flex', gap: '4px' }}>
     {FRAMEWORKS.map(fw => (
       <Box
@@ -267,8 +268,8 @@ const EmptyState: React.FC = () => (
 export interface ScoreTrendProps {
   evaluations: TrendPoint[];
   loading?: boolean;
-  selectedFramework: 1 | 2 | 3;
-  onFrameworkChange: (fw: 1 | 2 | 3) => void;
+  selectedFramework: 1 | 2 | 3 | 4;
+  onFrameworkChange: (fw: 1 | 2 | 3 | 4) => void;
 }
 
 const ScoreTrend: React.FC<ScoreTrendProps> = ({ evaluations, loading = false, selectedFramework, onFrameworkChange }) => {

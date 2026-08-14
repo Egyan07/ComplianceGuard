@@ -303,6 +303,38 @@ class WindowsEvidenceCollector {
     }
   }
 
+  // ---- Single-query helpers (back the windowsAPI IPC surface) ----
+
+  /**
+   * Return the most recent events from a single named log.
+   * logName is allowlisted by the caller (ipc/windows.js) before reaching here.
+   */
+  async getEventLog(logName, limit = 100) {
+    const { stdout } = await runCommand(
+      `wevtutil qe "${logName}" /c:${limit} /f:text /rd:true`
+    );
+    return { log: logName, limit, entries: stdout };
+  }
+
+  /** Raw `sc query state= all` output — all services and their states. */
+  async getServicesList() {
+    const { stdout } = await runCommand('sc query state= all');
+    return { services: stdout };
+  }
+
+  /** Raw `netsh advfirewall show allprofiles` output + parsed profile states. */
+  async getFirewallStatus() {
+    const { stdout } = await runCommand('netsh advfirewall show allprofiles');
+    return {
+      status: stdout,
+      profiles: {
+        domain: stdout.includes('Domain Profile') && stdout.includes('State ON'),
+        private: stdout.includes('Private Profile') && stdout.includes('State ON'),
+        public: stdout.includes('Public Profile') && stdout.includes('State ON'),
+      },
+    };
+  }
+
   // Helper methods
   parseNetAccounts(output) {
     const policy = {};

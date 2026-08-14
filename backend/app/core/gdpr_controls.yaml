@@ -1,0 +1,352 @@
+# GDPR (EU) 2016/679 control definitions.
+# 38 representative obligations across the operational chapters.
+# category: the article number the obligation stems from
+# chapter:  human-readable GDPR chapter grouping
+# risk_level: low | medium | high
+
+controls:
+  # ── Chapter 2 — Principles ────────────────────────────────────────────────
+  - id: Art.5.1
+    title: Principles Relating to Processing of Personal Data
+    description: Personal data shall be processed lawfully, fairly and transparently; collected for specified, explicit and legitimate purposes; limited to what is necessary; kept accurate and up to date; kept for no longer than necessary; and processed with appropriate security.
+    category: "5"
+    chapter: Principles
+    control_objective: Ensure all processing of personal data adheres to the six core data protection principles.
+    implementation_guidance: Document a privacy-by-design process that maps each processing activity to the six principles. Maintain an inventory of personal data, its purpose, retention periods, and accuracy review cycles.
+    risk_level: high
+
+  - id: Art.5.2
+    title: Accountability
+    description: The controller shall be responsible for, and be able to demonstrate compliance with, the principles relating to processing of personal data.
+    category: "5"
+    chapter: Principles
+    control_objective: Demonstrate compliance with GDPR principles through documented policies and records.
+    implementation_guidance: Maintain a compliance evidence pack — policies, training records, processing records, DPIA records, and audit reports — and review it at least annually.
+    risk_level: high
+
+  - id: Art.6.1
+    title: Lawfulness of Processing
+    description: 'Processing is lawful only if at least one legal basis applies: consent, contract, legal obligation, vital interests, public interest, or legitimate interests of the controller.'
+    category: "6"
+    chapter: Principles
+    control_objective: Ensure every processing activity has a valid documented legal basis.
+    implementation_guidance: For each processing activity in the record of processing, identify and document the legal basis. Re-verify bases when purposes change or after regulatory updates.
+    risk_level: high
+
+  - id: Art.6.4
+    title: Compatibility of Further Processing
+    description: Where the purpose of further processing is not compatible with the original purpose, the controller must assess compatibility before processing for the new purpose.
+    category: "6"
+    chapter: Principles
+    control_objective: Prevent personal data from being repurposed without a compatibility assessment.
+    implementation_guidance: Run a documented compatibility assessment whenever data collected for one purpose is proposed for another. Record the outcome and any safeguards applied.
+    risk_level: medium
+
+  - id: Art.7.1
+    title: Conditions for Consent
+    description: Where processing is based on consent, the controller must be able to demonstrate that the data subject has consented to the processing of their personal data.
+    category: "7"
+    chapter: Principles
+    control_objective: Ensure consent is freely given, specific, informed and demonstrable.
+    implementation_guidance: Capture consent with unambiguous, affirmative action (no pre-ticked boxes). Timestamp and store consent records with the version of the privacy notice shown at the time.
+    risk_level: high
+
+  - id: Art.7.2
+    title: Clear Withdrawal of Consent
+    description: Requests for consent shall be presented in a manner clearly distinguishable from other matters, and the data subject shall have the right to withdraw consent at any time with the same ease as granting it.
+    category: "7"
+    chapter: Principles
+    control_objective: Make consent requests distinct and withdrawal as easy as granting.
+    implementation_guidance: Separate consent checkboxes from terms-of-service. Provide a one-click withdrawal mechanism in the account or preference centre and honour it promptly.
+    risk_level: medium
+
+  - id: Art.8.1
+    title: Child's Consent
+    description: Where information society services are offered directly to a child, processing is lawful only if the child is at least 16 years old (or a lower age set by Member State, not below 13) and consent is given or authorised by the holder of parental responsibility.
+    category: "8"
+    chapter: Principles
+    control_objective: Obtain valid parental authorisation before processing a child's data.
+    implementation_guidance: Implement age gates for services offered to children. Where required, verify parental responsibility with reasonable efforts and document the verification method.
+    risk_level: high
+
+  - id: Art.9.1
+    title: Prohibition of Special Category Processing
+    description: Processing of personal data revealing racial or ethnic origin, political opinions, religious beliefs, trade union membership, genetic data, biometric data for identification, health data, or sexual orientation is prohibited.
+    category: "9"
+    chapter: Principles
+    control_objective: Prevent unlawful processing of special category data.
+    implementation_guidance: Scan data flows for special category fields. Block collection unless a valid Art.9(2) exception applies, and record the exception relied upon.
+    risk_level: high
+
+  - id: Art.9.2
+    title: Exceptions to the Special Category Prohibition
+    description: The prohibition does not apply where explicit consent, employment law obligations, vital interests, or other enumerated exceptions are met.
+    category: "9"
+    chapter: Principles
+    control_objective: Ensure any special category processing relies on a documented exception.
+    implementation_guidance: Document the Art.9(2) exception for each special category processing activity, including explicit consent records or the legal obligation relied upon.
+    risk_level: high
+
+  # ── Chapter 3 — Rights of the Data Subject ───────────────────────────────
+  - id: Art.12.1
+    title: Transparent Information and Communication
+    description: The controller shall take appropriate measures to provide information in a concise, transparent, intelligible and easily accessible form, using clear and plain language.
+    category: "12"
+    chapter: Data Subject Rights
+    control_objective: Communicate privacy information clearly and accessibly.
+    implementation_guidance: Maintain a plain-language privacy notice and layered notices at every collection point. Keep them current with actual processing.
+    risk_level: medium
+
+  - id: Art.12.2
+    title: Facilitating the Exercise of Data Subject Rights
+    description: The controller shall facilitate the exercise of data subject rights, including providing mechanisms to request and obtain access, rectification, erasure and restriction.
+    category: "12"
+    chapter: Data Subject Rights
+    control_objective: Make it easy for data subjects to exercise their rights.
+    implementation_guidance: Provide a dedicated rights-request channel (form, email or portal). Log requests, track response SLAs, and verify identity before actioning requests.
+    risk_level: medium
+
+  - id: Art.12.3
+    title: Timely Response to Requests
+    description: The controller shall provide information on action taken on a request without undue delay and in any event within one month of receipt, extendable by two further months where necessary.
+    category: "12"
+    chapter: Data Subject Rights
+    control_objective: Respond to data subject requests within statutory timeframes.
+    implementation_guidance: Track request intake dates and response deadlines. Escalate requests that risk breaching the one-month limit and document any extension granted.
+    risk_level: medium
+
+  - id: Art.13
+    title: Information to be Provided at Collection
+    description: Where personal data is collected from the data subject, the controller shall provide the identity of the controller, contact details, purposes and legal basis, retention periods, and the rights available.
+    category: "13"
+    chapter: Data Subject Rights
+    control_objective: Inform data subjects at the point of collection.
+    implementation_guidance: 'Embed mandatory notice fields in every collection form: controller identity, purpose, legal basis, retention, recipients, and rights references.'
+    risk_level: high
+
+  - id: Art.14
+    title: Information Where Data is Not Obtained from the Data Subject
+    description: Where personal data has not been obtained from the data subject, the controller shall provide the same information, including the source of the data, within a reasonable period.
+    category: "14"
+    chapter: Data Subject Rights
+    control_objective: Inform data subjects about data obtained from third parties.
+    implementation_guidance: Track third-party data sources in the processing register. Notify data subjects within one month of acquisition (or at first communication with them).
+    risk_level: medium
+
+  - id: Art.15.1
+    title: Right of Access
+    description: The data subject shall have the right to obtain confirmation of whether personal data concerning them is being processed and access to that data.
+    category: "15"
+    chapter: Data Subject Rights
+    control_objective: Provide data subjects access to their personal data on request.
+    implementation_guidance: Implement a self-service export or a verified request workflow that returns all personal data held on the individual in a structured, readable form.
+    risk_level: high
+
+  - id: Art.15.3
+    title: Provision of a Copy of Personal Data
+    description: The controller shall provide a copy of the personal data undergoing processing, free of charge, with further copies charged a reasonable fee.
+    category: "15"
+    chapter: Data Subject Rights
+    control_objective: Deliver data copies to data subjects without charge for the first copy.
+    implementation_guidance: Standardise the access-response artefact (machine-readable export plus human-readable summary). Apply fees only for manifestly unfounded or excessive repeat requests.
+    risk_level: low
+
+  - id: Art.16
+    title: Right to Rectification
+    description: The data subject shall have the right to obtain rectification of inaccurate personal data and completion of incomplete personal data.
+    category: "16"
+    chapter: Data Subject Rights
+    control_objective: Keep personal data accurate and complete.
+    implementation_guidance: Provide a self-service profile editor and a documented rectification workflow. Propagate corrections to all downstream systems and processors.
+    risk_level: medium
+
+  - id: Art.17.1
+    title: Right to Erasure (Right to be Forgotten)
+    description: The data subject shall have the right to obtain erasure of personal data where it is no longer necessary, consent is withdrawn, processing is unlawful, or erasure is required by law.
+    category: "17"
+    chapter: Data Subject Rights
+    control_objective: Delete personal data promptly when a valid erasure request is received.
+    implementation_guidance: Maintain a data map to locate every copy of an individual's data. Execute erasure across production, backups (within retention), and processors; log completion.
+    risk_level: high
+
+  - id: Art.18.1
+    title: Right to Restriction of Processing
+    description: The data subject shall have the right to obtain restriction of processing where accuracy is contested, processing is unlawful, or the controller no longer needs the data.
+    category: "18"
+    chapter: Data Subject Rights
+    control_objective: Suspend processing of an individual's data where restriction is requested.
+    implementation_guidance: Implement a flag that freezes an individual's records from further processing while preserving the data itself. Document the restriction and its lifting.
+    risk_level: medium
+
+  - id: Art.20.1
+    title: Right to Data Portability
+    description: The data subject shall have the right to receive their personal data in a structured, commonly used and machine-readable format and to transmit it to another controller.
+    category: "20"
+    chapter: Data Subject Rights
+    control_objective: Provide data in an interoperable, machine-readable format on request.
+    implementation_guidance: Support standard export formats (JSON, CSV) for data provided by the data subject and generated from their activity, and offer direct transfer where feasible.
+    risk_level: medium
+
+  - id: Art.21.1
+    title: Right to Object
+    description: The data subject shall have the right to object, on grounds relating to their particular situation, to processing based on legitimate interests or direct marketing.
+    category: "21"
+    chapter: Data Subject Rights
+    control_objective: Honour objections to legitimate-interest processing and direct marketing.
+    implementation_guidance: Maintain an objection register and a suppression list for marketing. Assess and document overriding legitimate grounds where processing continues.
+    risk_level: medium
+
+  - id: Art.22.1
+    title: Automated Individual Decision-Making
+    description: The data subject shall have the right not to be subject to a decision based solely on automated processing which produces legal or similarly significant effects.
+    category: "22"
+    chapter: Data Subject Rights
+    control_objective: Prevent solely automated decisions with significant effects unless an exception applies.
+    implementation_guidance: Audit ML and rule-based decisioning for solely-automated significant decisions. Provide human review, meaningful information about the logic, and the right to contest decisions.
+    risk_level: high
+
+  # ── Chapter 4 — Controller and Processor ─────────────────────────────────
+  - id: Art.24.1
+    title: Responsibility of the Controller
+    description: The controller shall implement appropriate technical and organisational measures to ensure and demonstrate that processing is performed in accordance with the Regulation.
+    category: "24"
+    chapter: Controller and Processor
+    control_objective: Embed accountability through governance, policies and technical controls.
+    implementation_guidance: Adopt a data protection policy, assign ownership, run an internal compliance programme, and retain evidence of measures implemented.
+    risk_level: high
+
+  - id: Art.25.1
+    title: Data Protection by Design
+    description: The controller shall implement appropriate technical and organisational measures, such as pseudonymisation and data minimisation, designed to implement data protection principles effectively.
+    category: "25"
+    chapter: Controller and Processor
+    control_objective: Bake data protection into products and processes from the start.
+    implementation_guidance: 'Apply a privacy-by-design checklist at architecture and feature design reviews: minimisation, pseudonymisation, access control, and default settings.'
+    risk_level: high
+
+  - id: Art.25.2
+    title: Data Protection by Default
+    description: The controller shall ensure that, by default, only personal data which is necessary for each specific purpose is processed, and that data is not made accessible to an indefinite number of people.
+    category: "25"
+    chapter: Controller and Processor
+    control_objective: Default privacy settings to the most protective option.
+    implementation_guidance: 'Ship products with the least-privilege defaults: minimal collection fields, private-by-default visibility, and limited retention windows.'
+    risk_level: medium
+
+  - id: Art.28.1
+    title: Processor Relationship
+    description: Where processing is carried out on behalf of a controller, only processors providing sufficient guarantees of GDPR compliance may be engaged.
+    category: "28"
+    chapter: Controller and Processor
+    control_objective: Engage only processors who can meet GDPR obligations.
+    implementation_guidance: Run a vendor due-diligence process covering security posture, sub-processors, and breach-response capability before engaging any processor.
+    risk_level: high
+
+  - id: Art.28.3
+    title: Processor Contract Requirements
+    description: Processing by a processor shall be governed by a contract binding the processor to the controller, setting out the subject matter, duration, nature and purpose of processing, and the data protection obligations.
+    category: "28"
+    chapter: Controller and Processor
+    control_objective: Contractually bind processors to GDPR obligations.
+    implementation_guidance: 'Maintain DPAs with every processor covering the mandatory Art.28(3) clauses: instructions, confidentiality, security, sub-processor authorisation, and deletion/return on termination.'
+    risk_level: high
+
+  - id: Art.30.1
+    title: Records of Processing Activities
+    description: Each controller (and each processor) shall maintain a record of processing activities including purposes, categories of data subjects and data, recipients, and retention periods.
+    category: "30"
+    chapter: Controller and Processor
+    control_objective: Keep a complete, current record of processing activities.
+    implementation_guidance: Operate a living register of processing activities (ROPA) with owners per activity, refreshed whenever a new system or purpose is introduced.
+    risk_level: high
+
+  - id: Art.31
+    title: Cooperation with Supervisory Authority
+    description: The controller and processor shall cooperate, on request, with the supervisory authority in the performance of its tasks.
+    category: "31"
+    chapter: Controller and Processor
+    control_objective: Respond cooperatively to supervisory authority requests.
+    implementation_guidance: Nominate a point of contact for regulator enquiries and maintain a response playbook with defined SLAs and escalation paths.
+    risk_level: medium
+
+  - id: Art.32.1
+    title: Security of Processing
+    description: The controller and processor shall implement appropriate technical and organisational measures to ensure a level of security appropriate to the risk, including encryption, confidentiality, integrity, availability and resilience.
+    category: "32"
+    chapter: Controller and Processor
+    control_objective: Protect personal data against unauthorised or unlawful processing and against accidental loss, destruction or damage.
+    implementation_guidance: Apply encryption at rest and in transit, access controls, patching, logging and monitoring, backup and restore testing, and incident-response capability scaled to risk.
+    risk_level: high
+
+  - id: Art.33.1
+    title: Notification of a Personal Data Breach to the Supervisory Authority
+    description: The controller shall notify the supervisory authority of a personal data breach without undue delay and, where feasible, not later than 72 hours after becoming aware of it.
+    category: "33"
+    chapter: Controller and Processor
+    control_objective: Report qualifying breaches to the supervisory authority within 72 hours.
+    implementation_guidance: Maintain a breach-response playbook with a 72-hour clock, a triage template (nature, categories, likely consequences, measures taken), and legal review of notifiability.
+    risk_level: high
+
+  - id: Art.34.1
+    title: Communication of a Breach to Data Subjects
+    description: Where a breach is likely to result in a high risk to rights and freedoms, the controller shall communicate the breach to the data subject without undue delay.
+    category: "34"
+    chapter: Controller and Processor
+    control_objective: Notify affected data subjects when a breach poses high risk.
+    implementation_guidance: Include data-subject notification steps in the breach playbook, with templates covering the nature of the breach and recommended mitigation.
+    risk_level: high
+
+  - id: Art.35.1
+    title: Data Protection Impact Assessment
+    description: A DPIA shall be carried out where processing is likely to result in a high risk to the rights and freedoms of natural persons, including systematic monitoring or large-scale special category processing.
+    category: "35"
+    chapter: Controller and Processor
+    control_objective: Assess high-risk processing before it begins.
+    implementation_guidance: Maintain a screening questionnaire to trigger DPIAs; run DPIAs before launch of high-risk processing and consult the DPO on the assessment.
+    risk_level: high
+
+  - id: Art.36.1
+    title: Prior Consultation with the Supervisory Authority
+    description: The controller shall consult the supervisory authority prior to processing where a DPIA indicates that the processing would result in a high risk in the absence of measures to mitigate it.
+    category: "36"
+    chapter: Controller and Processor
+    control_objective: Engage the supervisory authority before commencing residual high-risk processing.
+    implementation_guidance: Track DPIA outcomes; where residual high risk remains, prepare a consultation package (responsibilities, measures, mitigation) and submit before processing starts.
+    risk_level: medium
+
+  - id: Art.37.1
+    title: Designation of a Data Protection Officer
+    description: A Data Protection Officer shall be designated where processing is carried out by a public authority, involves systematic monitoring on a large scale, or involves large-scale special category data.
+    category: "37"
+    chapter: Controller and Processor
+    control_objective: Appoint a DPO where the criteria apply.
+    implementation_guidance: Formally designate a DPO (or contracted DPO service), publish contact details, notify the supervisory authority, and give the DPO the resources and independence required by Art.38.
+    risk_level: high
+
+  # ── Chapter 5 — Transfers of Personal Data to Third Countries ────────────
+  - id: Art.44
+    title: General Principle for Transfers
+    description: Any transfer of personal data to a third country or international organisation may take place only if the conditions of the GDPR are complied with, ensuring the level of protection is not undermined.
+    category: "44"
+    chapter: International Transfers
+    control_objective: Ensure all international transfers maintain GDPR-level protection.
+    implementation_guidance: Map all cross-border data flows, identify the transfer mechanism for each (adequacy, SCCs, BCRs), and record the basis in the ROPA.
+    risk_level: high
+
+  - id: Art.46.2
+    title: Transfers Subject to Appropriate Safeguards
+    description: Where no adequacy decision exists, a transfer may take place subject to appropriate safeguards, including standard contractual clauses, binding corporate rules, or approved codes of conduct.
+    category: "46"
+    chapter: International Transfers
+    control_objective: Apply appropriate safeguards for transfers to non-adequate countries.
+    implementation_guidance: Execute standard contractual clauses for transfers outside the EEA/UK, complete the clause annexes (parties, purposes, categories, security), and conduct a transfer risk assessment.
+    risk_level: high
+
+  - id: Art.47.1
+    title: Binding Corporate Rules
+    description: A group of undertakings may rely on binding corporate rules approved by a supervisory authority to legitimise intra-group transfers.
+    category: "47"
+    chapter: International Transfers
+    control_objective: Establish approved BCRs for intra-group international transfers.
+    implementation_guidance: Where the group transfers data between entities in non-adequate countries, prepare BCR documentation (principles, rights, complaint handling) and seek supervisory authority approval.
+    risk_level: low

@@ -32,8 +32,16 @@ test.describe('Authentication', () => {
     await page.getByLabel('Password').fill('Wrong@pass1');
     await page.getByRole('button', { name: 'Sign In' }).click();
 
-    // Should show an error alert (backend unreachable or auth failure)
-    await expect(page.getByRole('alert')).toBeVisible({ timeout: 10000 });
+    // Full-stack: the real backend returns 401 with a specific message. In the
+    // rare case the backend is down the login form also surfaces an alert, so
+    // accept either signal.
+    await expect
+      .poll(async () => {
+        const alertVisible = await page.getByRole('alert').isVisible().catch(() => false);
+        const errVisible = await page.getByText(/Incorrect email or password/).isVisible().catch(() => false);
+        return alertVisible || errVisible;
+      }, { timeout: 10000 })
+      .toBe(true);
   });
 
   test('shows tagline text', async ({ page }) => {

@@ -1,5 +1,9 @@
 # ComplianceGuard Frontend Dockerfile
 # React + TypeScript + Vite
+#
+# Build context: repo root (docker-compose build context: .) so that
+# shared/constants.json — the cross-repo single source of truth imported by
+# src/constants.ts — is available to the Vite build.
 
 # ----------------------
 # Build stage
@@ -8,11 +12,13 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy entire project (prevents missing index.html / tsconfig issues)
-COPY . .
-
-# Install dependencies
+# Install dependencies first (cached layer)
+COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci --legacy-peer-deps
+
+# Copy source + shared constants
+COPY frontend/ ./
+COPY shared/ ./shared/
 
 # Build app
 RUN npm run build

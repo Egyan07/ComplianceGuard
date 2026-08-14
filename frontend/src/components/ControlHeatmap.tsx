@@ -56,7 +56,7 @@ export interface ControlHeatmapProps {
   controlResults: Record<string, ControlResult> | null;
   isElectron: boolean;
   isProTier: boolean;
-  onDownloadScript?: (controlId: string) => Promise<{ success: boolean; file_name?: string }>;
+  onDownloadScript?: (controlId: string) => Promise<{ success?: boolean; file_name?: string; canceled?: boolean; error?: string }>;
   onRescan?: () => Promise<void>;
 }
 

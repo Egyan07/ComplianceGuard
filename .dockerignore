@@ -1,0 +1,43 @@
+# VCS
+.git
+.gitignore
+.worktrees
+
+# Node
+node_modules
+frontend/node_modules
+frontend/dist
+frontend/.vite
+
+# Python
+__pycache__
+*.py[cod]
+.pytest_cache
+.ruff_cache
+.venv
+venv
+env
+
+# Secrets — never ship into build contexts
+.env
+.env.*
+*.pem
+*.key
+ssl
+
+# Build artifacts (electron packaging)
+dist
+build
+release
+
+# Unrelated tooling / docs
+.superpowers
+docs
+assets
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

@@ -31,8 +31,9 @@ import {
   InsertDriveFile,
   Close
 } from '@mui/icons-material';
+import { getElectronAPI, isElectronMode } from '../services/electron';
 
-const isElectron = !!(window as any).electronAPI;
+const isElectron = isElectronMode();
 
 // SOC 2 controls for the dropdown (matches the 54-control framework)
 const SOC2_CONTROLS = [
@@ -142,7 +143,7 @@ const EvidenceUpload: React.FC<EvidenceUploadProps> = ({ open, onClose, onSucces
     if (!isElectron) return;
 
     try {
-      const api = (window as any).electronAPI;
+      const api = getElectronAPI();
       const file = await api.selectEvidenceFile();
       if (file) {
         setSelectedFile(file);
@@ -175,7 +176,7 @@ const EvidenceUpload: React.FC<EvidenceUploadProps> = ({ open, onClose, onSucces
     setError(null);
 
     try {
-      const api = (window as any).electronAPI;
+      const api = getElectronAPI();
 
       let evidenceData: any;
 

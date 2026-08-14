@@ -2,48 +2,45 @@
 Cross-repo single source of truth for versioning, machine limits, tier gates,
 and enumerations — Python side.
 
-Mirrored verbatim on the JS side in:
-  - electron/licensing/tier-constants.js  (desktop / Electron main process)
-  - frontend/src/constants.ts              (React / Vite bundle)
+The values themselves live in a single shared JSON file at the repo root
+(``shared/constants.json``) and are loaded at import time, so the Python,
+Electron (CJS), and React (ESM) mirrors can never drift.
 
-Any edit here MUST also be made in both of the files above, or the backend
-will drift from the desktop app and/or the web frontend. Values are
-duplicated instead of imported because Python and Node live in different
-module systems and we don't want the build to depend on a JSON shim.
-
-Checklist for an edit:
-  1. Update this file.
-  2. Update electron/licensing/tier-constants.js to match.
-  3. Update frontend/src/constants.ts to match.
-  4. If VERSION changed, bump:
-      - package.json (repo root)
-      - frontend/package.json
+If VERSION changes, also bump:
+  - package.json (repo root)
+  - frontend/package.json
 """
 
-VERSION = "3.5.1"
+import json
+from pathlib import Path
 
-VALID_LICENSE_TIERS = ("free", "pro", "enterprise")
-VALID_COMPLIANCE_LEVELS = ("compliant", "at_risk", "critical")
+# Resolution order covers the three layouts the app runs in:
+#   1. Source checkout / tests:  <repo>/shared/constants.json
+#   2. Docker image (prod):      /app/shared/constants.json
+#   3. Docker dev bind mount:    /app/shared/constants.json (mounted from <repo>/shared)
+_CONSTANTS_PATH = None
+for _candidate in (
+    Path(__file__).resolve().parents[3] / "shared" / "constants.json",
+    Path(__file__).resolve().parents[2] / "shared" / "constants.json",
+):
+    if _candidate.is_file():
+        _CONSTANTS_PATH = _candidate
+        break
+
+if _CONSTANTS_PATH is None:
+    raise FileNotFoundError(
+        f"Could not locate shared/constants.json from {Path(__file__).resolve()}"
+    )
+
+with _CONSTANTS_PATH.open("r", encoding="utf-8") as _fh:
+    _CONSTANTS = json.load(_fh)
+
+VERSION: str = _CONSTANTS["VERSION"]
+VALID_LICENSE_TIERS: tuple = tuple(_CONSTANTS["VALID_LICENSE_TIERS"])
+VALID_COMPLIANCE_LEVELS: tuple = tuple(_CONSTANTS["VALID_COMPLIANCE_LEVELS"])
 
 # Per-tier machine cap for cloud sync. ``None`` means unlimited.
-MACHINE_LIMITS = {
-    "free": 1,
-    "pro": 10,
-    "enterprise": None,
-}
+MACHINE_LIMITS: dict = _CONSTANTS["MACHINE_LIMITS"]
 
 # Feature gating — True means the tier can use the feature.
-FEATURE_GATES = {
-    "all_controls":        {"free": False, "pro": True, "enterprise": True},
-    "per_control_scoring": {"free": False, "pro": True, "enterprise": True},
-    "remediation":         {"free": False, "pro": True, "enterprise": True},
-    "pdf_reports":         {"free": False, "pro": True, "enterprise": True},
-    "evidence_upload":     {"free": False, "pro": True, "enterprise": True},
-    "evaluation_history":  {"free": False, "pro": True, "enterprise": True},
-    # Enterprise-only gates — false for all other tiers
-    "enterprise_audit_log":    {"free": False, "pro": False, "enterprise": True},
-    "enterprise_rbac":         {"free": False, "pro": False, "enterprise": True},
-    "enterprise_pdf_branding": {"free": False, "pro": False, "enterprise": True},
-    "enterprise_data_export":  {"free": False, "pro": False, "enterprise": True},
-    "enterprise_no_telemetry": {"free": False, "pro": False, "enterprise": True},
-}
+FEATURE_GATES: dict = _CONSTANTS["FEATURE_GATES"]

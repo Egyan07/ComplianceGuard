@@ -8,6 +8,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Full-stack Playwright E2E suite** — `frontend/e2e/fullstack.spec.ts` boots the real FastAPI backend (isolated `e2e_test.db`, rate limiting disabled) alongside the Vite dev server and drives register/login/dashboard/navigation flows through the browser. Previously the Playwright suite only exercised the UI shell against a backend-less dev server. Wired into CI as its own job (gates releases); 9 E2E tests total.
+- **Coverage reporting in CI** — backend `pytest-cov` (85% full suite / 78% unit gate, `fail_under=75`) and frontend `@vitest/coverage-v8` (77.4%, threshold 75%) with Codecov upload (backend + frontend flags) and `codecov.yml` gates.
+- **API load benchmark** — `backend/scripts/benchmark.py` hits the hot endpoints (login, controls, history, evaluate) serially or with `--concurrency`, reports p50/p95/p99, and exits non-zero past a `--max-p95-ms` ceiling. Scheduled/manual CI job in `.github/workflows/perf.yml`.
+- **Observability** — Prometheus `/metrics` endpoint (request counters, latency histogram, app info) with a low-cardinality middleware; `/health` now includes a live DB connectivity probe (`database: ok|unreachable`); `LOG_FORMAT=json` emits structured JSON logs (stdlib-only formatter). 7 new backend tests.
+- **Backup & disaster recovery** — `scripts/db-backup.sh` (verified `pg_dump -Fc`, rotation, retention pruning) and `scripts/db-restore.sh` (dry-run mode, idempotent drop/recreate, parallel restore) plus `docs/disaster-recovery.md` runbook with RPO/RTO targets and restore-drill checklist.
+- **GDPR (EU) 2016/679 framework** — 38 obligations across the operational chapters (principles, data subject rights, controller/processor duties, international transfers) in **both the web app and the Electron app**. Web: `gdpr_controls.yaml` + loader, evidence map, read-only API (`/api/v1/gdpr/…`) and `/gdpr/evaluate-from-evidence`, 18 new tests. Desktop: `electron/data/gdpr_controls.yaml` (with `evidence_types`), framework browser + local scoring engine, seeded `compliance_frameworks` row (id 4), and frontend selectors (sidebar, browser, score hero/trend, settings). Also fixes a latent desktop bug: the SOC 2-only control-ID allowlist was silently zeroing out ISO 27001/HIPAA (and now GDPR) evaluations — the allowlist now gates SOC 2 only.
+
+### Changed
+
+- **Backend login latency under load fixed (2.4s → ~390ms p95 @ 10 concurrent)** — bcrypt verify/hash are CPU-bound and were running on the async event loop, serializing concurrent logins; they now run in the thread pool via `asyncio.to_thread` (login, register, change/delete-account password checks, password reset).
+- **Single source of truth for cross-repo constants** — `VERSION`, `MACHINE_LIMITS`, `FEATURE_GATES`, and tier/level enumerations now live only in `shared/constants.json` and are loaded by the Python, Electron, and React mirrors (previously hand-mirrored across three files — the exact drift that caused the v3.5.1 29-vs-54 control bug). `test_ssot_drift.py` now verifies the mirrors load the JSON. Docker builds switch to repo-root contexts so `shared/` is available in images.
+- **Frontend test suite 9+ min → ~30s** — Vitest now pre-bundles the `@mui/icons-material` barrel (esbuild), which previously made every test file transform all ~2,300 icon modules.
+- **Fully typed Electron IPC boundary** — `services/electron.ts` (`getElectronAPI()`/`isElectronMode()`) replaces 33 `(window as any).electronAPI` casts; `types/electron.d.ts` now types every IPC method the renderer consumes. This surfaced (and fixed) several real bugs hidden by `any`: evidence items reported status `compliant` unconditionally, and some response-shape assumptions.
+- **Removed dead/misleading code** — `mapControlStatus()` (always returned `compliant`), production mock evidence data (`getMockEvidenceItems`), and the unused `requests` dependency. Evidence status now comes from the stored DB column.
+- **Tooling cleanup** — `requirements.txt` is now production-only (pytest/cov moved to `requirements-test.txt`; black/isort/flake8 dropped in favour of ruff, matching CI). Fixed all backend deprecation warnings: `HTTP_413_CONTENT_TOO_LARGE`, Alembic `path_separator`, and silenced the library-internal Starlette/httpx2 warning. Backend tests: **325 passed, 0 warnings**.
+- **Split monolith files** — `electron/main.js` (819 → ~230 lines; IPC handlers extracted to `electron/ipc/`, 37/37 channels preserved), `backend/app/api/auth.py` (709 → `app/api/auth/` package: session, verification, password, license, helpers, schemas), `Settings.tsx` (~700 → container + `components/settings/` sections), `services/api.ts` (501 → `api.ts` bridge + `api.http.ts` + `api.types.ts`).
+- **Wired the orphaned Windows live-query IPC surface** — `get-event-logs`, `get-services`, and `get-firewall-status` were exposed in `preload.js` (as `windowsAPI`) but never registered in the main process. New `electron/ipc/windows.js` implements them with main-process-side allowlist/limit validation and platform guards, backed by single-query methods on `WindowsEvidenceCollector`. All 40 preload channels are now registered (verified by channel-parity test suite); 4 new unit tests.
+- **Code-splitting** — route-level `React.lazy` + vendor `manualChunks`: the 829 KB single bundle is now a 63 KB shell with on-demand route chunks (no more chunk-size warning).
+- **Docs** — added missing `CONTRIBUTING.md`; updated `SECURITY.md` supported versions (3.x) and stale README test counts; CI's manual `better-sqlite3` rebuild folded into a `pretest:scheduler` hook so `npm run test:scheduler` works out of the box.
+
 ---
 
 ## [3.5.1] — 2026-08-12

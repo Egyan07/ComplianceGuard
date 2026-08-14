@@ -3,6 +3,7 @@ import { AppBar, Box, Chip, IconButton, Toolbar, Tooltip, Typography } from '@mu
 import { DarkMode, LightMode } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useLicense } from '../../contexts/LicenseContext';
+import { isElectronMode } from '../../services/electron';
 import { useAuth } from '../../contexts/AuthContext';
 import { VERSION } from '../../constants';
 
@@ -15,7 +16,7 @@ interface TopbarProps {
 const Topbar: React.FC<TopbarProps> = ({ mode, onToggleMode }) => {
   const { tier } = useLicense();
   const { user, logout } = useAuth();
-  const isElectron = !!(window as any).electronAPI;
+  const isElectron = isElectronMode();
 
   return (
     <AppBar

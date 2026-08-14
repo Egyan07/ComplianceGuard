@@ -16,6 +16,8 @@ services:
       DEBUG: "true"
     volumes:
       - ./backend:/app
+      # Re-mount shared constants — hidden by the ./backend:/app bind mount above
+      - ./shared:/app/shared:ro
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
   frontend:
@@ -24,6 +26,8 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
+      # Re-mount shared constants — hidden by the ./frontend:/app bind mount above
+      - ./shared:/app/shared:ro
     command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000"]
 
   nginx:

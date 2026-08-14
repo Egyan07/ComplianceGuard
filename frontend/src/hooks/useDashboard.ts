@@ -11,8 +11,9 @@ import {
   EvidenceItem,
   ComplianceEvaluation,
 } from '../services/api';
+import { getElectronAPI, isElectronMode } from '../services/electron';
 
-const isElectron = !!(window as any).electronAPI;
+const isElectron = isElectronMode();
 
 export const DASHBOARD_QUERY_KEYS = {
   summary: ['dashboard', 'summary'] as const,
@@ -130,7 +131,7 @@ export function useDashboard() {
   const handleRescan = useCallback(async () => {
     setState(prev => ({ ...prev, error: null }));
     if (isElectron) {
-      const api = (window as any).electronAPI;
+      const api = getElectronAPI();
       setEvaluating(true);
       try {
         await api.runCollectionNow();
@@ -153,10 +154,10 @@ export function useDashboard() {
     setExportingPDF(true);
     setState(prev => ({ ...prev, error: null }));
     try {
-      const api = (window as any).electronAPI;
+      const api = getElectronAPI();
       const result = await api.exportPDFReport(1);
       if (result.error) {
-        setState(prev => ({ ...prev, error: result.error }));
+        setState(prev => ({ ...prev, error: result.error ?? 'Failed to export PDF.' }));
       } else if (!result.cancelled) {
         setState(prev => ({ ...prev, successMessage: 'PDF report exported successfully!' }));
       }
@@ -172,7 +173,7 @@ export function useDashboard() {
     setSyncingCloud(true);
     setState(prev => ({ ...prev, error: null }));
     try {
-      const api = (window as any).electronAPI;
+      const api = getElectronAPI();
       const levelMap: Record<string, string> = {
         compliant: 'compliant',
         partial_compliance: 'at_risk',
@@ -188,7 +189,7 @@ export function useDashboard() {
         evidence_count: summary?.total_collections ?? null,
       });
       if (result.error) {
-        setState(prev => ({ ...prev, error: result.error }));
+        setState(prev => ({ ...prev, error: result.error ?? 'Cloud sync failed.' }));
       } else {
         setState(prev => ({ ...prev, successMessage: 'Synced to cloud successfully!' }));
       }
@@ -205,8 +206,8 @@ export function useDashboard() {
 
   useEffect(() => {
     if (isElectron) {
-      const api = (window as any).electronAPI;
-      api.cloudGetConfig().then((cfg: any) => setCloudConnected(!!cfg?.connected)).catch(() => setCloudConnected(false));
+      const api = getElectronAPI();
+      api.cloudGetConfig().then((cfg) => setCloudConnected(!!cfg?.connected)).catch(() => setCloudConnected(false));
     }
   }, []);
 

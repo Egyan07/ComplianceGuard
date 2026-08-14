@@ -35,6 +35,15 @@ describe('ComplianceGuardDatabase', () => {
       expect(row.name).toBe('HIPAA Security Rule');
     });
 
+    it('seeds GDPR framework row with id=4', async () => {
+      const row = await db.get(
+        'SELECT * FROM compliance_frameworks WHERE id = 4'
+      );
+      expect(row).toBeDefined();
+      expect(row.name).toBe('GDPR');
+      expect(row.version).toBe('2018');
+    });
+
     it('seed is idempotent — re-initializing does not throw', async () => {
       await expect(db.seedInitialData()).resolves.not.toThrow();
     });

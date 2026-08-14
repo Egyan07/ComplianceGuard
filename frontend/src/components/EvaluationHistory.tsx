@@ -32,8 +32,9 @@ import { useLicense } from '../contexts/LicenseContext';
 import ScoreTrend from './ScoreTrend';
 import { getScoreTrend, evaluationHistoryToTrend } from '../services/api';
 import type { TrendPoint } from '../services/api';
+import { getElectronAPI, isElectronMode } from '../services/electron';
 
-const isElectron = !!(window as any).electronAPI;
+const isElectron = isElectronMode();
 
 interface EvaluationRecord {
   id: number;
@@ -63,11 +64,11 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
   const [evaluations, setEvaluations] = useState<EvaluationRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedFramework, setSelectedFramework] = useState<1 | 2 | 3>(1);
+  const [selectedFramework, setSelectedFramework] = useState<1 | 2 | 3 | 4>(1);
   const [trendPoints, setTrendPoints] = useState<TrendPoint[]>([]);
   const [trendLoading, setTrendLoading] = useState(false);
 
-  const fetchHistory = async (frameworkId: 1 | 2 | 3) => {
+  const fetchHistory = async (frameworkId: 1 | 2 | 3 | 4) => {
     setLoading(true);
     setTrendLoading(true);
     setError(null);
@@ -77,12 +78,12 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
       if (isElectron) {
         // Fetch history once and derive the trend locally — getScoreTrend would
         // otherwise fetch the same history a second time.
-        const api = (window as any).electronAPI;
+        const api = getElectronAPI();
         const history = await api.getEvaluationHistory(frameworkId);
-        if (history?.error) {
+        if (history && !Array.isArray(history)) {
           setError(history.error);
         } else {
-          const rows = Array.isArray(history) ? history : [];
+          const rows = history ?? [];
           setEvaluations(rows);
           setTrendPoints(evaluationHistoryToTrend(rows));
         }

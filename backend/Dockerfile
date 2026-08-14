@@ -1,4 +1,7 @@
 # ComplianceGuard Backend Dockerfile
+# Build context: repo root (docker-compose build context: ., Railway: repo root)
+# so that shared/constants.json (the cross-repo single source of truth) is
+# available to the app at runtime.
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -22,14 +25,15 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-COPY requirements.txt .
+COPY backend/requirements.txt .
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Copy application code and migrations
-COPY app/ ./app/
-COPY migrations/ ./migrations/
-COPY alembic.ini .
-COPY docker-entrypoint.sh .
+# Copy application code, migrations, and the shared constants source
+COPY backend/app/ ./app/
+COPY backend/migrations/ ./migrations/
+COPY backend/alembic.ini .
+COPY backend/docker-entrypoint.sh .
+COPY shared/ ./shared/
 RUN chmod +x docker-entrypoint.sh
 
 # Create non-root user

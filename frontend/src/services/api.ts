@@ -4,212 +4,54 @@ API Service Layer for ComplianceGuard Frontend
 Provides a unified interface that works in two modes:
 1. Electron desktop mode - Uses IPC calls via window.electronAPI
 2. Web/fallback mode - Uses HTTP API calls (for future SaaS version)
+
+Implementation is split across:
+  - api.types.ts  shared request/response types
+  - api.http.ts   web-mode HTTP implementation (axios client + endpoints)
+  - api.ts        mode detection + Electron IPC implementation + public bridge
+
+Everything is re-exported from here so `import { X } from '../services/api'`
+keeps working regardless of which module implements X.
 */
 
-import axios, { AxiosInstance } from 'axios';
+import { getElectronAPI, isElectronMode } from './electron';
+import {
+  httpCheckHealth,
+  httpCollectEvidence,
+  httpGetEvidenceItems,
+  httpGetEvidenceSummary,
+  httpGetScoreTrend,
+} from './api.http';
+import type {
+  ComplianceEvaluation,
+  EvidenceCollectionRequest,
+  EvidenceCollectionResult,
+  EvidenceItem,
+  EvidenceSummary,
+  TrendPoint,
+} from './api.types';
+
+export * from './api.types';
+export * from './api.http';
 
 // Detect if running inside Electron
-const isElectron = !!(window as any).electronAPI;
-
-// HTTP client for web/fallback mode
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
-
-const apiClient: AxiosInstance = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 10000,
-  headers: { 'Content-Type': 'application/json' },
-});
-
-apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('auth_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// Auth callback hooks — registered by AuthContext to keep React state in sync
-let onTokenRefreshed: ((token: string) => void) | null = null;
-let onRefreshFailed: (() => void) | null = null;
-
-export function registerAuthCallbacks(opts: {
-  onRefreshed: (t: string) => void;
-  onFailed: () => void;
-}) {
-  onTokenRefreshed = opts.onRefreshed;
-  onRefreshFailed = opts.onFailed;
-}
-
-// Track whether a refresh is already in-flight to avoid parallel refresh loops
-let isRefreshing = false;
-interface PendingRequest {
-  onSuccess: (token: string) => void;
-  onFailure: (error: unknown) => void;
-}
-let pendingRequests: PendingRequest[] = [];
-
-apiClient.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-
-    // Only attempt refresh on 401, not on the refresh endpoint itself, and only once per request
-    if (
-      error.response?.status === 401 &&
-      !(originalRequest as any)._retried &&
-      !originalRequest.url?.includes('/auth/refresh')
-    ) {
-      (originalRequest as any)._retried = true;
-
-      if (isRefreshing) {
-        // Queue this request until the in-flight refresh completes or fails
-        return new Promise((resolve, reject) => {
-          pendingRequests.push({
-            onSuccess: (newToken: string) => {
-              originalRequest.headers.Authorization = `Bearer ${newToken}`;
-              resolve(apiClient(originalRequest));
-            },
-            onFailure: reject,
-          });
-        });
-      }
-
-      isRefreshing = true;
-
-      try {
-        // The refresh token rides the HttpOnly cookie (same-origin), so no body
-        // is sent; withCredentials ensures the cookie is included.
-        const refreshRes = await axios.post(
-          `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/v1/auth/refresh`,
-          {},
-          { withCredentials: true },
-        );
-        const newAccessToken: string = refreshRes.data.access_token;
-        localStorage.setItem('auth_token', newAccessToken);
-        onTokenRefreshed?.(newAccessToken);
-
-        // Replay all queued requests with the new token
-        pendingRequests.forEach(({ onSuccess }) => onSuccess(newAccessToken));
-        pendingRequests = [];
-
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-        return apiClient(originalRequest);
-      } catch {
-        // Refresh failed — reject all queued requests and clear auth
-        pendingRequests.forEach(({ onFailure }) => onFailure(error));
-        pendingRequests = [];
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('auth_user');
-        onRefreshFailed?.();
-        return Promise.reject(error);
-      } finally {
-        isRefreshing = false;
-      }
-    }
-
-    return Promise.reject(error);
-  },
-);
-
-// TypeScript interfaces
-
-export interface ComplianceMetrics {
-  s3_encryption_compliance: number;
-  iam_policy_compliance: number;
-  overall_compliance_score: number;
-}
-
-export interface EvidenceSummary {
-  total_collections: number;
-  last_collection: string | null;
-  compliance_metrics: ComplianceMetrics;
-}
-
-export interface EvidenceItem {
-  id: string;
-  type: string;
-  status: string;
-  data: Record<string, any>;
-  timestamp: string;
-  source: string;
-}
-
-export interface EvidenceCollectionRequest {
-  collection_types?: string[];
-}
-
-export interface EvidenceCollectionResult {
-  success?: boolean;
-  error?: string;
-  evidence_count?: number;
-}
-
-export interface ControlResult {
-  status: 'compliant' | 'non_compliant' | 'partial' | 'not_assessed';
-  score: number;           // 0–100
-  gaps: string[];          // missing evidence type IDs
-  available_evidence: string[];
-  recommendation?: string;
-}
-
-export interface ComplianceEvaluation {
-  framework_id: number;
-  framework_name: string;
-  evaluation_date: string;
-  overall_score: number;
-  status: string;
-  tier?: string;
-  total_controls: number;
-  compliant_controls: number;
-  non_compliant_controls: number;
-  partial_controls: number;
-  not_assessed_controls: number;
-  category_scores: Record<string, any> | null;
-  control_results: Record<string, ControlResult> | null;
-  recommendations: Array<Record<string, any>>;
-}
+const isElectron = isElectronMode();
 
 // ---- Score Trend ----
-
-export interface TrendPoint {
-  date: string;          // ISO 8601 — always chronologically ascending (invariant enforced by getScoreTrend)
-  score: number;         // 0–100
-  status: 'compliant' | 'partial' | 'non_compliant';
-}
-
-export interface TrendDisplayPoint extends TrendPoint {
-  formattedDate: string;  // e.g. "Jun 1"
-  statusLabel: string;    // "Good Standing" | "On Track" | "Needs Attention"
-  delta?: number;         // undefined for first point; thisScore - previousScore for rest
-}
 
 /**
  * Returns evaluation history as TrendPoint[], sorted ascending by date.
  * Electron: reads local SQLite via IPC.
  * Web: calls GET /api/v1/compliance/evaluations/history.
  */
-export async function getScoreTrend(frameworkId: 1 | 2 | 3 = 1): Promise<TrendPoint[]> {
+export async function getScoreTrend(frameworkId: 1 | 2 | 3 | 4 = 1): Promise<TrendPoint[]> {
   if (isElectron) {
     const api = getElectronAPI();
-    return evaluationHistoryToTrend(await api.getEvaluationHistory(frameworkId));
+    const history = await api.getEvaluationHistory(frameworkId);
+    if (history && !Array.isArray(history)) return [];
+    return evaluationHistoryToTrend(history ?? []);
   }
-  // Web mode
-  const response = await apiClient.get('/compliance/evaluations/history');
-  const rows: any[] = response.data ?? [];
-  return rows
-    .filter((r: any) => Number(r.framework_id) === frameworkId)
-    .map((r: any) => ({
-      date: r.evaluation_date,
-      score: Math.round((r.overall_score ?? 0) * (r.overall_score <= 1 ? 100 : 1)),
-      status: normaliseStatus(r.compliance_status ?? r.status),
-    }))
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-}
-
-function normaliseStatus(raw: string | undefined): TrendPoint['status'] {
-  if (raw === 'compliant') return 'compliant';
-  if (raw === 'partial' || raw === 'partial_compliance' || raw === 'at_risk') return 'partial';
-  return 'non_compliant';
+  return httpGetScoreTrend(frameworkId);
 }
 
 // Derive score-trend points from an already-fetched (Electron) evaluation
@@ -225,11 +67,13 @@ export function evaluationHistoryToTrend(history: any[]): TrendPoint[] {
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 }
 
-// ---- Electron IPC API ----
-
-function getElectronAPI(): any {
-  return (window as any).electronAPI;
+function normaliseStatus(raw: string | undefined): TrendPoint['status'] {
+  if (raw === 'compliant') return 'compliant';
+  if (raw === 'partial' || raw === 'partial_compliance' || raw === 'at_risk') return 'partial';
+  return 'non_compliant';
 }
+
+// ---- Electron IPC implementation ----
 
 async function electronGetEvidenceSummary(): Promise<EvidenceSummary> {
   const api = getElectronAPI();
@@ -253,13 +97,13 @@ async function electronGetEvidenceItems(): Promise<EvidenceItem[]> {
   const api = getElectronAPI();
   const items = await api.getEvidenceList(1);
 
-  if (items?.error) throw new Error(items.error);
+  if (items && !Array.isArray(items)) throw new Error(items.error ?? 'Failed to load evidence');
   if (!Array.isArray(items)) return [];
 
-  return items.map((item: any) => ({
+  return items.map((item) => ({
     id: String(item.id),
     type: item.evidence_type || 'unknown',
-    status: mapControlStatus(item),
+    status: item.status || 'not_assessed',
     data: item.metadata || {},
     timestamp: item.collected_at || new Date().toISOString(),
     source: item.evidence_type || 'local'
@@ -278,48 +122,12 @@ async function electronEvaluateCompliance(frameworkId = 1): Promise<ComplianceEv
   return result;
 }
 
-function mapControlStatus(item: any): string {
-  // Map evidence to a simple status for display
-  if (!item) return 'unknown';
-  if (item.evidence_type === 'event_logs' || item.evidence_type === 'system_configs') return 'compliant';
-  if (item.evidence_type === 'security_policies') return 'compliant';
-  return 'compliant';
-}
-
-// ---- HTTP API (fallback for web mode) ----
-
-async function httpGetEvidenceSummary(): Promise<EvidenceSummary> {
-  const response = await apiClient.get('/evidence/summary');
-  return response.data;
-}
-
-async function httpCollectEvidence(request: EvidenceCollectionRequest): Promise<EvidenceCollectionResult> {
-  const response = await apiClient.post('/evidence/collect', request);
-  return response.data;
-}
-
 // ---- Public API (auto-selects electron vs http) ----
 
 export const getEvidenceSummary = async (): Promise<EvidenceSummary> => {
   if (isElectron) return electronGetEvidenceSummary();
   return httpGetEvidenceSummary();
 };
-
-async function httpGetEvidenceItems(status?: string, search?: string): Promise<EvidenceItem[]> {
-  const params = new URLSearchParams();
-  if (status) params.set('status', status);
-  if (search) params.set('search', search);
-  const qs = params.toString();
-  const response = await apiClient.get(`/evidence/items${qs ? '?' + qs : ''}`);
-  return (response.data as any[]).map((item: any) => ({
-    id: String(item.id),
-    type: item.evidence_type,
-    status: item.status,
-    data: item.data || {},
-    timestamp: item.created_at,
-    source: item.source,
-  }));
-}
 
 export const getEvidenceItems = async (status?: string, search?: string): Promise<EvidenceItem[]> => {
   if (isElectron) return electronGetEvidenceItems();
@@ -338,48 +146,16 @@ export const evaluateCompliance = async (frameworkId = 1): Promise<ComplianceEva
   throw new Error('Compliance evaluation requires the desktop application');
 };
 
-export const evaluateComplianceWeb = async (frameworkId = 1): Promise<ComplianceEvaluation> => {
-  const urls: Record<number, string> = {
-    1: '/compliance/evaluate-from-evidence',
-    2: '/iso27001/evaluate-from-evidence',
-    3: '/hipaa/evaluate-from-evidence',
-  };
-  const frameworkNames: Record<number, string> = {
-    1: 'SOC 2 Type II',
-    2: 'ISO 27001:2013',
-    3: 'HIPAA Security Rule',
-  };
-  const response = await apiClient.post(urls[frameworkId] ?? urls[1]);
-  const d = response.data;
-  return {
-    framework_id: d.framework_id,
-    framework_name: frameworkNames[frameworkId] ?? 'SOC 2 Type II',
-    evaluation_date: d.evaluation_date,
-    overall_score: (d.overall_score ?? 0) * 100,
-    status: d.compliance_status,
-    tier: 'web',
-    total_controls: d.control_count,
-    compliant_controls: d.compliant_controls,
-    non_compliant_controls: d.control_count - d.compliant_controls,
-    partial_controls: 0,
-    not_assessed_controls: 0,
-    category_scores: null,
-    control_results: null,
-    recommendations: d.recommendations ?? [],
-  };
-};
-
 export const checkHealth = async (): Promise<Record<string, any>> => {
   if (isElectron) {
     const api = getElectronAPI();
     const info = await api.getSystemInfo();
     return { status: 'healthy', service: 'complianceguard-desktop', ...info };
   }
-  const response = await axios.get('http://localhost:8000/health');
-  return response.data;
+  return httpCheckHealth();
 };
 
-// ---- Mock data (used when no backend/electron available) ----
+// ---- Empty-state fallback (used when the evidence query fails) ----
 
 export const getMockEvidenceSummary = (): EvidenceSummary => {
   return {
@@ -392,110 +168,3 @@ export const getMockEvidenceSummary = (): EvidenceSummary => {
     }
   };
 };
-
-export const getMockEvidenceItems = (): EvidenceItem[] => {
-  if (isElectron) return []; // In electron mode, return empty - real data comes from IPC
-  return [
-    {
-      id: 'demo_1',
-      type: 's3_encryption',
-      status: 'compliant',
-      data: { bucket_name: 'secure-data-bucket', encryption: 'AES256' },
-      timestamp: '2024-01-15T10:30:00Z',
-      source: 'aws_s3'
-    },
-    {
-      id: 'demo_2',
-      type: 'iam_policy',
-      status: 'warning',
-      data: { policy_name: 'admin-policy', risk_level: 'medium' },
-      timestamp: '2024-01-15T10:25:00Z',
-      source: 'aws_iam'
-    },
-    {
-      id: 'demo_3',
-      type: 's3_encryption',
-      status: 'non_compliant',
-      data: { bucket_name: 'legacy-bucket', encryption: 'none' },
-      timestamp: '2024-01-15T10:20:00Z',
-      source: 'aws_s3'
-    }
-  ];
-};
-
-// ---- License HTTP (web mode) ----
-
-export async function getLicenseInfoHttp(): Promise<any> {
-  const token = localStorage.getItem('auth_token');
-  if (!token) return { tier: 'free' };
-  const base = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/api\/v1$/, '');
-  const url = `${base}/api/v1/auth/license-info`;
-  const res = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
-  return res.data;
-}
-
-export async function activateLicenseHttp(licenseKey: string): Promise<any> {
-  const token = localStorage.getItem('auth_token');
-  if (!token) throw new Error('Not authenticated');
-  const base = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/api\/v1$/, '');
-  const url = `${base}/api/v1/auth/activate-license`;
-  const res = await axios.post(
-    url,
-    { license_key: licenseKey },
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
-  return res.data;
-}
-
-// ---- Email verification / password reset (public, token-based, no auth) ----
-
-function authApiBase(): string {
-  return (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/api\/v1$/, '');
-}
-
-export async function verifyEmailHttp(token: string): Promise<{ message: string }> {
-  const res = await axios.post(`${authApiBase()}/api/v1/auth/verify-email`, { token });
-  return res.data;
-}
-
-export async function resetPasswordHttp(token: string, newPassword: string): Promise<{ message: string }> {
-  const res = await axios.post(`${authApiBase()}/api/v1/auth/reset-password`, {
-    token,
-    new_password: newPassword,
-  });
-  return res.data;
-}
-
-// ---- Cloud Dashboard types ----
-
-export interface FleetStats {
-  total_machines: number;
-  compliant: number;
-  at_risk: number;
-  critical: number;
-  never_synced: number;
-  avg_score: number | null;
-  machine_limit: number | null;
-}
-
-export interface MachineRecord {
-  id: number;
-  hostname: string;
-  os_version: string | null;
-  last_score: number | null;
-  compliance_level: string | null;
-  evidence_count: number | null;
-  last_sync_at: string | null;
-  is_active: boolean;
-  created_at: string;
-}
-
-export async function getFleetStats(): Promise<FleetStats> {
-  const response = await apiClient.get('/machines/fleet-stats');
-  return response.data;
-}
-
-export async function getMachines(): Promise<MachineRecord[]> {
-  const response = await apiClient.get('/machines');
-  return response.data;
-}

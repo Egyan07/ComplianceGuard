@@ -52,7 +52,7 @@ def _validate_upload(filename: str, size: int) -> None:
         )
     if size > _MAX_UPLOAD_BYTES:
         raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
             detail=(
                 f"File size {size / (1024 * 1024):.1f} MB exceeds the "
                 f"{settings.max_file_size_mb} MB limit."
@@ -418,7 +418,7 @@ async def upload_evidence_file(
         content.extend(chunk)
         if len(content) > _MAX_UPLOAD_BYTES:
             raise HTTPException(
-                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                status_code=status.HTTP_413_CONTENT_TOO_LARGE,
                 detail=f"File exceeds the {settings.max_file_size_mb} MB upload limit.",
             )
     content = bytes(content)

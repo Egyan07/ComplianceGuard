@@ -1,0 +1,38 @@
+name: Performance Benchmark
+
+on:
+  workflow_dispatch: # manual trigger
+  schedule:
+    # Weekly perf regression check (Monday 06:00 UTC)
+    - cron: "0 6 * * 1"
+
+jobs:
+  benchmark:
+    name: API Load Benchmark
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements-test.txt
+      - run: pip install -r requirements-test.txt
+      - name: Start backend (isolated SQLite)
+        run: |
+          nohup env ENVIRONMENT=testing DATABASE_NAME=bench_ci.db \
+            python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 \
+            > /tmp/bench.log 2>&1 &
+          # Wait for readiness, then give migrations time to settle.
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:8000/health > /dev/null; then break; fi
+            sleep 1
+          done
+          curl -sf http://127.0.0.1:8000/health > /dev/null || (cat /tmp/bench.log && exit 1)
+      - name: Run serial + parallel benchmarks (p95 gate)
+        run: |
+          python scripts/benchmark.py --requests 100 --evaluations 10 --max-p95-ms 500
+          python scripts/benchmark.py --requests 50 --evaluations 5 --max-p95-ms 750 --concurrency 10

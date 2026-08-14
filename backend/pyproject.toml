@@ -18,3 +18,29 @@ ignore = [
 "migrations/versions/*.py" = ["F401", "I001"]
 # Test modules commonly import fixtures without using them directly.
 "tests/**/*.py" = ["F401"]
+
+[tool.coverage.run]
+# Measure the app package only — tests, migrations, and entrypoints are
+# scaffolding, not shipped surface.
+source = ["app"]
+omit = ["app/main.py", "app/core/database.py", "*/migrations/*"]
+
+[tool.coverage.report]
+# Match the CI thresholds so local runs and CI stay in sync.
+show_missing = true
+skip_covered = true
+# Floor measured at 78% on the CI unit gate (full suite incl. integration/e2e
+# measures 85%); keep new code from eroding it.
+fail_under = 75
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[tool.pytest.ini_options]
+# Starlette 1.6 deprecates the httpx-backed TestClient in favour of httpx2.
+# fastapi.testclient raises this at import time — it is library-internal and
+# out of our control, so silence it until the stack migrates to httpx2.
+filterwarnings = [
+    # StarletteDeprecationWarning subclasses UserWarning, not DeprecationWarning.
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated:UserWarning",
+]

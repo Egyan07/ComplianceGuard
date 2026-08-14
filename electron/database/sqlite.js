@@ -275,6 +275,11 @@ class ComplianceGuardDatabase {
        VALUES (3, 'HIPAA Security Rule', '2003', 'HIPAA Security Rule 45 CFR Part 164 Subpart C')`
     ).run();
 
+    this.db.prepare(
+      `INSERT OR IGNORE INTO compliance_frameworks (id, name, version, description)
+       VALUES (4, 'GDPR', '2018', 'EU General Data Protection Regulation (EU) 2016/679')`
+    ).run();
+
     return Promise.resolve();
   }
 

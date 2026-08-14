@@ -1,0 +1,33 @@
+# Codecov configuration — Coverage reporting for ComplianceGuard.
+# Uploads come from .github/workflows/ci.yml (backend + frontend flags).
+coverage:
+  status:
+    project:
+      default:
+        # Disable the blanket project gate — each flag gates its own floor
+        # (backend fail_under in pyproject.toml, frontend thresholds in
+        # vite.config.ts), so a single combined % is not meaningful here.
+        target: auto
+        threshold: 2%
+      backend:
+        target: 75%
+        flags:
+          - backend
+      frontend:
+        target: 75%
+        flags:
+          - frontend
+    patch:
+      default:
+        target: 70%
+
+comment:
+  layout: "reach, diff, flags, files"
+  behavior: default
+  require_changes: true
+
+ignore:
+  - "backend/tests/**"
+  - "backend/migrations/**"
+  - "frontend/src/test/**"
+  - "frontend/e2e/**"

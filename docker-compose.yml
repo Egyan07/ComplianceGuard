@@ -22,7 +22,6 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required — set a strong value in .env, do NOT rely on defaults}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     ports:
       - "5432:5432"
     networks:
@@ -36,8 +35,9 @@ services:
   # Backend API Service
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      # Repo-root context so shared/constants.json is available in the image
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: complianceguard-backend
     restart: unless-stopped
     environment:
@@ -80,8 +80,9 @@ services:
   # Frontend React Application
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      # Repo-root context so shared/constants.json is available to the Vite build
+      context: .
+      dockerfile: frontend/Dockerfile
     container_name: complianceguard-frontend
     restart: unless-stopped
     environment:

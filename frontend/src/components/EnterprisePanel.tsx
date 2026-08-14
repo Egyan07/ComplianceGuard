@@ -5,8 +5,9 @@ import {
 } from '@mui/material';
 import { Security, History, Download, Group } from '@mui/icons-material';
 import { useEnterpriseFeature } from '../hooks/useEnterpriseFeature';
+import { getElectronAPI, isElectronMode } from '../services/electron';
 
-const isElectron = !!(window as any).electronAPI;
+const isElectron = isElectronMode();
 
 const EnterprisePanel: React.FC = () => {
   const hasEnterprise = useEnterpriseFeature('enterprise_audit_log');
@@ -38,8 +39,8 @@ const EnterprisePanel: React.FC = () => {
   useEffect(() => {
     if (!hasEnterprise) return;
     if (isElectron) {
-      const api = (window as any).electronAPI;
-      api.getEnterpriseConfig().then((cfg: any) => {
+      const api = getElectronAPI();
+      api.getEnterpriseConfig().then((cfg) => {
         if (cfg && !cfg.error) {
           setCompanyName(cfg.company_name || '');
           setReportFooter(cfg.report_footer || '');
@@ -49,7 +50,7 @@ const EnterprisePanel: React.FC = () => {
           setPeriodEnd(cfg.period_end || '');
         }
       });
-      api.getRemediationPlan(1).then((res: any) => {
+      api.getRemediationPlan(1).then((res) => {
         if (res && res.plan) {
           setRemRows(Object.entries(res.plan).map(([control_id, v]: [string, any]) => ({ control_id, ...v })));
         }
@@ -58,7 +59,7 @@ const EnterprisePanel: React.FC = () => {
   }, [hasEnterprise]);
 
   const refreshRemediation = async () => {
-    const api = (window as any).electronAPI;
+    const api = getElectronAPI();
     const res = await api.getRemediationPlan(1);
     if (res && res.plan) {
       setRemRows(Object.entries(res.plan).map(([control_id, v]: [string, any]) => ({ control_id, ...v })));
@@ -70,7 +71,7 @@ const EnterprisePanel: React.FC = () => {
     setRemSaving(true);
     setRemMsg(null);
     try {
-      const api = (window as any).electronAPI;
+      const api = getElectronAPI();
       const result = await api.setRemediation({
         framework_id: 1,
         control_id: remControl.trim(),
@@ -99,7 +100,7 @@ const EnterprisePanel: React.FC = () => {
     setBrandingMsg(null);
     try {
       if (isElectron) {
-        const api = (window as any).electronAPI;
+        const api = getElectronAPI();
         const result = await api.setEnterpriseConfig({
           company_name: companyName,
           report_footer: reportFooter,
@@ -121,7 +122,7 @@ const EnterprisePanel: React.FC = () => {
     setAuditLoading(true);
     try {
       if (isElectron) {
-        const api = (window as any).electronAPI;
+        const api = getElectronAPI();
         const result = await api.getAuditLog({ page: 1, pageSize: 50 });
         setAuditEntries(result?.entries || []);
       }
@@ -135,7 +136,7 @@ const EnterprisePanel: React.FC = () => {
     setExportMsg(null);
     try {
       if (isElectron) {
-        const api = (window as any).electronAPI;
+        const api = getElectronAPI();
         const result = await api.exportData();
         if (result?.canceled) { setExportMsg(null); return; }
         setExportMsg(result?.error ? `Export failed: ${result.error}` : `Exported to: ${result.file_path}`);

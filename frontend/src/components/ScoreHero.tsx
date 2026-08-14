@@ -14,6 +14,7 @@ const FRAMEWORKS = [
   { id: 1, label: 'SOC 2' },
   { id: 2, label: 'ISO 27001' },
   { id: 3, label: 'HIPAA' },
+  { id: 4, label: 'GDPR' },
 ];
 
 function getStatusLabel(score: number): string {

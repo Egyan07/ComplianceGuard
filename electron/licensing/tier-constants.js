@@ -2,46 +2,26 @@
  * Cross-repo single source of truth for versioning, machine limits, tier
  * gates, and enumerations — Electron main-process mirror.
  *
- * Mirrored verbatim on the Python side in backend/app/core/constants.py
- * and on the React side in frontend/src/constants.ts. Any edit here MUST
- * also be made in both of those files, or the desktop app will drift from
- * the backend and web frontend.
+ * The values live in a single shared JSON file at the repo root
+ * (shared/constants.json) and are loaded at require time, so the Electron,
+ * React (ESM), and Python mirrors can never drift.
  *
- * Values are duplicated instead of imported because the three environments
- * have different module systems (Python / CommonJS / ES modules).
- *
- * Checklist for an edit:
- *   1. Update this file.
- *   2. Update backend/app/core/constants.py to match.
- *   3. Update frontend/src/constants.ts to match.
- *   4. If VERSION changed, bump package.json and frontend/package.json.
+ * Desktop-specific lists that are NOT mirrored anywhere else stay here:
+ *   - FREE_TIER_CONTROL_IDS — keep in sync with backend/app/core/soc2_controls.yaml
+ *   - ALL_CONTROL_IDS       — keep in sync with backend/app/core/soc2_controls.yaml
  */
 
-const VERSION = '3.5.1';
+const path = require('path');
+const SHARED = require(path.join(__dirname, '..', '..', 'shared', 'constants.json'));
 
-const VALID_LICENSE_TIERS = ['free', 'pro', 'enterprise'];
-const VALID_COMPLIANCE_LEVELS = ['compliant', 'at_risk', 'critical'];
+const VERSION = SHARED.VERSION;
 
-const MACHINE_LIMITS = {
-  free: 1,
-  pro: 10,
-  enterprise: null,
-};
+const VALID_LICENSE_TIERS = SHARED.VALID_LICENSE_TIERS;
+const VALID_COMPLIANCE_LEVELS = SHARED.VALID_COMPLIANCE_LEVELS;
 
-const FEATURE_GATES = {
-  all_controls:        { free: false, pro: true, enterprise: true },
-  per_control_scoring: { free: false, pro: true, enterprise: true },
-  remediation:         { free: false, pro: true, enterprise: true },
-  pdf_reports:         { free: false, pro: true, enterprise: true },
-  evidence_upload:     { free: false, pro: true, enterprise: true },
-  evaluation_history:  { free: false, pro: true, enterprise: true },
-  // Enterprise-only gates — false for all other tiers
-  enterprise_audit_log:    { free: false, pro: false, enterprise: true },
-  enterprise_rbac:         { free: false, pro: false, enterprise: true },
-  enterprise_pdf_branding: { free: false, pro: false, enterprise: true },
-  enterprise_data_export:  { free: false, pro: false, enterprise: true },
-  enterprise_no_telemetry: { free: false, pro: false, enterprise: true },
-};
+const MACHINE_LIMITS = SHARED.MACHINE_LIMITS;
+
+const FEATURE_GATES = SHARED.FEATURE_GATES;
 
 // SOC2 control IDs — desktop-specific, not mirrored in Python where controls
 // are rendered from the framework metadata directly.
@@ -79,7 +59,7 @@ const ALL_CONTROL_IDS = [
 ];
 
 module.exports = {
-  VERSION: '3.5.1',
+  VERSION,
   VALID_LICENSE_TIERS,
   VALID_COMPLIANCE_LEVELS,
   MACHINE_LIMITS,

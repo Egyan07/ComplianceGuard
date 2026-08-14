@@ -5,8 +5,8 @@
 <p align="center">
   <a href="#quick-start"><img src="https://img.shields.io/badge/version-3.5.1-2563EB" alt="Version"></a>
   <img src="https://img.shields.io/badge/license-BSL%201.1-orange" alt="License">
-  <a href="#compliance-frameworks"><img src="https://img.shields.io/badge/frameworks-SOC%202%20%7C%20ISO%2027001%20%7C%20HIPAA-10B981" alt="Frameworks"></a>
-  <img src="https://img.shields.io/badge/tests-~568%20passing-10B981?logo=pytest&logoColor=white" alt="Tests">
+  <a href="#compliance-frameworks"><img src="https://img.shields.io/badge/frameworks-SOC%202%20%7C%20ISO%2027001%20%7C%20HIPAA%20%7C%20GDPR-10B981" alt="Frameworks"></a>
+  <img src="https://img.shields.io/badge/tests-~637%20passing-10B981?logo=pytest&logoColor=white" alt="Tests">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
   <a href="https://github.com/Egyan07/ComplianceGuard/actions"><img src="https://img.shields.io/github/actions/workflow/status/Egyan07/ComplianceGuard/ci.yml?label=CI&logo=githubactions&logoColor=white" alt="CI"></a>
 </p>
@@ -14,7 +14,7 @@
 
 Compliance tools like Vanta, Drata, and Sprinto scan your cloud infrastructure. That's useful — but they can't see what's happening **on the machines themselves**. Password policies, firewall rules, event logs, running services, local user accounts — that evidence lives on the endpoint, not in AWS.
 
-ComplianceGuard lives on the endpoint too. It collects evidence directly from Windows and macOS, scores it against SOC 2 Type II, ISO 27001:2013, and HIPAA Security Rule controls, and tells you exactly where the gaps are — across all three frameworks in a single collection pass. Run it as a desktop app or deploy the web version with Docker — everything stays under your control.
+ComplianceGuard lives on the endpoint too. It collects evidence directly from Windows and macOS, scores it against SOC 2 Type II, ISO 27001:2013, HIPAA Security Rule, and GDPR controls, and tells you exactly where the gaps are — across all four frameworks in a single collection pass. Run it as a desktop app or deploy the web version with Docker — everything stays under your control.
 
 How it works: the desktop app collects OS-level evidence → maps it to compliance controls → scores your readiness → optionally syncs to a multi-machine cloud dashboard.
 
@@ -58,7 +58,7 @@ All collected evidence items in one place — searchable and filterable by statu
 
 ## Who Is This For?
 
-- Security and IT teams preparing for SOC 2, ISO 27001, or HIPAA audits
+- Security and IT teams preparing for SOC 2, ISO 27001, HIPAA, or GDPR audits
 - Companies that need endpoint-level evidence, not just cloud infrastructure scanning
 - Teams requiring self-hosting, air-gapped deployment, or strict data residency
 - Government bodies, NHS/healthcare, legal firms, and financial services needing full data sovereignty and tamper-evident compliance audit trails (Enterprise tier)
@@ -204,7 +204,7 @@ npm run package    # outputs to dist/
 | **Self-hosted option** | ✅ Full control | ❌ Cloud only |
 | **Air-gapped networks** | Desktop works completely offline | Requires internet |
 | **Cost** | Free tier available, Pro from $149/mo | $8k–$10k/year |
-| **Compliance frameworks** | SOC 2 (54 controls), ISO 27001 (47), HIPAA (47) | SOC 2 only |
+| **Compliance frameworks** | SOC 2 (54 controls), ISO 27001 (47), HIPAA (47), GDPR (38) | SOC 2 only |
 | **Open source** | ✅ BSL 1.1 | ❌ Closed source |
 
 They scan the cloud. We scan the machine. Use both and you have covered the full stack.
@@ -334,6 +334,10 @@ Each evidence item is SHA-256 hashed for integrity and stored with full audit lo
 
 47 safeguards across all five 45 CFR Part 164 sections (§164.308–§164.316). Available via `GET /api/v1/hipaa/framework/controls`. Each safeguard includes its specification type (Required or Addressable) and implementation guidance aligned with HHS guidance. Also browseable offline in the desktop app's **Browse Frameworks** tab.
 
+### GDPR (EU) 2016/679
+
+38 obligations across the operational chapters — principles (Art. 5–9), data subject rights (Art. 12–22), controller and processor duties (Art. 24–37), and international transfers (Art. 44–47). Available via `GET /api/v1/gdpr/framework/controls`. Each obligation includes its source article, GDPR chapter, control objective, and implementation guidance. Browse by article (`/by-category/32`), search by keyword, or fetch by ID (`/framework/controls/Art.32.1`). Fully supported in the desktop app too — scoring, **Browse Frameworks**, and PDF reports.
+
 ## Architecture
 
 <details>
@@ -347,7 +351,7 @@ ComplianceGuard runs in two modes: Desktop (Electron + SQLite) for offline use, 
 │                                                               │
 │  ┌─────────────────┐  ┌───────────────────────────────────┐  │
 │  │ Evidence        │  │ Compliance Engine                  │  │
-│  │ Processor       │  │ SOC 2 / ISO 27001 / HIPAA scoring  │  │
+│  │ Processor       │  │ SOC 2 / ISO 27001 / HIPAA / GDPR scoring  │  │
 │  │ Collect · Store │  │ gap analysis · recommendations     │  │
 │  └────────┬────────┘  └───────────────┬───────────────────┘  │
 │           └──────────┬────────────────┘                       │
@@ -573,18 +577,51 @@ uvicorn app.main:app --reload        # Run backend locally
 # Frontend (Vitest unit + Playwright e2e)
 cd frontend
 npm test                 # Vitest unit tests
-npm run test:e2e         # Playwright e2e tests
+npm run test:e2e         # Playwright e2e (starts real backend + frontend)
 npm run lint             # ESLint
 npm run format:check     # Prettier
 
-# Backend (281 unit + 35 integration + 8 e2e)
+# Backend
 cd backend
 python -m pytest tests/unit/ -v
 python -m pytest tests/integration/ -v
 python -m pytest tests/e2e/ -v --run-e2e
+python -m pytest tests/ -q --cov        # with coverage report
 ```
 
-CI runs all tests on every push via GitHub Actions, and the desktop (Electron) test suite now gates releases. Backend: 281 unit + 35 integration + 8 e2e. Frontend: ~208 Vitest unit + ~63 Electron unit. e2e: 5 Playwright.
+The Playwright e2e suite (`frontend/e2e/`) is full-stack: it boots the real
+FastAPI backend against an isolated SQLite database (`e2e_test.db`) plus the
+Vite dev server, then drives the browser through register/login/dashboard
+flows. Run it with `cd frontend && npm run test:e2e` (backend deps must be
+installed and on PATH, or prefix with `PATH=../backend/.venv/bin:$PATH`).
+
+### Performance benchmark
+
+```bash
+cd backend
+python -m uvicorn app.main:app --reload --port 8000   # terminal 1
+python scripts/benchmark.py --requests 100            # terminal 2: serial
+python scripts/benchmark.py --requests 100 --concurrency 10   # parallel load
+```
+
+Reports p50/p95/p99 latency for the hot endpoints (login, framework controls,
+evaluation history, evaluate) and exits non-zero if p95 exceeds
+`--max-p95-ms` (default 500 ms), so it can gate CI performance regressions.
+The bench user is auto-created and promoted to a verified Pro account.
+
+CI runs all tests on every push via GitHub Actions, and the desktop (Electron) test suite now gates releases. Backend: 282 unit + 35 integration + 8 e2e. Frontend: 204 Vitest unit + 103 Electron unit. e2e: 9 Playwright (5 shell + 4 full-stack).
+
+## Backup & Disaster Recovery
+
+Nightly `pg_dump` backups with verification + retention pruning, a one-command
+restore, and a full DR runbook (RPO/RTO targets, off-site copies, restore
+drills) live in [`docs/disaster-recovery.md`](docs/disaster-recovery.md):
+
+```bash
+./scripts/db-backup.sh                          # nightly backup
+./scripts/db-restore.sh --dry-run backups/latest.dump   # safe preview
+./scripts/db-restore.sh backups/latest.dump             # actual restore
+```
 
 ## Troubleshooting
 
@@ -598,6 +635,7 @@ CI runs all tests on every push via GitHub Actions, and the desktop (Electron) t
 | **`alembic upgrade head` fails** | Ensure `DATABASE_URL` in your `.env` is set correctly. For local SQLite, use `sqlite:///./complianceguard.db`. |
 | **License key not activating** | License keys are tied to the Ed25519 public key bundled with the app. Ensure you are using a key generated for this build. |
 | **CI fails with `ERR_MODULE_NOT_FOUND`** | Run `cd frontend && npm install react-transition-group` to install the missing peer dependency. |
+| **Electron tests fail with "Could not locate the bindings file"** | `postinstall` builds `better-sqlite3` for the Electron ABI. `npm run test:scheduler` rebuilds it for the Node ABI automatically via its `pretest` hook; if you rebuilt manually, run `npm rebuild better-sqlite3`. |
 
 
 ## FAQ
@@ -642,7 +680,7 @@ Contributions are welcome. Before submitting a pull request, please:
 
 - Add tests for any new functionality
 - Ensure all existing tests pass (`npm test` + `pytest`)
-- Follow existing code style (ESLint + Prettier for frontend, flake8 for backend)
+- Follow existing code style (ESLint + Prettier for frontend, ruff for backend)
 - Update documentation for any user-facing changes
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.

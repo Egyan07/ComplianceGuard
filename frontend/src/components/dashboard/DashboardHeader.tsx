@@ -4,8 +4,9 @@ import MotionButton from '../ui/MotionButton';
 import { Refresh, CloudUpload, Assessment, Upload, PictureAsPdf, CloudSync as CloudSyncIcon } from '@mui/icons-material';
 import { useLicense } from '../../contexts/LicenseContext';
 import { ComplianceEvaluation } from '../../services/api';
+import { isElectronMode } from '../../services/electron';
 
-const isElectron = !!(window as any).electronAPI;
+const isElectron = isElectronMode();
 
 interface Props {
   loading: boolean;
@@ -39,7 +40,7 @@ const DashboardHeader: React.FC<Props> = ({
             Dashboard
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            Monitor your compliance status across SOC 2, ISO 27001 and HIPAA
+            Monitor your compliance status across SOC 2, ISO 27001, HIPAA and GDPR
           </Typography>
         </Box>
 

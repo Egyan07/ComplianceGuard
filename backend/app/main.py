@@ -16,8 +16,11 @@ import sentry_sdk
 import uvicorn
 from alembic import command as alembic_command
 from alembic.config import Config as AlembicConfig
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import PlainTextResponse
+from sqlalchemy import text
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from slowapi import _rate_limit_exceeded_handler
@@ -27,6 +30,7 @@ from app.api.auth import router as auth_router
 from app.api.aws_credentials import router as aws_credentials_router
 from app.api.iso27001 import router as iso27001_router
 from app.api.hipaa import router as hipaa_router
+from app.api.gdpr import router as gdpr_router
 from app.api.enterprise.audit import router as enterprise_audit_router
 from app.api.enterprise.branding import router as enterprise_branding_router
 from app.api.enterprise.export import router as enterprise_export_router
@@ -36,12 +40,22 @@ from app.api.evidence import router as evidence_router
 from app.api.machines import router as machines_router
 from app.core.config import settings
 from app.core.constants import VERSION
-from app.core.database import Base, engine
+from app.core.database import Base, engine, SessionLocal
+from app.core.observability import (
+    APP_INFO,
+    configure_logging,
+    now_ms,
+    record_request,
+)
 from app.core.rate_limit import limiter
 
 import app.models  # noqa: F401
 
 logger = logging.getLogger(__name__)
+
+# Structured logging (LOG_FORMAT=json for JSON lines) + Prometheus build info.
+configure_logging(level=settings.log_level)
+APP_INFO.labels(version=VERSION, git_sha=os.getenv("GIT_SHA", "dev")).set(1.0)
 
 _enterprise_mode = os.getenv("ENTERPRISE_MODE", "false").lower() == "true"
 if settings.sentry_dsn and not _enterprise_mode:
@@ -168,6 +182,32 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.middleware("http")
+async def metrics_middleware(request: Request, call_next):
+    """Record every request into the Prometheus metrics (excluding /metrics
+    itself to avoid self-referential scrapes)."""
+    if request.url.path == "/metrics":
+        return await call_next(request)
+    start = now_ms()
+    response = await call_next(request)
+    # Use the Starlette route template (e.g. /api/v1/users/{user_id}) so label
+    # cardinality stays bounded, falling back to the raw path for unmatched routes.
+    path_template = getattr(request.scope.get("route"), "path", request.url.path)
+    record_request(
+        method=request.method,
+        path_template=path_template,
+        status_code=response.status_code,
+        duration_s=now_ms() - start,
+    )
+    return response
+
+
+@app.get("/metrics")
+async def metrics() -> PlainTextResponse:
+    """Prometheus scrape endpoint."""
+    return PlainTextResponse(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+
 # All routers define only resource-level paths (e.g. /auth, /evidence).
 # The shared /api/v1 prefix is applied here so the convention is enforced
 # in a single place and individual routers stay prefix-free.
@@ -178,6 +218,7 @@ app.include_router(machines_router, prefix="/api/v1")
 app.include_router(aws_credentials_router, prefix="/api/v1")
 app.include_router(iso27001_router, prefix="/api/v1")
 app.include_router(hipaa_router, prefix="/api/v1")
+app.include_router(gdpr_router, prefix="/api/v1")
 app.include_router(enterprise_audit_router, prefix="/api/v1")
 app.include_router(enterprise_branding_router, prefix="/api/v1")
 app.include_router(enterprise_export_router, prefix="/api/v1")
@@ -191,12 +232,28 @@ async def health_check() -> Dict[str, Any]:
     ``git_sha`` lets oncall map an incident to a specific deploy even when the
     version string hasn't been bumped; ``started_at`` exposes worker age so
     rolling-restart regressions are obvious.
+
+    Includes a live DB connectivity probe so load balancers / orchestrators can
+    pull an instance that has lost its database before routing traffic to it.
+    The probe is cheap (SELECT 1) and runs only on this endpoint.
     """
+    db_ok = True
+    try:
+        db = SessionLocal()
+        try:
+            db.execute(text("SELECT 1"))
+        finally:
+            db.close()
+    except Exception:
+        logger.exception("health check DB probe failed")
+        db_ok = False
+
     return {
-        "status": "healthy",
+        "status": "healthy" if db_ok else "degraded",
         "service": "complianceguard-api",
         "version": VERSION,
         "git_sha": _GIT_SHA,
+        "database": "ok" if db_ok else "unreachable",
         "started_at": _SERVICE_STARTED_AT.isoformat(),
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
