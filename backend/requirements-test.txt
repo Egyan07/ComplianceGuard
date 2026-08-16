@@ -11,7 +11,7 @@ PyJWT>=2.8,<3
 bcrypt>=4.1,<5
 python-multipart>=0.0.9
 pydantic>=2.10,<3
-pydantic-settings>=2.6,<3
+pydantic-settings>=2.15.0,<3
 python-dotenv>=1.0
 slowapi==0.1.9
 email-validator>=2.1

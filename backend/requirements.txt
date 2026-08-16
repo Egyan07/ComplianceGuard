@@ -18,7 +18,7 @@ python-multipart>=0.0.9
 # pydantic>=2.10 has prebuilt pydantic-core wheels for Python 3.13, so
 # `pip install` no longer requires a Rust toolchain on the install host.
 pydantic>=2.10,<3
-pydantic-settings>=2.6,<3
+pydantic-settings>=2.15.0,<3
 python-dotenv>=1.0
 
 # HTTP and API clients
