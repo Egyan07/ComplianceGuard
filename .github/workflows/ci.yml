@@ -194,6 +194,24 @@ jobs:
       - name: Install frontend dependencies
         run: cd frontend && npm ci
 
+      # electron-builder 26 spawns one GitHub publisher per target (nsis +
+      # portable), and each lazily creates the draft release on first upload.
+      # When both race, one create wins and the loser's uploads are dropped
+      # while the job still exits 0 (the draft ends up with only some assets,
+      # e.g. just the blockmap). Pre-create the draft so both publishers find
+      # an existing release and only upload to it.
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "${{ github.ref_name }}" --json isDraft --jq .isDraft >/dev/null 2>&1; then
+            echo "Draft release ${{ github.ref_name }} already exists"
+          else
+            gh release create "${{ github.ref_name }}" --draft \
+              --title "ComplianceGuard ${{ github.ref_name }}" \
+              --notes "ComplianceGuard ${{ github.ref_name }} — draft release. Installers are uploaded by CI; publish manually after verification."
+          fi
+
       - name: Build and publish
         run: npm run publish
         env:
@@ -255,6 +273,22 @@ jobs:
 
       - name: Install frontend dependencies
         run: cd frontend && npm ci
+
+      # Same pre-create as the Windows job: the x64 and arm64 dmg targets each
+      # get their own GitHub publisher, and racing to create the draft drops
+      # uploads while still exiting 0. The draft normally already exists (the
+      # Windows job runs first); this is idempotent insurance for re-runs.
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "${{ github.ref_name }}" --json isDraft --jq .isDraft >/dev/null 2>&1; then
+            echo "Draft release ${{ github.ref_name }} already exists"
+          else
+            gh release create "${{ github.ref_name }}" --draft \
+              --title "ComplianceGuard ${{ github.ref_name }}" \
+              --notes "ComplianceGuard ${{ github.ref_name }} — draft release. Installers are uploaded by CI; publish manually after verification."
+          fi
 
       - name: Build and publish
         run: npm run publish:mac
