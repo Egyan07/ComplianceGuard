@@ -14,7 +14,7 @@ pydantic>=2.10,<3
 pydantic-settings>=2.6,<3
 python-dotenv>=1.0
 slowapi==0.1.9
-email-validator>=2.1
+email-validator>=2.3.0
 python-dateutil>=2.8
 pytz>=2024.1
 httpx>=0.26,<1
