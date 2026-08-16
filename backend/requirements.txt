@@ -22,7 +22,7 @@ pydantic-settings>=2.6,<3
 python-dotenv>=1.0
 
 # HTTP and API clients
-httpx>=0.26,<1
+httpx>=0.28.1,<1
 aiosmtplib>=3.0.0
 
 # Rate limiting
