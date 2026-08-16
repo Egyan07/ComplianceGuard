@@ -7,6 +7,18 @@ cap. We spy on create_engine so the test needs no Postgres driver.
 import app.core.database as db
 
 
+# Documented defaults from app/core/config.py. The test pins them explicitly
+# (monkeypatched onto the settings singleton) so it is deterministic even on
+# machines whose environment overrides DB_POOL_* — production behavior is
+# untouched; the test only freezes the inputs it asserts on.
+_POOL_DEFAULTS = {
+    "db_pool_size": 5,
+    "db_max_overflow": 5,
+    "db_pool_timeout": 30,
+    "db_pool_recycle": 1800,
+}
+
+
 def test_postgres_engine_has_pool_sizing(monkeypatch):
     captured = {}
 
@@ -20,6 +32,8 @@ def test_postgres_engine_has_pool_sizing(monkeypatch):
         db, "get_database_url_for_environment",
         lambda testing=False: "postgresql+psycopg2://u:p@h:5432/db",
     )
+    for key, value in _POOL_DEFAULTS.items():
+        monkeypatch.setattr(db.settings, key, value)
 
     db.create_database_engine(testing=False)
 

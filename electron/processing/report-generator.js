@@ -255,6 +255,7 @@ class ReportGenerator {
   .status.partial { background:rgba(255,149,0,.14); color:#B25000; }
   .status.non_compliant, .status.non-compliant { background:rgba(255,59,48,.12); color:#C4231A; }
   .status.not_assessed, .status.not-assessed { background:var(--surface); color:var(--muted); }
+  .summary-card.not-assessed { border-top:2px solid #8E8E93; }
 
   .score-bar { display:flex; align-items:center; gap:8px; }
   .score-bar-bg { flex:1; height:6px; background:var(--hair); border-radius:980px; overflow:hidden; }
@@ -350,12 +351,17 @@ ${systemDescription ? `
     <div class="summary-card compliant"><span class="dot"></span><div class="value">${numOr0(findings.compliant_controls)}</div><div class="label">Compliant</div></div>
     <div class="summary-card partial"><span class="dot"></span><div class="value">${numOr0(findings.partial_controls)}</div><div class="label">Partial</div></div>
     <div class="summary-card non-compliant"><span class="dot"></span><div class="value">${numOr0(findings.non_compliant_controls)}</div><div class="label">Non-Compliant</div></div>
+    <div class="summary-card not-assessed"><span class="dot"></span><div class="value">${numOr0(findings.not_assessed_controls)}</div><div class="label">Not Assessed</div></div>
   </div>
 
   <p>The evaluation covers <strong>${numOr0(findings.total_controls)} controls</strong> across the
-  ${escapeHtml(framework.name)} framework. The overall readiness score is
-  <strong>${Math.round(overallScore)}%</strong> with a status of
-  <span class="status ${escapeHtml(status)}">${escapeHtml(status).replace(/_/g, ' ')}</span>.</p>
+  ${escapeHtml(framework.name)} framework. The overall readiness score of
+  <strong>${Math.round(overallScore)}%</strong> is the share of required control evidence
+  that has been demonstrated. Controls with no evidence are counted as
+  <strong>not assessed</strong> and pull the score down until evidence is collected —
+  ${numOr0(findings.not_assessed_controls)} of ${numOr0(findings.total_controls)} controls
+  have not been assessed in this evaluation.</p>
+  <p><strong>Evidence items collected:</strong> ${evidence.length}</p>
   <p><strong>Evidence items collected:</strong> ${evidence.length}</p>
 
   ${findings.category_scores ? `

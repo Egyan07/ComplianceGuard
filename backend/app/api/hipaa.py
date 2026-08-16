@@ -11,12 +11,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app.api.compliance import ComplianceEvaluationResponse
+from app.api.compliance import ComplianceEvaluationResponse, _counts_from_totals, _response_from_record
 from app.api.deps import get_current_user
 from app.core.database import get_db
-from app.core.framework_scoring import score_from_map, derive_overall
+from app.core.exceptions import EvaluationError
+from app.core.canonical_router import evaluate_from_evidence_canonical
 from app.core.hipaa_controls import HIPAAControl, HIPAAFramework, create_hipaa_framework
-from app.core.hipaa_evidence_map import HIPAA_EVIDENCE_CONTROL_MAP
 from app.models.evaluation import ComplianceEvaluationRecord
 from app.models.user import User
 
@@ -131,22 +131,25 @@ async def evaluate_from_evidence(
         .all()
     )
 
-    control_scores = score_from_map(items, HIPAA_EVIDENCE_CONTROL_MAP)
-    totals = derive_overall(control_scores)
+    # Canonical coverage engine (single scoring path).
+    evidence_types = [item.evidence_type for item in items]
+    totals = evaluate_from_evidence_canonical("hipaa", evidence_types)
 
     try:
+        evidence_summary = dict(totals.get("evidence_summary") or {})
+        evidence_summary["control_counts"] = _counts_from_totals(totals)
         record = ComplianceEvaluationRecord(
             evaluation_id=f"eval-{uuid.uuid4().hex[:12]}",
-            framework_id="hipaa_security_rule",
+            framework_id=totals["framework_id"],
             user_id=current_user.id,
             overall_score=totals["overall_score"],
             compliance_status=totals["compliance_status"],
             compliance_level=totals["compliance_level"],
             evaluated_by="web_auto",
-            scope=list({c.category for c in _hipaa_framework.get_all_controls()}),
-            evidence_summary={"total_evidence": len(items)},
-            risk_assessment={},
-            recommendations=[],
+            scope=None,
+            evidence_summary=evidence_summary,
+            risk_assessment=totals["risk_assessment"],
+            recommendations=totals["recommendations"],
             control_count=totals["control_count"],
             compliant_controls=totals["compliant_controls"],
         )
@@ -154,21 +157,7 @@ async def evaluate_from_evidence(
         db.commit()
         db.refresh(record)
 
-        return ComplianceEvaluationResponse(
-            framework_id=record.framework_id,
-            overall_score=record.overall_score,
-            compliance_status=record.compliance_status,
-            compliance_level=record.compliance_level,
-            evaluation_date=record.created_at,
-            evaluated_by=record.evaluated_by,
-            scope=record.scope or [],
-            evidence_summary=record.evidence_summary or {},
-            risk_assessment=record.risk_assessment or {},
-            recommendations=record.recommendations or [],
-            next_review_date=None,
-            control_count=record.control_count,
-            compliant_controls=record.compliant_controls,
-        )
-    except Exception as e:
+        return _response_from_record(record)
+    except Exception as exc:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Evaluation failed: {str(e)}")
+        raise EvaluationError(log_message=f"HIPAA evaluation failed (user={current_user.email})") from exc

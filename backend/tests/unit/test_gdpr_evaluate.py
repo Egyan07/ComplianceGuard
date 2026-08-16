@@ -113,10 +113,12 @@ def test_evaluate_returns_200_with_score(auth_client_with_evidence):
     )
     assert resp.status_code == 200
     data = resp.json()
-    assert data["overall_score"] > 0.0
+    # Canonical contract: 0-100 scale + canonical status vocabulary.
+    assert 0.0 < data["overall_score"] <= 100.0
     assert data["framework_id"] == "gdpr_2016_679"
-    assert data["control_count"] > 0
-    assert "compliance_status" in data
+    assert data["control_count"] == 38
+    assert data["compliance_status"] in {"compliant", "partial", "non_compliant", "not_assessed"}
+    assert data["not_assessed_controls"] < 38  # evidence was translated and scored
 
 
 def test_evaluate_no_evidence_returns_zero(auth_client_no_evidence):
@@ -126,7 +128,10 @@ def test_evaluate_no_evidence_returns_zero(auth_client_no_evidence):
         headers={"Authorization": f"Bearer {token}"},
     )
     assert resp.status_code == 200
-    assert resp.json()["overall_score"] == 0.0
+    data = resp.json()
+    assert data["overall_score"] == 0.0
+    assert data["compliance_status"] == "non_compliant"
+    assert data["not_assessed_controls"] == 38
 
 
 def test_evaluate_unauthorized():

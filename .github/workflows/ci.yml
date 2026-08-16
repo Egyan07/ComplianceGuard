@@ -8,8 +8,10 @@ on:
   pull_request:
     branches: [master, main]
 
-permissions:
-  contents: write
+# Least privilege: nothing is granted by default. Test/build jobs read only;
+# only the release jobs (which publish artifacts to a draft release) and the
+# post-release integrity job (which uploads SHA256SUMS.txt) need write access.
+permissions: {}
 
 jobs:
   backend-tests:
@@ -30,6 +32,15 @@ jobs:
         run: |
           pip install "ruff>=0.4"
           ruff check app
+      - name: Env-example hygiene check (no phantom vars)
+        run: python ../scripts/check-env-example.py
+      # Supply-chain: fail on known-vulnerable Python packages. pip-audit
+      # resolves the declared ranges against the OSV advisory database.
+      - name: Python dependency audit (pip-audit)
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt
+          pip-audit -r requirements-test.txt
       - name: Run unit tests with coverage
         run: python -m pytest tests/unit/ -v --tb=short --cov --cov-report=term --cov-report=xml:coverage.xml
       # Run the WHOLE integration suite, not just one file (test_aws_integration.py
@@ -58,6 +69,13 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
+      # Supply-chain: fail on high/critical npm advisories. The only remaining
+      # known findings are moderate react-router (<6→7 migration required) and
+      # are tracked as accepted risk; --audit-level=high gates regressions.
+      - run: npm audit --audit-level=high
+      # Evidence vocabulary parity: the committed upload catalog must match the
+      # canonical shared framework data (Phase 11) — drift fails CI.
+      - run: npm run check:evidence
       - run: npm run lint
       - run: npx tsc --noEmit
       - name: Run unit tests with coverage
@@ -80,6 +98,8 @@ jobs:
           node-version: 20
       - name: Install dependencies
         run: npm ci
+      # Supply-chain: fail on high/critical npm advisories in the desktop app.
+      - run: npm audit --audit-level=high
       # vitest runs the electron tests under Node, but postinstall
       # (electron-builder install-app-deps) rebuilds better-sqlite3 for the
       # Electron ABI. The pretest hook on test:scheduler rebuilds it for the
@@ -136,6 +156,20 @@ jobs:
       - run: npm ci
       - run: npm run build
 
+  docker-build:
+    name: Docker Images Build (production Dockerfiles)
+    runs-on: ubuntu-latest
+    needs: [backend-tests, lint-and-test, build]
+    steps:
+      - uses: actions/checkout@v4
+      # Verify the exact Dockerfiles the docker-compose deployment ships build
+      # from a clean context (repo root, shared/ included), so a broken
+      # production container image cannot slip past CI.
+      - name: Build backend image
+        run: docker build -f backend/Dockerfile -t complianceguard-backend:ci .
+      - name: Build frontend image
+        run: docker build -f frontend/Dockerfile -t complianceguard-frontend:ci .
+
   release:
     name: Release Windows Installer
     runs-on: windows-latest
@@ -143,6 +177,9 @@ jobs:
     # gates here because the desktop app IS the shipped Windows/macOS artifact.
     needs: [backend-tests, lint-and-test, electron-tests, e2e-tests, build]
     if: startsWith(github.ref, 'refs/tags/v')
+    # Needed to upload installers + latest.yml to the draft release.
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -151,7 +188,7 @@ jobs:
           node-version: 20
 
       - name: Install root dependencies
-        run: npm install
+        run: npm ci
 
       - name: Install frontend dependencies
         run: cd frontend && npm ci
@@ -160,6 +197,37 @@ jobs:
         run: npm run publish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Windows code signing. Two supported routes (see
+          # docs/release-and-signing.md): classic PKCS#12 via WIN_CSC_LINK
+          # (base64 of the .pfx) + WIN_CSC_KEY_PASSWORD, or Azure Trusted
+          # Signing via AZURE_* (no EV hardware). When NONE of these are set,
+          # electron-builder skips signing and the verification step below
+          # fails loudly instead of shipping a silently-unsigned installer.
+          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_KEY_VAULT_NAME: ${{ secrets.AZURE_KEY_VAULT_NAME }}
+          AZURE_CERT_NAME: ${{ secrets.AZURE_CERT_NAME }}
+
+      - name: Verify installer Authenticode signature
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem dist -Filter 'ComplianceGuard-Setup-*.exe' | Where-Object { $_.Name -notlike '*.blockmap' } | Select-Object -First 1
+          if (-not $installer) { Write-Error 'No NSIS installer found in dist/'; exit 1 }
+          $sig = Get-AuthenticodeSignature -FilePath $installer.FullName
+          Write-Host "Installer: $($installer.Name)"
+          Write-Host "Signature status: $($sig.Status)"
+          if ($sig.Status -ne 'Valid') {
+            if ($env:WIN_CSC_LINK -or $env:AZURE_CLIENT_ID) {
+              Write-Error "Signing credentials were provided but the installer is NOT signed (status: $($sig.Status)). Aborting release."
+              exit 1
+            }
+            Write-Warning "Installer is UNSIGNED (no signing credentials configured). This release will not support verified auto-updates — configure WIN_CSC_LINK or AZURE_* before publishing to customers."
+          } else {
+            Write-Host "Signer: $($sig.SignerCertificate.Subject)"
+          }
 
   release-mac:
     name: Release macOS DMG
@@ -169,6 +237,9 @@ jobs:
     # finds that draft and uploads the .dmg. Avoids the split-draft race.
     needs: [backend-tests, lint-and-test, electron-tests, build, release]
     if: startsWith(github.ref, 'refs/tags/v')
+    # Needed to upload the .dmg to the same draft release.
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -177,7 +248,7 @@ jobs:
           node-version: 20
 
       - name: Install root dependencies
-        run: npm install
+        run: npm ci
 
       - name: Install frontend dependencies
         run: cd frontend && npm ci
@@ -186,3 +257,63 @@ jobs:
         run: npm run publish:mac
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # macOS signing + notarization (see docs/release-and-signing.md).
+          # Without these, the .dmg is built unsigned.
+          CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+  release-integrity:
+    name: Verify Release Integrity
+    runs-on: ubuntu-latest
+    needs: [release, release-mac]
+    if: startsWith(github.ref, 'refs/tags/v')
+    # Needs write to upload SHA256SUMS.txt to the draft release.
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch draft release artifacts
+        run: |
+          gh release view "${{ github.ref_name }}" --json isDraft,assets --jq '{draft: .isDraft, assets: [.assets[].name]}'
+          gh release download "${{ github.ref_name }}" --pattern '*.exe' --pattern '*.dmg' --pattern 'latest.yml' --dir release-assets
+          ls -la release-assets
+
+      - name: Fail if artifacts are missing
+        run: |
+          for f in 'ComplianceGuard-Setup-*.exe' 'ComplianceGuard-*.dmg' 'latest.yml'; do
+            matches=$(ls release-assets/$f 2>/dev/null || true)
+            if [ -z "$matches" ]; then
+              echo "::error::Missing required release artifact: $f"
+              exit 1
+            fi
+          done
+          echo "All expected artifacts present."
+
+      - name: Generate and upload SHA256SUMS.txt
+        run: |
+          (cd release-assets && sha256sum *.exe *.dmg *.yml > SHA256SUMS.txt && cat SHA256SUMS.txt)
+          gh release upload "${{ github.ref_name }}" release-assets/SHA256SUMS.txt --clobber
+
+      # Supply-chain visibility: ship an SPDX SBOM alongside the installers so
+      # consumers can audit the dependency inventory of the release.
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: spdx-json
+          output-file: release-assets/sbom.spdx.json
+
+      - name: Upload SBOM to release
+        run: gh release upload "${{ github.ref_name }}" release-assets/sbom.spdx.json --clobber
+
+      - name: Verify draft is still a draft (no accidental publish)
+        run: |
+          draft=$(gh release view "${{ github.ref_name }}" --json isDraft --jq .isDraft)
+          echo "Release is draft: $draft"
+          [ "$draft" = "true" ] || { echo '::error::Release is not a draft — expected draft until manual publish.'; exit 1; }

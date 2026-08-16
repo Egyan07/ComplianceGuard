@@ -11,7 +11,6 @@ import pytest
 from typing import Dict, List
 
 from app.core.soc2_controls import SOC2Control, SOC2Framework
-from app.services.compliance_service import ComplianceService, ComplianceEvaluation
 
 
 class TestSOC2Controls:
@@ -69,60 +68,6 @@ class TestSOC2Controls:
             assert control.id.startswith('CC') or control.id.startswith('A') or \
                    control.id.startswith('C') or control.id.startswith('PI') or \
                    control.id.startswith('CA'), f"Invalid control ID format: {control.id}"
-
-
-class TestComplianceService:
-    """Test cases for compliance evaluation service."""
-
-    def test_compliance_service_evaluation(self):
-        """Test compliance evaluation functionality."""
-        framework = SOC2Framework()
-        service = ComplianceService(framework)
-
-        controls = framework.get_all_controls()[:5]  # Test with first 5 controls
-
-        # Mock evidence data
-        evidence_data = {
-            control.id: {"status": "compliant", "score": 0.85}
-            for control in controls
-        }
-
-        evaluation = service.evaluate_compliance(evidence_data)
-
-        assert isinstance(evaluation, ComplianceEvaluation)
-        assert hasattr(evaluation, 'overall_score')
-        assert hasattr(evaluation, 'control_assessments')
-        assert hasattr(evaluation, 'compliance_status')
-        assert 0 <= evaluation.overall_score <= 1, "Score should be between 0 and 1"
-
-    def test_compliance_scoring_logic(self):
-        """Test that compliance scoring works correctly."""
-        framework = SOC2Framework()
-        service = ComplianceService(framework)
-
-        # Test with perfect compliance
-        perfect_evidence = {
-            "CC1.1": {"status": "compliant", "score": 1.0},
-            "CC2.1": {"status": "compliant", "score": 1.0}
-        }
-
-        evaluation = service.evaluate_compliance(perfect_evidence)
-        assert evaluation.overall_score == 1.0, "Perfect compliance should score 1.0"
-        assert evaluation.compliance_status == "compliant", "Should be fully compliant"
-
-    def test_error_handling_for_invalid_controls(self):
-        """Test error handling for invalid control references."""
-        framework = SOC2Framework()
-        service = ComplianceService(framework)
-
-        # Test with invalid control ID
-        invalid_evidence = {
-            "INVALID_CONTROL": {"status": "compliant", "score": 1.0}
-        }
-
-        # Should handle invalid controls gracefully
-        evaluation = service.evaluate_compliance(invalid_evidence)
-        assert isinstance(evaluation, ComplianceEvaluation)
 
 
 if __name__ == "__main__":

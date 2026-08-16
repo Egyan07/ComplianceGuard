@@ -3,10 +3,10 @@
 </p>
 
 <p align="center">
-  <a href="#quick-start"><img src="https://img.shields.io/badge/version-3.5.1-2563EB" alt="Version"></a>
+  <a href="#quick-start"><img src="https://img.shields.io/badge/version-3.7.0-2563EB" alt="Version"></a>
   <img src="https://img.shields.io/badge/license-BSL%201.1-orange" alt="License">
   <a href="#compliance-frameworks"><img src="https://img.shields.io/badge/frameworks-SOC%202%20%7C%20ISO%2027001%20%7C%20HIPAA%20%7C%20GDPR-10B981" alt="Frameworks"></a>
-  <img src="https://img.shields.io/badge/tests-~637%20passing-10B981?logo=pytest&logoColor=white" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-~934%20passing-10B981?logo=pytest&logoColor=white" alt="Tests">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
   <a href="https://github.com/Egyan07/ComplianceGuard/actions"><img src="https://img.shields.io/github/actions/workflow/status/Egyan07/ComplianceGuard/ci.yml?label=CI&logo=githubactions&logoColor=white" alt="CI"></a>
 </p>
@@ -98,6 +98,8 @@ Contact us to set up a hosted instance. Install the desktop app on your machines
 Download `ComplianceGuard-Setup.exe` from the [latest release](https://github.com/Egyan07/ComplianceGuard/releases/latest), run the installer, and launch from the Start Menu.
 
 > **Requirements:** Windows 10/11 (64-bit)
+>
+> **Auto-updates:** packaged builds check for updates shortly after launch and every 4 hours, download them automatically, and install on quit. Release integrity and signing details live in [`docs/release-and-signing.md`](docs/release-and-signing.md). Portable builds don't auto-update — use the Setup installer.
 
 <details>
 <summary>Desktop — macOS (unsigned)</summary>
@@ -231,6 +233,16 @@ Each evidence item is SHA-256 hashed for integrity and stored with full audit lo
 ### SOC 2 Controls
 
 54 controls across 5 categories, scored by evidence coverage with equal weighting.
+
+Scoring uses the **canonical coverage model** (one engine, shared by the web API
+and the desktop app, driven by the framework definitions in `shared/frameworks/`):
+each control scores as the share of its required evidence types that are present
+— 100% → `compliant`, ≥50% → `partial`, >0% → `non_compliant`, none →
+`not_assessed`. The overall 0–100 score is the mean over **all** controls;
+`not_assessed` controls count as 0, so a sparse evidence set honestly reflects
+evidence coverage rather than inflating readiness. The same model applies to ISO
+27001, HIPAA, and GDPR — framework differences are data, not separate scoring
+logic.
 
 <details>
 <summary><strong>Common Criteria (CC) — 19 controls</strong></summary>
@@ -397,12 +409,12 @@ ComplianceGuard/
 │   ├── app/
 │   │   ├── main.py                     # FastAPI app, CORS, routes, lifespan tasks
 │   │   ├── api/                        # Auth, evidence, compliance, ISO 27001 endpoints
-│   │   ├── core/                       # Config, database, auth, soc2/iso27001/hipaa_controls.yaml, evidence_mapping.py
+│   │   ├── core/                       # Config, database, auth, controls YAML, canonical_evidence.py + canonical_router.py
 │   │   ├── models/                     # SQLAlchemy models (user, refresh_token, evidence, compliance, machine)
-│   │   ├── services/                   # Compliance service, evidence collector
+│   │   ├── services/                   # Audit log, evidence collector
 │   │   └── integrations/aws.py         # AWS evidence collection
 │   ├── migrations/                     # Alembic database migrations
-│   ├── tests/                          # Unit (213) + integration (26) + e2e (8)
+│   ├── tests/                          # Unit (296) + integration (35) + e2e (8)
 │   ├── requirements.txt
 │   └── Dockerfile
 ├── electron/
@@ -415,10 +427,11 @@ ComplianceGuard/
 │   │   ├── license-manager.js          # License state, feature gates, persistence
 │   │   └── tier-constants.js           # Free vs Pro feature definitions
 │   ├── processing/
-│   │   ├── compliance-engine.js        # SOC 2 / ISO 27001 / HIPAA scoring engine (tier-aware)
+│   │   ├── canonical-engine.js         # Canonical scoring engine (JS port of the shared model)
 │   │   ├── evidence-processor.js       # Evidence collection + storage
 │   │   └── report-generator.js         # HTML → PDF report generation
 │   └── system/windows.js               # Windows evidence collector
+├── shared/frameworks/                  # Source of truth: canonical control definitions (4 YAMLs) + evidence vocabulary (JSON)
 ├── frontend/
 │   ├── src/
 │   │   ├── App.tsx                     # App entry point — providers, auth gate, error boundary
@@ -431,8 +444,8 @@ ComplianceGuard/
 │   │   ├── contexts/AuthContext.tsx     # JWT auth state, login/register/logout
 │   │   ├── contexts/LicenseContext.tsx  # React context for tier state + feature checks
 │   │   ├── services/api.ts             # Unified API (IPC or HTTP)
-│   │   └── test/                       # Vitest test suite (~211 tests)
-│   ├── e2e/                            # Playwright e2e tests (5 tests)
+│   │   └── test/                       # Vitest test suite (~215 tests)
+│   ├── e2e/                            # Playwright e2e tests (13 tests)
 │   ├── .eslintrc.cjs
 │   ├── .prettierrc
 │   └── Dockerfile

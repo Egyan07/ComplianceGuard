@@ -6,6 +6,7 @@ import {
 import { Security, History, Download, Group } from '@mui/icons-material';
 import { useEnterpriseFeature } from '../hooks/useEnterpriseFeature';
 import { getElectronAPI, isElectronMode } from '../services/electron';
+import type { AuditEntry, RemediationRow } from '../services/api.types';
 
 const isElectron = isElectronMode();
 
@@ -22,7 +23,7 @@ const EnterprisePanel: React.FC = () => {
   const [brandingMsg, setBrandingMsg] = useState<string | null>(null);
 
   // Remediation plan (owner + target date per control)
-  const [remRows, setRemRows] = useState<any[]>([]);
+  const [remRows, setRemRows] = useState<RemediationRow[]>([]);
   const [remControl, setRemControl] = useState('');
   const [remOwner, setRemOwner] = useState('');
   const [remDate, setRemDate] = useState('');
@@ -30,7 +31,7 @@ const EnterprisePanel: React.FC = () => {
   const [remSaving, setRemSaving] = useState(false);
   const [remMsg, setRemMsg] = useState<string | null>(null);
 
-  const [auditEntries, setAuditEntries] = useState<any[]>([]);
+  const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
   const [auditLoading, setAuditLoading] = useState(false);
 
   const [exporting, setExporting] = useState(false);
@@ -52,7 +53,12 @@ const EnterprisePanel: React.FC = () => {
       });
       api.getRemediationPlan(1).then((res) => {
         if (res && res.plan) {
-          setRemRows(Object.entries(res.plan).map(([control_id, v]: [string, any]) => ({ control_id, ...v })));
+          // The IPC returns plan as Record<string, unknown>; the row shape is
+          // the documented RemediationRow minus the key.
+          setRemRows(
+            Object.entries(res.plan as Record<string, Omit<RemediationRow, 'control_id'>>)
+              .map(([control_id, v]) => ({ control_id, ...v })),
+          );
         }
       });
     }
@@ -124,7 +130,9 @@ const EnterprisePanel: React.FC = () => {
       if (isElectron) {
         const api = getElectronAPI();
         const result = await api.getAuditLog({ page: 1, pageSize: 50 });
-        setAuditEntries(result?.entries || []);
+        // The IPC returns entries as Array<Record<string, unknown>>; the
+        // rendered fields are the documented AuditEntry shape.
+        setAuditEntries((result?.entries ?? []) as unknown as AuditEntry[]);
       }
     } finally {
       setAuditLoading(false);

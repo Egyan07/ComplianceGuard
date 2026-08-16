@@ -13,5 +13,11 @@ module.exports = defineConfig({
     pool: 'forks',
     execArgv: ['--require', path.resolve(__dirname, 'vitest.electron.preload.cjs')],
     include: ['electron/**/*.test.js'],
+    // Used only when --coverage is passed; the default suite run is unchanged.
+    coverage: {
+      provider: 'v8',
+      reporter: ['text'],
+      include: ['electron/**'],
+    },
   },
 });

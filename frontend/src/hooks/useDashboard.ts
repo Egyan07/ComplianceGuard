@@ -12,6 +12,7 @@ import {
   ComplianceEvaluation,
 } from '../services/api';
 import { getElectronAPI, isElectronMode } from '../services/electron';
+import { getErrorMessage } from '../lib/errors';
 
 const isElectron = isElectronMode();
 
@@ -98,8 +99,8 @@ export function useDashboard() {
           successMessage: `Evidence collection complete! ${result.evidence_count || 0} items collected.`,
         }));
       }
-    } catch (err: any) {
-      setState(prev => ({ ...prev, error: err.message || 'Failed to collect evidence.' }));
+    } catch (err) {
+      setState(prev => ({ ...prev, error: getErrorMessage(err, 'Failed to collect evidence.') }));
     } finally {
       // Invalidate on both success and failure — server state may have partially
       // changed even when the mutation throws, so always sync the cache.
@@ -115,13 +116,21 @@ export function useDashboard() {
       const evaluation = isElectron
         ? await evaluateCompliance(selectedFramework)
         : await evaluateComplianceWeb(selectedFramework);
+      // The overall score is the share of required control evidence demonstrated
+      // (0-100 canonical contract on both desktop and web). Controls with no
+      // evidence are not_assessed and pull the score down until collected —
+      // surface that distinction instead of reporting a bare percentage.
+      const notAssessed = evaluation.not_assessed_controls ?? 0;
+      const assessedNote = notAssessed > 0
+        ? ` ${notAssessed} control${notAssessed === 1 ? '' : 's'} not yet assessed.`
+        : '';
       setState(prev => ({
         ...prev,
         evaluation,
-        successMessage: `Compliance evaluation complete! Score: ${evaluation.overall_score.toFixed(1)}%`,
+        successMessage: `Evaluation complete — evidence coverage score: ${evaluation.overall_score.toFixed(1)}%.${assessedNote}`,
       }));
-    } catch (err: any) {
-      setState(prev => ({ ...prev, error: err.message || 'Failed to evaluate compliance.' }));
+    } catch (err) {
+      setState(prev => ({ ...prev, error: getErrorMessage(err, 'Failed to evaluate compliance.') }));
     } finally {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       setEvaluating(false);
@@ -137,8 +146,8 @@ export function useDashboard() {
         await api.runCollectionNow();
         const evaluation = await evaluateCompliance(selectedFramework);
         setState(prev => ({ ...prev, evaluation }));
-      } catch (err: any) {
-        setState(prev => ({ ...prev, error: err?.message || 'Re-scan failed.' }));
+      } catch (err) {
+        setState(prev => ({ ...prev, error: getErrorMessage(err, 'Re-scan failed.') }));
         throw err; // ControlHeatmap catches this to set verification_failed
       } finally {
         setEvaluating(false);
@@ -161,8 +170,8 @@ export function useDashboard() {
       } else if (!result.cancelled) {
         setState(prev => ({ ...prev, successMessage: 'PDF report exported successfully!' }));
       }
-    } catch (err: any) {
-      setState(prev => ({ ...prev, error: err.message || 'Failed to export PDF.' }));
+    } catch (err) {
+      setState(prev => ({ ...prev, error: getErrorMessage(err, 'Failed to export PDF.') }));
     } finally {
       setExportingPDF(false);
     }
@@ -193,8 +202,8 @@ export function useDashboard() {
       } else {
         setState(prev => ({ ...prev, successMessage: 'Synced to cloud successfully!' }));
       }
-    } catch (err: any) {
-      setState(prev => ({ ...prev, error: err.message || 'Cloud sync failed.' }));
+    } catch (err) {
+      setState(prev => ({ ...prev, error: getErrorMessage(err, 'Cloud sync failed.') }));
     } finally {
       setSyncingCloud(false);
     }

@@ -6,6 +6,9 @@ on:
     # Weekly perf regression check (Monday 06:00 UTC)
     - cron: "0 6 * * 1"
 
+# Read-only: benchmarks only build and probe a local server.
+permissions: {}
+
 jobs:
   benchmark:
     name: API Load Benchmark

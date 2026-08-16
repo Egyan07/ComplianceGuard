@@ -109,10 +109,15 @@ async function cloudSync(database, syncData) {
   const result = await _postSync(serverUrl, accessToken, payload);
 
   if (result.status === 401 && refreshToken) {
-    const newToken = await _refreshAccessToken(serverUrl, refreshToken);
-    if (newToken) {
-      await database.setUserSetting(KEYS.ACCESS_TOKEN, secureStorage.encryptString(newToken), 'string');
-      return _postSync(serverUrl, newToken, payload);
+    const refreshed = await _refreshAccessToken(serverUrl, refreshToken);
+    if (refreshed) {
+      await database.setUserSetting(KEYS.ACCESS_TOKEN, secureStorage.encryptString(refreshed.access_token), 'string');
+      // Rotation (Phase 11): the presented refresh token is now revoked; store
+      // the rotated one or the next refresh would look like token reuse.
+      if (refreshed.refresh_token) {
+        await database.setUserSetting(KEYS.REFRESH_TOKEN, secureStorage.encryptString(refreshed.refresh_token), 'string');
+      }
+      return _postSync(serverUrl, refreshed.access_token, payload);
     }
     return { error: 'Session expired. Reconnect in Settings > Cloud Sync.' };
   }
@@ -152,7 +157,8 @@ async function _refreshAccessToken(serverUrl, refreshToken) {
     });
     if (!res.ok) return null;
     const data = await res.json();
-    return data.access_token || null;
+    if (!data.access_token) return null;
+    return { access_token: data.access_token, refresh_token: data.refresh_token || null };
   } catch {
     return null;
   }

@@ -45,6 +45,9 @@ env/
 *.sqlite
 *.sqlite3
 
+# Runtime uploaded evidence (user data — never commit)
+backend/storage/
+
 # Node
 node_modules/
 npm-debug.log*

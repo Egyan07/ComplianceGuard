@@ -11,7 +11,7 @@ export interface LicenseInfo {
   tier: 'free' | 'pro' | 'enterprise';
   licenseId?: string | null;
   email?: string | null;
-  maxMachines?: number;
+  maxMachines?: number | null;
   expiresAt?: string | null;
   daysRemaining?: number | null;
   isExpired?: boolean;
