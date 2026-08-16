@@ -255,11 +255,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # electron-builder only emits a blockmap for the NSIS Setup target,
+          # not the portable build — glob only for files that actually exist.
           gh release upload "${{ github.ref_name }}" \
             dist/ComplianceGuard-Setup-*.exe \
             dist/ComplianceGuard-Setup-*.exe.blockmap \
             dist/ComplianceGuard-Portable-*.exe \
-            dist/ComplianceGuard-Portable-*.exe.blockmap \
             dist/latest.yml \
             --clobber
 
