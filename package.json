@@ -71,8 +71,7 @@
       ],
       "icon": "resources/icons/icon.ico",
       "requestedExecutionLevel": "asInvoker",
-      "verifyUpdateCodeSignature": true,
-      "publisherName": "ComplianceGuard LLC"
+      "verifyUpdateCodeSignature": true
     },
     "msi": {
       "createDesktopShortcut": true,
