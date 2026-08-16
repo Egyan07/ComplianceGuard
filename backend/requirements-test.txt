@@ -4,7 +4,7 @@
 # Code quality is handled by ruff (see pyproject.toml), not black/isort/flake8.
 fastapi>=0.110,<1
 uvicorn[standard]>=0.27,<1
-sqlalchemy>=2.0.32,<3
+sqlalchemy>=2.0.52,<3
 alembic>=1.13,<2
 psycopg2-binary>=2.9.9
 PyJWT>=2.8,<3
