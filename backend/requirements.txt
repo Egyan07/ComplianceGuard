@@ -26,7 +26,7 @@ httpx>=0.26,<1
 aiosmtplib>=3.0.0
 
 # Rate limiting
-slowapi==0.1.9
+slowapi==0.1.10
 
 # Error monitoring
 sentry-sdk[fastapi]>=2.0.0

@@ -13,7 +13,7 @@ python-multipart>=0.0.9
 pydantic>=2.10,<3
 pydantic-settings>=2.6,<3
 python-dotenv>=1.0
-slowapi==0.1.9
+slowapi==0.1.10
 email-validator>=2.1
 python-dateutil>=2.8
 pytz>=2024.1
