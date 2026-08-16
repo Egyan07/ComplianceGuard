@@ -6,7 +6,7 @@
   <a href="#quick-start"><img src="https://img.shields.io/badge/version-3.7.0-2563EB" alt="Version"></a>
   <img src="https://img.shields.io/badge/license-BSL%201.1-orange" alt="License">
   <a href="#compliance-frameworks"><img src="https://img.shields.io/badge/frameworks-SOC%202%20%7C%20ISO%2027001%20%7C%20HIPAA%20%7C%20GDPR-10B981" alt="Frameworks"></a>
-  <img src="https://img.shields.io/badge/tests-~934%20passing-10B981?logo=pytest&logoColor=white" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-~1010%20passing-10B981?logo=pytest&logoColor=white" alt="Tests">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
   <a href="https://github.com/Egyan07/ComplianceGuard/actions"><img src="https://img.shields.io/github/actions/workflow/status/Egyan07/ComplianceGuard/ci.yml?label=CI&logo=githubactions&logoColor=white" alt="CI"></a>
 </p>
@@ -414,7 +414,7 @@ ComplianceGuard/
 │   │   ├── services/                   # Audit log, evidence collector
 │   │   └── integrations/aws.py         # AWS evidence collection
 │   ├── migrations/                     # Alembic database migrations
-│   ├── tests/                          # Unit (296) + integration (35) + e2e (8)
+│   ├── tests/                          # Unit (332) + integration (35) + e2e (8)
 │   ├── requirements.txt
 │   └── Dockerfile
 ├── electron/
@@ -444,8 +444,8 @@ ComplianceGuard/
 │   │   ├── contexts/AuthContext.tsx     # JWT auth state, login/register/logout
 │   │   ├── contexts/LicenseContext.tsx  # React context for tier state + feature checks
 │   │   ├── services/api.ts             # Unified API (IPC or HTTP)
-│   │   └── test/                       # Vitest test suite (~215 tests)
-│   ├── e2e/                            # Playwright e2e tests (13 tests)
+│   │   └── test/                       # Vitest test suite (~235 tests)
+│   ├── e2e/                            # Playwright e2e tests (9 tests)
 │   ├── .eslintrc.cjs
 │   ├── .prettierrc
 │   └── Dockerfile
@@ -622,7 +622,7 @@ evaluation history, evaluate) and exits non-zero if p95 exceeds
 `--max-p95-ms` (default 500 ms), so it can gate CI performance regressions.
 The bench user is auto-created and promoted to a verified Pro account.
 
-CI runs all tests on every push via GitHub Actions, and the desktop (Electron) test suite now gates releases. Backend: 282 unit + 35 integration + 8 e2e. Frontend: 204 Vitest unit + 103 Electron unit. e2e: 9 Playwright (5 shell + 4 full-stack).
+CI runs all tests on every push via GitHub Actions, and the desktop (Electron) test suite now gates releases. Backend: 332 unit + 35 integration + 8 e2e. Frontend: 235 Vitest unit + 391 Electron unit. e2e: 9 Playwright.
 
 ## Backup & Disaster Recovery
 
@@ -648,7 +648,7 @@ drills) live in [`docs/disaster-recovery.md`](docs/disaster-recovery.md):
 | **`alembic upgrade head` fails** | Ensure `DATABASE_URL` in your `.env` is set correctly. For local SQLite, use `sqlite:///./complianceguard.db`. |
 | **License key not activating** | License keys are tied to the Ed25519 public key bundled with the app. Ensure you are using a key generated for this build. |
 | **CI fails with `ERR_MODULE_NOT_FOUND`** | Run `cd frontend && npm install react-transition-group` to install the missing peer dependency. |
-| **Electron tests fail with "Could not locate the bindings file"** | `postinstall` builds `better-sqlite3` for the Electron ABI. `npm run test:scheduler` rebuilds it for the Node ABI automatically via its `pretest` hook; if you rebuilt manually, run `npm rebuild better-sqlite3`. |
+| **Electron tests fail with "Could not locate the bindings file"** | `better-sqlite3` 13 ships N-API prebuilds in the npm tarball, so the same binary works under Node (tests) and Electron (packaged app) with no rebuild. If you see a bindings error, run `npm ci` to restore the prebuilds; only the legacy `npm run test:scheduler` `pretest` hook rebuilds for a specific ABI. |
 
 
 ## FAQ

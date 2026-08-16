@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [3.7.0] — 2026-08-16
+
 ### Changed
 
 - **Phase 11 — evidence vocabulary & production integrity**
@@ -74,9 +76,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
     before the separation.
   - **Desktop distribution & enterprise readiness (Phase 2)**
     - **Electron 28 → 43.4** (15 majors) with `electron-builder` 26 and
-      `better-sqlite3` 11 (prebuilt binaries for the new Electron ABI); the
-      full main/preload/IPC API surface was audited for 28→43 breaking changes
-      (none in use).
+      `better-sqlite3` 13 (N-API prebuilds shipped in the npm tarball, so
+      `install-app-deps`/`@electron/rebuild` no longer compiles native code
+      against the Electron headers — fixes the CI native-build failures on
+      Node 22 runners); the full main/preload/IPC API surface was audited for
+      28→43 breaking changes (none in use).
     - **Secure auto-update** — new `electron/update-manager.js`: packaged builds
       check for updates 10 s after launch and every 4 h, auto-download, and
       install on quit; disabled in dev. Updates are served from the GitHub
@@ -84,8 +88,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
       verification once signing is configured.
     - **Explicit publish + signing config** — root `build.publish` now points at
       `Egyan07/ComplianceGuard` (draft releases), `verifyUpdateCodeSignature`
-      and `publisherName` set, and Windows/macOS signing are env-driven
+      set (the publisher name is derived from the signing certificate at
+      publish time; a manually-set `win.publisherName` is invalid in
+      electron-builder 26's schema), and Windows/macOS signing are env-driven
       (PKCS#12 or Azure Trusted Signing; see `docs/release-and-signing.md`).
+    - **Deterministic release publishing (post-3.6.0 release fixes)** — the
+      release jobs no longer use electron-builder's GitHub publisher, which
+      races across targets, can resolve a different release object than the
+      tag implies (leaving uploads invisible to `gh release view`), and
+      swallows failures while exiting 0. Jobs now build with `--publish never`
+      (which still writes `latest.yml`/`latest-mac.yml` into `dist/`) and
+      upload deterministically with `gh release upload --clobber` — same tag
+      resolution as the release-integrity job, fails loudly on any error, and
+      `--clobber` overwrites stale assets from interrupted runs.
     - **Release CI hardening** — least-privilege workflow permissions,
       `npm ci` in release jobs, Windows installer Authenticode verification
       (fails if credentials were set but the build is unsigned), and a new
