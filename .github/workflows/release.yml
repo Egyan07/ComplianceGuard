@@ -10,6 +10,8 @@ on:
         description: 'This workflow is disabled. Use ci.yml release job.'
         required: false
 
+permissions: {}
+
 jobs:
   noop:
     runs-on: ubuntu-latest

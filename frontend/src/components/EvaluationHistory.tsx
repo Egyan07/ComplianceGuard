@@ -32,7 +32,9 @@ import { useLicense } from '../contexts/LicenseContext';
 import ScoreTrend from './ScoreTrend';
 import { getScoreTrend, evaluationHistoryToTrend } from '../services/api';
 import type { TrendPoint } from '../services/api';
+import type { Recommendation } from '../services/api.types';
 import { getElectronAPI, isElectronMode } from '../services/electron';
+import { getErrorMessage } from '../lib/errors';
 
 const isElectron = isElectronMode();
 
@@ -50,8 +52,8 @@ interface EvaluationRecord {
     partial_controls?: number;
     non_compliant_controls?: number;
     not_assessed_controls?: number;
-    category_scores?: Record<string, any>;
-    recommendations?: Array<any>;
+    category_scores?: Record<string, unknown>;
+    recommendations?: Recommendation[];
   };
 }
 
@@ -91,8 +93,8 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
         const trend = await getScoreTrend(frameworkId);
         setTrendPoints(trend);
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
       setTrendLoading(false);
@@ -112,7 +114,7 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): 'success' | 'warning' | 'error' | 'default' => {
     switch (status) {
       case 'compliant': return 'success';
       case 'partial': return 'warning';
@@ -238,7 +240,7 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
                             <Chip
                               label={(eval_.status || findings.status || 'not assessed').replace(/_/g, ' ').toUpperCase()}
                               size="small"
-                              color={getStatusColor(eval_.status || findings.status || '') as any}
+                              color={getStatusColor(eval_.status || findings.status || '')}
                               variant="outlined"
                             />
                           </Box>
@@ -296,7 +298,7 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
                       {findings.recommendations && findings.recommendations.length > 0 && (
                         <Box sx={{ mt: 1.5, ml: 5 }}>
                           <Typography variant="caption" color="text.secondary">
-                            {findings.recommendations.filter((r: any) => r.priority === 'high').length} high priority
+                            {findings.recommendations.filter((r: Recommendation) => r.priority === 'high').length} high priority
                             {' / '}
                             {findings.recommendations.length} total recommendations
                           </Typography>

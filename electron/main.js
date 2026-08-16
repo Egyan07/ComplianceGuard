@@ -4,11 +4,13 @@ const path = require('path');
 const fs = require('fs');
 
 // Local processing modules
+const { isAllowedNavigationUrl } = require('./navigation-guard');
 const ComplianceGuardDatabase = require('./database/sqlite');
 const LocalEvidenceProcessor = require('./processing/evidence-processor');
-const LocalComplianceEngine = require('./processing/compliance-engine');
+const { CanonicalEngine } = require('./processing/canonical-engine');
 const ReportGenerator = require('./processing/report-generator');
 const LicenseManager = require('./licensing/license-manager');
+const UpdateManager = require('./update-manager');
 const scheduler = require('./scheduler');
 const registerIpcHandlers = require('./ipc');
 
@@ -19,12 +21,24 @@ let tray = null;
 // Local processing instances
 let database = null;
 let evidenceProcessor = null;
-let complianceEngine = null;
+let canonicalEngine = null;
 let reportGenerator = null;
 let licenseManager = null;
+let updateManager = null;
 
 // Development mode flag
 const isDev = !app.isPackaged;
+
+// Windows: without an App User Model ID, toast notifications (used by the
+// update-ready prompt and system alerts) may not surface. Must be set before
+// app.whenReady().
+if (process.platform === 'win32') {
+  try {
+    app.setAppUserModelId('com.complianceguard.desktop');
+  } catch (err) {
+    log.warn('Could not set AppUserModelID:', err);
+  }
+}
 
 function showNotification(title, body) {
   if (!Notification.isSupported()) return;
@@ -129,8 +143,11 @@ app.whenReady().then(async () => {
     licenseManager = new LicenseManager(database);
     await licenseManager.initialize();
 
+    updateManager = new UpdateManager({ notify: showNotification });
+    updateManager.start();
+
     evidenceProcessor = new LocalEvidenceProcessor(database, app.getPath('userData'));
-    complianceEngine = new LocalComplianceEngine(database, licenseManager);
+    canonicalEngine = new CanonicalEngine();
     reportGenerator = new ReportGenerator(database);
 
     log.info('Database and processing engines initialized');
@@ -143,9 +160,10 @@ app.whenReady().then(async () => {
     registerIpcHandlers({
       database,
       evidenceProcessor,
-      complianceEngine,
+      canonicalEngine,
       reportGenerator,
       licenseManager,
+      updateManager,
       showNotification,
       getMainWindow: () => mainWindow,
     });
@@ -191,12 +209,12 @@ app.on('before-quit', async () => {
   }
 });
 
-// Security: Prevent navigation to external sites
+// Security: Prevent navigation to external sites. Exact-origin matching (see
+// navigation-guard.js) — a prefix check would let lookalike origins like
+// http://localhost:5173.evil.com through.
 app.on('web-contents-created', (event, contents) => {
   contents.on('will-navigate', (navEvent, navigationUrl) => {
-    const parsedUrl = new URL(navigationUrl);
-    const allowedOrigins = ['http://localhost:5173', 'file://'];
-    if (!allowedOrigins.some(origin => parsedUrl.href.startsWith(origin))) {
+    if (!isAllowedNavigationUrl(navigationUrl)) {
       navEvent.preventDefault();
     }
   });

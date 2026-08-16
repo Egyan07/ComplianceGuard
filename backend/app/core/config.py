@@ -75,6 +75,15 @@ class Settings(BaseSettings):
 
     # Authentication settings
     secret_key: str = Field(default_factory=lambda: secrets.token_urlsafe(32))
+    # Domain-separated cryptographic keys (optional). Each of these, when set,
+    # replaces SECRET_KEY for a single domain (JWT signing / credential
+    # encryption / audit-chain HMAC). When unset the domain falls back to
+    # SECRET_KEY, so existing deployments keep working unchanged and a single
+    # key rotation no longer has to invalidate sessions, stored credentials,
+    # and the audit chain all at once.
+    jwt_secret: Optional[str] = Field(None)
+    credential_encryption_key: Optional[str] = Field(None)
+    audit_hmac_key: Optional[str] = Field(None)
     algorithm: str = Field("HS256")
     access_token_expire_minutes: int = Field(30)
     refresh_token_expire_days: int = Field(7)

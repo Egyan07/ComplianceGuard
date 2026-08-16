@@ -12,6 +12,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
+import { getErrorMessage } from '../lib/errors';
 
 export default function LoginPage() {
   const { login, register } = useAuth();
@@ -34,9 +35,11 @@ export default function LoginPage() {
       } else {
         await register(email, password, firstName, lastName);
       }
-    } catch (err: any) {
-      const msg = err?.response?.data?.detail || err?.message || 'Something went wrong';
-      setError(msg);
+    } catch (err) {
+      // axios rejects with { response: { data: { detail } } } for API errors;
+      // fall back to the shared error-message extraction for everything else.
+      const apiDetail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      setError(apiDetail ?? getErrorMessage(err, 'Something went wrong'));
     } finally {
       setSubmitting(false);
     }

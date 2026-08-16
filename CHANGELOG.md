@@ -6,6 +6,293 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **Phase 11 — evidence vocabulary & production integrity**
+  - **One authoritative evidence vocabulary** — the upload catalog is now
+    GENERATED from the canonical shared data (`shared/frameworks/soc2_controls.yaml`
+    + `evidence-vocabulary.json` via `scripts/generate-evidence-catalog.mjs`).
+    The 97 evidence types the old UI offered that the engine could never score
+    are gone; every selectable type is a canonical scoring input. CI verifies
+    catalog freshness (`npm run check:evidence`).
+  - **Unknown evidence types are rejected, not silently stored** — both the web
+    upload API and the desktop `process-manual-evidence` path validate the type
+    against the canonical vocabulary (rejecting with a clear error), so
+    dead types can never enter persistence again.
+  - **Framework browser consolidated onto the canonical data** — `electron/ipc/
+    frameworks.js` now loads `shared/frameworks/*.yaml` (the duplicate
+    `electron/data/*.yaml` was removed). HIPAA `specification_type` and GDPR
+    `chapter` display metadata were ported into the shared definitions so no
+    data was lost. A parity test proves the browser and the scoring engine can
+    never drift.
+  - **Legacy 0-1 evaluations display correctly** — pre-Phase-5 records (0-1
+    scale, legacy statuses like `partially_compliant`) are normalized to the
+    0-100 contract on the read path (history/assessments/trend/report) without
+    touching canonical records.
+  - **Refresh-token rotation + reuse detection** — every `/auth/refresh` revokes
+    the presented token and issues a new one in the same family; replaying a
+    rotated token revokes the whole family. The desktop cloud-sync client
+    stores the rotated token.
+  - **Account-aware login throttling** — per-account windowed throttle with no
+    username-enumeration side channel (identical 401 response); complements the
+    existing IP limiter without weakening it.
+  - **Application-level security headers** — the API now sets
+    `X-Content-Type-Options`, `X-Frame-Options`, and `Referrer-Policy` itself
+    (defense in depth; nginx unchanged).
+  - **Rate-limit deployment honesty** — the Docker image now defaults to ONE
+    worker (`WORKERS` env, default 1) so the in-memory rate limiter is not
+    silently multiplied; scaling out requires `WORKERS>1` + `RATELIMIT_STORAGE_URI`.
+    A config test gates the invariant.
+  - **PostgreSQL bound to localhost only** in docker-compose (`127.0.0.1:5432:5432`).
+  - **Evidence pipeline documented** — `docs/evidence-pipeline.md` covers the
+    collector → type → control matrix and the (honest) manual-evidence ceiling.
+
+- **Phase 1 hardening**
+  - **WAL-safe database backups** — desktop `backup()` now uses SQLite's online
+    backup API (`better-sqlite3 db.backup`) instead of copying the raw DB file,
+    which could silently produce stale backups while `journal_mode=WAL` is active.
+  - **Exact-origin Electron navigation validation** — `will-navigate` now uses a
+    strict origin allowlist (new `electron/navigation-guard.js`) instead of a
+    `startsWith` prefix check that let lookalike origins like
+    `http://localhost:5173.evil.com` through. Regression tests included.
+  - **Renderer Content Security Policy** — the packaged app's `index.html` now
+    ships with a strict CSP meta tag (script-src 'self', no object/frame
+    embedding) injected at build time; the dev server is unaffected.
+  - **No more internal error leakage** — the `except Exception -> HTTPException(500,
+    str(e))` pattern was replaced with a typed exception hierarchy
+    (`ComplianceAppError` / `EvaluationError` / `EvidenceCollectionError`), a
+    global handler that logs full tracebacks server-side, and safe generic
+    client messages. Every response now carries an `X-Request-ID` correlation
+    header.
+  - **Domain-separated cryptographic keys** — optional `JWT_SECRET`,
+    `CREDENTIAL_ENCRYPTION_KEY`, and `AUDIT_HMAC_KEY` settings replace
+    `SECRET_KEY` per domain when configured; unset keys fall back to `SECRET_KEY`
+    so existing deployments, JWTs, stored credentials, and audit chains are
+    unaffected. Credential decryption keeps a tiered fallback for values written
+    before the separation.
+  - **Desktop distribution & enterprise readiness (Phase 2)**
+    - **Electron 28 → 43.4** (15 majors) with `electron-builder` 26 and
+      `better-sqlite3` 11 (prebuilt binaries for the new Electron ABI); the
+      full main/preload/IPC API surface was audited for 28→43 breaking changes
+      (none in use).
+    - **Secure auto-update** — new `electron/update-manager.js`: packaged builds
+      check for updates 10 s after launch and every 4 h, auto-download, and
+      install on quit; disabled in dev. Updates are served from the GitHub
+      draft release with sha512 verification (`latest.yml`) and Authenticode
+      verification once signing is configured.
+    - **Explicit publish + signing config** — root `build.publish` now points at
+      `Egyan07/ComplianceGuard` (draft releases), `verifyUpdateCodeSignature`
+      and `publisherName` set, and Windows/macOS signing are env-driven
+      (PKCS#12 or Azure Trusted Signing; see `docs/release-and-signing.md`).
+    - **Release CI hardening** — least-privilege workflow permissions,
+      `npm ci` in release jobs, Windows installer Authenticode verification
+      (fails if credentials were set but the build is unsigned), and a new
+      `release-integrity` job that checks both installers exist in the draft,
+      computes `SHA256SUMS.txt`, and uploads it.
+    - **Windows AppUserModelID** set at startup so toast notifications (update
+      prompts, system alerts) surface correctly.
+  - **Canonical scoring engine (Phase 4)** — single source-of-truth framework
+    data (`shared/frameworks/`): per-framework YAMLs merge the backend control
+    metadata with the Electron required-evidence lists, plus an
+    `evidence-vocabulary.json` registry (13 canonical types + legacy alias
+    translation). Coverage-based scoring implemented in both Python
+    (`app/core/canonical_evidence.py`) and Electron
+    (`electron/processing/canonical-engine.js`) from the same data, behind the
+    `EVALUATION_ENGINE=legacy|canonical` flag (legacy default — zero behavior
+    change until flipped). A cross-engine equivalence suite
+    (`canonical-equivalence.test.js`) runs a 60-fixture × 4-framework matrix
+    through both engines and asserts identical per-control scores, statuses,
+    counts, and overall scores (249 assertions).
+  - **Canonical scoring end-to-end (Phase 5)** — the canonical coverage engine
+    is now the **single scoring path** in both the web API and the desktop app;
+    the legacy engines and the `EVALUATION_ENGINE` flag were removed after the
+    canonical path was validated across all consumers.
+    - **Legacy removed** — `compliance_service.py`, `framework_scoring.py`, the
+      four `*_evidence_map.py` maps (plus `evidence_mapping.py`), and the
+      Electron `compliance-engine.js` are deleted; the Electron IPC layer,
+      `generate-compliance-report` path, and preload bridge now run through
+      `canonical-engine.js`/`canonical_evidence.py` only.
+    - **Canonical contract everywhere** — responses are 0–100 scores with the
+      single status vocabulary `not_assessed / non_compliant / partial /
+      compliant`; `not_assessed` controls stay in the overall denominator, so a
+      sparse evidence set honestly reflects coverage. The web evaluate
+      endpoints, `/evidence/items/{id}/controls` (coverage presence instead of
+      legacy base scores), evaluation history, dashboard, and reports all
+      consume the canonical contract.
+    - **UI/report coverage communication** — score summaries now distinguish
+      overall coverage score from compliant / partial / non-compliant /
+      not-assessed control counts, so a low score reads as "evidence not yet
+      demonstrated", not "you are non-compliant" (ScoreHero, dashboard success
+      message, PDF report summary cards).
+    - **Inert mappings documented, not forced** — `firewall → HIPAA` and
+      `training_records → GDPR` are recorded in `evidence-vocabulary.json` with
+      reasons (no HIPAA/GDPR control requires those types); no arbitrary
+      evidence requirements were added.
+    - **Regression tests** — 14 backend tests pin the canonical behaviors
+      (all controls present, `not_assessed` in denominator, 0–100 scale, single
+      status vocabulary, alias translation); the 249-assertion cross-engine
+      equivalence suite continues to gate Python == JavaScript.
+  - **Testing maturity (Phase 6)**
+    - **Deletion audit** — the Phase 5 backend unit count drop (337 → 276) is
+      fully accounted for: 74 tests covering *removed* legacy code
+      (`compliance_service.py` 49, `framework_scoring.py` 11, three evidence-map
+      suites 11, SOC 2 service-class 3) minus one obsolete flag-default test,
+      offset by 14 new regression tests. Every still-live behavior they covered
+      (evaluate, history, control-assessments, trend, compliance level) is
+      covered by live API/integration/e2e tests.
+    - **Coverage measured & reported** — backend 87.15% (baseline 85%), frontend
+      77.4% (baseline 77.4%), Electron 44.1% (first measurement; the untested
+      IPC surface is now partly covered).
+    - **Exhaustive scoring contract sweep** — a new property test enumerates
+      ALL 2^13 evidence subsets per framework and proves the threshold mapping
+      (≥90 compliant, 70–89 partial, <70 non-compliant) holds universally, with
+      boundary separation (max partial < 90 ≤ min compliant). Plus dedup,
+      weight-uniformity, category-aggregation, unknown-type, and inert-mapping
+      contract tests (`test_scoring_contract.py`, 20 tests).
+    - **Deterministic test environment** — `tests/conftest.py` now strips
+      developer-machine env vars that leaked into pydantic-settings
+      (`DATABASE_URL`, `AWS_*`, `DB_POOL_*`, `ALLOWED_FILE_TYPES`, ...), so the
+      backend suite runs identically on dev machines and CI without manual env
+      sanitization; `test_db_pool` freezes its settings inputs explicitly.
+    - **Electron suite green on Windows** — the two Windows-only-guard tests in
+      `electron/ipc/windows.test.js` now stub `process.platform` so they pass on
+      both Windows and Linux hosts (previously Windows runners failed them).
+    - **Real IPC coverage for the canonical wiring** — new
+      `electron/ipc/compliance.test.js` (8 tests) drives `evaluate-compliance`
+      through the real `CanonicalEngine` (evidence translation, persistence,
+      per-framework control counts), the Pro gates on history/PDF export, and
+      remediation-script validation.
+    - **Fixed: web dashboard control-status counts** — the web API responses
+      (SOC 2 + ISO 27001 + HIPAA + GDPR) now carry the real
+      `partial_controls` / `non_compliant_controls` / `not_assessed_controls`
+      (stashed in `evidence_summary.control_counts` so history re-reads them);
+      the frontend previously fabricated `partial=0, not_assessed=0` and
+      over-counted non-compliant. Regression tests assert the counts round-trip
+      through evaluate → history.
+    - **Weak assertions strengthened** — ISO 27001 / HIPAA / GDPR evaluate
+      tests upgraded from `overall_score > 0` to the full canonical contract
+      (0–100 scale, status vocabulary, exact control counts, not-assessed
+      bounds for empty vs. populated evidence).
+  - **Frontend & code-quality cleanup (Phase 7)**
+    - **Zero `any` in production frontend code** (was ~24). Every catch block
+      now handles `unknown` via a single shared `getErrorMessage` helper
+      (`src/lib/errors.ts`, unit-tested) instead of `catch (err: any)`; the
+      axios retry marker, evidence/history/trend mapping, license payloads, and
+      the enterprise remediation/audit state are typed against new interfaces
+      in `api.types.ts` (canonical `HttpEvaluationResponse`/`HttpEvaluationRecord`,
+      `EvaluationHistoryEntry`, `Recommendation`, `LicenseInfoPayload`,
+      `RemediationRow`, `AuditEntry`). The typing surfaced and fixed a latent
+      mismatch: `ComplianceEvaluation.framework_id` is `number | string`
+      (numeric on desktop, canonical id string on web) and
+      `LicenseInfo.maxMachines` accepts `null`.
+    - **EvidenceUpload slimmed 419 → 341 lines** — the 54-control SOC 2
+      catalog, `getCategoryForType`, and the file/text upload payload types
+      moved to a co-located `EvidenceUpload.data.ts` (data movement only, no
+      behavior change). It is now the only component that was over 400 lines.
+    - **Unnecessary casts removed** — `MotionCard`/`MotionButton` props are
+      `ComponentProps & MotionProps` (no more `props as any`), the
+      `Switch` slotProps cast is gone, `EvidenceList`'s search onChange needs
+      no cast, and `EvaluationHistory`'s `getStatusColor` is typed as the MUI
+      color union (removing the Chip `as any`).
+    - **No regression, no churn** — test-file `as any` mocking is untouched;
+      `normaliseStatus` was already deduplicated (Phase 5); Settings sections
+      were already split; chart components (ScoreTrend, ControlHeatmap) were
+      left alone where splitting would add indirection without clarity.
+    - **Tests** — 5 new `getErrorMessage` unit tests; frontend suite
+      210 → 215 passing, coverage 77.4% → 77.95%, `tsc --noEmit` clean,
+      production build green.
+  - **Repository hygiene (Phase 8)**
+    - **Legacy desktop packaging path removed** — `frontend/electron-builder.json`
+      (Electron 28-era config with `verifyUpdateCodeSignature: false`, msi+nsis
+      targets, and a `../installer/nsis-include.nsh` include that no longer
+      exists) plus the `frontend` `electron`/`electron:dev`/`electron:build`/
+      `electron:package` scripts were deleted; the root `package.json` `build`
+      config (Electron 43.4, nsis+portable, `verifyUpdateCodeSignature: true`)
+      fully supersedes them. The four orphaned devDeps (`electron@28`,
+      `electron-builder@24`, `concurrently`, `wait-on`) were removed and the
+      frontend lockfile regenerated (−3,596 lines).
+    - **`.env.example` cleaned of phantom variables** — every `VAR=` line is
+      now proven to be read by the backend Settings, frontend, docker-compose,
+      or `scripts/*.sh`. ~55 unreferenced/obsolete vars removed (rate-limit,
+      metrics, cache/queue, session-cookie, SOC 2 auto-collection, backup/DR,
+      mock/test-user, docker resource-limit, VITE_* feature-flag groups);
+      wrong-named vars renamed to their real Settings fields
+      (`PASSWORD_REQUIRE_NUMBERS`→`PASSWORD_REQUIRE_DIGITS`,
+      `AWS_EVIDENCE_BUCKET`→`AWS_S3_BUCKET`, `MAX_FILE_SIZE`→`MAX_FILE_SIZE_MB`,
+      `LOCAL_STORAGE_PATH`→`EVIDENCE_STORAGE_PATH`, `API_VERSION`/`API_PREFIX`→
+      `API_V1_PREFIX`); three real-but-undocumented vars added
+      (`RATELIMIT_STORAGE_URI`, `WORKERS`, `LOG_FORMAT`).
+    - **Automated hygiene gate** — new `scripts/check-env-example.py` fails CI
+      when a `.env.example` / `.env.enterprise.example` variable has no
+      reference anywhere in the repository (AST-parses the Settings fields so
+      it is dependency-free and immune to local `.env` values); wired into the
+      `backend-tests` job. Verified it both accepts the cleaned file and
+      rejects an injected phantom.
+    - **Stale README fixed** — version badge 3.5.1 → 3.7.0, tests badge
+      ~637 → ~934 (339 backend + 380 electron + 215 frontend), the bogus
+      `shared/frameworks/└── system/windows.js` tree line replaced with the
+      real contents, `services/` comment corrected, and test-count annotations
+      updated (unit 296 / integration 35 / e2e 13, frontend ~215).
+    - **Verified-but-kept** — `scripts/*.sh` (5) are referenced by
+      README/docs/docker-compose; `.env.enterprise.example` vars all resolve to
+      docker-compose.enterprise.yml/scripts/Settings; `electron/data/*.yaml`
+      is runtime-loaded by `electron/ipc/frameworks.js` (legacy duplicate of
+      `shared/frameworks/` — consolidation is a data migration, deferred).
+    - **Tests** — full matrix re-run after cleanup: backend 339 passed,
+      electron 380 passed, frontend 215 passed + `tsc --noEmit` + production
+      build, ruff clean, hygiene gate green.
+  - **CI/CD hardening (Phase 9)**
+    - **Dependency vulnerabilities fixed** — `npm audit` was failing with 7
+      findings in the desktop app (1 critical `shell-quote`, 4 high incl.
+      `axios`/`js-yaml`/`fast-uri`) and 24 in the frontend (2 critical via the
+      dev toolchain, 14 high). The frontend toolchain was modernized to clear
+      them: `vite 5 → 6`, `vitest 1 → 3` (+`@vitest/coverage-v8`), and
+      `@typescript-eslint 6 → 7`; `npm audit fix` cleared the rest. Backend
+      `boto3`/`botocore` bumped `1.34.0 → 1.43.72`, fixing a vulnerable
+      transitive `urllib3 2.0.7`. Both packages now pass
+      `npm audit --audit-level=high`; `pip-audit` reports no known
+      vulnerabilities for `requirements.txt` and `requirements-test.txt`.
+    - **Accepted risk, documented** — `react-router`/`react-router-dom`
+      moderate findings remain (open-redirect advisory): the only fix is the
+      breaking `6 → 7` migration, out of scope here. The CI audit gate
+      (`--audit-level=high`) tolerates moderates and fails on any new
+      high/critical advisory.
+    - **Coverage restored after toolchain upgrade** — vitest 3's v8 provider
+      counts declaration-only files (`*.d.ts`, `api.types.ts`) and entry
+      components differently, which dropped measured coverage below the 75%
+      gate. Declaration files were excluded (no executable statements),
+      `App.tsx` excluded as an e2e-covered entry point (same rationale as
+      `main.tsx`), and the Phase 6-flagged `useDashboard` gap was closed with a
+      real 16-test hook suite (web + electron mode, error paths, canonical
+      score messaging). Coverage: **78.9%** (up from 77.95%).
+    - **CI gates added** — `npm audit --audit-level=high` in the frontend and
+      Electron jobs; `pip-audit` against both backend requirements files in
+      the backend job; a `docker-build` job that builds both production
+      Dockerfiles from a clean repo-root context (the exact images
+      docker-compose ships); and an SPDX SBOM generated by
+      `anchore/sbom-action` and uploaded to the draft release alongside
+      `SHA256SUMS.txt`.
+    - **Dependabot configured** — `.github/dependabot.yml` covering npm (root +
+      frontend), pip (backend), and github-actions, weekly cadence; every PR
+      runs the full CI gates (audit + tests + coverage), so a bump that
+      reintroduces a high/critical advisory or breaks the build cannot merge.
+    - **Least-privilege permissions** — `permissions: {}` now explicit on
+      `perf.yml` and the disabled `release.yml` placeholder; `ci.yml` already
+      ran read-only by default with `contents: write` scoped only to the three
+      release jobs (verified unchanged).
+    - **Clean-install verified** — `npm ci` passes for the frontend and the
+      root lockfile is consistent (root postinstall needs the VS C++ toolchain
+      to rebuild better-sqlite3 for the Electron ABI — a local-only
+      limitation; CI runners have it).
+    - **Tests** — full matrix green after all changes: backend 339 passed
+      (incl. AWS integration with boto3 1.43.72), electron 380 passed,
+      frontend 231 passed (16 new) at 78.9% coverage, `tsc --noEmit`, lint,
+      production build, ruff, hygiene gate, and both audit gates.
+
+---
+
 ## [3.6.0] — 2026-08-14
 
 ### Added

@@ -54,9 +54,15 @@ class RefreshRequest(BaseModel):
 
 
 class RefreshResponse(BaseModel):
-    """Schema for refresh token response."""
+    """Schema for refresh token response.
+
+    ``refresh_token`` carries the ROTATED token (Phase 11): refresh rotates the
+    presented token, so body-based clients (the Electron desktop) must store
+    this new value or their next refresh will be treated as reuse.
+    """
     access_token: str
     token_type: str
+    refresh_token: str
 
 
 class ActivateLicenseRequest(BaseModel):

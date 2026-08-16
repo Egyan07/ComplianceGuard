@@ -103,7 +103,10 @@ def test_controls_for_known_type(auth_client):
     data = resp.json()
     assert data["evidence_type"] == "firewall"
     assert "A3.2" in data["controls"]
-    assert data["controls"]["A3.2"] == 0.9
+    # Phase 5 canonical contract: the endpoint reports coverage presence (1.0
+    # when the evidence type satisfies a control's required evidence), replacing
+    # the legacy hand-authored base-score map (which returned 0.9 for A3.2).
+    assert data["controls"]["A3.2"] == 1.0
 
 
 def test_controls_for_unmapped_type(auth_client):
