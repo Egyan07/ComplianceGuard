@@ -3,6 +3,7 @@ issuance with DB persistence, and password-strength validation."""
 
 from datetime import timedelta, datetime, timezone
 import re
+import uuid
 
 from fastapi import Response
 
@@ -39,11 +40,21 @@ def _clear_refresh_cookie(response: Response) -> None:
     response.delete_cookie(REFRESH_COOKIE_NAME, path=REFRESH_COOKIE_PATH)
 
 
-def _issue_refresh_token(user_id: int, sub: str, db: Session) -> str:
-    """Create a refresh token JWT and persist its jti to the DB for revocation support."""
+def _issue_refresh_token(user_id: int, sub: str, db: Session, family_id: str | None = None) -> str:
+    """Create a refresh token JWT and persist its jti to the DB for revocation support.
+
+    Rotation (Phase 11): each login starts a new family (uuid4). A refresh keeps
+    the same family so reuse of a rotated token can be detected and the whole
+    family revoked.
+    """
     token, jti = create_refresh_token({"sub": sub})
     expires_at = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
-    db.add(RefreshToken(jti=jti, user_id=user_id, expires_at=expires_at))
+    db.add(RefreshToken(
+        jti=jti,
+        user_id=user_id,
+        family_id=family_id or uuid.uuid4().hex,
+        expires_at=expires_at,
+    ))
     return token
 
 

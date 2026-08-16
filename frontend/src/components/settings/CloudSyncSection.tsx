@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Box, Paper, Typography, Chip, Button } from '@mui/material';
 import { Cloud } from '@mui/icons-material';
 import SectionHeader from './SectionHeader';
+import { getErrorMessage } from '../../lib/errors';
 
 export interface CloudSyncConfig {
   connected: boolean;
@@ -36,8 +37,8 @@ const CloudSyncSection: React.FC<CloudSyncSectionProps> = ({
     try {
       await onConnect(cloudUrl, cloudEmail, cloudPassword);
       setCloudPassword('');
-    } catch (err: any) {
-      onError(err.message);
+    } catch (err) {
+      onError(getErrorMessage(err));
     } finally {
       setConnecting(false);
     }

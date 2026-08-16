@@ -47,4 +47,6 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 ENTRYPOINT ["./docker-entrypoint.sh"]
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+# Single worker by default: the in-memory rate limiter must not be multiplied
+# across workers. Scale out with WORKERS>1 AND RATELIMIT_STORAGE_URI set.
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers \"${WORKERS:-1}\""]

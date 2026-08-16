@@ -3,7 +3,7 @@
 // type: 'script' = automatable via PowerShell (requiresAdmin: true, reversible: true)
 // type: 'guide'  = requires human action (policy docs, risk assessments)
 //
-// Keep keys in sync with electron/data/soc2_controls.yaml (54 controls).
+// Keep keys in sync with shared/frameworks/soc2_controls.yaml (54 controls).
 
 const REMEDIATION_SCRIPTS = {
 

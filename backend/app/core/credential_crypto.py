@@ -22,12 +22,22 @@ from cryptography.fernet import Fernet, InvalidToken
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
+from app.core.config import settings
+
 logger = logging.getLogger(__name__)
 
 # Domain-separation label — changing this value invalidates all existing
 # encrypted credentials. Bump the version suffix if you ever need to rotate
 # the KDF itself (not the input secret).
 _FERNET_INFO = b"complianceguard:credential-encryption:v1"
+
+# The dedicated CREDENTIAL_ENCRYPTION_KEY replaces SECRET_KEY as the KDF
+# input when set (so credential encryption stops sharing a key with JWT
+# signing and the audit chain). When unset we fall back to SECRET_KEY — the
+# pre-separation behavior — so existing deployments are unaffected.
+
+def _encryption_material() -> str:
+    return settings.credential_encryption_key or settings.secret_key
 
 
 def _derive_fernet_key(secret_key: str) -> bytes:
@@ -57,10 +67,15 @@ def _legacy_fernet_key(secret_key: str) -> bytes:
 
 
 def encrypt_credential(plaintext: str, secret_key: str) -> str:
-    """Encrypt a credential string. Returns ``enc:<token>``."""
+    """Encrypt a credential string. Returns ``enc:<token>``.
+
+    ``secret_key`` is the caller-supplied key (normally ``settings.secret_key``)
+    used for the legacy fallback path. Current encryption always uses the
+    configured encryption material (CREDENTIAL_ENCRYPTION_KEY or SECRET_KEY).
+    """
     if not plaintext:
         return ""
-    token = _make_fernet(secret_key).encrypt(plaintext.encode()).decode()
+    token = _make_fernet(_encryption_material()).encrypt(plaintext.encode()).decode()
     return f"enc:{token}"
 
 
@@ -68,11 +83,18 @@ def decrypt_credential(stored: str, secret_key: str) -> str:
     """
     Decrypt a stored credential.
 
-    Tries the current HKDF-derived key first; falls back to the legacy
-    SHA-256 derivation for values written before the migration. Logs a
-    one-line warning when falling back so ops can see the drift.
+    Tries, in order:
+      1. the current encryption material (CREDENTIAL_ENCRYPTION_KEY or
+         SECRET_KEY) via HKDF,
+      2. SECRET_KEY via HKDF — the pre-key-separation derivation, so values
+         written before CREDENTIAL_ENCRYPTION_KEY was introduced still decrypt
+         during the migration window,
+      3. the legacy raw SHA-256(SECRET_KEY) derivation from before HKDF.
 
-    Raises ``ValueError`` if the value is not a recognised encrypted token.
+    Logs a warning on any fallback so ops can see the drift and re-save.
+
+    Raises ``ValueError`` if the value is not a recognised encrypted token or
+    none of the keys can decrypt it.
     """
     if not stored:
         return ""
@@ -80,16 +102,33 @@ def decrypt_credential(stored: str, secret_key: str) -> str:
         raise ValueError("Stored value does not appear to be encrypted")
     token = stored[4:].encode()
 
+    # 1) Current encryption material (CREDENTIAL_ENCRYPTION_KEY or SECRET_KEY).
     try:
-        return _make_fernet(secret_key).decrypt(token).decode()
+        return _make_fernet(_encryption_material()).decrypt(token).decode()
     except InvalidToken:
-        # Legacy path: value was written before HKDF. Best-effort fallback.
+        pass
+
+    # 2) Pre-key-separation fallback: HKDF derived from SECRET_KEY. Only
+    #    attempted when a dedicated encryption key is configured (otherwise
+    #    this is identical to attempt 1 and would log a false drift warning).
+    if _encryption_material() != secret_key:
         try:
-            plaintext = Fernet(_legacy_fernet_key(secret_key)).decrypt(token).decode()
+            plaintext = _make_fernet(secret_key).decrypt(token).decode()
             logger.warning(
-                "Decrypted credential with legacy key derivation — re-save "
-                "to upgrade to HKDF-derived key."
+                "Decrypted credential with SECRET_KEY fallback (pre-key-separation) "
+                "— re-save to upgrade to the dedicated encryption key."
             )
             return plaintext
-        except InvalidToken as e:
-            raise ValueError("Could not decrypt credential") from e
+        except InvalidToken:
+            pass
+
+    # 3) Legacy raw SHA-256(SECRET_KEY) derivation from before the HKDF migration.
+    try:
+        plaintext = Fernet(_legacy_fernet_key(secret_key)).decrypt(token).decode()
+        logger.warning(
+            "Decrypted credential with legacy key derivation — re-save "
+            "to upgrade to HKDF-derived key."
+        )
+        return plaintext
+    except InvalidToken as e:
+        raise ValueError("Could not decrypt credential") from e

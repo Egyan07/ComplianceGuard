@@ -14,6 +14,40 @@ from sqlalchemy.orm import Session
 os.environ["ENVIRONMENT"] = "testing"
 os.environ["DATABASE_TYPE"] = "sqlite"
 
+# Deterministic test environment (Phase 6): pydantic-settings reads every env
+# var matching a Settings field, so developer machines with stray OS-level
+# vars (DATABASE_URL, SECRET_KEY, AWS_*, DB_POOL_*, ALLOWED_FILE_TYPES, ...)
+# would make local runs diverge from CI. Strip the known leaky vars here —
+# tests that need specific values set them explicitly (monkeypatch/settings).
+# Production behavior is untouched; this only makes the test environment
+# match CI's clean one.
+for _leaky_var in (
+    "ALLOWED_FILE_TYPES",
+    "DATABASE_URL",
+    "TEST_DATABASE_URL",
+    "SECRET_KEY",
+    "AWS_ACCESS_KEY_ID",
+    "AWS_SECRET_ACCESS_KEY",
+    "AWS_REGION",
+    "AWS_CONFIG_ENABLED",
+    "MOCK_AWS_SERVICES",
+    "AWS_CLOUDTRAIL_ENABLED",
+    "AWS_CLOUDWATCH_ENABLED",
+    "AWS_EVIDENCE_BUCKET",
+    "DB_HOST",
+    "DB_PORT",
+    "DB_NAME",
+    "DB_USER",
+    "DB_PASSWORD",
+    "DB_POOL_SIZE",
+    "DB_MAX_OVERFLOW",
+    "DB_POOL_TIMEOUT",
+    "DB_POOL_RECYCLE",
+    "DB_CPU_LIMIT",
+    "DB_MEMORY_LIMIT",
+):
+    os.environ.pop(_leaky_var, None)
+
 from app.core.config import settings
 from app.core.database import Base, create_test_database
 from sqlalchemy.orm import sessionmaker

@@ -9,13 +9,17 @@ const REMEDIATION_SCRIPTS = require('../processing/remediation-scripts');
  * Compliance IPC handlers: evaluation, history, PDF export, remediation scripts.
  */
 function registerComplianceHandlers(ctx) {
-  const { database, complianceEngine, reportGenerator, licenseManager, showNotification } = ctx;
+  const { database, reportGenerator, licenseManager, showNotification } = ctx;
 
   // Compliance evaluation
   ipcMain.handle('evaluate-compliance', async (event, frameworkId = 1) => {
     try {
       log.info('Starting compliance evaluation...');
-      const evaluation = await complianceEngine.evaluateCompliance(frameworkId);
+      // Phase 5: the canonical engine (shared-framework coverage scoring) is
+      // the single scoring path.
+      const evidence = await database.getAllEvidence();
+      const evidenceTypes = evidence.map((item) => item.evidence_type);
+      const evaluation = await ctx.canonicalEngine.evaluateAndPersist(frameworkId, evidenceTypes, database);
 
       showNotification(
         'Compliance Evaluation Complete',
@@ -25,16 +29,6 @@ function registerComplianceHandlers(ctx) {
       return evaluation;
     } catch (error) {
       log.error('Compliance evaluation failed:', error);
-      return { error: error.message };
-    }
-  });
-
-  // Compliance report generation
-  ipcMain.handle('generate-compliance-report', async (event, frameworkId = 1, format = 'detailed') => {
-    try {
-      return await complianceEngine.generateComplianceReport(frameworkId, format);
-    } catch (error) {
-      log.error('Report generation failed:', error);
       return { error: error.message };
     }
   });

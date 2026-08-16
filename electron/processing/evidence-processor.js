@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const { logAuditEvent } = require('./audit-service');
+const { isKnownEvidenceType } = require('./evidence-vocabulary');
 
 // The only directories evidence may be written into. Used both to scaffold the
 // dirs and to validate a (renderer-supplied) category, preventing path traversal.
@@ -238,6 +239,15 @@ class LocalEvidenceProcessor {
   }
 
   async processManualEvidence(evidenceData, frameworkId) {
+    // Phase 11: reject evidence types the canonical engine cannot score instead
+    // of silently storing them (the Phase 10 "97 dead upload types" finding).
+    const evidenceType = evidenceData.evidenceType || (evidenceData.file ? 'document' : 'text');
+    if (!isKnownEvidenceType(evidenceType)) {
+      throw new Error(
+        `Unknown evidence type "${evidenceType}". Choose a valid evidence type from the upload list.`
+      );
+    }
+
     // Handle file upload
     if (evidenceData.file) {
       const fileBuffer = evidenceData.file.buffer || evidenceData.file;
@@ -256,7 +266,7 @@ class LocalEvidenceProcessor {
       const evidenceId = await this.db.addEvidence({
         framework_id: frameworkId,
         control_id: evidenceData.controlId,
-        evidence_type: evidenceData.evidenceType || 'document',
+        evidence_type: evidenceType,
         title: evidenceData.title,
         description: evidenceData.description,
         file_path: savedFile.file_path,
@@ -276,7 +286,7 @@ class LocalEvidenceProcessor {
       const evidenceId = await this.db.addEvidence({
         framework_id: frameworkId,
         control_id: evidenceData.controlId,
-        evidence_type: evidenceData.evidenceType || 'text',
+        evidence_type: evidenceType,
         title: evidenceData.title,
         description: evidenceData.description,
         file_path: null,

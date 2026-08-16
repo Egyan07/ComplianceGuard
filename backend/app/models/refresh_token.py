@@ -21,6 +21,11 @@ class RefreshToken(Base):
     id = Column(Integer, primary_key=True, index=True)
     jti = Column(String(64), unique=True, index=True, nullable=False)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    # Rotation family (Phase 11): every refresh revokes the presented token and
+    # issues a new one in the SAME family. Replaying a rotated token revokes the
+    # whole family. NULL on legacy pre-rotation rows (they are promoted into a
+    # fresh family on their next refresh).
+    family_id = Column(String(64), index=True, nullable=True)
     expires_at = Column(DateTime(timezone=True), nullable=False)
     revoked_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core.rate_limit import limiter
+from app.core.login_throttle import clear_failures, is_throttled, record_failure
 from app.core.auth import (
     authenticate_user,
     create_access_token,
@@ -66,15 +67,30 @@ async def login(
     Raises:
         HTTPException: If authentication fails
     """
-    # bcrypt verification is CPU-bound (~200ms at default cost); run it in the
-    # thread pool so concurrent logins don't serialize on the event loop.
-    user = await asyncio.to_thread(authenticate_user, db, form_data.username, form_data.password)
-    if not user:
+    # Account-aware throttle (Phase 11): protects against distributed attacks
+    # that spread attempts across many IPs. The response stays IDENTICAL to a
+    # wrong password so no account-existence side channel is created. The
+    # IP-based limiter above still runs first and is untouched.
+    email_key = form_data.username.strip().lower()
+    if is_throttled(email_key):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    # bcrypt verification is CPU-bound (~200ms at default cost); run it in the
+    # thread pool so concurrent logins don't serialize on the event loop.
+    user = await asyncio.to_thread(authenticate_user, db, form_data.username, form_data.password)
+    if not user:
+        record_failure(email_key)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    clear_failures(email_key)
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
@@ -191,13 +207,19 @@ async def register(
 @limiter.limit("10/minute")
 async def refresh_token(
     request: Request,
+    response: Response,
     db: Session = Depends(get_db),
     request_data: RefreshRequest | None = None,
     refresh_cookie: str | None = Cookie(default=None, alias=REFRESH_COOKIE_NAME),
 ):
-    """Exchange a valid refresh token for a new access token.
+    """Exchange a valid refresh token for a new access token (rotation).
 
     The token comes from the HttpOnly cookie (web) or the JSON body (Electron).
+
+    Rotation & reuse detection (Phase 11): every successful refresh revokes the
+    presented token and issues a new one in the same family. Presenting an
+    already-rotated token is treated as theft/replay: the ENTIRE family is
+    revoked and reauthentication is required.
     """
     _invalid = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -213,22 +235,49 @@ async def refresh_token(
     if token_data is None or token_data.sub is None or token_data.jti is None:
         raise _invalid
 
-    # Validate against DB — ensures the token hasn't been revoked via /logout.
     db_token = (
         db.query(RefreshToken).filter(RefreshToken.jti == token_data.jti).first()
     )
-    if db_token is None or db_token.is_revoked or db_token.is_expired:
+    if db_token is None:
+        raise _invalid
+
+    # Reuse detection: a revoked token being presented again means either a
+    # rotated token was replayed (theft signal) — revoke the whole family.
+    if db_token.is_revoked:
+        if db_token.family_id:
+            now = datetime.now(timezone.utc)
+            db.query(RefreshToken).filter(
+                RefreshToken.family_id == db_token.family_id,
+                RefreshToken.revoked_at.is_(None),
+            ).update({RefreshToken.revoked_at: now}, synchronize_session=False)
+            db.commit()
+        raise _invalid
+
+    if db_token.is_expired:
         raise _invalid
 
     user = db.query(User).filter(User.email == token_data.sub).first()
     if not user or not user.is_active:
         raise _invalid
 
+    # Rotate: revoke the presented token, issue a fresh one in the same family.
+    # Legacy rows (family_id NULL) are promoted into a brand-new family here.
+    db_token.revoked_at = datetime.now(timezone.utc)
+    family_id = db_token.family_id
+    new_refresh_token = _issue_refresh_token(user.id, user.email, db, family_id=family_id)
+    db.commit()
+
+    _set_refresh_cookie(response, new_refresh_token)
+
     access_token = create_access_token(
         data={"sub": user.email},
         expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
     )
-    return RefreshResponse(access_token=access_token, token_type="bearer")
+    return RefreshResponse(
+        access_token=access_token,
+        refresh_token=new_refresh_token,
+        token_type="bearer",
+    )
 
 
 @router.post("/logout")

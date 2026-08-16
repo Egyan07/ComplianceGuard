@@ -165,7 +165,7 @@ const EvidenceList: React.FC<EvidenceListProps> = ({
             placeholder="Search evidence..."
             name="searchTerm"
             value={filters.searchTerm}
-            onChange={handleFilterChange as any}
+            onChange={handleFilterChange}
             sx={{ minWidth: 200, '& .MuiInputBase-root': { height: 34 } }}
           />
 

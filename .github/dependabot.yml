@@ -1,0 +1,35 @@
+# Dependabot keeps the dependency surface current. Weekly cadence keeps PR
+# volume manageable; the CI gates (npm audit, pip-audit, coverage, tests) run
+# on every Dependabot PR, so a bump that breaks the build or reintroduces a
+# high/critical advisory cannot merge silently.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      electron-toolchain:
+        patterns:
+          - "electron"
+          - "electron-builder"
+          - "electron-updater"
+
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: pip
+    directory: /backend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10

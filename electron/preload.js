@@ -6,6 +6,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   getSystemInfo: () => ipcRenderer.invoke('get-system-info'),
 
+  // Auto-update
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+
   // Notifications
   showNotification: (title, body) => {
     if (typeof title !== 'string' || typeof body !== 'string') return;
@@ -46,12 +49,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   getEvaluationHistory: (frameworkId = 1) => {
     return ipcRenderer.invoke('get-evaluation-history', frameworkId);
-  },
-
-  generateComplianceReport: (frameworkId = 1, format = 'detailed') => {
-    const allowedFormats = ['detailed', 'summary'];
-    if (!allowedFormats.includes(format)) format = 'detailed';
-    return ipcRenderer.invoke('generate-compliance-report', frameworkId, format);
   },
 
   exportPDFReport: (frameworkId = 1) => {

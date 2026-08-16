@@ -48,7 +48,7 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({ schedule, onChange, o
               <Switch
                 checked={schedule?.config.enabled ?? false}
                 onChange={() => onChange({ enabled: !schedule?.config.enabled })}
-                slotProps={{ input: { role: 'switch', 'aria-label': 'enable automatic collection' } as any }}
+                slotProps={{ input: { role: 'switch', 'aria-label': 'enable automatic collection' } }}
               />
             </ListItemSecondaryAction>
           </ListItem>

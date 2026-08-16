@@ -23,7 +23,10 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      # Localhost-only: PostgreSQL must not be reachable from the host network.
+      # The backend reaches it over the compose network (db:5432); external DB
+      # access is not part of the supported deployment.
+      - "127.0.0.1:5432:5432"
     networks:
       - complianceguard-network
     healthcheck:
@@ -60,6 +63,12 @@ services:
 
       # CORS Configuration
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:5173}
+
+      # Worker count. Default 1: the rate limiter uses in-memory storage unless
+      # RATELIMIT_STORAGE_URI is set, and per-worker counters would silently
+      # multiply the published limits. To scale out, set WORKERS>1 AND provide
+      # RATELIMIT_STORAGE_URI (a shared backend).
+      WORKERS: ${WORKERS:-1}
     ports:
       - "8000:8000"
     depends_on:

@@ -44,7 +44,7 @@ export interface ControlResult {
 }
 
 export interface ComplianceEvaluation {
-  framework_id: number;
+  framework_id: number | string; // numeric on desktop (1-4), canonical id string on web
   framework_name: string;
   evaluation_date: string;
   overall_score: number;
@@ -72,6 +72,104 @@ export interface TrendDisplayPoint extends TrendPoint {
   formattedDate: string;  // e.g. "Jun 1"
   statusLabel: string;    // "Good Standing" | "On Track" | "Needs Attention"
   delta?: number;         // undefined for first point; thisScore - previousScore for rest
+}
+
+// ---- Evaluation history (shared record shapes) ----
+
+/** A recommendation produced by the canonical engines (Python + Electron). */
+export interface Recommendation {
+  control_id: string;
+  priority: string; // 'high' | 'medium' (string so legacy rows stay valid)
+  recommendation: string;
+  evidence_needed?: string[];
+}
+
+/**
+ * Electron evaluation-history row. `findings` is deliberately the same
+ * untyped shape the preload exposes (Record<string, unknown>); consumers that
+ * read fields from it coerce values locally.
+ */
+export interface EvaluationHistoryEntry {
+  id: number;
+  framework_id: number;
+  evaluation_date: string;
+  overall_score: number;
+  status: string;
+  findings?: Record<string, unknown>;
+}
+
+/** Row returned by the web /compliance/evaluations/history endpoint. */
+export interface HttpEvaluationRecord {
+  framework_id: string | number;
+  overall_score?: number;
+  compliance_status?: string;
+  status?: string;
+  evaluation_date?: string;
+}
+
+/** Web /evidence/items row. */
+export interface HttpEvidenceItem {
+  id: number | string;
+  evidence_type?: string;
+  status?: string;
+  data?: Record<string, unknown>;
+  created_at?: string;
+  source?: string;
+}
+
+/** Web evaluate-from-evidence response (canonical 0-100 contract). */
+export interface HttpEvaluationResponse {
+  framework_id: string;
+  evaluation_date: string;
+  overall_score: number;
+  compliance_status: string;
+  compliance_level?: string;
+  control_count: number;
+  compliant_controls: number;
+  partial_controls?: number;
+  non_compliant_controls?: number;
+  not_assessed_controls?: number;
+  recommendations?: Recommendation[];
+}
+
+/**
+ * Web license-info / activate-license payload. The backend returns snake_case;
+ * camelCase variants are accepted for resilience.
+ */
+export interface LicenseInfoPayload {
+  tier?: string;
+  license_id?: string | null;
+  licenseId?: string | null;
+  email?: string | null;
+  max_machines?: number | null;
+  maxMachines?: number | null;
+  expires_at?: string | null;
+  expiresAt?: string | null;
+  days_remaining?: number | null;
+  daysRemaining?: number | null;
+  is_expired?: boolean;
+  isExpired?: boolean;
+  is_grace_period?: boolean;
+  isGracePeriod?: boolean;
+}
+
+// ---- Enterprise (desktop IPC payloads) ----
+
+/** One row of the remediation plan (owner + target date per control). */
+export interface RemediationRow {
+  control_id: string;
+  owner: string;
+  target_date: string;
+  notes?: string;
+}
+
+/** One audit-log entry rendered in the Enterprise panel. */
+export interface AuditEntry {
+  id: number;
+  event_type: string;
+  framework?: string | null;
+  score?: number | null;
+  created_at: string;
 }
 
 // ---- Cloud Dashboard ----

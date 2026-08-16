@@ -20,9 +20,16 @@ def _audit_key() -> bytes:
     the DB) with domain separation. This is what makes the chain tamper-EVIDENT:
     an attacker with DB write access but not the secret cannot recompute valid
     entry hashes, so any edit/re-chain is detected by verify_audit_chain.
+
+    Uses the dedicated AUDIT_HMAC_KEY when configured; otherwise falls back to
+    SECRET_KEY (the pre-separation behavior), so existing chains remain
+    verifiable without re-keying. Note: changing the key invalidates the chain
+    — AUDIT_HMAC_KEY should only be introduced on a fresh deployment or when
+    the chain is intentionally re-anchored.
     """
+    material = settings.audit_hmac_key or settings.secret_key
     return hashlib.sha256(
-        b"complianceguard-audit-chain-v1:" + settings.secret_key.encode("utf-8")
+        b"complianceguard-audit-chain-v1:" + material.encode("utf-8")
     ).digest()
 
 

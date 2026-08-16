@@ -19,8 +19,9 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_current_user
 from app.core.config import settings
-from app.core.evidence_mapping import EVIDENCE_CONTROL_MAP
+
 from app.core.credential_crypto import decrypt_credential
+from app.core.exceptions import EvidenceCollectionError
 from app.core.database import get_db
 from app.models.aws_credential import AwsCredential
 from app.models.evidence import EvidenceCollection, EvidenceItem
@@ -65,6 +66,38 @@ def _safe_filename(filename: str) -> str:
     base = os.path.basename(filename)
     cleaned = _SAFE_NAME_RE.sub("_", base).strip("._")
     return cleaned or "upload"
+
+
+# Non-scoring evidence types that are legitimate storage values but never feed
+# the scoring engine (manual uploads without a type mapping, collector fallback).
+_NON_SCORING_EVIDENCE_TYPES = {"manual_upload", "document", "text", "unknown"}
+
+
+def validate_evidence_type(evidence_type: str) -> str:
+    """Validate an evidence_type at the persistence boundary.
+
+    Accepts canonical types, validated legacy aliases (translated before
+    scoring), and the non-scoring storage defaults. Anything else — including
+    the 97 dead types the old upload UI exposed — is rejected with a clear
+    error instead of being silently stored as evidence that can never move a
+    score. Rejecting beats silently persisting: the Phase 10 finding was
+    exactly "uploads that score nothing without any feedback".
+    """
+    from app.core.canonical_evidence import get_vocabulary
+
+    vocab = get_vocabulary()
+    if evidence_type in _NON_SCORING_EVIDENCE_TYPES:
+        return evidence_type
+    if vocab.to_canonical(evidence_type):
+        return evidence_type
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail=(
+            f"Unknown evidence type '{evidence_type}'. Upload must use a canonical "
+            "evidence type or a recognized legacy alias (see the evidence "
+            "vocabulary). This type was never a valid scoring input."
+        ),
+    )
 
 
 def _evidence_dir_for_user(user_id: int) -> str:
@@ -216,11 +249,11 @@ async def collect_evidence(
             ],
         )
 
-    except Exception as e:
+    except Exception as exc:
         db.rollback()
-        error_msg = f"Evidence collection failed: {str(e)}"
-        logger.error(error_msg)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=error_msg)
+        raise EvidenceCollectionError(
+            log_message=f"Evidence collection failed (user={current_user.email})"
+        ) from exc
 
 
 @router.get("/status/{collection_id}", response_model=EvidenceCollectionResponse)
@@ -398,6 +431,10 @@ async def upload_evidence_file(
     """
     filename = file.filename or "upload"
 
+    # Validate the evidence type BEFORE storing anything — a dead type must
+    # never silently enter persistence (Phase 11 regression protection).
+    validate_evidence_type(evidence_type)
+
     # Extension check is free (uses the filename header) — do it before reading.
     ext = os.path.splitext(filename)[1].lower()
     if ext not in settings.allowed_file_types:
@@ -524,10 +561,44 @@ async def download_evidence_file(
 
 
 class EvidenceControlsResponse(BaseModel):
-    """Which SOC 2 controls this evidence item contributes to, with base scores."""
+    """Which SOC 2 controls this evidence item contributes to."""
     item_id: int
     evidence_type: str
     controls: Dict[str, float]
+
+
+def _evidence_to_controls_map() -> Dict[str, Dict[str, float]]:
+    """Build canonical evidence-type → SOC 2 control-ids from the shared definitions.
+
+    Replaces the legacy hard-coded base-score map: a control is "contributed to"
+    when the (translated) evidence type is in its required_evidence list. Values
+    are 1.0 (present) since canonical scoring is coverage-based. Cached — the
+    underlying framework definitions are read-only.
+    """
+    from functools import lru_cache
+
+    @lru_cache(maxsize=1)
+    def _build() -> Dict[str, Dict[str, float]]:
+        from app.core.canonical_evidence import get_canonical_engine
+        from app.core.canonical_evidence import get_vocabulary
+
+        engine = get_canonical_engine()
+        data = engine._load_framework("soc2")
+        result: Dict[str, Dict[str, float]] = {}
+        for control in data.get("controls", []):
+            for req in control.get("required_evidence", []):
+                result.setdefault(req, {})[control["id"]] = 1.0
+        # Also expose legacy aliases (translated) so old evidence types resolve.
+        vocab = get_vocabulary()
+        for alias in vocab.canonical_types:
+            pass
+        for alias in vocab._alias_to_canonical:
+            canonical = vocab._alias_to_canonical[alias]
+            if canonical in result:
+                result.setdefault(alias, dict(result[canonical]))
+        return result
+
+    return _build()
 
 
 @router.get("/items/{item_id}/controls", response_model=EvidenceControlsResponse)
@@ -536,7 +607,7 @@ async def get_evidence_item_controls(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Return the SOC 2 controls an evidence item contributes to with base scores."""
+    """Return the SOC 2 controls an evidence item contributes to."""
     item = (
         db.query(EvidenceItem)
         .join(EvidenceCollection)
@@ -549,8 +620,9 @@ async def get_evidence_item_controls(
     if not item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evidence item not found")
 
+    controls = _evidence_to_controls_map().get(item.evidence_type, {})
     return EvidenceControlsResponse(
         item_id=item.id,
         evidence_type=item.evidence_type,
-        controls=EVIDENCE_CONTROL_MAP.get(item.evidence_type, {}),
+        controls=controls,
     )
