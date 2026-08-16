@@ -109,7 +109,9 @@ def test_complete_compliance_flow(test_client: TestClient, test_user: User, auth
     evidence_data = {}
     for control_id in test_control_ids:
         evidence_data[control_id] = {
-            "evidence_provided": [f"evidence_{control_id}_1", f"evidence_{control_id}_2"],
+            # Canonical evidence types (Phase 5): the manual endpoint derives
+            # scores from evidence coverage, not from client-supplied scores.
+            "evidence_provided": ["event_logs", "system_configs", "policy_document"],
             "status": "compliant",
             "score": 0.85,
             "comments": f"Test evidence for control {control_id}"
@@ -139,8 +141,11 @@ def test_complete_compliance_flow(test_client: TestClient, test_user: User, auth
         assert field in evaluation_result
 
     assert isinstance(evaluation_result["overall_score"], (int, float))
-    assert 0.0 <= evaluation_result["overall_score"] <= 1.0
-    assert evaluation_result["compliance_status"] in ["compliant", "non_compliant", "partially_compliant"]
+    # Canonical contract (Phase 5): 0-100 score scale.
+    assert 0.0 <= evaluation_result["overall_score"] <= 100.0
+    assert evaluation_result["compliance_status"] in [
+        "compliant", "partial", "non_compliant", "not_assessed"
+    ]
 
     # Step 7: Test evaluation history
     history_response = test_client.get("/api/v1/compliance/evaluations/history", headers=headers)
@@ -292,12 +297,14 @@ def test_evidence_collection_and_evaluation_flow(test_client: TestClient, auth_t
         for control in controls:
             control_id = control["id"]
             evidence_data[control_id] = {
+                # Canonical evidence types (Phase 5): scores are derived from
+                # evidence coverage, so these must be real canonical types.
                 "evidence_provided": [
-                    f"policy_doc_{control_id}",
-                    f"implementation_evidence_{control_id}",
-                    f"monitoring_log_{control_id}"
+                    "event_logs",
+                    "system_configs",
+                    "policy_document"
                 ],
-                "status": "compliant" if category == "CC" else "partially_compliant",
+                "status": "compliant" if category == "CC" else "partial",
                 "score": 0.9 if category == "CC" else 0.7,
                 "comments": f"Test evidence for {control_id} in category {category}"
             }

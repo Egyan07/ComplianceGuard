@@ -29,7 +29,12 @@ REFRESH_TOKEN_EXPIRE_DAYS = settings.refresh_token_expire_days
 
 
 def _secret_key() -> str:
-    return settings.secret_key
+    """JWT signing key — dedicated JWT_SECRET when set, else SECRET_KEY.
+
+    Resolved lazily at call time (not module import) so test env-var
+    overrides and runtime key rotation are always respected.
+    """
+    return settings.jwt_secret or settings.secret_key
 
 
 class TokenPayload(BaseModel):

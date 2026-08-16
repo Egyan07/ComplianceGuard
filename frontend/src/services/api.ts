@@ -24,6 +24,7 @@ import {
 } from './api.http';
 import type {
   ComplianceEvaluation,
+  EvaluationHistoryEntry,
   EvidenceCollectionRequest,
   EvidenceCollectionResult,
   EvidenceItem,
@@ -56,20 +57,25 @@ export async function getScoreTrend(frameworkId: 1 | 2 | 3 | 4 = 1): Promise<Tre
 
 // Derive score-trend points from an already-fetched (Electron) evaluation
 // history, so callers that also need the raw history don't fetch it twice.
-export function evaluationHistoryToTrend(history: any[]): TrendPoint[] {
+// `findings` arrives as Record<string, unknown> from the preload, so the
+// values it contributes are coerced with Number/String rather than cast.
+export function evaluationHistoryToTrend(history: EvaluationHistoryEntry[]): TrendPoint[] {
   if (!Array.isArray(history)) return [];
   return history
-    .map((r: any) => ({
+    .map((r) => ({
       date: r.evaluation_date,
-      score: Math.round(r.overall_score ?? r.findings?.overall_score ?? 0),
-      status: normaliseStatus(r.status ?? r.findings?.status),
+      score: Math.round(Number(r.overall_score ?? r.findings?.overall_score) || 0),
+      status: normaliseStatus(r.status ?? String(r.findings?.status ?? '')),
     }))
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 }
 
-function normaliseStatus(raw: string | undefined): TrendPoint['status'] {
+// Canonical status vocabulary is compliant | partial | non_compliant | not_assessed.
+// The legacy synonyms below are mapped defensively for records saved before the
+// Phase 5 canonicalization; new evaluations store the canonical strings.
+export function normaliseStatus(raw: string | undefined): TrendPoint['status'] {
   if (raw === 'compliant') return 'compliant';
-  if (raw === 'partial' || raw === 'partial_compliance' || raw === 'at_risk') return 'partial';
+  if (raw === 'partial' || raw === 'partial_compliance' || raw === 'at_risk' || raw === 'partially_compliant') return 'partial';
   return 'non_compliant';
 }
 
@@ -146,7 +152,7 @@ export const evaluateCompliance = async (frameworkId = 1): Promise<ComplianceEva
   throw new Error('Compliance evaluation requires the desktop application');
 };
 
-export const checkHealth = async (): Promise<Record<string, any>> => {
+export const checkHealth = async (): Promise<Record<string, unknown>> => {
   if (isElectron) {
     const api = getElectronAPI();
     const info = await api.getSystemInfo();

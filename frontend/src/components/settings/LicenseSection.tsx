@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Box, Paper, Typography, List, ListItem, ListItemText, Divider, Chip, Button } from '@mui/material';
 import { VpnKey } from '@mui/icons-material';
 import SectionHeader from './SectionHeader';
+import { getErrorMessage } from '../../lib/errors';
 
 export interface LicenseSectionInfo {
   licenseId?: string | null;
@@ -118,8 +119,8 @@ const LicenseSection: React.FC<LicenseSectionProps> = ({
                     } else {
                       onError(result.error || 'Invalid license key.');
                     }
-                  } catch (err: any) {
-                    onError(err.message);
+                  } catch (err) {
+                    onError(getErrorMessage(err));
                   } finally {
                     setActivating(false);
                   }

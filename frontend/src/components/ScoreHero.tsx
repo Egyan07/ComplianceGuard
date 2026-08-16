@@ -165,8 +165,14 @@ const ScoreHero: React.FC<ScoreHeroProps> = ({
         {evaluation && (
           <Box sx={{ mt: 2, pt: 1.5, borderTop: '1px solid', borderColor: 'divider' }}>
             <Typography variant="caption" color="text.secondary">
-              {evaluation.compliant_controls}/{evaluation.total_controls} controls compliant ·{' '}
-              Last evaluated {new Date(evaluation.evaluation_date).toLocaleDateString()}
+              {evaluation.compliant_controls}/{evaluation.total_controls} controls compliant
+              {typeof evaluation.not_assessed_controls === 'number' && evaluation.not_assessed_controls > 0 && (
+                <> · {evaluation.not_assessed_controls} not yet assessed</>
+              )}{' '}
+              · Last evaluated {new Date(evaluation.evaluation_date).toLocaleDateString()}
+            </Typography>
+            <Typography variant="caption" sx={{ display: 'block', color: 'text.disabled', mt: 0.5 }}>
+              Score = share of required control evidence demonstrated; unassessed controls lower it until evidence is collected.
             </Typography>
           </Box>
         )}

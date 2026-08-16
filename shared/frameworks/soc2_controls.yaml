@@ -1,17 +1,36 @@
-# SOC 2 Trust Service Criteria control definitions.
-# Edit this file to add, remove, or adjust controls — no Python changes needed.
-# Each entry maps to a SOC2Control dataclass (see soc2_controls.py).
-# risk_level: low | medium | high  (default: medium)
-
+framework:
+  id: soc2_v2017
+  name: SOC 2 Type II
+  version: '2017'
+  status_vocabulary:
+    - compliant
+    - partial
+    - non_compliant
+    - not_assessed
+  legacy_evidence_types:
+    - event_logs
+    - file_permissions
+    - firewall
+    - iam_mfa
+    - iam_policy
+    - network
+    - security_settings
+    - services
+    - software
+    - system_info
+    - update_status
+    - users
 controls:
-  # ── Common Criteria (CC) ─────────────────────────────────────────────────────
   - id: CC1.1
     title: Control Environment
     description: The entity demonstrates a commitment to integrity and ethical values.
     category: CC
     control_objective: Establish and maintain a control environment that sets the tone at the top.
     implementation_guidance: Implement policies, organizational structure, and governance processes.
-    related_controls: [CC1.2, CC1.3]
+    risk_level: medium
+    related_controls:
+      - CC1.2
+      - CC1.3
     evidence_mapping:
       - id: CC1.1-E1
         name: Code of Conduct
@@ -25,14 +44,17 @@ controls:
         type: document
         frequency: periodic
         retention_period: 7_years
-    evidence_types: [policy_document, training_records, security_policies]
-
+    required_evidence:
+      - policy_document
+      - security_policies
+      - training_records
   - id: CC1.2
     title: Board Independence
     description: The board of directors demonstrates independence from management.
     category: CC
     control_objective: Ensure board independence in oversight activities.
     implementation_guidance: Establish independent board structure and procedures.
+    risk_level: medium
     evidence_mapping:
       - id: CC1.2-E1
         name: Board Charter
@@ -40,14 +62,16 @@ controls:
         type: document
         frequency: annual
         retention_period: 7_years
-    evidence_types: [policy_document, audit_reports]
-
+    required_evidence:
+      - audit_reports
+      - policy_document
   - id: CC1.3
     title: Management Philosophy
     description: Management demonstrates commitment to competence.
     category: CC
     control_objective: Ensure management demonstrates commitment to technical and professional competence.
     implementation_guidance: Establish competency requirements and training programs.
+    risk_level: medium
     evidence_mapping:
       - id: CC1.3-E1
         name: Competency Framework
@@ -55,15 +79,19 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
-    evidence_types: [policy_document, training_records]
-
+    required_evidence:
+      - policy_document
+      - training_records
   - id: CC2.1
     title: Communication and Information
     description: The entity obtains or generates and uses relevant, quality information.
     category: CC
     control_objective: Ensure information is identified, captured, and distributed to support control operations.
     implementation_guidance: Implement information systems and communication processes.
-    related_controls: [CC2.2, CC2.3]
+    risk_level: medium
+    related_controls:
+      - CC2.2
+      - CC2.3
     evidence_mapping:
       - id: CC2.1-E1
         name: Information Systems Documentation
@@ -71,14 +99,16 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
-    evidence_types: [policy_document, training_records]
-
+    required_evidence:
+      - policy_document
+      - training_records
   - id: CC2.2
     title: Information Quality
     description: The entity internally communicates information.
     category: CC
     control_objective: Ensure internal communication supports the functioning of controls.
     implementation_guidance: Establish internal communication processes.
+    risk_level: medium
     evidence_mapping:
       - id: CC2.2-E1
         name: Communication Procedures
@@ -86,14 +116,16 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
-    evidence_types: [policy_document, audit_reports]
-
+    required_evidence:
+      - audit_reports
+      - policy_document
   - id: CC2.3
     title: External Communication
     description: The entity communicates with external parties.
     category: CC
     control_objective: Ensure external communication supports accountability.
     implementation_guidance: Establish external communication protocols.
+    risk_level: medium
     evidence_mapping:
       - id: CC2.3-E1
         name: External Communication Policy
@@ -101,14 +133,16 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
-    evidence_types: [policy_document, audit_reports]
-
+    required_evidence:
+      - audit_reports
+      - policy_document
   - id: CC3.1
     title: Risk Assessment Process
     description: The entity specifies objectives with sufficient clarity.
     category: CC
     control_objective: Establish clear objectives to enable risk identification and assessment.
     implementation_guidance: Define objectives at various levels and ensure they are understood throughout the organization.
+    risk_level: medium
     evidence_mapping:
       - id: CC3.1-E1
         name: Risk Assessment Documentation
@@ -116,14 +150,16 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
-    evidence_types: [policy_document, audit_reports]
-
+    required_evidence:
+      - audit_reports
+      - policy_document
   - id: CC3.2
     title: Risk Identification
     description: The entity identifies risks to the achievement of objectives.
     category: CC
     control_objective: Identify and analyze risks to achievement of objectives.
     implementation_guidance: Implement risk identification and analysis processes.
+    risk_level: medium
     evidence_mapping:
       - id: CC3.2-E1
         name: Risk Register
@@ -131,14 +167,16 @@ controls:
         type: document
         frequency: quarterly
         retention_period: 3_years
-    evidence_types: [policy_document, audit_reports]
-
+    required_evidence:
+      - audit_reports
+      - policy_document
   - id: CC3.3
     title: Risk Analysis
     description: The entity analyzes risks.
     category: CC
     control_objective: Analyze identified risks to determine their potential impact.
     implementation_guidance: Implement risk analysis methodology.
+    risk_level: medium
     evidence_mapping:
       - id: CC3.3-E1
         name: Risk Analysis Reports
@@ -146,14 +184,16 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
-    evidence_types: [policy_document, audit_reports]
-
+    required_evidence:
+      - audit_reports
+      - policy_document
   - id: CC4.1
     title: Monitoring Activities
     description: The entity selects, develops, and performs ongoing and/or separate evaluations.
     category: CC
     control_objective: Implement ongoing and separate evaluations to ascertain whether controls are present and functioning.
     implementation_guidance: Establish monitoring processes and procedures.
+    risk_level: medium
     evidence_mapping:
       - id: CC4.1-E1
         name: Monitoring Procedures
@@ -161,14 +201,16 @@ controls:
         type: document
         frequency: continuous
         retention_period: 3_years
-    evidence_types: [audit_reports, event_logs]
-
+    required_evidence:
+      - audit_reports
+      - event_logs
   - id: CC4.2
     title: Separate Evaluations
     description: The entity conducts separate evaluations of controls.
     category: CC
     control_objective: Conduct separate evaluations to assess control effectiveness.
     implementation_guidance: Implement separate evaluation procedures.
+    risk_level: medium
     evidence_mapping:
       - id: CC4.2-E1
         name: Audit Reports
@@ -176,14 +218,16 @@ controls:
         type: document
         frequency: annual
         retention_period: 5_years
-    evidence_types: [audit_reports, policy_document]
-
+    required_evidence:
+      - audit_reports
+      - policy_document
   - id: CC5.1
     title: Control Activities
     description: The entity selects and develops control activities.
     category: CC
     control_objective: Select and develop control activities that contribute to achievement of objectives.
     implementation_guidance: Implement control activities that mitigate risks.
+    risk_level: medium
     evidence_mapping:
       - id: CC5.1-E1
         name: Control Activity Documentation
@@ -191,14 +235,16 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
-    evidence_types: [policy_document, audit_reports]
-
+    required_evidence:
+      - audit_reports
+      - policy_document
   - id: CC5.2
     title: Control Activities Development
     description: The entity develops control activities that mitigate risk.
     category: CC
     control_objective: Develop control activities to address identified risks.
     implementation_guidance: Design controls to address specific risks.
+    risk_level: medium
     evidence_mapping:
       - id: CC5.2-E1
         name: Risk Control Matrix
@@ -206,8 +252,9 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
-    evidence_types: [policy_document, audit_reports]
-
+    required_evidence:
+      - audit_reports
+      - policy_document
   - id: CC6.1
     title: Logical Access Controls
     description: The entity restricts logical access to systems.
@@ -228,8 +275,11 @@ controls:
         type: system
         frequency: continuous
         retention_period: 1_year
-    evidence_types: [access_logs, user_provisioning, system_configs, network_configs]
-
+    required_evidence:
+      - access_logs
+      - network_configs
+      - system_configs
+      - user_provisioning
   - id: CC6.2
     title: Authentication
     description: The entity implements authentication mechanisms.
@@ -244,8 +294,9 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
-    evidence_types: [user_provisioning, system_configs]
-
+    required_evidence:
+      - system_configs
+      - user_provisioning
   - id: CC6.3
     title: Authorization
     description: The entity implements authorization controls.
@@ -260,14 +311,16 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
-    evidence_types: [user_provisioning, policy_document]
-
+    required_evidence:
+      - policy_document
+      - user_provisioning
   - id: CC7.1
     title: System Operations
     description: The entity manages system operations.
     category: CC
     control_objective: Manage system operations effectively.
     implementation_guidance: Implement system operations procedures.
+    risk_level: medium
     evidence_mapping:
       - id: CC7.1-E1
         name: Operations Procedures
@@ -275,14 +328,16 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
-    evidence_types: [event_logs, system_configs]
-
+    required_evidence:
+      - event_logs
+      - system_configs
   - id: CC8.1
     title: Change Management
     description: The entity manages changes to systems.
     category: CC
     control_objective: Manage changes to systems and applications.
     implementation_guidance: Implement change management processes.
+    risk_level: medium
     evidence_mapping:
       - id: CC8.1-E1
         name: Change Management Policy
@@ -290,14 +345,16 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
-    evidence_types: [audit_reports, policy_document]
-
+    required_evidence:
+      - audit_reports
+      - policy_document
   - id: CC9.1
     title: Risk Mitigation
     description: The entity mitigates risk.
     category: CC
     control_objective: Mitigate risks to objectives.
     implementation_guidance: Implement risk mitigation strategies.
+    risk_level: medium
     evidence_mapping:
       - id: CC9.1-E1
         name: Risk Mitigation Plan
@@ -305,15 +362,16 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
-    evidence_types: [policy_document, audit_reports]
-
-  # ── Availability (A) ─────────────────────────────────────────────────────────
+    required_evidence:
+      - audit_reports
+      - policy_document
   - id: A1.1
     title: Availability Policies and Procedures
     description: The entity maintains availability policies and procedures.
     category: A
     control_objective: Ensure systems remain available for operation and are protected against unauthorized access.
     implementation_guidance: Develop and maintain availability policies.
+    risk_level: medium
     evidence_mapping:
       - id: A1.1-E1
         name: Availability Policy
@@ -327,14 +385,17 @@ controls:
         type: system
         frequency: continuous
         retention_period: 1_year
-    evidence_types: [system_configs, backup_logs, incident_reports]
-
+    required_evidence:
+      - backup_logs
+      - incident_reports
+      - system_configs
   - id: A1.2
     title: Capacity Management
     description: The entity manages capacity to support availability requirements.
     category: A
     control_objective: Monitor and manage system capacity to meet availability requirements.
     implementation_guidance: Implement capacity planning and monitoring processes.
+    risk_level: medium
     evidence_mapping:
       - id: A1.2-E1
         name: Capacity Planning Reports
@@ -342,8 +403,9 @@ controls:
         type: document
         frequency: quarterly
         retention_period: 3_years
-    evidence_types: [policy_document, backup_logs]
-
+    required_evidence:
+      - backup_logs
+      - policy_document
   - id: A1.3
     title: Backup and Recovery
     description: The entity implements backup and recovery procedures.
@@ -358,14 +420,15 @@ controls:
         type: system
         frequency: monthly
         retention_period: 1_year
-    evidence_types: [system_configs]
-
+    required_evidence:
+      - system_configs
   - id: A1.4
     title: Incident Response
     description: The entity responds to availability incidents.
     category: A
     control_objective: Detect and respond to availability incidents.
     implementation_guidance: Implement incident response procedures.
+    risk_level: medium
     evidence_mapping:
       - id: A1.4-E1
         name: Incident Response Plan
@@ -373,14 +436,16 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
-    evidence_types: [backup_logs, policy_document]
-
+    required_evidence:
+      - backup_logs
+      - policy_document
   - id: A1.5
     title: System Performance Monitoring
     description: The entity monitors system performance.
     category: A
     control_objective: Monitor system performance to ensure availability.
     implementation_guidance: Implement performance monitoring tools and procedures.
+    risk_level: medium
     evidence_mapping:
       - id: A1.5-E1
         name: Performance Reports
@@ -388,14 +453,16 @@ controls:
         type: system
         frequency: daily
         retention_period: 1_year
-    evidence_types: [system_configs, event_logs]
-
+    required_evidence:
+      - event_logs
+      - system_configs
   - id: A2.1
     title: Environmental Controls
     description: The entity implements environmental controls.
     category: A
     control_objective: Protect systems from environmental threats.
     implementation_guidance: Implement environmental protection measures.
+    risk_level: medium
     evidence_mapping:
       - id: A2.1-E1
         name: Environmental Controls Documentation
@@ -403,14 +470,16 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
-    evidence_types: [policy_document, audit_reports]
-
+    required_evidence:
+      - audit_reports
+      - policy_document
   - id: A2.2
     title: Facility Access
     description: The entity controls facility access.
     category: A
     control_objective: Control physical access to facilities.
     implementation_guidance: Implement facility access controls.
+    risk_level: medium
     evidence_mapping:
       - id: A2.2-E1
         name: Facility Access Logs
@@ -418,8 +487,9 @@ controls:
         type: system
         frequency: continuous
         retention_period: 1_year
-    evidence_types: [access_logs, audit_reports]
-
+    required_evidence:
+      - access_logs
+      - audit_reports
   - id: A3.1
     title: Network Security
     description: The entity implements network security controls.
@@ -434,14 +504,16 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
-    evidence_types: [network_configs, firewall_configs]
-
+    required_evidence:
+      - firewall_configs
+      - network_configs
   - id: A3.2
     title: Firewall Management
     description: The entity manages firewall configurations.
     category: A
     control_objective: Manage firewall configurations.
     implementation_guidance: Implement firewall management procedures.
+    risk_level: medium
     evidence_mapping:
       - id: A3.2-E1
         name: Firewall Configuration
@@ -449,15 +521,16 @@ controls:
         type: document
         frequency: quarterly
         retention_period: 3_years
-    evidence_types: [firewall_configs, network_configs]
-
-  # ── Confidentiality (C) ──────────────────────────────────────────────────────
+    required_evidence:
+      - firewall_configs
+      - network_configs
   - id: C1.1
     title: Confidentiality Policies
     description: The entity maintains confidentiality policies and procedures.
     category: C
     control_objective: Ensure confidential information is protected from unauthorized access.
     implementation_guidance: Develop and maintain confidentiality policies.
+    risk_level: medium
     evidence_mapping:
       - id: C1.1-E1
         name: Confidentiality Policy
@@ -471,14 +544,16 @@ controls:
         type: system
         frequency: continuous
         retention_period: 1_year
-    evidence_types: [policy_document, system_configs]
-
+    required_evidence:
+      - policy_document
+      - system_configs
   - id: C1.2
     title: Data Classification
     description: The entity classifies information according to sensitivity.
     category: C
     control_objective: Classify information based on sensitivity and criticality.
     implementation_guidance: Implement data classification schema and procedures.
+    risk_level: medium
     evidence_mapping:
       - id: C1.2-E1
         name: Data Classification Policy
@@ -486,8 +561,9 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
-    evidence_types: [encryption_policies, system_configs]
-
+    required_evidence:
+      - encryption_policies
+      - system_configs
   - id: C1.3
     title: Encryption Controls
     description: The entity implements encryption for confidential data.
@@ -502,14 +578,16 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
-    evidence_types: [policy_document, audit_reports]
-
+    required_evidence:
+      - audit_reports
+      - policy_document
   - id: C1.4
     title: Data Masking
     description: The entity implements data masking for sensitive information.
     category: C
     control_objective: Protect sensitive data through masking techniques.
     implementation_guidance: Implement data masking procedures.
+    risk_level: medium
     evidence_mapping:
       - id: C1.4-E1
         name: Data Masking Procedures
@@ -517,14 +595,16 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
-    evidence_types: [policy_document, audit_reports]
-
+    required_evidence:
+      - audit_reports
+      - policy_document
   - id: C2.1
     title: Confidentiality Agreements
     description: The entity obtains confidentiality agreements.
     category: C
     control_objective: Obtain confidentiality agreements from personnel and third parties.
     implementation_guidance: Implement confidentiality agreement processes.
+    risk_level: medium
     evidence_mapping:
       - id: C2.1-E1
         name: Confidentiality Agreements
@@ -532,14 +612,16 @@ controls:
         type: document
         frequency: annual
         retention_period: 7_years
-    evidence_types: [policy_document, audit_reports]
-
+    required_evidence:
+      - audit_reports
+      - policy_document
   - id: C2.2
     title: Data Retention
     description: The entity implements data retention policies.
     category: C
     control_objective: Retain data according to policy requirements.
     implementation_guidance: Implement data retention procedures.
+    risk_level: medium
     evidence_mapping:
       - id: C2.2-E1
         name: Data Retention Policy
@@ -547,14 +629,16 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
-    evidence_types: [policy_document, audit_reports]
-
+    required_evidence:
+      - audit_reports
+      - policy_document
   - id: C2.3
     title: Data Disposal
     description: The entity securely disposes of confidential data.
     category: C
     control_objective: Dispose of confidential data securely.
     implementation_guidance: Implement secure data disposal procedures.
+    risk_level: medium
     evidence_mapping:
       - id: C2.3-E1
         name: Disposal Procedures
@@ -562,14 +646,16 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
-    evidence_types: [policy_document, audit_reports]
-
+    required_evidence:
+      - audit_reports
+      - policy_document
   - id: C3.1
     title: Third Party Confidentiality
     description: The entity ensures third parties maintain confidentiality.
     category: C
     control_objective: Ensure third parties protect confidential information.
     implementation_guidance: Implement third party confidentiality requirements.
+    risk_level: medium
     evidence_mapping:
       - id: C3.1-E1
         name: Third Party Agreements
@@ -577,14 +663,16 @@ controls:
         type: document
         frequency: annual
         retention_period: 7_years
-    evidence_types: [policy_document, audit_reports]
-
+    required_evidence:
+      - audit_reports
+      - policy_document
   - id: C3.2
     title: Confidentiality Monitoring
     description: The entity monitors confidentiality compliance.
     category: C
     control_objective: Monitor compliance with confidentiality requirements.
     implementation_guidance: Implement confidentiality monitoring procedures.
+    risk_level: medium
     evidence_mapping:
       - id: C3.2-E1
         name: Monitoring Reports
@@ -592,15 +680,16 @@ controls:
         type: document
         frequency: quarterly
         retention_period: 3_years
-    evidence_types: [audit_reports, event_logs]
-
-  # ── Processing Integrity (PI) ────────────────────────────────────────────────
+    required_evidence:
+      - audit_reports
+      - event_logs
   - id: PI1.1
     title: Processing Integrity Controls
     description: The entity implements controls to ensure processing integrity.
     category: PI
     control_objective: Ensure system processing is complete, valid, accurate, and authorized.
     implementation_guidance: Implement processing validation and error detection controls.
+    risk_level: medium
     evidence_mapping:
       - id: PI1.1-E1
         name: Processing Validation Logs
@@ -608,14 +697,16 @@ controls:
         type: system
         frequency: continuous
         retention_period: 1_year
-    evidence_types: [policy_document, audit_reports]
-
+    required_evidence:
+      - audit_reports
+      - policy_document
   - id: PI1.2
     title: Quality Assurance
     description: The entity maintains quality assurance procedures.
     category: PI
     control_objective: Ensure processing quality through validation and testing.
     implementation_guidance: Implement quality assurance and testing procedures.
+    risk_level: medium
     evidence_mapping:
       - id: PI1.2-E1
         name: QA Test Results
@@ -623,14 +714,16 @@ controls:
         type: document
         frequency: periodic
         retention_period: 3_years
-    evidence_types: [system_configs, audit_reports]
-
+    required_evidence:
+      - audit_reports
+      - system_configs
   - id: PI1.3
     title: Input Validation
     description: The entity validates input data.
     category: PI
     control_objective: Ensure input data is valid and accurate.
     implementation_guidance: Implement input validation controls.
+    risk_level: medium
     evidence_mapping:
       - id: PI1.3-E1
         name: Input Validation Rules
@@ -638,14 +731,16 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
-    evidence_types: [event_logs, audit_reports]
-
+    required_evidence:
+      - audit_reports
+      - event_logs
   - id: PI1.4
     title: Processing Controls
     description: The entity implements processing controls.
     category: PI
     control_objective: Ensure processing operations are accurate and complete.
     implementation_guidance: Implement processing controls and validation.
+    risk_level: medium
     evidence_mapping:
       - id: PI1.4-E1
         name: Processing Procedures
@@ -653,14 +748,16 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
-    evidence_types: [audit_reports, policy_document]
-
+    required_evidence:
+      - audit_reports
+      - policy_document
   - id: PI1.5
     title: Output Validation
     description: The entity validates output data.
     category: PI
     control_objective: Ensure output data is accurate and complete.
     implementation_guidance: Implement output validation controls.
+    risk_level: medium
     evidence_mapping:
       - id: PI1.5-E1
         name: Output Validation Reports
@@ -668,14 +765,16 @@ controls:
         type: document
         frequency: periodic
         retention_period: 3_years
-    evidence_types: [event_logs, audit_reports]
-
+    required_evidence:
+      - audit_reports
+      - event_logs
   - id: PI2.1
     title: Error Handling
     description: The entity implements error handling procedures.
     category: PI
     control_objective: Handle processing errors appropriately.
     implementation_guidance: Implement error detection and handling procedures.
+    risk_level: medium
     evidence_mapping:
       - id: PI2.1-E1
         name: Error Handling Procedures
@@ -683,14 +782,16 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
-    evidence_types: [event_logs, audit_reports]
-
+    required_evidence:
+      - audit_reports
+      - event_logs
   - id: PI2.2
     title: Transaction Integrity
     description: The entity ensures transaction integrity.
     category: PI
     control_objective: Ensure transaction completeness and accuracy.
     implementation_guidance: Implement transaction validation controls.
+    risk_level: medium
     evidence_mapping:
       - id: PI2.2-E1
         name: Transaction Logs
@@ -698,14 +799,16 @@ controls:
         type: system
         frequency: continuous
         retention_period: 1_year
-    evidence_types: [event_logs, system_configs]
-
+    required_evidence:
+      - event_logs
+      - system_configs
   - id: PI3.1
     title: Processing Monitoring
     description: The entity monitors processing activities.
     category: PI
     control_objective: Monitor processing activities for integrity.
     implementation_guidance: Implement processing monitoring controls.
+    risk_level: medium
     evidence_mapping:
       - id: PI3.1-E1
         name: Processing Monitoring Reports
@@ -713,14 +816,16 @@ controls:
         type: document
         frequency: daily
         retention_period: 1_year
-    evidence_types: [event_logs, audit_reports]
-
+    required_evidence:
+      - audit_reports
+      - event_logs
   - id: PI3.2
     title: Exception Reporting
     description: The entity reports processing exceptions.
     category: PI
     control_objective: Report processing exceptions.
     implementation_guidance: Implement exception reporting procedures.
+    risk_level: medium
     evidence_mapping:
       - id: PI3.2-E1
         name: Exception Reports
@@ -728,15 +833,16 @@ controls:
         type: document
         frequency: event_driven
         retention_period: 3_years
-    evidence_types: [event_logs, audit_reports]
-
-  # ── Confidentiality & Availability (CA) ──────────────────────────────────────
+    required_evidence:
+      - audit_reports
+      - event_logs
   - id: CA1.1
     title: Confidentiality and Availability Management
     description: The entity manages confidentiality and availability requirements.
     category: CA
     control_objective: Ensure both confidentiality and availability requirements are met.
     implementation_guidance: Implement integrated confidentiality and availability controls.
+    risk_level: medium
     evidence_mapping:
       - id: CA1.1-E1
         name: Integrated Security Plan
@@ -744,8 +850,9 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
-    evidence_types: [policy_document, audit_reports]
-
+    required_evidence:
+      - audit_reports
+      - policy_document
   - id: CA1.2
     title: Incident Response
     description: The entity implements incident response procedures.
@@ -766,14 +873,16 @@ controls:
         type: system
         frequency: event_driven
         retention_period: 3_years
-    evidence_types: [incident_reports, policy_document]
-
+    required_evidence:
+      - incident_reports
+      - policy_document
   - id: CA1.3
     title: Security Awareness Training
     description: The entity provides security awareness training.
     category: CA
     control_objective: Ensure personnel understand security responsibilities.
     implementation_guidance: Provide regular security awareness training to all personnel.
+    risk_level: medium
     evidence_mapping:
       - id: CA1.3-E1
         name: Training Records
@@ -781,14 +890,16 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
-    evidence_types: [training_records, security_policies]
-
+    required_evidence:
+      - security_policies
+      - training_records
   - id: CA1.4
     title: Physical Security
     description: The entity implements physical security controls.
     category: CA
     control_objective: Protect facilities and equipment from unauthorized access.
     implementation_guidance: Implement physical security measures.
+    risk_level: medium
     evidence_mapping:
       - id: CA1.4-E1
         name: Physical Security Policy
@@ -796,14 +907,16 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
-    evidence_types: [policy_document, audit_reports]
-
+    required_evidence:
+      - audit_reports
+      - policy_document
   - id: CA1.5
     title: Vendor Management
     description: The entity manages third-party vendors.
     category: CA
     control_objective: Ensure vendors meet security requirements.
     implementation_guidance: Implement vendor management processes.
+    risk_level: medium
     evidence_mapping:
       - id: CA1.5-E1
         name: Vendor Assessment Reports
@@ -811,14 +924,16 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
-    evidence_types: [policy_document, audit_reports]
-
+    required_evidence:
+      - audit_reports
+      - policy_document
   - id: CA1.6
     title: Change Management
     description: The entity implements change management procedures.
     category: CA
     control_objective: Manage changes to systems and processes.
     implementation_guidance: Implement change management controls.
+    risk_level: medium
     evidence_mapping:
       - id: CA1.6-E1
         name: Change Management Procedures
@@ -826,8 +941,9 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
-    evidence_types: [audit_reports, policy_document]
-
+    required_evidence:
+      - audit_reports
+      - policy_document
   - id: CA1.7
     title: Business Continuity
     description: The entity maintains business continuity plans.
@@ -842,14 +958,16 @@ controls:
         type: document
         frequency: annual
         retention_period: 3_years
-    evidence_types: [backup_logs, policy_document]
-
+    required_evidence:
+      - backup_logs
+      - policy_document
   - id: CA1.8
     title: Security Monitoring
     description: The entity monitors security events.
     category: CA
     control_objective: Monitor security events and activities.
     implementation_guidance: Implement security monitoring tools and procedures.
+    risk_level: medium
     evidence_mapping:
       - id: CA1.8-E1
         name: Security Monitoring Logs
@@ -857,4 +975,6 @@ controls:
         type: system
         frequency: continuous
         retention_period: 1_year
-    evidence_types: [event_logs, system_configs]
+    required_evidence:
+      - event_logs
+      - system_configs

@@ -8,9 +8,10 @@ and SOC 2 audit workflows.
 import asyncio
 import logging
 import os
+import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 import sentry_sdk
 import uvicorn
@@ -18,7 +19,7 @@ from alembic import command as alembic_command
 from alembic.config import Config as AlembicConfig
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from sqlalchemy import text
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from sentry_sdk.integrations.fastapi import FastApiIntegration
@@ -41,6 +42,7 @@ from app.api.machines import router as machines_router
 from app.core.config import settings
 from app.core.constants import VERSION
 from app.core.database import Base, engine, SessionLocal
+from app.core.exceptions import ComplianceAppError
 from app.core.observability import (
     APP_INFO,
     configure_logging,
@@ -163,6 +165,60 @@ app = FastAPI(
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+
+async def _compliance_app_error_handler(request: Request, exc: ComplianceAppError) -> JSONResponse:
+    """Translate application exceptions into safe client responses.
+
+    The full traceback is logged server-side (with the request ID for
+    correlation); the client only ever receives the safe ``detail`` message —
+    never internal exception text, file paths, or SDK errors.
+    """
+    request_id = getattr(request.state, "request_id", None)
+    context = {"request_id": request_id} if request_id else {}
+    # Single place that logs the full traceback (with correlation ID); endpoints
+    # only raise with a log_message carrying their own context.
+    message = exc.log_message or f"Unhandled {type(exc).__name__}"
+    logger.exception(message, extra=context)
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
+
+app.add_exception_handler(ComplianceAppError, _compliance_app_error_handler)
+
+
+@app.middleware("http")
+async def security_headers_middleware(request: Request, call_next):
+    """Defense-in-depth browser security headers at the application layer.
+
+    The nginx deployment already sets these at the proxy; this middleware makes
+    the API safe even when reached directly (desktop/local deployments, a
+    misconfigured proxy, or the published :8000 port). HSTS and CSP are NOT set
+    here on purpose: HSTS only applies under guaranteed HTTPS (nginx's job) and
+    CSP for the API (JSON responses) is meaningless — the frontend CSP lives in
+    nginx where the HTML is served.
+    """
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    return response
+
+
+@app.middleware("http")
+async def request_id_middleware(request: Request, call_next):
+    """Attach a correlation ID to every request.
+
+    Generates an ID when none is supplied, stores it on ``request.state`` for
+    logging context, and echoes it back in the ``X-Request-ID`` response
+    header so a client can reference a specific failure in support.
+    """
+    request_id: Optional[str] = request.headers.get("X-Request-ID")
+    if not request_id:
+        request_id = uuid.uuid4().hex[:12]
+    request.state.request_id = request_id
+    response = await call_next(request)
+    response.headers["X-Request-ID"] = request_id
+    return response
 
 # Captured once at boot so /health can report uptime without re-reading the
 # environment on every request. GIT_SHA is injected by CI (see .github/workflows)

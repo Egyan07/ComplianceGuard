@@ -20,6 +20,7 @@ import {
 import { useLicense } from '../contexts/LicenseContext';
 import { VERSION } from '../constants';
 import { getElectronAPI, isElectronMode } from '../services/electron';
+import { getErrorMessage } from '../lib/errors';
 import type { ScheduleConfig, SystemInfo } from '../types/electron';
 import EnterprisePanel from './EnterprisePanel';
 import AboutSection from './settings/AboutSection';
@@ -67,8 +68,8 @@ const Settings: React.FC = () => {
       } else {
         setSuccessMessage(`Database backed up successfully!`);
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(getErrorMessage(err));
     }
   };
 
@@ -83,8 +84,8 @@ const Settings: React.FC = () => {
         setCloudConfig(result);
         setSuccessMessage('Connected to cloud successfully!');
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(getErrorMessage(err));
     }
   };
 
@@ -115,8 +116,8 @@ const Settings: React.FC = () => {
         last_run_at: result.ran_at,
         last_result: result,
       } : prev);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(getErrorMessage(err));
     }
   };
 

@@ -1,0 +1,118 @@
+{
+  "$schema_note": "Canonical evidence vocabulary for ComplianceGuard scoring. Evidence is framework-agnostic by TYPE; a control's required_evidence list (shared/frameworks/*_controls.yaml) determines which types satisfy it. 'legacy_aliases' are the old Python-map evidence_type values that translate to this canonical type (see canonical_evidence.py translate_evidence_types).",
+  "version": "1.0",
+  "canonical_types": [
+    {
+      "type": "access_logs",
+      "description": "Access/authentication log records (e.g., login activity, access attempts).",
+      "producers": ["manual"],
+      "frameworks": ["soc2", "gdpr"],
+      "legacy_aliases": []
+    },
+    {
+      "type": "audit_reports",
+      "description": "Audit records/reports: review results, audit trail evidence, independent assessment artifacts.",
+      "producers": ["manual"],
+      "frameworks": ["soc2", "iso27001", "hipaa", "gdpr"],
+      "legacy_aliases": ["update_status"]
+    },
+    {
+      "type": "backup_logs",
+      "description": "Backup and restore records (success/failure, retention).",
+      "producers": ["manual"],
+      "frameworks": ["soc2", "iso27001", "gdpr"],
+      "legacy_aliases": []
+    },
+    {
+      "type": "encryption_policies",
+      "description": "Encryption configuration and policy evidence (at-rest/in-transit encryption, key management).",
+      "producers": ["manual"],
+      "frameworks": ["soc2", "iso27001", "hipaa", "gdpr"],
+      "legacy_aliases": ["s3_encryption", "s3_public_access", "iam_mfa"]
+    },
+    {
+      "type": "event_logs",
+      "description": "System/event/audit log evidence from the endpoint or cloud.",
+      "producers": ["windows_collector", "macos_collector", "aws_collector", "manual"],
+      "frameworks": ["soc2", "iso27001", "hipaa", "gdpr"],
+      "legacy_aliases": ["event_logs"]
+    },
+    {
+      "type": "firewall_configs",
+      "description": "Firewall state and rule configuration evidence.",
+      "producers": ["windows_collector", "macos_collector", "manual"],
+      "frameworks": ["soc2", "iso27001", "gdpr"],
+      "legacy_aliases": ["firewall"]
+    },
+    {
+      "type": "incident_reports",
+      "description": "Incident/breach reports and response records.",
+      "producers": ["manual"],
+      "frameworks": ["soc2", "iso27001", "hipaa", "gdpr"],
+      "legacy_aliases": ["incident_reports"]
+    },
+    {
+      "type": "network_configs",
+      "description": "Network configuration evidence (interfaces, segmentation, routing).",
+      "producers": ["windows_collector", "macos_collector", "manual"],
+      "frameworks": ["soc2", "iso27001", "hipaa"],
+      "legacy_aliases": ["network"]
+    },
+    {
+      "type": "policy_document",
+      "description": "Written policy/standard/procedure documents.",
+      "producers": ["manual"],
+      "frameworks": ["soc2", "iso27001", "hipaa", "gdpr"],
+      "legacy_aliases": ["policy_document"]
+    },
+    {
+      "type": "security_policies",
+      "description": "Security configuration/policy evidence from the endpoint (password policy, audit policy, hardening).",
+      "producers": ["windows_collector", "macos_collector", "manual"],
+      "frameworks": ["soc2", "iso27001", "hipaa", "gdpr"],
+      "legacy_aliases": ["security_policies", "security_settings"]
+    },
+    {
+      "type": "system_configs",
+      "description": "System/OS configuration evidence (services, installed software, file permissions, system info).",
+      "producers": ["windows_collector", "macos_collector", "manual"],
+      "frameworks": ["soc2", "iso27001", "hipaa", "gdpr"],
+      "legacy_aliases": ["system_info", "services", "software", "file_permissions"]
+    },
+    {
+      "type": "training_records",
+      "description": "Security awareness/competency training records.",
+      "producers": ["manual"],
+      "frameworks": ["soc2", "iso27001", "hipaa", "gdpr"],
+      "legacy_aliases": ["training_records"]
+    },
+    {
+      "type": "user_provisioning",
+      "description": "User account/provisioning evidence (account inventory, MFA enforcement, access reviews).",
+      "producers": ["windows_collector", "macos_collector", "manual"],
+      "frameworks": ["soc2", "iso27001", "hipaa", "gdpr"],
+      "legacy_aliases": ["users", "iam_policy", "iam_mfa"]
+    }
+  ],
+  "non_scoring_types": [
+    "manual_upload",
+    "document",
+    "text",
+    "unknown"
+  ],
+  "note": "legacy_aliases are translation inputs only: web-mode evidence stored under the old Python vocabulary is translated to its canonical type before scoring. Types with no alias (access_logs, backup_logs) can only be satisfied by manual uploads today.",
+  "inert_mappings": [
+    {
+      "legacy_type": "firewall",
+      "canonical_type": "firewall_configs",
+      "frameworks_where_inert": ["hipaa"],
+      "reason": "HIPAA Security Rule controls consume network_configs / encryption_policies / event_logs for transmission security (164.312.e.2.i-ii); no HIPAA control lists firewall_configs in required_evidence. A legacy 'firewall' item therefore does not affect HIPAA scoring. Intentional — not a gap to force by adding arbitrary evidence requirements."
+    },
+    {
+      "legacy_type": "training_records",
+      "canonical_type": "training_records",
+      "frameworks_where_inert": ["gdpr"],
+      "reason": "GDPR controls in the canonical definitions do not list training_records in required_evidence (training maps to Art.32/39 via security_policies in practice). A legacy 'training_records' item therefore does not affect GDPR scoring. If product wants training records to influence GDPR, the GDPR control definitions must be updated deliberately — not via translation."
+    }
+  ]
+}

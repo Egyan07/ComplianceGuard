@@ -20,6 +20,13 @@ function registerAppHandlers(ctx) {
       electronVersion: process.versions.electron
     };
   });
+
+  ipcMain.handle('check-for-updates', async () => {
+    if (!ctx.updateManager) {
+      return { enabled: false, checking: false, message: 'Update manager unavailable.' };
+    }
+    return ctx.updateManager.checkForUpdates({ silent: false });
+  });
 }
 
 module.exports = registerAppHandlers;

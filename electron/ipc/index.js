@@ -14,9 +14,10 @@ const registerWindowsHandlers = require('./windows');
  * @param {object} ctx
  * @param {object} ctx.database              ComplianceGuardDatabase instance
  * @param {object} ctx.evidenceProcessor     LocalEvidenceProcessor instance
- * @param {object} ctx.complianceEngine      LocalComplianceEngine instance
+ * @param {object} ctx.canonicalEngine       CanonicalEngine instance (scoring path)
  * @param {object} ctx.reportGenerator       ReportGenerator instance
  * @param {object} ctx.licenseManager        LicenseManager instance
+ * @param {object} ctx.updateManager         UpdateManager instance (auto-update)
  * @param {Function} ctx.showNotification    (title, body) => void
  * @param {Function} ctx.getMainWindow       () => BrowserWindow | null
  */

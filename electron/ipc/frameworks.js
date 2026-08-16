@@ -5,6 +5,10 @@ const fs = require('fs');
 const yaml = require('js-yaml');
 
 // ---- Framework Reference Browser ----
+// Data source: the CANONICAL shared/frameworks YAMLs (same files the scoring
+// engine loads). The legacy duplicate at electron/data/ was removed in Phase 11;
+// a parity test (electron/ipc/frameworks.test.js) proves the browser and the
+// engine can never drift apart.
 const frameworkCache = new Map();
 const FRAMEWORK_FILES = {
   1: { name: 'SOC 2', file: 'soc2_controls.yaml' },
@@ -13,10 +17,16 @@ const FRAMEWORK_FILES = {
   4: { name: 'GDPR', file: 'gdpr_controls.yaml' },
 };
 
+function sharedDir() {
+  // repo layout: <root>/shared/frameworks ; packaged app includes shared/**.
+  return path.join(__dirname, '..', '..', 'shared', 'frameworks');
+}
+
 /**
  * Framework reference browser IPC handler. Lazy-loads and caches each
- * framework YAML on first request; strips `evidence_mapping` and defaults
- * `risk_level` to `medium` at the boundary.
+ * framework YAML on first request; strips internal scoring fields
+ * (`required_evidence`, `evidence_mapping`) at the boundary and defaults
+ * `risk_level` to `medium`.
  */
 function registerFrameworkHandlers() {
   ipcMain.handle('get-framework-controls', (event, frameworkId) => {
@@ -28,7 +38,7 @@ function registerFrameworkHandlers() {
       return { error: `Unknown framework ID: ${frameworkId}` };
     }
     try {
-      const filePath = path.join(__dirname, '..', 'data', meta.file);
+      const filePath = path.join(sharedDir(), meta.file);
       const raw = fs.readFileSync(filePath, 'utf8');
       const parsed = yaml.load(raw);
       const controls = parsed.controls.map(c => ({

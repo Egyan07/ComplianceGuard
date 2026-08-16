@@ -3,16 +3,24 @@ HTTP implementation of the API service layer (web mode). Re-exported from
 services/api.ts so existing imports keep working.
 */
 
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import type {
+  ComplianceEvaluation,
   EvidenceCollectionRequest,
   EvidenceCollectionResult,
   EvidenceItem,
   EvidenceSummary,
   FleetStats,
+  HttpEvaluationRecord,
+  HttpEvaluationResponse,
+  HttpEvidenceItem,
+  LicenseInfoPayload,
   MachineRecord,
-  ComplianceEvaluation,
 } from './api.types';
+
+// Axios config extended with our one-shot retry marker.
+type RetryableRequest = InternalAxiosRequestConfig & { _retried?: boolean };
+import { normaliseStatus } from './api';
 
 // HTTP client for web/fallback mode
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
@@ -54,15 +62,16 @@ let pendingRequests: PendingRequest[] = [];
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config;
+    const originalRequest = error.config as RetryableRequest | undefined;
+    if (!originalRequest) return Promise.reject(error);
 
     // Only attempt refresh on 401, not on the refresh endpoint itself, and only once per request
     if (
       error.response?.status === 401 &&
-      !(originalRequest as any)._retried &&
+      !originalRequest._retried &&
       !originalRequest.url?.includes('/auth/refresh')
     ) {
-      (originalRequest as any)._retried = true;
+      originalRequest._retried = true;
 
       if (isRefreshing) {
         // Queue this request until the in-flight refresh completes or fails
@@ -131,14 +140,14 @@ export async function httpGetEvidenceItems(status?: string, search?: string): Pr
   if (status) params.set('status', status);
   if (search) params.set('search', search);
   const qs = params.toString();
-  const response = await apiClient.get(`/evidence/items${qs ? '?' + qs : ''}`);
-  return (response.data as any[]).map((item: any) => ({
+  const response = await apiClient.get<HttpEvidenceItem[]>(`/evidence/items${qs ? '?' + qs : ''}`);
+  return (response.data ?? []).map((item) => ({
     id: String(item.id),
-    type: item.evidence_type,
-    status: item.status,
-    data: item.data || {},
-    timestamp: item.created_at,
-    source: item.source,
+    type: item.evidence_type ?? 'unknown',
+    status: item.status ?? 'not_assessed',
+    data: item.data ?? {},
+    timestamp: item.created_at ?? new Date().toISOString(),
+    source: item.source ?? 'unknown',
   }));
 }
 
@@ -147,23 +156,19 @@ export async function httpGetScoreTrend(frameworkId: 1 | 2 | 3 | 4): Promise<Arr
   score: number;
   status: 'compliant' | 'partial' | 'non_compliant';
 }>> {
-  const response = await apiClient.get('/compliance/evaluations/history');
-  const rows: any[] = response.data ?? [];
+  const response = await apiClient.get<HttpEvaluationRecord[]>('/compliance/evaluations/history');
+  const rows: HttpEvaluationRecord[] = response.data ?? [];
   return rows
-    .filter((r: any) => Number(r.framework_id) === frameworkId)
-    .map((r: any) => ({
-      date: r.evaluation_date,
-      score: Math.round((r.overall_score ?? 0) * (r.overall_score <= 1 ? 100 : 1)),
+    .filter((r) => Number(r.framework_id) === frameworkId)
+    .map((r) => ({
+      date: r.evaluation_date ?? '',
+      // Canonical contract: overall_score is 0-100 on both web and desktop.
+      score: Math.round(r.overall_score ?? 0),
       status: normaliseStatus(r.compliance_status ?? r.status),
     }))
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 }
 
-function normaliseStatus(raw: string | undefined): 'compliant' | 'partial' | 'non_compliant' {
-  if (raw === 'compliant') return 'compliant';
-  if (raw === 'partial' || raw === 'partial_compliance' || raw === 'at_risk') return 'partial';
-  return 'non_compliant';
-}
 
 export async function evaluateComplianceWeb(frameworkId = 1): Promise<ComplianceEvaluation> {
   const urls: Record<number, string> = {
@@ -178,34 +183,37 @@ export async function evaluateComplianceWeb(frameworkId = 1): Promise<Compliance
     3: 'HIPAA Security Rule',
     4: 'GDPR',
   };
-  const response = await apiClient.post(urls[frameworkId] ?? urls[1]);
+  const response = await apiClient.post<HttpEvaluationResponse>(urls[frameworkId] ?? urls[1]);
   const d = response.data;
   return {
     framework_id: d.framework_id,
     framework_name: frameworkNames[frameworkId] ?? 'SOC 2 Type II',
     evaluation_date: d.evaluation_date,
-    overall_score: (d.overall_score ?? 0) * 100,
+    // Canonical contract: overall_score is 0-100 from the API.
+    overall_score: Math.round(d.overall_score ?? 0),
     status: d.compliance_status,
     tier: 'web',
     total_controls: d.control_count,
     compliant_controls: d.compliant_controls,
-    non_compliant_controls: d.control_count - d.compliant_controls,
-    partial_controls: 0,
-    not_assessed_controls: 0,
+    // Canonical contract: the API returns the real control-status counts.
+    // Fallbacks keep pre-fix persisted records (which lacked them) sane.
+    non_compliant_controls: d.non_compliant_controls ?? d.control_count - d.compliant_controls,
+    partial_controls: d.partial_controls ?? 0,
+    not_assessed_controls: d.not_assessed_controls ?? 0,
     category_scores: null,
     control_results: null,
     recommendations: d.recommendations ?? [],
   };
 }
 
-export async function httpCheckHealth(): Promise<Record<string, any>> {
+export async function httpCheckHealth(): Promise<Record<string, unknown>> {
   const response = await axios.get('http://localhost:8000/health');
   return response.data;
 }
 
 // ---- License HTTP (web mode) ----
 
-export async function getLicenseInfoHttp(): Promise<any> {
+export async function getLicenseInfoHttp(): Promise<LicenseInfoPayload> {
   const token = localStorage.getItem('auth_token');
   if (!token) return { tier: 'free' };
   const base = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/api\/v1$/, '');
@@ -214,7 +222,7 @@ export async function getLicenseInfoHttp(): Promise<any> {
   return res.data;
 }
 
-export async function activateLicenseHttp(licenseKey: string): Promise<any> {
+export async function activateLicenseHttp(licenseKey: string): Promise<LicenseInfoPayload> {
   const token = localStorage.getItem('auth_token');
   if (!token) throw new Error('Not authenticated');
   const base = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/api\/v1$/, '');

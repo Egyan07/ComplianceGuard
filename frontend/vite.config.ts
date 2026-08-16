@@ -1,10 +1,13 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { cspPlugin } from './csp'
 
 export default defineConfig({
   base: './',
-  plugins: [react()],
+  // cspPlugin injects the renderer Content-Security-Policy meta tag into the
+  // production build (build-only, so dev HMR is unaffected). See csp.ts.
+  plugins: [react(), cspPlugin()],
   server: {
     port: 5173,
     host: true
@@ -43,6 +46,14 @@ export default defineConfig({
         'src/test/**',
         'src/main.tsx',
         'src/vite-env.d.ts',
+        // Declaration-only files carry no executable statements; the v8
+        // provider counts their (nonexistent) lines as uncovered, which
+        // would misrepresent coverage after the vitest 3 upgrade.
+        'src/**/*.d.ts',
+        'src/services/api.types.ts',
+        // App entry component: providers + routing shell, exercised by the
+        // Playwright full-stack e2e suite (same rationale as src/main.tsx).
+        'src/App.tsx',
       ],
     },
     setupFiles: './src/test/setup.ts',

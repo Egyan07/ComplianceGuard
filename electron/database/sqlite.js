@@ -506,12 +506,13 @@ class ComplianceGuardDatabase {
 
   async backup() {
     const backupPath = this.dbPath + '.backup-' + Date.now();
-    return new Promise((resolve, reject) => {
-      fs.copyFile(this.dbPath, backupPath, (error) => {
-        if (error) reject(error);
-        else resolve(backupPath);
-      });
-    });
+    // Use SQLite's online backup API (better-sqlite3 db.backup) instead of
+    // copying the raw DB file. With journal_mode=WAL the most recent commits
+    // live in the -wal sidecar, so a raw file copy can silently produce a
+    // stale or inconsistent backup. db.backup() takes a consistent snapshot
+    // of the full database state including WAL contents.
+    await this.db.backup(backupPath);
+    return backupPath;
   }
 
   async vacuum() {
