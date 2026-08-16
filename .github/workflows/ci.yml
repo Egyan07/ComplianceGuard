@@ -48,7 +48,7 @@ jobs:
       - run: python -m pytest tests/integration/ -v --tb=short
       - run: python -m pytest tests/e2e/ -v --tb=short --run-e2e
       - name: Upload backend coverage
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           files: backend/coverage.xml
           flags: backend
@@ -81,7 +81,7 @@ jobs:
       - name: Run unit tests with coverage
         run: npm test -- --run --reporter=verbose --coverage
       - name: Upload frontend coverage
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           files: frontend/coverage/lcov.info
           flags: frontend
