@@ -29,7 +29,7 @@ aiosmtplib>=3.0.0
 slowapi==0.1.9
 
 # Error monitoring
-sentry-sdk[fastapi]>=2.0.0
+sentry-sdk[fastapi]>=2.68.0
 
 # Observability: Prometheus /metrics endpoint
 prometheus-client>=0.20,<1
