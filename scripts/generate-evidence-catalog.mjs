@@ -20,11 +20,18 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
-import yaml from 'js-yaml';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..');
+
+// Resolve js-yaml from the FRONTEND install, not the repo root. CI jobs that
+// run this script (lint-and-test's check:evidence, e2e's predev/prebuild) only
+// run `npm ci` inside frontend/, so the root node_modules does not exist there.
+// js-yaml is declared in frontend/package.json, so this always resolves.
+const _require = createRequire(path.join(REPO_ROOT, 'frontend', 'package.json'));
+const yaml = _require('js-yaml');
 const SHARED_DIR = path.join(REPO_ROOT, 'shared', 'frameworks');
 const OUT_FILE = path.join(REPO_ROOT, 'frontend', 'src', 'components', 'evidenceCatalog.generated.ts');
 
