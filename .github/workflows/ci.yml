@@ -201,6 +201,7 @@ jobs:
       # e.g. just the blockmap). Pre-create the draft so both publishers find
       # an existing release and only upload to it.
       - name: Create draft release
+        shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -279,6 +280,7 @@ jobs:
       # uploads while still exiting 0. The draft normally already exists (the
       # Windows job runs first); this is idempotent insurance for re-runs.
       - name: Create draft release
+        shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
