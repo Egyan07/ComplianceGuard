@@ -352,7 +352,9 @@ async def get_evidence_items(
     if status:
         query = query.filter(EvidenceItem.status == status)
     if search:
-        query = query.filter(EvidenceItem.evidence_type.ilike(f"%{search}%"))
+        # Escape LIKE wildcards so user input is matched literally
+        safe_search = search.replace("%", "\\%").replace("_", "\\_")
+        query = query.filter(EvidenceItem.evidence_type.ilike(f"%{safe_search}%"))
 
     items = (
         query

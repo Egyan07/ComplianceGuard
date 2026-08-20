@@ -232,7 +232,9 @@ class LocalEvidenceProcessor {
           detail: { item_count: processedEvidence.length },
         });
       }
-    } catch (_) {}
+    } catch (auditErr) {
+      log.error('Enterprise audit event failed for evidence_collected:', auditErr);
+    }
 
     log.info(`Processed ${processedEvidence.length} evidence items`);
     return processedEvidence;

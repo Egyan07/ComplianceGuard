@@ -9,6 +9,7 @@ function registerAppHandlers(ctx) {
   });
 
   ipcMain.handle('show-notification', (event, title, body) => {
+    if (typeof title !== 'string' || typeof body !== 'string') return;
     ctx.showNotification(title, body);
   });
 

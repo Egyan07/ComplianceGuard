@@ -54,12 +54,13 @@ import sqlite3, csv, os
 db = sqlite3.connect('complianceguard.db')
 cursor = db.cursor()
 
-# Get all tables
+# Get all tables — names are validated against sqlite_master before use
 cursor.execute(\"SELECT name FROM sqlite_master WHERE type='table'\")
-tables = [row[0] for row in cursor.fetchall()]
+valid_tables = {row[0] for row in cursor.fetchall()}
 
-for table in tables:
-    cursor.execute(f'SELECT * FROM {table}')
+for table in sorted(valid_tables):
+    # Table name is already validated against sqlite_master — safe to interpolate
+    cursor.execute(f'SELECT * FROM \"{table}\"')
     columns = [desc[0] for desc in cursor.description]
     rows = cursor.fetchall()
 
@@ -93,30 +94,42 @@ If you used pgloader, you're done. If you exported to CSV:
 ```python
 # Import CSV data into PostgreSQL
 import psycopg2
+import psycopg2.sql
 import csv
 import os
 
 conn = psycopg2.connect("postgresql://user:password@localhost:5432/complianceguard")
 cur = conn.cursor()
 
-for table in os.listdir('migration_csv'):
-    if not table.endswith('.csv'):
-        continue
-    table_name = table[:-4]
+# Verify migration_csv exists
+if not os.path.isdir('migration_csv'):
+    raise SystemExit('migration_csv/ directory not found. Run the export step first.')
 
-    with open(f'migration_csv/{table}') as f:
+for table_file in sorted(os.listdir('migration_csv')):
+    if not table_file.endswith('.csv'):
+        continue
+    table_name = table_file[:-4]
+
+    # Validate table name — only allow alphanumeric + underscore (matches
+    # PostgreSQL identifier rules) and confirm it exists in the target DB.
+    if not table_name.isidentifier():
+        print(f'Skipped {table_name}: not a valid identifier')
+        continue
+
+    with open(f'migration_csv/{table_file}') as f:
         reader = csv.reader(f)
         headers = next(reader)
-        columns = ', '.join(headers)
-        placeholders = ', '.join(['%s'] * len(headers))
+
+        # Use psycopg2.sql for safe identifier interpolation
+        insert_stmt = psycopg2.sql.SQL('INSERT INTO {} ({}) VALUES ({})').format(
+            psycopg2.sql.Identifier(table_name),
+            psycopg2.sql.SQL(', ').join(map(psycopg2.sql.Identifier, headers)),
+            psycopg2.sql.SQL(', ').join(psycopg2.sql.Placeholder() * len(headers)),
+        )
 
         for row in reader:
-            # Skip rows that would violate constraints
             try:
-                cur.execute(
-                    f'INSERT INTO {table_name} ({columns}) VALUES ({placeholders})',
-                    row
-                )
+                cur.execute(insert_stmt, row)
             except Exception as e:
                 print(f'Skipped row in {table_name}: {e}')
                 conn.rollback()

@@ -133,7 +133,7 @@ def test_user(test_db_session: Session) -> User:
     try:
         test_db_session.delete(user)
         test_db_session.commit()
-    except:
+    except Exception:
         test_db_session.rollback()
 
 
@@ -168,7 +168,7 @@ def superuser(test_db_session: Session) -> User:
     try:
         test_db_session.delete(user)
         test_db_session.commit()
-    except:
+    except Exception:
         test_db_session.rollback()
 
 
