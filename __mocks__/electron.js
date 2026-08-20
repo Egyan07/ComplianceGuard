@@ -22,5 +22,23 @@ module.exports = {
   BrowserWindow: class {},
   // `name` present so electron-log takes the `app.name` branch instead of
   // calling app.getName() (which it would otherwise do for any app object).
-  app: { getVersion: () => '0.0.0', name: 'complianceguard-test', getName: () => 'complianceguard-test' },
+  app: {
+    _listeners: {},
+    getVersion: () => '0.0.0',
+    name: 'complianceguard-test',
+    getName: () => 'complianceguard-test',
+    isPackaged: false,
+    whenReady: () => Promise.resolve(),
+    on(event, fn) {
+      if (!this._listeners[event]) this._listeners[event] = [];
+      this._listeners[event].push(fn);
+    },
+    emit(event, ...args) {
+      (this._listeners[event] || []).forEach(fn => fn(...args));
+    },
+    quit: () => {},
+    getPath: (name) => '/tmp/test-userdata',
+    getAppPath: () => '/tmp/test-app',
+    setAppUserModelId: () => {},
+  },
 };
