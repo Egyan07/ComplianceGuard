@@ -624,6 +624,15 @@ The bench user is auto-created and promoted to a verified Pro account.
 
 CI runs all tests on every push via GitHub Actions, and the desktop (Electron) test suite now gates releases. Backend: 315 unit + 35 integration + 9 e2e. Frontend: 235 Vitest unit + 456 Electron (192 passing). Playwright e2e: 9.
 
+## Deployment
+
+See [`docs/deployment.md`](docs/deployment.md) for production deployment guides
+covering Railway (one-click), Docker Compose (VPS), Render, and manual VPS
+setup. Includes monitoring, migration, and troubleshooting.
+
+Moving from SQLite to PostgreSQL? See
+[`docs/migrate-sqlite-to-postgres.md`](docs/migrate-sqlite-to-postgres.md).
+
 ## Backup & Disaster Recovery
 
 Nightly `pg_dump` backups with verification + retention pruning, a one-command

@@ -46,7 +46,7 @@ Version, tier gates, and machine limits live **only** in `shared/constants.json`
 
 ## Framework Data (SOC 2 / ISO 27001 / HIPAA)
 
-Controls are defined in YAML (`backend/app/core/*.yaml` and `electron/data/*.yaml`) and rendered from metadata, not hardcoded. The desktop control lists (`FREE_TIER_CONTROL_IDS`, `ALL_CONTROL_IDS` in `electron/licensing/tier-constants.js`) must stay in sync with `backend/app/core/soc2_controls.yaml`.
+Controls are defined in YAML (`shared/frameworks/*.yaml`) — the single source of truth — and rendered from metadata, not hardcoded. Backend and Electron load from these files at runtime. The desktop control lists (`FREE_TIER_CONTROL_IDS`, `ALL_CONTROL_IDS` in `electron/licensing/tier-constants.js`) must stay in sync with `shared/frameworks/soc2_controls.yaml`.
 
 ## Docs
 
