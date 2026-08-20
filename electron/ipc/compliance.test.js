@@ -11,7 +11,7 @@ const SOC2 = 1;
 
 function makeDatabase({ evidence = [], history = [], createEvaluationImpl = null } = {}) {
   return {
-    getAllEvidence: vi.fn(async () => evidence),
+    getEvidenceByFramework: vi.fn(async () => evidence),
     getEvaluationHistory: vi.fn(async () => history),
     createEvaluation: createEvaluationImpl || vi.fn(async () => 42),
   };
@@ -52,7 +52,7 @@ describe('evaluate-compliance (canonical path)', () => {
 
     const result = await ipcMain.registeredHandlers['evaluate-compliance'](null, SOC2);
 
-    expect(database.getAllEvidence).toHaveBeenCalled();
+    expect(database.getEvidenceByFramework).toHaveBeenCalled();
     expect(createEvaluation).toHaveBeenCalledTimes(1);
     // Legacy alias was translated and persisted evaluation returned.
     expect(result.id).toBe(7);

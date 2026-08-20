@@ -73,7 +73,7 @@ export function useDashboard() {
   });
   const [collectingEvidence, setCollectingEvidence] = useState(false);
   const [evaluating, setEvaluating] = useState(false);
-  const [selectedFramework, setSelectedFramework] = useState<1 | 2 | 3>(1);
+  const [selectedFramework, setSelectedFramework] = useState<1 | 2 | 3 | 4>(1);
   const [exportingPDF, setExportingPDF] = useState(false);
   const [syncingCloud, setSyncingCloud] = useState(false);
   const [cloudConnected, setCloudConnected] = useState(false);
@@ -90,7 +90,7 @@ export function useDashboard() {
     setCollectingEvidence(true);
     setState(prev => ({ ...prev, error: null }));
     try {
-      const result = await collectEvidence();
+      const result = await collectEvidence(undefined, selectedFramework);
       if (result.error) {
         setState(prev => ({ ...prev, error: `Evidence collection failed: ${result.error}` }));
       } else {
@@ -107,7 +107,7 @@ export function useDashboard() {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       setCollectingEvidence(false);
     }
-  }, [queryClient]);
+  }, [queryClient, selectedFramework]);
 
   const handleEvaluateCompliance = useCallback(async () => {
     setEvaluating(true);

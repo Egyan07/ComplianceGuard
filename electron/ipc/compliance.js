@@ -17,7 +17,7 @@ function registerComplianceHandlers(ctx) {
       log.info('Starting compliance evaluation...');
       // Phase 5: the canonical engine (shared-framework coverage scoring) is
       // the single scoring path.
-      const evidence = await database.getAllEvidence();
+      const evidence = await database.getEvidenceByFramework(frameworkId);
       const evidenceTypes = evidence.map((item) => item.evidence_type);
       const evaluation = await ctx.canonicalEngine.evaluateAndPersist(frameworkId, evidenceTypes, database);
 

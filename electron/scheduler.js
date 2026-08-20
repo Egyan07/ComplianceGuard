@@ -4,7 +4,7 @@ const log = require('./logger');
 // Windows collector directly produced hollow/empty evidence on scheduled macOS runs.
 const { collectEvidence } = require('./system/collector');
 
-const FRAMEWORKS = [1, 2, 3];
+const FRAMEWORKS = [1, 2, 3, 4];
 const CHECK_INTERVAL_MS = 60_000;
 
 let _db = null;
@@ -68,7 +68,7 @@ async function runCollection() {
     if (Notification.isSupported()) {
       new Notification({
         title: 'Evidence Collection Complete',
-        body: `${evidenceCount} items collected across 3 frameworks`,
+        body: `${evidenceCount} items collected across 4 frameworks`,
       }).show();
     }
 

@@ -116,9 +116,9 @@ async function electronGetEvidenceItems(): Promise<EvidenceItem[]> {
   }));
 }
 
-async function electronCollectEvidence(): Promise<EvidenceCollectionResult> {
+async function electronCollectEvidence(frameworkId = 1): Promise<EvidenceCollectionResult> {
   const api = getElectronAPI();
-  return await api.collectWindowsEvidence(1);
+  return await api.collectWindowsEvidence(frameworkId);
 }
 
 async function electronEvaluateCompliance(frameworkId = 1): Promise<ComplianceEvaluation> {
@@ -141,9 +141,10 @@ export const getEvidenceItems = async (status?: string, search?: string): Promis
 };
 
 export const collectEvidence = async (
-  request?: EvidenceCollectionRequest
+  request?: EvidenceCollectionRequest,
+  frameworkId?: number
 ): Promise<EvidenceCollectionResult> => {
-  if (isElectron) return electronCollectEvidence();
+  if (isElectron) return electronCollectEvidence(frameworkId);
   return httpCollectEvidence(request || {});
 };
 
