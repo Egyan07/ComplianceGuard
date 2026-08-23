@@ -34,7 +34,7 @@
     "concurrently": "^8.2.2",
     "electron": "^43.4.0",
     "electron-builder": "^26.15.3",
-    "vitest": "^4.1.5",
+    "vitest": "^4.1.11",
     "wait-on": "^7.0.1"
   },
   "build": {
