@@ -4,6 +4,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material';
 import Settings from './Settings';
 import { useLicense } from '../contexts/LicenseContext';
+import { VERSION } from '../constants';
 
 vi.mock('../contexts/LicenseContext', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../contexts/LicenseContext')>();
@@ -39,7 +40,7 @@ describe('Settings', () => {
   it('shows version info', () => {
     renderWithTheme(<Settings />);
     expect(screen.getByText('Version')).toBeInTheDocument();
-    expect(screen.getByText('3.6.0')).toBeInTheDocument();
+    expect(screen.getByText(VERSION)).toBeInTheDocument();
   });
 
   it('shows database section', () => {
