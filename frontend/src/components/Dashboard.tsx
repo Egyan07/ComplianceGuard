@@ -41,8 +41,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const [searchParams] = useSearchParams();
   useEffect(() => {
     const fw = Number(searchParams.get('fw') || '1');
-    if (fw === 1 || fw === 2 || fw === 3) {
-      setSelectedFramework(fw);
+    if (fw === 1 || fw === 2 || fw === 3 || fw === 4) {
+      setSelectedFramework(fw as 1 | 2 | 3 | 4);
     }
   }, [searchParams, setSelectedFramework]);
 

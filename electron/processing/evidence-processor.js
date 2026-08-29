@@ -91,11 +91,12 @@ class LocalEvidenceProcessor {
   async processWindowsEvidence(windowsEvidence, frameworkId) {
     const processedEvidence = [];
 
-    // Process system information -> CC6.1
+    // Process system information
+    // Evidence type: system_configs (used by all frameworks)
     if (windowsEvidence.systemInfo && !windowsEvidence.systemInfo.error) {
       const id = await this.db.addEvidence({
         framework_id: frameworkId,
-        control_id: 'CC6.1',
+        control_id: null, // canonical engine maps evidence_type -> control
         evidence_type: 'system_configs',
         title: 'Windows System Information',
         description: 'Automatically collected Windows system configuration',
@@ -106,11 +107,12 @@ class LocalEvidenceProcessor {
       processedEvidence.push(id);
     }
 
-    // Process security settings -> CC1.1
+    // Process security settings
+    // Evidence type: security_policies (used by all frameworks)
     if (windowsEvidence.securitySettings && !windowsEvidence.securitySettings.error) {
       const id = await this.db.addEvidence({
         framework_id: frameworkId,
-        control_id: 'CC1.1',
+        control_id: null, // canonical engine maps evidence_type -> control
         evidence_type: 'security_policies',
         title: 'Windows Security Settings',
         description: 'Password policies, audit policies, and security configurations',
@@ -121,7 +123,8 @@ class LocalEvidenceProcessor {
       processedEvidence.push(id);
     }
 
-    // Process event logs -> CC7.1 (save large logs as files)
+    // Process event logs
+    // Evidence type: event_logs (used by all frameworks)
     if (windowsEvidence.eventLogs) {
       for (const [logType, logData] of Object.entries(windowsEvidence.eventLogs)) {
         if (logType === 'error') continue;
@@ -137,7 +140,7 @@ class LocalEvidenceProcessor {
 
           const id = await this.db.addEvidence({
             framework_id: frameworkId,
-            control_id: 'CC7.1',
+            control_id: null, // canonical engine maps evidence_type -> control
             evidence_type: 'event_logs',
             title: `Windows ${logType} Event Logs`,
             description: `Collected Windows ${logType} event logs for compliance monitoring`,
@@ -150,11 +153,12 @@ class LocalEvidenceProcessor {
       }
     }
 
-    // Process services -> CC6.1
+    // Process services
+    // Evidence type: system_configs (services are system configuration)
     if (windowsEvidence.services && !windowsEvidence.services.error) {
       const id = await this.db.addEvidence({
         framework_id: frameworkId,
-        control_id: 'CC6.1',
+        control_id: null, // canonical engine maps evidence_type -> control
         evidence_type: 'system_configs',
         title: 'Windows Services Status',
         description: 'Critical Windows services and their operational status',
@@ -165,11 +169,12 @@ class LocalEvidenceProcessor {
       processedEvidence.push(id);
     }
 
-    // Process firewall -> A3.2 (Firewall Management)
+    // Process firewall
+    // Evidence type: firewall_configs (used by all frameworks)
     if (windowsEvidence.firewall && !windowsEvidence.firewall.error) {
       const id = await this.db.addEvidence({
         framework_id: frameworkId,
-        control_id: 'A3.2',
+        control_id: null, // canonical engine maps evidence_type -> control
         evidence_type: 'firewall_configs',
         title: 'Windows Firewall Status',
         description: 'Windows Firewall configuration and profile status',
@@ -180,11 +185,12 @@ class LocalEvidenceProcessor {
       processedEvidence.push(id);
     }
 
-    // Process network -> A3.1 (Network Security)
+    // Process network
+    // Evidence type: network_configs (used by all frameworks)
     if (windowsEvidence.network && !windowsEvidence.network.error) {
       const id = await this.db.addEvidence({
         framework_id: frameworkId,
-        control_id: 'A3.1',
+        control_id: null, // canonical engine maps evidence_type -> control
         evidence_type: 'network_configs',
         title: 'Network Configuration',
         description: 'Network interfaces, open ports, and routing configuration',
@@ -195,11 +201,12 @@ class LocalEvidenceProcessor {
       processedEvidence.push(id);
     }
 
-    // Process user accounts -> CC6.2
+    // Process user accounts
+    // Evidence type: user_provisioning (used by all frameworks)
     if (windowsEvidence.users && !windowsEvidence.users.error) {
       const id = await this.db.addEvidence({
         framework_id: frameworkId,
-        control_id: 'CC6.2',
+        control_id: null, // canonical engine maps evidence_type -> control
         evidence_type: 'user_provisioning',
         title: 'Windows User Accounts',
         description: 'Local user accounts and administrator group membership',

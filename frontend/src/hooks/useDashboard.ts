@@ -25,10 +25,18 @@ export interface DashboardState {
   evaluation: ComplianceEvaluation | null;
   error: string | null;
   successMessage: string | null;
-}
-
-export function useDashboard() {
+}export function useDashboard() {
   const queryClient = useQueryClient();
+
+  // ── local UI state (selectedFramework needed by queries below) ────────────
+  const [state, setState] = useState<DashboardState>({
+    evaluation: null,
+    error: null,
+    successMessage: null,
+  });
+  const [collectingEvidence, setCollectingEvidence] = useState(false);
+  const [evaluating, setEvaluating] = useState(false);
+  const [selectedFramework, setSelectedFramework] = useState<1 | 2 | 3 | 4>(1);
 
   // ── server state via react-query ──────────────────────────────────────────
   const {
@@ -36,10 +44,10 @@ export function useDashboard() {
     isLoading: summaryLoading,
     refetch: refetchSummary,
   } = useQuery<EvidenceSummary | null>({
-    queryKey: DASHBOARD_QUERY_KEYS.summary,
+    queryKey: [...DASHBOARD_QUERY_KEYS.summary, selectedFramework],
     queryFn: async () => {
       try {
-        return await getEvidenceSummary();
+        return await getEvidenceSummary(selectedFramework);
       } catch {
         return getMockEvidenceSummary();
       }
@@ -53,10 +61,10 @@ export function useDashboard() {
     isLoading: itemsLoading,
     refetch: refetchItems,
   } = useQuery<EvidenceItem[]>({
-    queryKey: DASHBOARD_QUERY_KEYS.items,
+    queryKey: [...DASHBOARD_QUERY_KEYS.items, selectedFramework],
     queryFn: async () => {
       try {
-        return await getEvidenceItems();
+        return await getEvidenceItems(undefined, undefined, selectedFramework);
       } catch {
         return [];
       }
@@ -65,15 +73,6 @@ export function useDashboard() {
     refetchOnWindowFocus: true,
   });
 
-  // ── local UI state ─────────────────────────────────────────────────────────
-  const [state, setState] = useState<DashboardState>({
-    evaluation: null,
-    error: null,
-    successMessage: null,
-  });
-  const [collectingEvidence, setCollectingEvidence] = useState(false);
-  const [evaluating, setEvaluating] = useState(false);
-  const [selectedFramework, setSelectedFramework] = useState<1 | 2 | 3 | 4>(1);
   const [exportingPDF, setExportingPDF] = useState(false);
   const [syncingCloud, setSyncingCloud] = useState(false);
   const [cloudConnected, setCloudConnected] = useState(false);

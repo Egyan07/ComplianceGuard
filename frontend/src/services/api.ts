@@ -81,9 +81,9 @@ export function normaliseStatus(raw: string | undefined): TrendPoint['status'] {
 
 // ---- Electron IPC implementation ----
 
-async function electronGetEvidenceSummary(): Promise<EvidenceSummary> {
+async function electronGetEvidenceSummary(frameworkId: 1 | 2 | 3 | 4 = 1): Promise<EvidenceSummary> {
   const api = getElectronAPI();
-  const summary = await api.getEvidenceSummary(1);
+  const summary = await api.getEvidenceSummary(frameworkId);
 
   if (summary?.error) throw new Error(summary.error);
 
@@ -99,9 +99,9 @@ async function electronGetEvidenceSummary(): Promise<EvidenceSummary> {
   };
 }
 
-async function electronGetEvidenceItems(): Promise<EvidenceItem[]> {
+async function electronGetEvidenceItems(frameworkId: 1 | 2 | 3 | 4 = 1): Promise<EvidenceItem[]> {
   const api = getElectronAPI();
-  const items = await api.getEvidenceList(1);
+  const items = await api.getEvidenceList(frameworkId);
 
   if (items && !Array.isArray(items)) throw new Error(items.error ?? 'Failed to load evidence');
   if (!Array.isArray(items)) return [];
@@ -116,7 +116,7 @@ async function electronGetEvidenceItems(): Promise<EvidenceItem[]> {
   }));
 }
 
-async function electronCollectEvidence(frameworkId = 1): Promise<EvidenceCollectionResult> {
+async function electronCollectEvidence(frameworkId: 1 | 2 | 3 | 4 = 1): Promise<EvidenceCollectionResult> {
   const api = getElectronAPI();
   return await api.collectWindowsEvidence(frameworkId);
 }
@@ -130,19 +130,19 @@ async function electronEvaluateCompliance(frameworkId = 1): Promise<ComplianceEv
 
 // ---- Public API (auto-selects electron vs http) ----
 
-export const getEvidenceSummary = async (): Promise<EvidenceSummary> => {
-  if (isElectron) return electronGetEvidenceSummary();
+export const getEvidenceSummary = async (frameworkId?: 1 | 2 | 3 | 4): Promise<EvidenceSummary> => {
+  if (isElectron) return electronGetEvidenceSummary(frameworkId);
   return httpGetEvidenceSummary();
 };
 
-export const getEvidenceItems = async (status?: string, search?: string): Promise<EvidenceItem[]> => {
-  if (isElectron) return electronGetEvidenceItems();
+export const getEvidenceItems = async (status?: string, search?: string, frameworkId?: 1 | 2 | 3 | 4): Promise<EvidenceItem[]> => {
+  if (isElectron) return electronGetEvidenceItems(frameworkId);
   return httpGetEvidenceItems(status, search);
 };
 
 export const collectEvidence = async (
   request?: EvidenceCollectionRequest,
-  frameworkId?: number
+  frameworkId?: 1 | 2 | 3 | 4
 ): Promise<EvidenceCollectionResult> => {
   if (isElectron) return electronCollectEvidence(frameworkId);
   return httpCollectEvidence(request || {});

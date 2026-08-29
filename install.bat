@@ -12,7 +12,7 @@ echo.
 :: Check Node.js
 :: -------------------------------------------
 where node >nul 2>&1
-if %errorlevel% neq 0 (
+if errorlevel 1 (
     color 0C
     echo  [ERROR] Node.js is not installed.
     echo.
@@ -30,7 +30,7 @@ echo  [OK] Node.js found: %NODE_VER%
 :: Check Python
 :: -------------------------------------------
 where python >nul 2>&1
-if %errorlevel% neq 0 (
+if errorlevel 1 (
     color 0C
     echo  [ERROR] Python is not installed.
     echo.
@@ -49,7 +49,7 @@ echo  [OK] %PYTHON_VER% found
 :: Check npm
 :: -------------------------------------------
 where npm >nul 2>&1
-if %errorlevel% neq 0 (
+if errorlevel 1 (
     color 0C
     echo  [ERROR] npm is not installed. It should come with Node.js.
     echo  Reinstall Node.js from https://nodejs.org/
@@ -59,14 +59,67 @@ if %errorlevel% neq 0 (
 )
 echo  [OK] npm found
 
+:: -------------------------------------------
+:: Check for Visual Studio Build Tools
+:: (needed to compile native modules like better-sqlite3)
+:: -------------------------------------------
+echo.
+echo  Checking for Visual C++ Build Tools...
+set "VSCPP_OK=0"
+if exist "C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" set VSCPP_OK=1
+if exist "C:\Program Files\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" set VSCPP_OK=1
+if exist "C:\Program Files (x86)\Microsoft Visual Studio\17\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" set VSCPP_OK=1
+if exist "C:\Program Files\Microsoft Visual Studio\17\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" set VSCPP_OK=1
+if exist "C:\Program Files (x86)\Microsoft Visual Studio\17\Community\VC\Auxiliary\Build\vcvarsall.bat" set VSCPP_OK=1
+if exist "C:\Program Files\Microsoft Visual Studio\17\Community\VC\Auxiliary\Build\vcvarsall.bat" set VSCPP_OK=1
+if exist "C:\Program Files (x86)\Microsoft Visual Studio\16\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" set VSCPP_OK=1
+if exist "C:\Program Files\Microsoft Visual Studio\16\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" set VSCPP_OK=1
+if "%VSCPP_OK%"=="1" goto vs_found
+
+color 0C
+echo  [MISSING] Visual C++ Build Tools
+echo.
+echo  ComplianceGuard uses a native database module (better-sqlite3)
+echo  that needs a C++ compiler to install. This is a one-time setup.
+echo.
+echo  To fix this:
+echo    1. Download Visual Studio Build Tools (free, ~2 GB):
+echo       https://visualstudio.microsoft.com/visual-cpp-build-tools/
+echo.
+echo    2. Run the installer and select this workload:
+echo       [x] "Desktop development with C++"
+echo.
+echo    3. Click Install and wait for it to finish.
+echo.
+echo    4. Come back here and run install.bat again.
+echo.
+echo  -------------------------------------------
+echo  Would you like to open the download page now? (Y/N)
+set /p OPENVS=
+if /i "%OPENVS%"=="Y" start https://visualstudio.microsoft.com/visual-cpp-build-tools/
+echo.
+echo  Press any key to exit...
+pause >nul
+exit /b 1
+
+:vs_found
+echo  [OK] Visual C++ Build Tools found
+
 echo.
 echo  -------------------------------------------
 echo  Step 1/4: Installing root dependencies...
 echo  -------------------------------------------
 call npm install
-if %errorlevel% neq 0 (
+if errorlevel 1 (
     color 0C
+    echo.
     echo  [ERROR] Root npm install failed.
+    echo.
+    echo  This is usually caused by a missing C++ compiler.
+    echo  Please install Visual Studio Build Tools and try again:
+    echo    https://visualstudio.microsoft.com/visual-cpp-build-tools/
+    echo  (select "Desktop development with C++" during install^)
+    echo.
     pause
     exit /b 1
 )
@@ -78,7 +131,7 @@ echo  Step 2/4: Installing frontend dependencies...
 echo  -------------------------------------------
 cd /d "%~dp0frontend"
 call npm install
-if %errorlevel% neq 0 (
+if errorlevel 1 (
     color 0C
     echo  [ERROR] Frontend npm install failed.
     cd /d "%~dp0"
@@ -94,7 +147,7 @@ echo  Step 3/4: Installing backend dependencies...
 echo  -------------------------------------------
 cd /d "%~dp0backend"
 pip install -r requirements.txt -q
-if %errorlevel% neq 0 (
+if errorlevel 1 (
     echo  [WARN] pip install had issues. Trying with --user flag...
     pip install -r requirements.txt -q --user
 )
@@ -107,7 +160,7 @@ echo  Step 4/4: Running database migrations...
 echo  -------------------------------------------
 cd /d "%~dp0backend"
 python -m alembic upgrade head 2>nul
-if %errorlevel% neq 0 (
+if errorlevel 1 (
     echo  [INFO] Alembic migration skipped (tables will auto-create on first run)
 )
 cd /d "%~dp0"
