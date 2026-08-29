@@ -194,6 +194,20 @@ jobs:
       - name: Install frontend dependencies
         run: cd frontend && npm ci
 
+      - name: Sync version from tag into constants.json
+        shell: bash
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          echo "Setting VERSION to $TAG_VERSION in shared/constants.json"
+          node -e "
+            const fs = require('fs');
+            const p = 'shared/constants.json';
+            const data = JSON.parse(fs.readFileSync(p, 'utf8'));
+            data.VERSION = '$TAG_VERSION';
+            fs.writeFileSync(p, JSON.stringify(data, null, 2) + '\\n');
+          "
+          cat shared/constants.json
+
       # electron-builder 26's GitHub publisher is unreliable for multi-target
       # builds: it spawns one publisher per target, races to create/resolve the
       # release, can resolve a different release object than the tag implies
@@ -289,6 +303,20 @@ jobs:
 
       - name: Install frontend dependencies
         run: cd frontend && npm ci
+
+      - name: Sync version from tag into constants.json
+        shell: bash
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          echo "Setting VERSION to $TAG_VERSION in shared/constants.json"
+          node -e "
+            const fs = require('fs');
+            const p = 'shared/constants.json';
+            const data = JSON.parse(fs.readFileSync(p, 'utf8'));
+            data.VERSION = '$TAG_VERSION';
+            fs.writeFileSync(p, JSON.stringify(data, null, 2) + '\\n');
+          "
+          cat shared/constants.json
 
       # Same pre-create as the Windows job; idempotent insurance for re-runs.
       - name: Create draft release
