@@ -1,35 +1,43 @@
-# Dependabot keeps the dependency surface current. Weekly cadence keeps PR
-# volume manageable; the CI gates (npm audit, pip-audit, coverage, tests) run
-# on every Dependabot PR, so a bump that breaks the build or reintroduces a
-# high/critical advisory cannot merge silently.
 version: 2
 updates:
-  - package-ecosystem: npm
-    directory: /
+  # npm — root + frontend
+  - package-ecosystem: "npm"
+    directories:
+      - "/"
+      - "/frontend"
     schedule:
-      interval: weekly
+      interval: "weekly"
+      day: "monday"
     open-pull-requests-limit: 10
     groups:
-      electron-toolchain:
-        patterns:
-          - "electron"
-          - "electron-builder"
-          - "electron-updater"
+      npm-patch-minor:
+        update-types:
+          - "minor"
+          - "patch"
+    commit-message:
+      prefix: "deps"
 
-  - package-ecosystem: npm
-    directory: /frontend
+  # pip — backend
+  - package-ecosystem: "pip"
+    directory: "/backend"
     schedule:
-      interval: weekly
-    open-pull-requests-limit: 10
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    groups:
+      pip-patch-minor:
+        update-types:
+          - "minor"
+          - "patch"
+    commit-message:
+      prefix: "deps"
 
-  - package-ecosystem: pip
-    directory: /backend
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
     schedule:
-      interval: weekly
-    open-pull-requests-limit: 10
-
-  - package-ecosystem: github-actions
-    directory: /
-    schedule:
-      interval: weekly
-    open-pull-requests-limit: 10
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
