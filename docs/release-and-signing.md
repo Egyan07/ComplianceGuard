@@ -42,8 +42,8 @@ The release jobs run only on tag pushes matching `v*`:
 # 1. Bump "version" in package.json (root). The version here drives the
 #    installer name, latest.yml, and the update check.
 # 2. Commit, then tag and push:
-git tag v3.7.0
-git push origin v3.7.0
+git tag v3.9.0
+git push origin v3.9.0
 ```
 
 CI then: runs all suites → builds the Windows installer (signed if credentials
@@ -96,7 +96,7 @@ Azure Trusted Signing requires the `trusted-signing` Azure extension; see
 ### Verifying a signature locally (Windows)
 
 ```powershell
-Get-AuthenticodeSignature .\dist\ComplianceGuard-Setup-3.7.0.exe
+Get-AuthenticodeSignature .\dist\ComplianceGuard-Setup-3.9.0.exe
 # Status: Valid
 # SignerCertificate.Subject: CN=…, O=ComplianceGuard LLC, …
 ```
@@ -128,7 +128,7 @@ npm run publish            # --publish always → draft GitHub release
 
 # Add checksums:
 (cd dist && sha256sum *.exe *.yml > SHA256SUMS.txt)
-gh release upload v3.7.0 dist/SHA256SUMS.txt --clobber
+gh release upload v3.9.0 dist/SHA256SUMS.txt --clobber
 ```
 
 `npm run package` builds locally without publishing (`--publish never`).
