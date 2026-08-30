@@ -38,7 +38,7 @@ prometheus-client>=0.20,<1
 PyYAML>=6.0,<7
 email-validator==2.1.0
 python-dateutil==2.8.2
-pytz==2023.3
+pytz==2026.3.post1
 
 # AWS Integration
 boto3==1.43.72
