@@ -27,7 +27,7 @@
     "@mui/lab": "^9.0.0-beta.2",
     "@mui/material": "^9.0.0",
     "@sentry/react": "^10.48.0",
-    "@tanstack/react-query": "^5.8.0",
+    "@tanstack/react-query": "^5.102.8",
     "axios": "^1.6.0",
     "framer-motion": "^12.38.0",
     "react": "^18.2.0",
