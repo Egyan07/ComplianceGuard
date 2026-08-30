@@ -8,6 +8,45 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [3.9.0] — 2026-08-29
+
+### Fixed
+
+- **GDPR framework selection in desktop app** — the Electron framework picker now
+  correctly routes GDPR evaluations to the scoring engine, and evidence collection
+  properly targets the selected framework instead of defaulting to SOC 2.
+
+---
+
+## [3.8.0] — 2026-08-20
+
+### Added
+
+- **Electron processing test suite** — 74 new tests for the canonical engine,
+  evidence processor, report generator, remediation scripts, and evidence
+  vocabulary modules.
+
+### Changed
+
+- **Release CI hardening** — Windows installer uploads now use `gh release upload`
+  instead of electron-builder's unreliable GitHub publisher, preventing race
+  conditions across multi-target builds. Invalid `win.publisherName` removed
+  for electron-builder 26 schema compliance.
+
+### Fixed
+
+- **Security hardening** — migration guide hardened, error handling improved,
+  input validation tightened across API endpoints.
+
+### Docs
+
+- Added `docs/deployment.md` production deployment guide (Railway, Docker
+  Compose, Render, manual VPS).
+- Added `docs/migrate-sqlite-to-postgres.md` migration guide.
+- Fixed framework file paths in documentation.
+
+---
+
 ## [3.7.0] — 2026-08-16
 
 ### Changed
