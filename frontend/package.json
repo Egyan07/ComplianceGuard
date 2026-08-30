@@ -25,7 +25,7 @@
     "@fontsource/inter": "^5.2.8",
     "@mui/icons-material": "^9.0.0",
     "@mui/lab": "^9.0.0-beta.2",
-    "@mui/material": "^9.0.0",
+    "@mui/material": "^9.4.0",
     "@sentry/react": "^10.48.0",
     "@tanstack/react-query": "^5.8.0",
     "axios": "^1.6.0",
