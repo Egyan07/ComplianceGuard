@@ -10,7 +10,7 @@ alembic>=1.13,<2
 psycopg2-binary>=2.9.9
 
 # Authentication and security
-PyJWT>=2.8,<3
+PyJWT>=2.13.0,<3
 bcrypt>=4.1,<5
 python-multipart>=0.0.9
 
