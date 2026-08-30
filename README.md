@@ -471,7 +471,7 @@ ComplianceGuard supports Windows and macOS endpoints. The following limitations 
 - **Automatic scheduling** — Daily or Weekly evidence collection runs automatically while the desktop app is open. Configure in Settings → Automatic Collection.
 - **Per-machine view in desktop mode** — the Electron app shows one machine at a time. Use web mode (self-hosted or managed) with the Cloud Dashboard to monitor multiple machines centrally.
 - **AWS only for cloud evidence** — the web backend collects S3 and IAM evidence from AWS. GCP and Azure are not yet implemented.
-- **PCI DSS not yet implemented** — SOC 2 Type II (54 controls), ISO 27001:2013 (47 controls), and HIPAA Security Rule (47 safeguards) are all available. PCI DSS is planned.
+- **PCI DSS not yet implemented** — SOC 2 Type II (54 controls), ISO 27001:2013 (47 controls), HIPAA Security Rule (47 safeguards), and GDPR (38 obligations) are all available. PCI DSS is planned.
 - **Single machine in free tier** — the free tier is limited to one machine. Pro supports up to 10, Enterprise is unlimited.
 - **No real-time monitoring** — ComplianceGuard takes point-in-time snapshots, not continuous streams.
 - **PDF reports require Pro** — the free tier shows your overall score but does not generate audit-ready PDF exports.
@@ -713,7 +713,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 |------|---------|
 | Evidence collection (8 categories — event logs, registry, services, firewall, users, network, software, file permissions) | Linux support |
 | **macOS support** — native evidence collection on Intel + Apple Silicon; unsigned DMG distribution with Gatekeeper bypass | |
-| SOC 2 Type II (54 controls), ISO 27001:2013 (47 controls), HIPAA Security Rule (47 safeguards) | GCP and Azure cloud evidence |
+| SOC 2 Type II (54 controls), ISO 27001:2013 (47 controls), HIPAA Security Rule (47 safeguards), GDPR (38 obligations) | GCP and Azure cloud evidence |
 | Scheduled automatic evidence collection (Daily/Weekly) | PCI DSS framework |
 | PDF audit-ready reports + evaluation history | Setup video walkthrough |
 | **Control Heatmap** — per-control score bars, status pills, gap details; all 54 SOC 2 controls at a glance | Evidence status workflow |
