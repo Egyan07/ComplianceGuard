@@ -26,7 +26,7 @@ httpx>=0.26,<1
 aiosmtplib>=3.0.0
 
 # Rate limiting
-slowapi==0.1.9
+slowapi==0.1.10
 
 # Error monitoring
 sentry-sdk[fastapi]>=2.0.0
@@ -36,13 +36,13 @@ prometheus-client>=0.20,<1
 
 # Utilities
 PyYAML>=6.0,<7
-email-validator==2.1.0
-python-dateutil==2.8.2
+email-validator==2.3.0
+python-dateutil==2.9.0.post0
 pytz==2023.3
 
 # AWS Integration
-boto3==1.43.72
-botocore==1.43.72
+boto3==1.43.82
+botocore==1.43.82
 
 # License key verification
 cryptography>=42.0.0
