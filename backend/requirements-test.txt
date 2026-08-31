@@ -3,7 +3,7 @@
 # dependency surface as production) plus the pytest toolchain.
 # Code quality is handled by ruff (see pyproject.toml), not black/isort/flake8.
 fastapi>=0.110,<1
-uvicorn[standard]>=0.27,<1
+uvicorn[standard]>=0.52.4,<1
 sqlalchemy>=2.0.32,<3
 alembic>=1.13,<2
 psycopg2-binary>=2.9.9

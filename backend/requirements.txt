@@ -1,7 +1,7 @@
 # FastAPI and ASGI server
 # fastapi>=0.110 is the first release with Python 3.13 wheels upstream.
 fastapi>=0.110,<1
-uvicorn[standard]>=0.27,<1
+uvicorn[standard]>=0.52.4,<1
 
 # Database and ORM
 # sqlalchemy>=2.0.30 ships wheels that work with Python 3.13's typing module.
