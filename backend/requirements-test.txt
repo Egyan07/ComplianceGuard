@@ -2,7 +2,7 @@
 # Mirrors the ranges in requirements.txt (so tests exercise the same
 # dependency surface as production) plus the pytest toolchain.
 # Code quality is handled by ruff (see pyproject.toml), not black/isort/flake8.
-fastapi>=0.110,<1
+fastapi>=0.141.1,<1
 uvicorn[standard]>=0.27,<1
 sqlalchemy>=2.0.32,<3
 alembic>=1.13,<2
