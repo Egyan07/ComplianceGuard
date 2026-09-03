@@ -181,6 +181,12 @@ jobs:
     # Needed to upload installers + latest.yml to the draft release.
     permissions:
       contents: write
+    # Whether this pipeline owns the release as a draft. The integrity job uses
+    # this to enforce "no accidental publish" only when the release was created
+    # (or already existed) as a draft — an already-published release (e.g. after
+    # a re-tag) is not pipeline-owned, so the assertion is skipped there.
+    outputs:
+      release_is_draft: ${{ steps.create_release.outputs.release_is_draft }}
     steps:
       - uses: actions/checkout@v4
 
@@ -217,16 +223,26 @@ jobs:
       # written into dist/) and upload deterministically with `gh release
       # upload --clobber`, which targets the same tag the integrity job reads.
       - name: Create draft release
+        id: create_release
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if gh release view "${{ github.ref_name }}" --json isDraft --jq .isDraft >/dev/null 2>&1; then
+          # Report whether this pipeline owns the release as a draft. The
+          # integrity job only asserts "still a draft" in that case; an already
+          # published release (e.g. after a re-tag) is not a pipeline-owned
+          # draft, so the assertion is skipped there.
+          if gh release view "${{ github.ref_name }}" --json isDraft --jq .isDraft 2>/dev/null | grep -q 'true'; then
             echo "Draft release ${{ github.ref_name }} already exists"
+            echo "release_is_draft=true" >> "$GITHUB_OUTPUT"
+          elif gh release view "${{ github.ref_name }}" >/dev/null 2>&1; then
+            echo "Release ${{ github.ref_name }} already exists and is published — skipping draft assertion"
+            echo "release_is_draft=false" >> "$GITHUB_OUTPUT"
           else
             gh release create "${{ github.ref_name }}" --draft \
               --title "ComplianceGuard ${{ github.ref_name }}" \
               --notes "ComplianceGuard ${{ github.ref_name }} — draft release. Installers are uploaded by CI; publish manually after verification."
+            echo "release_is_draft=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Build Windows installer
@@ -402,6 +418,11 @@ jobs:
         run: gh release upload "${{ github.ref_name }}" release-assets/sbom.spdx.json --clobber
 
       - name: Verify draft is still a draft (no accidental publish)
+        # Only enforced when this pipeline owns the release as a draft (fresh
+        # tag, or a pre-existing draft). If the release was already published
+        # before the run, the assertion is skipped — the pipeline still
+        # --clobber-uploads the fresh assets onto the live release.
+        if: needs.release.outputs.release_is_draft == 'true'
         run: |
           draft=$(gh release view "${{ github.ref_name }}" --json isDraft --jq .isDraft)
           echo "Release is draft: $draft"
