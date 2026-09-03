@@ -8,13 +8,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-## [3.9.0] — 2026-08-29
+## [3.9.0] — 2026-09-03
+
+### Changed
+
+- **Visual redesign — one design system across the app** — a single
+  ThemeProvider and typography (Inter) everywhere, including the auth pages;
+  canonical semantic status colors (one success/warning/error language, no
+  independent color dialects); a unified 0-100 score scale with canonical
+  bands (≥85 Good Standing, ≥70 On Track, <70 Needs Attention) shared by the
+  hero status chip, trend-chart zones, and history list; a 6/8/12px radius
+  system; flat primary buttons (gradient CTAs removed); improved contrast and
+  readability; and dead Tailwind/shadcn scaffolding removed.
+- **Distinctive data surfaces** — the control heatmap now reads as a ledger
+  with state rails, quiet healthy rows, and live per-category counts; evidence
+  rows carry a document-record grammar and route statuses through the shared
+  token `StatusChip`; cloud machine statuses use the same token grammar;
+  Framework Browser detail labels are readable (no more uppercase
+  micro-overlines) and its dark-mode surface leak is fixed.
+- **Shell polish** — Settings now uses the shared PageHeader, and its sidebar
+  context navigation is real anchor navigation (items previously did nothing
+  and were in the wrong order).
 
 ### Fixed
 
 - **GDPR framework selection in desktop app** — the Electron framework picker now
   correctly routes GDPR evaluations to the scoring engine, and evidence collection
   properly targets the selected framework instead of defaulting to SOC 2.
+- **Cross-surface score consistency** — history/trend rows previously
+  classified by the engine's ≥90 status vocabulary while the hero and chart
+  used the ≥85 band, so scores 85-89 could read "On Track" inside the green
+  zone. All surfaces now classify from the score via the canonical bands.
 
 ---
 
