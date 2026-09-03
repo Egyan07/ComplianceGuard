@@ -219,34 +219,34 @@ const FrameworkBrowser: React.FC = () => {
                               <Chip
                                 label={control.risk_level.toUpperCase()}
                                 size="small"
-                                sx={{ ...(RISK_CHIP_SX[control.risk_level] ?? {}), fontWeight: 600, fontSize: '0.65rem' }}
+                                sx={{ ...(RISK_CHIP_SX[control.risk_level] ?? {}), fontWeight: 650, fontSize: '0.72rem' }}
                               />
                             )}
                           </Box>
                         </AccordionSummary>
-                        <AccordionDetails sx={{ backgroundColor: '#F8FAFC', p: 2 }}>
+                        <AccordionDetails sx={{ backgroundColor: theme.palette.mode === 'light' ? 'rgba(15,23,42,0.02)' : 'rgba(255,255,255,0.02)', p: 2 }}>
                           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                             <Box>
-                              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 650, display: 'block', letterSpacing: '0.4px', textTransform: 'uppercase' }}>
+                              <Typography sx={{ fontSize: '0.78rem', fontWeight: 600, color: 'text.secondary', display: 'block', mb: 0.25 }}>
                                 Description
                               </Typography>
                               <Typography variant="body2">{control.description}</Typography>
                             </Box>
                             <Box>
-                              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 650, display: 'block', letterSpacing: '0.4px', textTransform: 'uppercase' }}>
+                              <Typography sx={{ fontSize: '0.78rem', fontWeight: 600, color: 'text.secondary', display: 'block', mb: 0.25 }}>
                                 Objective
                               </Typography>
                               <Typography variant="body2">{control.control_objective}</Typography>
                             </Box>
                             <Box>
-                              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 650, display: 'block', letterSpacing: '0.4px', textTransform: 'uppercase' }}>
+                              <Typography sx={{ fontSize: '0.78rem', fontWeight: 600, color: 'text.secondary', display: 'block', mb: 0.25 }}>
                                 Implementation guidance
                               </Typography>
                               <Typography variant="body2">{control.implementation_guidance}</Typography>
                             </Box>
                             {control.specification_type && (
                               <Box>
-                                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 650, display: 'block', letterSpacing: '0.4px', textTransform: 'uppercase' }}>
+                                <Typography sx={{ fontSize: '0.78rem', fontWeight: 600, color: 'text.secondary', display: 'block', mb: 0.5 }}>
                                   Type
                                 </Typography>
                                 <Chip

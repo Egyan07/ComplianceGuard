@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import type { TrendPoint, TrendDisplayPoint } from '../services/api';
 import EmptyState from './ui/EmptyState';
 import Segmented from './ui/Segmented';
-import { RADIUS } from '../theme';
+import { RADIUS, SCORE_BAND_GOOD, SCORE_BAND_ON_TRACK, SCORE_BAND_LABEL, scoreBand } from '../theme';
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
@@ -20,9 +20,10 @@ const W = 820, H = 120, PAD = 40;
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-function statusLabel(s: TrendPoint['status']): string {
-  if (s === 'compliant') return 'Good Standing';
-  if (s === 'partial')   return 'On Track';
+function statusLabel(score: number): string {
+  const band = scoreBand(score);
+  if (band === 'good') return 'Good Standing';
+  if (band === 'on_track') return 'On Track';
   return 'Needs Attention';
 }
 
@@ -34,7 +35,10 @@ function toDisplayPoints(pts: TrendPoint[]): TrendDisplayPoint[] {
   return pts.map((p, i) => ({
     ...p,
     formattedDate: fmtDate(p.date),
-    statusLabel: statusLabel(p.status),
+    // The canonical 0-100 readiness bands (≥85 good / ≥70 on track / <70
+    // attention) are the single display vocabulary — labels never depend on
+    // the engine's stored status string (whose thresholds differ).
+    statusLabel: statusLabel(p.score),
     delta: i === 0 ? undefined : p.score - pts[i - 1].score,
   }));
 }
@@ -104,7 +108,8 @@ interface ChartPalette {
 const ScoreHero: React.FC<{ pts: TrendDisplayPoint[]; pal: ChartPalette }> = ({ pts, pal }) => {
   const latest = pts[pts.length - 1];
   const delta = pts.length >= 2 ? pts[pts.length - 1].score - pts[0].score : undefined;
-  const dotColor = latest?.status === 'compliant' ? pal.good : latest?.status === 'partial' ? pal.warn : pal.bad;
+  const band = latest ? scoreBand(latest.score) : 'attention';
+  const dotColor = band === 'good' ? pal.good : band === 'on_track' ? pal.warn : pal.bad;
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', mb: '28px', flexWrap: 'wrap', gap: 2 }}>
@@ -130,7 +135,7 @@ const ScoreHero: React.FC<{ pts: TrendDisplayPoint[]; pal: ChartPalette }> = ({ 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px', mt: '8px' }}>
           <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: dotColor }} />
           <Typography sx={{ fontSize: '0.8125rem', fontWeight: 500, color: 'text.secondary' }}>
-            {latest ? (latest.status === 'compliant' ? 'Compliant' : latest.status === 'partial' ? 'Partial' : 'Non-compliant') : ''}
+            {latest ? SCORE_BAND_LABEL[scoreBand(latest.score)] : ''}
           </Typography>
         </Box>
       </Box>
@@ -173,7 +178,12 @@ const ScoreHero: React.FC<{ pts: TrendDisplayPoint[]; pal: ChartPalette }> = ({ 
   );
 };
 
-const TrendChart: React.FC<{ pts: TrendDisplayPoint[]; geo: ChartGeometry; pal: ChartPalette }> = ({ pts, geo, pal }) => (
+const TrendChart: React.FC<{ pts: TrendDisplayPoint[]; geo: ChartGeometry; pal: ChartPalette }> = ({ pts, geo, pal }) => {
+  // Zone gridlines derive from the canonical score scale (theme.ts) so the
+  // trend zones and the hero band can never disagree about what score is good.
+  const goodY = (1 - SCORE_BAND_GOOD / 100) * H;   // top of the good zone
+  const onTrackY = (1 - SCORE_BAND_ON_TRACK / 100) * H; // top of the on-track zone
+  return (
   <Box>
     <svg
       role="img"
@@ -189,12 +199,12 @@ const TrendChart: React.FC<{ pts: TrendDisplayPoint[]; geo: ChartGeometry; pal: 
         </linearGradient>
       </defs>
       <line x1="0" y1="0" x2={W} y2="0" stroke={pal.grid} strokeWidth="0.8" />
-      <line x1="0" y1="18" x2={W} y2="18" stroke={pal.grid} strokeWidth="0.8" strokeDasharray="3 4" />
-      <line x1="0" y1="36" x2={W} y2="36" stroke={pal.grid} strokeWidth="0.8" strokeDasharray="3 4" />
+      <line x1="0" y1={goodY} x2={W} y2={goodY} stroke={pal.grid} strokeWidth="0.8" strokeDasharray="3 4" />
+      <line x1="0" y1={onTrackY} x2={W} y2={onTrackY} stroke={pal.grid} strokeWidth="0.8" strokeDasharray="3 4" />
       <line x1="0" y1={H} x2={W} y2={H} stroke={pal.grid} strokeWidth="0.8" />
-      <text x="4" y="14" fontSize="10" fill={pal.good} fontFamily="Inter" fontWeight="600" letterSpacing="0.02em" aria-hidden="true">≥85%</text>
-      <text x="4" y="32" fontSize="10" fill={pal.warn} fontFamily="Inter" fontWeight="600" letterSpacing="0.02em" aria-hidden="true">≥70%</text>
-      <text x="4" y={H - 4} fontSize="10" fill={pal.bad} fontFamily="Inter" fontWeight="600" letterSpacing="0.02em" aria-hidden="true">&lt;70%</text>
+      <text x="4" y={goodY - 4} fontSize="11" fill={pal.good} fontFamily="Inter" fontWeight="600" letterSpacing="0.02em" aria-hidden="true">≥{SCORE_BAND_GOOD}%</text>
+      <text x="4" y={onTrackY - 4} fontSize="11" fill={pal.warn} fontFamily="Inter" fontWeight="600" letterSpacing="0.02em" aria-hidden="true">≥{SCORE_BAND_ON_TRACK}%</text>
+      <text x="4" y={H - 4} fontSize="11" fill={pal.bad} fontFamily="Inter" fontWeight="600" letterSpacing="0.02em" aria-hidden="true">&lt;{SCORE_BAND_ON_TRACK}%</text>
       {geo.fillPath && <path d={geo.fillPath} fill="url(#trendFill)" />}
       {geo.linePath && (
         <motion.path
@@ -219,7 +229,7 @@ const TrendChart: React.FC<{ pts: TrendDisplayPoint[]; geo: ChartGeometry; pal: 
         return (
           <g>
             <rect x={lp.x - 38} y={pillarY - 22} width="76" height="18" rx="9" ry="9" fill={pal.ink} />
-            <text x={lp.x} y={pillarY - 10} fontSize="10" fill="#ffffff" fontFamily="Inter" fontWeight="600" textAnchor="middle" style={{ letterSpacing: '-0.3px' }}>
+            <text x={lp.x} y={pillarY - 10} fontSize="11" fill="#ffffff" fontFamily="Inter" fontWeight="600" textAnchor="middle" style={{ letterSpacing: '-0.3px' }}>
               {latest?.score}% · now
             </text>
           </g>
@@ -241,12 +251,13 @@ const TrendChart: React.FC<{ pts: TrendDisplayPoint[]; geo: ChartGeometry; pal: 
       ))}
     </Box>
   </Box>
-);
+  );
+};
 
-const STATUS_FILL: Record<TrendPoint['status'], (pal: ChartPalette) => string> = {
-  compliant: pal => pal.good,
-  partial: pal => pal.warn,
-  non_compliant: pal => pal.bad,
+const STATUS_FILL: Record<ReturnType<typeof scoreBand>, (pal: ChartPalette) => string> = {
+  good: pal => pal.good,
+  on_track: pal => pal.warn,
+  attention: pal => pal.bad,
 };
 
 const EvaluationTable: React.FC<{ pts: TrendDisplayPoint[]; pal: ChartPalette }> = ({ pts, pal }) => (
@@ -281,7 +292,7 @@ const EvaluationTable: React.FC<{ pts: TrendDisplayPoint[]; pal: ChartPalette }>
           {p.formattedDate}
         </Typography>
         <Box sx={{ flex: 1, background: pal.track, borderRadius: '999px', height: '4px', overflow: 'hidden' }}>
-          <Box sx={{ height: '100%', borderRadius: '999px', width: `${p.score}%`, bgcolor: STATUS_FILL[p.status](pal) }} />
+          <Box sx={{ height: '100%', borderRadius: '999px', width: `${p.score}%`, bgcolor: STATUS_FILL[scoreBand(p.score)](pal) }} />
         </Box>
         <Typography
           sx={{

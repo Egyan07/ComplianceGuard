@@ -12,7 +12,6 @@ import {
   Paper,
   Button,
   CircularProgress,
-  Chip,
   Tooltip,
   Table,
   TableBody,
@@ -27,6 +26,7 @@ import { getFleetStats, getMachines, FleetStats, MachineRecord } from '../servic
 import PageHeader from './ui/PageHeader';
 import EmptyState from './ui/EmptyState';
 import StatCard from './ui/StatCard';
+import StatusChip from './ui/StatusChip';
 import { RADIUS, Tone } from '../theme';
 
 const STALE_THRESHOLD_DAYS = 7;
@@ -192,18 +192,7 @@ const CloudDashboard: React.FC<CloudDashboardProps> = () => {
                   </TableCell>
                   <TableCell>
                     {machine.compliance_level ? (
-                      <Chip
-                        label={statusLabel}
-                        size="small"
-                        sx={{
-                          fontSize: '0.7rem',
-                          fontWeight: 600,
-                          color: `${tone}.dark`,
-                          backgroundColor: `${tone}.light`,
-                          border: '1px solid',
-                          borderColor: 'divider',
-                        }}
-                      />
+                      <StatusChip tone={tone} label={statusLabel} size="sm" />
                     ) : (
                       '\u2014'
                     )}

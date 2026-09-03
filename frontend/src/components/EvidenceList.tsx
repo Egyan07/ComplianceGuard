@@ -7,13 +7,12 @@ source information, and filtering capabilities using Material-UI.
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { RADIUS } from '../theme';
+import { RADIUS, Tone } from '../theme';
 import {
   Card,
   CardContent,
   CardHeader,
   Typography,
-  Chip,
   Box,
   Collapse,
   TextField,
@@ -32,6 +31,7 @@ import {
   ExpandMore,
   FilterList
 } from '@mui/icons-material';
+import StatusChip from './ui/StatusChip';
 import { EvidenceItem } from '../services/api';
 
 interface EvidenceListProps {
@@ -83,7 +83,7 @@ const EvidenceList: React.FC<EvidenceListProps> = ({
     }));
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusTone = (status: string): Tone => {
     switch (status.toLowerCase()) {
       case 'compliant':
         return 'success';
@@ -93,7 +93,7 @@ const EvidenceList: React.FC<EvidenceListProps> = ({
       case 'non-compliant':
         return 'error';
       default:
-        return 'default';
+        return 'neutral';
     }
   };
 
@@ -242,38 +242,49 @@ const EvidenceList: React.FC<EvidenceListProps> = ({
                     borderColor: 'divider',
                     borderRadius: RADIUS.sm,
                     mb: 1,
-                    py: 0.875,
-                    px: 2,
+                    py: 1,
+                    px: 1.75,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.75,
                     '&:hover': {
                       backgroundColor: 'action.hover'
                     },
                     cursor: 'pointer'
                   }}
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Box>
-                      {getSourceIcon(item.source)}
-                    </Box>
-                    <Box sx={{ flex: 1 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                        <Typography variant="subtitle2">
-                          {item.type.replace(/_/g, ' ').toUpperCase()}
-                        </Typography>
-                        <Chip
-                          size="small"
-                          label={formatStatus(item.status)}
-                          color={getStatusColor(item.status) as 'success' | 'warning' | 'error' | 'default'}
-                          variant="outlined"
-                        />
-                      </Box>
-                      <Typography variant="body2" color="text.secondary">
-                        Source: {item.source.replace(/_/g, ' ')} •
-                        {new Date(item.timestamp).toLocaleDateString()}
+                  {/* Evidence record: leading source tile + type + state + meta */}
+                  <Box
+                    sx={{
+                      width: 30,
+                      height: 30,
+                      borderRadius: RADIUS.sm,
+                      flexShrink: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'text.secondary',
+                      bgcolor: 'action.hover',
+                    }}
+                  >
+                    {getSourceIcon(item.source)}
+                  </Box>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.25 }}>
+                      <Typography
+                        sx={{ fontSize: '0.8125rem', fontWeight: 650, color: 'text.primary', lineHeight: 1.4 }}
+                      >
+                        {item.type.replace(/_/g, ' ').toUpperCase()}
                       </Typography>
+                      <StatusChip tone={getStatusTone(item.status)} label={formatStatus(item.status)} size="sm" />
                     </Box>
-                    <Box>
-                      {expandedItems.has(item.id) ? <ExpandLess /> : <ExpandMore />}
-                    </Box>
+                    <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', lineHeight: 1.5 }}>
+                      Source: {item.source.replace(/_/g, ' ')} •
+                      {new Date(item.timestamp).toLocaleDateString()}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ color: 'text.disabled', flexShrink: 0 }}>
+                    {expandedItems.has(item.id) ? <ExpandLess /> : <ExpandMore />}
                   </Box>
                 </Box>
 

@@ -12,11 +12,12 @@ and the handlers each section triggers.
 
 import React, { useState, useEffect } from 'react';
 import {
+  Box,
   Container,
-  Typography,
   Alert,
   Snackbar,
 } from '@mui/material';
+import PageHeader from './ui/PageHeader';
 import { useLicense } from '../contexts/LicenseContext';
 import { VERSION } from '../constants';
 import { getElectronAPI, isElectronMode } from '../services/electron';
@@ -124,46 +125,61 @@ const Settings: React.FC = () => {
 
   return (
     <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
-      <Typography component="h1" sx={{ fontWeight: 700, fontSize: '1.5rem', letterSpacing: '-0.6px', mb: 3 }}>
-        Settings
-      </Typography>
+      <PageHeader title="Settings" />
 
-      <AboutSection appVersion={appVersion} systemInfo={systemInfo} isElectron={isElectron} />
+      {/* Section anchors are the targets the sidebar's Settings navigation scrolls to. */}
+      <Box id="settings-about" sx={{ scrollMarginTop: 60 }}>
+        <AboutSection appVersion={appVersion} systemInfo={systemInfo} isElectron={isElectron} />
+      </Box>
 
-      <LicenseSection
-        tier={tier}
-        licenseInfo={licenseInfo}
-        activateLicense={activateLicense}
-        deactivateLicense={handleDeactivateLicense}
-        onSuccess={setSuccessMessage}
-        onError={setError}
-      />
-
-      <EnterprisePanel />
-
-      <DatabaseSection isElectron={isElectron} onBackup={handleBackup} />
-
-      {isElectron && (
-        <CloudSyncSection
-          cloudConfig={cloudConfig}
-          onConnect={handleCloudConnect}
-          onDisconnect={handleCloudDisconnect}
+      <Box id="settings-license" sx={{ scrollMarginTop: 60 }}>
+        <LicenseSection
+          tier={tier}
+          licenseInfo={licenseInfo}
+          activateLicense={activateLicense}
+          deactivateLicense={handleDeactivateLicense}
           onSuccess={setSuccessMessage}
           onError={setError}
         />
+      </Box>
+
+      <Box id="settings-enterprise" sx={{ scrollMarginTop: 60 }}>
+        <EnterprisePanel />
+      </Box>
+
+      <Box id="settings-database" sx={{ scrollMarginTop: 60 }}>
+        <DatabaseSection isElectron={isElectron} onBackup={handleBackup} />
+      </Box>
+
+      {isElectron && (
+        <Box id="settings-cloud" sx={{ scrollMarginTop: 60 }}>
+          <CloudSyncSection
+            cloudConfig={cloudConfig}
+            onConnect={handleCloudConnect}
+            onDisconnect={handleCloudDisconnect}
+            onSuccess={setSuccessMessage}
+            onError={setError}
+          />
+        </Box>
       )}
 
       {isElectron && (
-        <ScheduleSection
-          schedule={schedule}
-          onChange={handleScheduleChange}
-          onRunNow={handleRunNow}
-        />
+        <Box id="settings-schedule" sx={{ scrollMarginTop: 60 }}>
+          <ScheduleSection
+            schedule={schedule}
+            onChange={handleScheduleChange}
+            onRunNow={handleRunNow}
+          />
+        </Box>
       )}
 
-      <DisplaySection />
+      <Box id="settings-display" sx={{ scrollMarginTop: 60 }}>
+        <DisplaySection />
+      </Box>
 
-      <FrameworksSection />
+      <Box id="settings-frameworks" sx={{ scrollMarginTop: 60 }}>
+        <FrameworksSection />
+      </Box>
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>

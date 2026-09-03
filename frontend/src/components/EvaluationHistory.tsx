@@ -37,7 +37,7 @@ import type { TrendPoint } from '../services/api';
 import type { Recommendation } from '../services/api.types';
 import { getElectronAPI, isElectronMode } from '../services/electron';
 import { getErrorMessage } from '../lib/errors';
-import { RADIUS, Tone, toneColors } from '../theme';
+import { RADIUS, SCORE_BAND_LABEL, SCORE_BAND_TONE, scoreBand, Tone, toneColors } from '../theme';
 
 const isElectron = isElectronMode();
 
@@ -64,11 +64,14 @@ interface EvaluationHistoryProps {
   onNavigate?: (page: string) => void;
 }
 
-const TONE_FOR_STATUS: Record<string, Tone> = {
-  compliant: 'success',
-  partial: 'warning',
-  non_compliant: 'error',
-};
+// The canonical 0-100 readiness bands (theme.ts: ≥85 good / ≥70 on track /
+// <70 attention) are the single display vocabulary — the stored engine status
+// string (whose thresholds differ) never drives a row's tone or label.
+const BAND_ICON = {
+  good: CheckCircle,
+  on_track: Warning,
+  attention: ErrorIcon,
+} as const;
 
 const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => {
   const theme = useTheme();
@@ -114,8 +117,6 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
   useEffect(() => {
     fetchHistory(selectedFramework);
   }, [selectedFramework]);
-
-  const toneOf = (status?: string): Tone => TONE_FOR_STATUS[status ?? ''] ?? 'neutral';
 
   if (!isFeatureAllowed('evaluation_history')) {
     return (
@@ -193,9 +194,14 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
               {evaluations.map((eval_, index) => {
                 const score = Math.round(eval_.overall_score || eval_.findings?.overall_score || 0);
                 const findings = eval_.findings || {};
-                const status = eval_.status || findings.status || 'not_assessed';
-                const tone = toneOf(status);
+                const notAssessed = score === 0 && (eval_.status || findings.status) === 'not_assessed';
+                const band = scoreBand(score);
+                const tone: Tone = SCORE_BAND_TONE[band];
+                // Chip takes a concrete MUI color; the canonical bands only
+                // ever map to success/warning/error (never neutral).
+                const chipColor = tone === 'error' ? 'error' : tone === 'warning' ? 'warning' : 'success';
                 const tc = toneColors(theme, tone);
+                const BandIcon = BAND_ICON[band];
 
                 return (
                   <React.Fragment key={eval_.id || index}>
@@ -209,14 +215,10 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
                       }}
                     >
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        {/* Status icon */}
-                        {status === 'compliant'
-                          ? <CheckCircle sx={{ color: tc.main }} />
-                          : status === 'partial'
-                            ? <Warning sx={{ color: tc.main }} />
-                            : status === 'non_compliant'
-                              ? <ErrorIcon sx={{ color: tc.main }} />
-                              : <HelpOutlined sx={{ color: 'text.disabled' }} />}
+                        {/* Status icon — canonical band, not the stored status string */}
+                        {notAssessed
+                          ? <HelpOutlined sx={{ color: 'text.disabled' }} />
+                          : <BandIcon sx={{ color: tc.main }} />}
 
                         {/* Main content */}
                         <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -227,9 +229,9 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
                               })}
                             </Typography>
                             <Chip
-                              label={status.replace(/_/g, ' ').toUpperCase()}
+                              label={notAssessed ? 'NOT ASSESSED' : SCORE_BAND_LABEL[band]}
                               size="small"
-                              color={tone === 'neutral' ? 'default' : tone}
+                              color={notAssessed ? 'default' : chipColor}
                               variant="outlined"
                               sx={{ fontSize: '0.7rem', fontWeight: 600 }}
                             />

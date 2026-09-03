@@ -152,20 +152,50 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
               return filterRow(status);
             });
             if (visibleIds.length === 0) return null;
+            // Live per-category posture summary — the group header carries the
+            // state of its controls so rows stay quiet until they need you.
+            const catCounts = { pass: 0, fail: 0, partial: 0, na: 0 };
+            cat.ids.forEach((id) => {
+              const s = (controlResults[id]?.status ?? 'not_assessed') as StatusKey;
+              if (s === 'compliant') catCounts.pass++;
+              else if (s === 'non_compliant') catCounts.fail++;
+              else if (s === 'partial') catCounts.partial++;
+              else catCounts.na++;
+            });
+            const needsAttention = catCounts.fail + catCounts.partial;
             return (
               <Box key={cat.label}>
-                <Typography
+                <Box
                   sx={{
-                    fontSize: '0.72rem',
-                    fontWeight: 650,
-                    color: 'text.secondary',
+                    display: 'flex',
+                    alignItems: 'baseline',
+                    gap: 1,
                     px: 1,
                     pt: 1.25,
                     pb: 0.5,
                   }}
                 >
-                  {cat.label}
-                </Typography>
+                  <Typography
+                    sx={{ fontSize: '0.75rem', fontWeight: 700, color: 'text.primary', letterSpacing: '0.1px' }}
+                  >
+                    {cat.label}
+                  </Typography>
+                  {needsAttention > 0 ? (
+                    <Typography
+                      sx={{
+                        fontSize: '0.7rem',
+                        fontWeight: 600,
+                        color: c(needsAttention === catCounts.fail ? 'error' : 'warning').main,
+                      }}
+                    >
+                      {catCounts.fail} fail · {catCounts.partial} partial
+                    </Typography>
+                  ) : (
+                    <Typography sx={{ fontSize: '0.7rem', fontWeight: 500, color: 'text.disabled' }}>
+                      {catCounts.pass} pass
+                    </Typography>
+                  )}
+                </Box>
                 {visibleIds.map(id => {
                   const r = controlResults[id];
                   const status: StatusKey = r?.status ?? 'not_assessed';
@@ -175,6 +205,17 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
                   const isFail = status === 'non_compliant';
                   const isAutomatable = AUTOMATABLE_CONTROLS.has(id);
                   const failBg = alpha(theme.palette.error.main, theme.palette.mode === 'light' ? 0.04 : 0.06);
+
+                  const isPartial = status === 'partial';
+                  const isQuiet = status === 'compliant' || status === 'not_assessed';
+                  // Row state rail: failing rows carry a red rail + faint wash,
+                  // partial rows an amber rail. Compliant / not-assessed rows stay
+                  // quiet — posture is read from the rail, not from more pills.
+                  const railColor = isFail
+                    ? alpha(theme.palette.error.main, theme.palette.mode === 'light' ? 0.9 : 0.85)
+                    : isPartial
+                      ? alpha(theme.palette.warning.main, theme.palette.mode === 'light' ? 0.9 : 0.85)
+                      : 'transparent';
 
                   return (
                     <React.Fragment key={id}>
@@ -188,17 +229,32 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
                           borderRadius: '8px',
                           mb: 0.25,
                           flexWrap: { xs: 'wrap', md: 'nowrap' },
-                          bgcolor: isFail ? failBg : 'transparent',
-                          '&:hover': { bgcolor: isFail ? failBg : 'action.hover' },
+                          position: 'relative',
+                          bgcolor: isFail ? failBg : isPartial ? alpha(theme.palette.warning.main, theme.palette.mode === 'light' ? 0.035 : 0.05) : 'transparent',
+                          '&:hover': { bgcolor: isFail ? failBg : isPartial ? alpha(theme.palette.warning.main, 0.06) : 'action.hover' },
                         }}
                       >
+                        {/* State rail */}
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            left: 0,
+                            top: 5,
+                            bottom: 5,
+                            width: 2.5,
+                            borderRadius: RADIUS.pill,
+                            bgcolor: railColor,
+                            opacity: isQuiet ? 0 : 1,
+                          }}
+                        />
                         <Typography
                           sx={{
-                            fontSize: '0.72rem',
+                            fontSize: '0.75rem',
                             fontWeight: 700,
                             fontVariantNumeric: 'tabular-nums',
-                            color: isFail ? 'error.main' : 'text.secondary',
-                            width: 46,
+                            letterSpacing: '0.1px',
+                            color: isFail ? 'error.main' : isPartial ? 'warning.main' : 'text.primary',
+                            width: 48,
                             flexShrink: 0,
                           }}
                         >

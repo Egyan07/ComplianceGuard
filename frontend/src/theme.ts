@@ -41,6 +41,36 @@ export const RADIUS = {
 
 export const CONTROL_HEIGHT = 34;
 
+// ---- Compliance score scale -------------------------------------------------
+// One canonical 0-100 readiness scale for EVERY surface that renders a score
+// band (hero status chip, trend chart zones, history list tones).
+// These thresholds mirror the trend chart's zone bands (≥85 good, ≥70 on
+// track, <70 attention) so a score means the same thing everywhere.
+
+export const SCORE_BAND_GOOD = 85;
+export const SCORE_BAND_ON_TRACK = 70;
+
+export type ScoreBand = 'good' | 'on_track' | 'attention';
+
+/** Classify a 0-100 score into the canonical readiness band. */
+export function scoreBand(score: number): ScoreBand {
+  if (score >= SCORE_BAND_GOOD) return 'good';
+  if (score >= SCORE_BAND_ON_TRACK) return 'on_track';
+  return 'attention';
+}
+
+export const SCORE_BAND_TONE: Record<ScoreBand, Tone> = {
+  good: 'success',
+  on_track: 'warning',
+  attention: 'error',
+};
+
+export const SCORE_BAND_LABEL: Record<ScoreBand, string> = {
+  good: 'GOOD STANDING',
+  on_track: 'ON TRACK',
+  attention: 'NEEDS ATTENTION',
+};
+
 // ---- Semantic tones -------------------------------------------------------
 
 export type Tone = 'success' | 'warning' | 'error' | 'info' | 'neutral';

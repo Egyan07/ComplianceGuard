@@ -40,9 +40,9 @@ interface ContextSidebarProps {
 const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <Typography
     sx={{
-      fontSize: '0.68rem',
+      fontSize: '0.72rem',
       fontWeight: 650,
-      letterSpacing: '0.2px',
+      letterSpacing: '0.1px',
       color: 'text.secondary',
       px: 1.5,
       py: 0.5,
@@ -63,6 +63,13 @@ const ContextSidebar: React.FC<ContextSidebarProps> = ({ selectedFramework = 1 }
   const isNavActive = (route: string): boolean => {
     if (route === '/') return path === '/';
     return path.startsWith(route);
+  };
+
+  // Scroll the settings page to the section matching this key. Each section
+  // in Settings.tsx carries an id="settings-<key>" anchor, so the contextual
+  // nav stays honest — it navigates somewhere real instead of being dead rows.
+  const scrollToSettings = (key: string) => () => {
+    document.getElementById(`settings-${key}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const getGroups = (): NavGroup[] => {
@@ -89,10 +96,14 @@ const ContextSidebar: React.FC<ContextSidebarProps> = ({ selectedFramework = 1 }
     if (path === '/settings') return [{
       title: 'Settings',
       items: [
-        { label: 'License',         key: 'license',         onClick: () => {} },
-        { label: 'Auto Collection', key: 'auto-collection', onClick: () => {} },
-        { label: 'Cloud Sync',      key: 'cloud-sync',      onClick: () => {} },
-        { label: 'About',           key: 'about',           onClick: () => {} },
+        { label: 'About',           key: 'about',       onClick: scrollToSettings('about') },
+        { label: 'License',         key: 'license',     onClick: scrollToSettings('license') },
+        { label: 'Enterprise',      key: 'enterprise',  onClick: scrollToSettings('enterprise') },
+        { label: 'Database',        key: 'database',    onClick: scrollToSettings('database') },
+        { label: 'Cloud Sync',      key: 'cloud-sync',  onClick: scrollToSettings('cloud') },
+        { label: 'Auto Collection', key: 'auto-collection', onClick: scrollToSettings('schedule') },
+        { label: 'Display',         key: 'display',     onClick: scrollToSettings('display') },
+        { label: 'Frameworks',      key: 'frameworks',  onClick: scrollToSettings('frameworks') },
       ],
     }];
     if (path === '/cloud') return [{
@@ -221,7 +232,7 @@ const ContextSidebar: React.FC<ContextSidebarProps> = ({ selectedFramework = 1 }
 
       {/* Version stamp */}
       <Box sx={{ position: 'absolute', bottom: 12, left: 0, right: 0, textAlign: 'center' }}>
-        <Typography sx={{ fontSize: '0.68rem', color: 'text.secondary' }}>
+        <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
           v{VERSION}
         </Typography>
       </Box>

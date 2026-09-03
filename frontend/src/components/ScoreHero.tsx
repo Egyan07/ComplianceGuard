@@ -5,7 +5,7 @@ import { motion, useSpring, useTransform, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom';
 import { ComplianceEvaluation } from '../services/api';
 import StatusChip from './ui/StatusChip';
-import { RADIUS, Tone, toneColors } from '../theme';
+import { RADIUS, scoreBand, SCORE_BAND_LABEL, SCORE_BAND_TONE, toneColors } from '../theme';
 
 interface ScoreHeroProps {
   evaluation: ComplianceEvaluation | null;
@@ -19,28 +19,6 @@ const FRAMEWORKS = [
   { id: 3, label: 'HIPAA' },
   { id: 4, label: 'GDPR' },
 ];
-
-const STATUS_TONE: Record<string, Tone> = {
-  'GOOD STANDING': 'success',
-  'ON TRACK': 'warning',
-  'NEEDS ATTENTION': 'error',
-};
-
-const SCORE_TONE = [
-  { min: 80, tone: 'success' as Tone },
-  { min: 60, tone: 'warning' as Tone },
-  { min: 0, tone: 'error' as Tone },
-];
-
-function getStatusLabel(score: number): string {
-  if (score >= 90) return 'GOOD STANDING';
-  if (score >= 70) return 'ON TRACK';
-  return 'NEEDS ATTENTION';
-}
-
-function scoreTone(score: number): Tone {
-  return SCORE_TONE.find(t => score >= t.min)?.tone ?? 'error';
-}
 
 const ScoreHero: React.FC<ScoreHeroProps> = ({
   evaluation,
@@ -73,8 +51,10 @@ const ScoreHero: React.FC<ScoreHeroProps> = ({
   }
 
   const score = evaluation ? Math.round(evaluation.overall_score) : 0;
-  const statusLabel = getStatusLabel(score);
-  const tone = scoreTone(score);
+  // One readiness scale across the app: bands mirror the trend-chart zones.
+  const band = scoreBand(score);
+  const statusLabel = SCORE_BAND_LABEL[band];
+  const tone = SCORE_BAND_TONE[band];
   const tc = toneColors(theme, tone);
 
   return (
@@ -136,7 +116,7 @@ const ScoreHero: React.FC<ScoreHeroProps> = ({
               transition={{ type: 'spring', stiffness: 200, damping: 20 }}
               style={{ display: 'inline-block', marginBottom: 20 }}
             >
-              <StatusChip tone={STATUS_TONE[statusLabel]} label={statusLabel} dot pill size="md" />
+              <StatusChip tone={tone} label={statusLabel} dot pill size="md" />
             </motion.div>
           )}
         </AnimatePresence>
