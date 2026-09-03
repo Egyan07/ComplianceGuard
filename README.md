@@ -48,13 +48,31 @@ _A walkthrough of ComplianceGuard in action — collecting endpoint evidence, ev
 
 ![ComplianceGuard Dashboard](assets/screenshots/Dashboard.png)
 
-The dashboard shows your real-time compliance score, per-category breakdowns, and one-click access to collect evidence, run an evaluation, upload manual evidence, and export a PDF report. The per-control heatmap below shows exactly which of the 54 SOC 2 controls are passing, partial, or failing — with inline remediation scripts for automatable findings.
+Your real-time compliance score after a full evaluation — with one-click access to collect evidence, run an evaluation, upload manual evidence, and export an audit-ready PDF report.
 
-### Evidence List
+### Control Heatmap
 
-![Evidence List](assets/screenshots/EvidenceCollection.png)
+![Control Heatmap](assets/screenshots/ControlHeatmap.png)
 
-All collected evidence items in one place — searchable and filterable by status and source. Each item shows its compliance status, collection date, and can be expanded for full details.
+Every SOC 2 control at a glance — passing, partial, and failing — with per-control gap details and inline remediation scripts for automatable findings.
+
+### Compliance Score Trend
+
+![Score Trend](assets/screenshots/ScoreTrend.png)
+
+Track your readiness over time on the History screen, with compliance zone bands and per-framework tabs across SOC 2, ISO 27001, HIPAA, and GDPR.
+
+### Cloud Dashboard
+
+![Cloud Dashboard](assets/screenshots/CloudDashboard.png)
+
+Monitor every machine from one centralized web dashboard — compliance scores, fleet-level stats, and last-sync status across all your endpoints.
+
+### Framework Browser
+
+![Framework Browser](assets/screenshots/FrameworkBrowser.png)
+
+Browse the full control library offline — SOC 2 Type II (54 controls), ISO 27001 (47), HIPAA (47), and GDPR (38) with control objectives and implementation guidance.
 
 ## Who Is This For?
 
@@ -451,7 +469,7 @@ ComplianceGuard/
 │   └── Dockerfile
 ├── assets/
 │   ├── banner.svg
-│   └── screenshots/                    # Dashboard.png, EvidenceCollection.png
+│   └── screenshots/                    # Dashboard, ControlHeatmap, ScoreTrend, CloudDashboard, ...
 ├── resources/icons/                    # App icons (ico, png, svg, tray)
 ├── install.bat                         # One-click setup (installs deps, creates start.bat)
 ├── .github/workflows/ci.yml            # Backend Tests → Lint & Test → Build

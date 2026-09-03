@@ -16,25 +16,28 @@ import {
   Alert,
   Chip,
   Divider,
-  LinearProgress
+  LinearProgress,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import {
-  Timeline,
   Assessment,
   Refresh,
   CheckCircle,
   Warning,
   Error as ErrorIcon,
-  HelpOutlined
+  HelpOutlined,
 } from '@mui/icons-material';
 
 import { useLicense } from '../contexts/LicenseContext';
 import ScoreTrend from './ScoreTrend';
+import PageHeader from './ui/PageHeader';
+import EmptyState from './ui/EmptyState';
 import { getScoreTrend, evaluationHistoryToTrend } from '../services/api';
 import type { TrendPoint } from '../services/api';
 import type { Recommendation } from '../services/api.types';
 import { getElectronAPI, isElectronMode } from '../services/electron';
 import { getErrorMessage } from '../lib/errors';
+import { RADIUS, Tone, toneColors } from '../theme';
 
 const isElectron = isElectronMode();
 
@@ -61,7 +64,14 @@ interface EvaluationHistoryProps {
   onNavigate?: (page: string) => void;
 }
 
+const TONE_FOR_STATUS: Record<string, Tone> = {
+  compliant: 'success',
+  partial: 'warning',
+  non_compliant: 'error',
+};
+
 const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => {
+  const theme = useTheme();
   const { isFeatureAllowed } = useLicense();
   const [evaluations, setEvaluations] = useState<EvaluationRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -105,48 +115,23 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
     fetchHistory(selectedFramework);
   }, [selectedFramework]);
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'compliant': return <CheckCircle sx={{ color: '#66BB6A' }} />;
-      case 'partial': return <Warning sx={{ color: '#FFA726' }} />;
-      case 'non_compliant': return <ErrorIcon sx={{ color: '#EF5350' }} />;
-      default: return <HelpOutlined sx={{ color: '#9E9E9E' }} />;
-    }
-  };
-
-  const getStatusColor = (status: string): 'success' | 'warning' | 'error' | 'default' => {
-    switch (status) {
-      case 'compliant': return 'success';
-      case 'partial': return 'warning';
-      case 'non_compliant': return 'error';
-      default: return 'default';
-    }
-  };
-
-  const getScoreColor = (score: number) => {
-    if (score >= 90) return '#66BB6A';
-    if (score >= 70) return '#FFA726';
-    return '#EF5350';
-  };
-
+  const toneOf = (status?: string): Tone => TONE_FOR_STATUS[status ?? ''] ?? 'neutral';
 
   if (!isFeatureAllowed('evaluation_history')) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', mb: 3 }}>
-          Evaluation History
-        </Typography>
-        <Paper sx={{ p: 6, textAlign: 'center' }}>
-          <Assessment sx={{ fontSize: 60, color: 'text.disabled', mb: 2 }} />
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            Track your compliance over time
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Evaluation history and score trends are available with a Pro license.
-          </Typography>
-          <Button variant="contained" onClick={() => onNavigate?.('settings')}>
-            Upgrade to Pro
-          </Button>
+        <PageHeader title="Evaluation History" />
+        <Paper sx={{ borderRadius: RADIUS.lg }}>
+          <EmptyState
+            icon={<Assessment sx={{ fontSize: 42 }} />}
+            title="Track your compliance over time"
+            description="Evaluation history and score trends are available with a Pro license."
+            action={
+              <Button variant="contained" onClick={() => onNavigate?.('settings')}>
+                Upgrade to Pro
+              </Button>
+            }
+          />
         </Paper>
       </Container>
     );
@@ -154,16 +139,19 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: 3 }}>
-        <Button
-          variant="outlined"
-          startIcon={<Refresh />}
-          onClick={() => fetchHistory(selectedFramework)}
-          disabled={loading}
-        >
-          Refresh
-        </Button>
-      </Box>
+      <PageHeader
+        title="Evaluation History"
+        actions={
+          <Button
+            variant="outlined"
+            startIcon={<Refresh />}
+            onClick={() => fetchHistory(selectedFramework)}
+            disabled={loading}
+          >
+            Refresh
+          </Button>
+        }
+      />
 
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>
@@ -173,18 +161,6 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
           <CircularProgress size={50} />
         </Box>
-      ) : !isElectron ? (
-        <>
-          <ScoreTrend
-            evaluations={trendPoints}
-            loading={trendLoading}
-            selectedFramework={selectedFramework}
-            onFrameworkChange={(fw) => setSelectedFramework(fw)}
-          />
-          <Alert severity="info">
-            Evaluation history requires the desktop application.
-          </Alert>
-        </>
       ) : (
         <>
           <ScoreTrend
@@ -193,21 +169,23 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
             selectedFramework={selectedFramework}
             onFrameworkChange={(fw) => setSelectedFramework(fw)}
           />
-          {evaluations.length === 0 ? (
-            <Paper sx={{ p: 6, textAlign: 'center' }}>
-              <Assessment sx={{ fontSize: 60, color: 'text.disabled', mb: 2 }} />
-              <Typography variant="h6" color="text.secondary" gutterBottom>
-                No evaluations yet
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Go to the Dashboard, collect evidence, and run "Evaluate Compliance" to see results here.
-              </Typography>
+          {!isElectron ? (
+            <Alert severity="info" sx={{ mt: 1 }}>
+              Evaluation history requires the desktop application.
+            </Alert>
+          ) : evaluations.length === 0 ? (
+            <Paper sx={{ borderRadius: RADIUS.lg }}>
+              <EmptyState
+                icon={<Assessment sx={{ fontSize: 42 }} />}
+                title="No evaluations yet"
+                description={'Go to the Dashboard, collect evidence, and run "Evaluate Compliance" to see results here.'}
+              />
             </Paper>
           ) : (
-            <Paper>
-              <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+            <Paper sx={{ borderRadius: RADIUS.lg }}>
+              <Box sx={{ p: 2.5, borderBottom: 1, borderColor: 'divider' }}>
                 <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Timeline color="primary" />
+                  <Assessment color="primary" sx={{ fontSize: 20 }} />
                   All Evaluations ({evaluations.length})
                 </Typography>
               </Box>
@@ -215,48 +193,60 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
               {evaluations.map((eval_, index) => {
                 const score = Math.round(eval_.overall_score || eval_.findings?.overall_score || 0);
                 const findings = eval_.findings || {};
+                const status = eval_.status || findings.status || 'not_assessed';
+                const tone = toneOf(status);
+                const tc = toneColors(theme, tone);
 
                 return (
                   <React.Fragment key={eval_.id || index}>
                     <Box
                       sx={{
                         p: 3,
-                        borderLeft: '2px solid', borderColor: 'divider', pl: 2,
+                        borderLeft: '2px solid',
+                        borderColor: 'divider',
+                        pl: 2,
                         '&:hover': { backgroundColor: 'action.hover' },
                       }}
                     >
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         {/* Status icon */}
-                        {getStatusIcon(eval_.status || findings.status || 'not_assessed')}
+                        {status === 'compliant'
+                          ? <CheckCircle sx={{ color: tc.main }} />
+                          : status === 'partial'
+                            ? <Warning sx={{ color: tc.main }} />
+                            : status === 'non_compliant'
+                              ? <ErrorIcon sx={{ color: tc.main }} />
+                              : <HelpOutlined sx={{ color: 'text.disabled' }} />}
 
                         {/* Main content */}
-                        <Box sx={{ flex: 1 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5, flexWrap: 'wrap' }}>
+                            <Typography sx={{ fontSize: '0.95rem', fontWeight: 650 }}>
                               {new Date(eval_.evaluation_date).toLocaleDateString('en-US', {
-                                year: 'numeric', month: 'long', day: 'numeric'
+                                year: 'numeric', month: 'long', day: 'numeric',
                               })}
                             </Typography>
                             <Chip
-                              label={(eval_.status || findings.status || 'not assessed').replace(/_/g, ' ').toUpperCase()}
+                              label={status.replace(/_/g, ' ').toUpperCase()}
                               size="small"
-                              color={getStatusColor(eval_.status || findings.status || '')}
+                              color={tone === 'neutral' ? 'default' : tone}
                               variant="outlined"
+                              sx={{ fontSize: '0.7rem', fontWeight: 600 }}
                             />
                           </Box>
 
                           {/* Control breakdown */}
-                          <Box sx={{ display: 'flex', gap: 3, mt: 1 }}>
+                          <Box sx={{ display: 'flex', gap: 3, mt: 1, flexWrap: 'wrap' }}>
                             <Typography variant="body2" color="text.secondary">
                               Controls: <strong>{findings.total_controls || 0}</strong>
                             </Typography>
-                            <Typography variant="body2" sx={{ color: '#66BB6A' }}>
+                            <Typography variant="body2" sx={{ color: toneColors(theme, 'success').onSurface }}>
                               Compliant: <strong>{findings.compliant_controls || 0}</strong>
                             </Typography>
-                            <Typography variant="body2" sx={{ color: '#FFA726' }}>
+                            <Typography variant="body2" sx={{ color: toneColors(theme, 'warning').onSurface }}>
                               Partial: <strong>{findings.partial_controls || 0}</strong>
                             </Typography>
-                            <Typography variant="body2" sx={{ color: '#EF5350' }}>
+                            <Typography variant="body2" sx={{ color: toneColors(theme, 'error').onSurface }}>
                               Non-compliant: <strong>{findings.non_compliant_controls || 0}</strong>
                             </Typography>
                           </Box>
@@ -269,26 +259,27 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
                               sx={{
                                 flex: 1,
                                 height: 6,
-                                borderRadius: 3,
-                                backgroundColor: 'rgba(0,0,0,0.08)',
-                                '& .MuiLinearProgress-bar': {
-                                  backgroundColor: getScoreColor(score),
-                                  borderRadius: 3
-                                }
+                                '& .MuiLinearProgress-bar': { backgroundColor: tc.main },
                               }}
                             />
                           </Box>
                         </Box>
 
                         {/* Score */}
-                        <Box sx={{ textAlign: 'center', minWidth: 80 }}>
+                        <Box sx={{ textAlign: 'center', minWidth: 84, flexShrink: 0 }}>
                           <Typography
-                            variant="h4"
-                            sx={{ fontWeight: 700, color: getScoreColor(score), lineHeight: 1 }}
+                            sx={{
+                              fontSize: '1.9rem',
+                              fontWeight: 750,
+                              color: tc.main,
+                              lineHeight: 1.1,
+                              letterSpacing: '-1px',
+                              fontVariantNumeric: 'tabular-nums',
+                            }}
                           >
                             {score}%
                           </Typography>
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography sx={{ fontSize: '0.72rem', color: 'text.secondary', mt: 0.25 }}>
                             score
                           </Typography>
                         </Box>
@@ -297,7 +288,7 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
                       {/* Recommendations count */}
                       {findings.recommendations && findings.recommendations.length > 0 && (
                         <Box sx={{ mt: 1.5, ml: 5 }}>
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
                             {findings.recommendations.filter((r: Recommendation) => r.priority === 'high').length} high priority
                             {' / '}
                             {findings.recommendations.length} total recommendations

@@ -1,7 +1,11 @@
 import React, { useMemo } from 'react';
 import { Box, Paper, Typography, Skeleton } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import { motion } from 'framer-motion';
 import type { TrendPoint, TrendDisplayPoint } from '../services/api';
+import EmptyState from './ui/EmptyState';
+import Segmented from './ui/Segmented';
+import { RADIUS } from '../theme';
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
@@ -85,55 +89,47 @@ function buildGeometry(pts: TrendDisplayPoint[]): ChartGeometry {
   return { svgPoints, linePath: line, fillPath: fill };
 }
 
-// ── Sub-components ──────────────────────────────────────────────────────────
+// ── Theme-derived chart palette (single source: the active theme) ──────────
 
-const FrameworkTabs: React.FC<{ selected: 1|2|3|4; onChange: (fw: 1|2|3|4) => void }> = ({ selected, onChange }) => (
-  <Box sx={{ display: 'flex', gap: '4px' }}>
-    {FRAMEWORKS.map(fw => (
-      <Box
-        key={fw.id}
-        component="button"
-        type="button"
-        aria-pressed={selected === fw.id}
-        onClick={() => onChange(fw.id)}
-        sx={{
-          font: 'inherit', cursor: 'pointer', outline: 'none',
-          fontSize: '13px', fontWeight: selected === fw.id ? 600 : 500, letterSpacing: '-0.1px',
-          padding: '6px 14px', borderRadius: '999px', border: '1px solid',
-          borderColor: selected === fw.id ? '#1d1d1f' : 'transparent',
-          bgcolor: selected === fw.id ? '#1d1d1f' : 'transparent',
-          color: selected === fw.id ? '#ffffff' : '#707070',
-          transition: 'all 0.1s',
-          '&:hover': { color: '#1d1d1f' },
-          '&:focus-visible': { outline: '2px solid #1d1d1f', outlineOffset: 2 },
-        }}
-      >
-        {fw.label}
-      </Box>
-    ))}
-  </Box>
-);
+interface ChartPalette {
+  ink: string;        // primary line / numerals
+  soft: string;       // secondary text
+  grid: string;       // grid lines
+  track: string;      // subtle bars/tracks
+  good: string;       // success
+  warn: string;       // warning
+  bad: string;        // error
+}
 
-const ScoreHero: React.FC<{ pts: TrendDisplayPoint[] }> = ({ pts }) => {
+const ScoreHero: React.FC<{ pts: TrendDisplayPoint[]; pal: ChartPalette }> = ({ pts, pal }) => {
   const latest = pts[pts.length - 1];
   const delta = pts.length >= 2 ? pts[pts.length - 1].score - pts[0].score : undefined;
-  const dotColor = latest?.status === 'compliant' ? '#34c759' : latest?.status === 'partial' ? '#ff9f0a' : '#b64400';
+  const dotColor = latest?.status === 'compliant' ? pal.good : latest?.status === 'partial' ? pal.warn : pal.bad;
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', mb: '28px' }}>
+    <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', mb: '28px', flexWrap: 'wrap', gap: 2 }}>
       <Box>
-        <Typography sx={{ fontSize: '13px', fontWeight: 500, letterSpacing: '-0.1px', color: '#707070', mb: '4px' }}>
+        <Typography sx={{ fontSize: '0.8125rem', fontWeight: 500, color: 'text.secondary', mb: '4px' }}>
           Current compliance score
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-          <Typography sx={{ fontSize: '80px', fontWeight: 800, letterSpacing: '-4px', lineHeight: 1, color: '#1d1d1f', fontVariantNumeric: 'tabular-nums' }}>
+          <Typography
+            sx={{
+              fontSize: '4.5rem',
+              fontWeight: 800,
+              letterSpacing: '-3.5px',
+              lineHeight: 1,
+              color: 'text.primary',
+              fontVariantNumeric: 'tabular-nums',
+            }}
+          >
             {latest?.score ?? 0}
           </Typography>
-          <Typography sx={{ fontSize: '28px', fontWeight: 600, letterSpacing: '-1px', color: '#707070' }}>%</Typography>
+          <Typography sx={{ fontSize: '1.75rem', fontWeight: 600, letterSpacing: '-0.5px', color: 'text.secondary' }}>%</Typography>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px', mt: '8px' }}>
           <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: dotColor }} />
-          <Typography sx={{ fontSize: '13px', fontWeight: 500, letterSpacing: '-0.1px', color: '#707070' }}>
+          <Typography sx={{ fontSize: '0.8125rem', fontWeight: 500, color: 'text.secondary' }}>
             {latest ? (latest.status === 'compliant' ? 'Compliant' : latest.status === 'partial' ? 'Partial' : 'Non-compliant') : ''}
           </Typography>
         </Box>
@@ -141,18 +137,35 @@ const ScoreHero: React.FC<{ pts: TrendDisplayPoint[] }> = ({ pts }) => {
       {delta !== undefined && (
         <Box sx={{ display: 'flex', gap: '32px', alignItems: 'flex-end', pb: '8px' }}>
           <Box sx={{ textAlign: 'right' }}>
-            <Typography sx={{ fontSize: '14px', fontWeight: 600, letterSpacing: '-0.2px', color: delta >= 0 ? '#34c759' : '#b64400', fontVariantNumeric: 'tabular-nums' }}>
+            <Typography
+              sx={{
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                letterSpacing: '-0.2px',
+                color: delta >= 0 ? 'success.dark' : 'error.dark',
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
               {delta >= 0 ? '↑' : '↓'} {delta >= 0 ? '+' : ''}{delta} pts
             </Typography>
-            <Typography sx={{ fontSize: '12px', color: '#707070', letterSpacing: '-0.1px', mt: '1px' }}>
+            <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', mt: '1px' }}>
               since {pts[0] ? fmtDate(pts[0].date) : ''}
             </Typography>
           </Box>
           <Box sx={{ textAlign: 'right' }}>
-            <Typography sx={{ fontSize: '32px', fontWeight: 700, letterSpacing: '-1.5px', lineHeight: 1, color: '#1d1d1f', fontVariantNumeric: 'tabular-nums' }}>
+            <Typography
+              sx={{
+                fontSize: '1.9rem',
+                fontWeight: 700,
+                letterSpacing: '-1.5px',
+                lineHeight: 1,
+                color: 'text.primary',
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
               {pts.length}
             </Typography>
-            <Typography sx={{ fontSize: '12px', color: '#707070', letterSpacing: '-0.1px', mt: '1px' }}>evaluations</Typography>
+            <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', mt: '1px' }}>evaluations</Typography>
           </Box>
         </Box>
       )}
@@ -160,7 +173,7 @@ const ScoreHero: React.FC<{ pts: TrendDisplayPoint[] }> = ({ pts }) => {
   );
 };
 
-const TrendChart: React.FC<{ pts: TrendDisplayPoint[]; geo: ChartGeometry }> = ({ pts, geo }) => (
+const TrendChart: React.FC<{ pts: TrendDisplayPoint[]; geo: ChartGeometry; pal: ChartPalette }> = ({ pts, geo, pal }) => (
   <Box>
     <svg
       role="img"
@@ -171,31 +184,31 @@ const TrendChart: React.FC<{ pts: TrendDisplayPoint[]; geo: ChartGeometry }> = (
     >
       <defs>
         <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#1d1d1f" stopOpacity="0.06" />
-          <stop offset="100%" stopColor="#1d1d1f" stopOpacity="0" />
+          <stop offset="0%" stopColor={pal.ink} stopOpacity="0.06" />
+          <stop offset="100%" stopColor={pal.ink} stopOpacity="0" />
         </linearGradient>
       </defs>
-      <line x1="0" y1="0" x2={W} y2="0" stroke="#e8e8ed" strokeWidth="0.8" />
-      <line x1="0" y1="18" x2={W} y2="18" stroke="#e8e8ed" strokeWidth="0.8" strokeDasharray="3 4" />
-      <line x1="0" y1="36" x2={W} y2="36" stroke="#e8e8ed" strokeWidth="0.8" strokeDasharray="3 4" />
-      <line x1="0" y1={H} x2={W} y2={H} stroke="#e8e8ed" strokeWidth="0.8" />
-      <text x="4" y="14" fontSize="10" fill="#34c759" fontFamily="Inter" fontWeight="600" letterSpacing="0.02em" aria-hidden="true">≥85%</text>
-      <text x="4" y="32" fontSize="10" fill="#ff9f0a" fontFamily="Inter" fontWeight="600" letterSpacing="0.02em" aria-hidden="true">≥70%</text>
-      <text x="4" y={H - 4} fontSize="10" fill="#b64400" fontFamily="Inter" fontWeight="600" letterSpacing="0.02em" aria-hidden="true">&lt;70%</text>
+      <line x1="0" y1="0" x2={W} y2="0" stroke={pal.grid} strokeWidth="0.8" />
+      <line x1="0" y1="18" x2={W} y2="18" stroke={pal.grid} strokeWidth="0.8" strokeDasharray="3 4" />
+      <line x1="0" y1="36" x2={W} y2="36" stroke={pal.grid} strokeWidth="0.8" strokeDasharray="3 4" />
+      <line x1="0" y1={H} x2={W} y2={H} stroke={pal.grid} strokeWidth="0.8" />
+      <text x="4" y="14" fontSize="10" fill={pal.good} fontFamily="Inter" fontWeight="600" letterSpacing="0.02em" aria-hidden="true">≥85%</text>
+      <text x="4" y="32" fontSize="10" fill={pal.warn} fontFamily="Inter" fontWeight="600" letterSpacing="0.02em" aria-hidden="true">≥70%</text>
+      <text x="4" y={H - 4} fontSize="10" fill={pal.bad} fontFamily="Inter" fontWeight="600" letterSpacing="0.02em" aria-hidden="true">&lt;70%</text>
       {geo.fillPath && <path d={geo.fillPath} fill="url(#trendFill)" />}
       {geo.linePath && (
         <motion.path
-          d={geo.linePath} fill="none" stroke="#1d1d1f" strokeWidth="1.5" strokeLinecap="round"
+          d={geo.linePath} fill="none" stroke={pal.ink} strokeWidth="1.5" strokeLinecap="round"
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.35, ease: 'easeOut' }}
         />
       )}
       {geo.svgPoints.map((pt, i) => {
         const isLatest = i === geo.svgPoints.length - 1;
         return isLatest ? (
-          <circle key={i} cx={pt.x} cy={pt.y} r="5" fill="#1d1d1f"
+          <circle key={i} cx={pt.x} cy={pt.y} r="5" fill={pal.ink}
             aria-label={`${pts[i].formattedDate} score ${pts[i].score} percent`} />
         ) : (
-          <circle key={i} cx={pt.x} cy={pt.y} r="3.5" fill="#ffffff" stroke="#1d1d1f" strokeWidth="1.5"
+          <circle key={i} cx={pt.x} cy={pt.y} r="3.5" fill="#ffffff" stroke={pal.ink} strokeWidth="1.5"
             aria-label={`${pts[i].formattedDate} score ${pts[i].score} percent`} />
         );
       })}
@@ -205,7 +218,7 @@ const TrendChart: React.FC<{ pts: TrendDisplayPoint[]; geo: ChartGeometry }> = (
         const pillarY = Math.max(22, lp.y);
         return (
           <g>
-            <rect x={lp.x - 38} y={pillarY - 22} width="76" height="18" rx="9" ry="9" fill="#1d1d1f" />
+            <rect x={lp.x - 38} y={pillarY - 22} width="76" height="18" rx="9" ry="9" fill={pal.ink} />
             <text x={lp.x} y={pillarY - 10} fontSize="10" fill="#ffffff" fontFamily="Inter" fontWeight="600" textAnchor="middle" style={{ letterSpacing: '-0.3px' }}>
               {latest?.score}% · now
             </text>
@@ -215,7 +228,14 @@ const TrendChart: React.FC<{ pts: TrendDisplayPoint[]; geo: ChartGeometry }> = (
     </svg>
     <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: '6px', px: `${PAD}px` }}>
       {pts.map((p, i) => (
-        <Typography key={i} sx={{ fontSize: '11px', letterSpacing: '-0.1px', fontWeight: i === pts.length - 1 ? 600 : 400, color: i === pts.length - 1 ? '#1d1d1f' : '#707070' }}>
+        <Typography
+          key={i}
+          sx={{
+            fontSize: '0.75rem',
+            fontWeight: i === pts.length - 1 ? 600 : 400,
+            color: i === pts.length - 1 ? 'text.primary' : 'text.secondary',
+          }}
+        >
           {p.formattedDate}
         </Typography>
       ))}
@@ -223,43 +243,89 @@ const TrendChart: React.FC<{ pts: TrendDisplayPoint[]; geo: ChartGeometry }> = (
   </Box>
 );
 
-const STATUS_FILL: Record<TrendPoint['status'], string> = {
-  compliant: '#34c759',
-  partial: '#ff9f0a',
-  non_compliant: '#b64400',
+const STATUS_FILL: Record<TrendPoint['status'], (pal: ChartPalette) => string> = {
+  compliant: pal => pal.good,
+  partial: pal => pal.warn,
+  non_compliant: pal => pal.bad,
 };
 
-const EvaluationTable: React.FC<{ pts: TrendDisplayPoint[] }> = ({ pts }) => (
-  <Box sx={{ mt: '28px', pt: '20px', borderTop: '1px solid #e8e8ed' }}>
+const EvaluationTable: React.FC<{ pts: TrendDisplayPoint[]; pal: ChartPalette }> = ({ pts, pal }) => (
+  <Box sx={{ mt: '28px', pt: '20px', borderTop: '1px solid', borderColor: 'divider' }}>
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: '12px' }}>
-      <Typography sx={{ fontSize: '17px', fontWeight: 600, letterSpacing: '-0.3px', color: '#1d1d1f' }}>All Evaluations</Typography>
-      <Typography sx={{ fontSize: '13px', color: '#707070', letterSpacing: '-0.1px' }}>{pts.length} total</Typography>
+      <Typography sx={{ fontSize: '1.125rem', fontWeight: 650, letterSpacing: '-0.3px', color: 'text.primary' }}>
+        All Evaluations
+      </Typography>
+      <Typography sx={{ fontSize: '0.8125rem', color: 'text.secondary' }}>{pts.length} total</Typography>
     </Box>
     {[...pts].reverse().map((p, i) => (
-      <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: '16px', py: '11px', borderBottom: i < pts.length - 1 ? '1px solid #f5f5f7' : 'none' }}>
-        <Typography sx={{ fontSize: '14px', fontWeight: 400, color: '#707070', letterSpacing: '-0.1px', width: '90px', flexShrink: 0 }}>{p.formattedDate}</Typography>
-        <Box sx={{ flex: 1, background: '#f5f5f7', borderRadius: '999px', height: '4px', overflow: 'hidden' }}>
-          <Box sx={{ height: '100%', borderRadius: '999px', width: `${p.score}%`, bgcolor: STATUS_FILL[p.status] }} />
+      <Box
+        key={i}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px',
+          py: '10px',
+          borderBottom: i < pts.length - 1 ? '1px solid' : 'none',
+          borderColor: 'divider',
+        }}
+      >
+        <Typography
+          sx={{
+            fontSize: '0.8125rem',
+            color: 'text.secondary',
+            width: '92px',
+            flexShrink: 0,
+            fontVariantNumeric: 'tabular-nums',
+          }}
+        >
+          {p.formattedDate}
+        </Typography>
+        <Box sx={{ flex: 1, background: pal.track, borderRadius: '999px', height: '4px', overflow: 'hidden' }}>
+          <Box sx={{ height: '100%', borderRadius: '999px', width: `${p.score}%`, bgcolor: STATUS_FILL[p.status](pal) }} />
         </Box>
-        <Typography sx={{ fontSize: '15px', fontWeight: 600, letterSpacing: '-0.3px', width: '40px', textAlign: 'right', flexShrink: 0, fontVariantNumeric: 'tabular-nums', color: '#1d1d1f' }}>
+        <Typography
+          sx={{
+            fontSize: '0.875rem',
+            fontWeight: 600,
+            letterSpacing: '-0.2px',
+            width: '44px',
+            textAlign: 'right',
+            flexShrink: 0,
+            fontVariantNumeric: 'tabular-nums',
+            color: 'text.primary',
+          }}
+        >
           {p.score}%
         </Typography>
-        <Typography sx={{ fontSize: '12px', fontWeight: 500, letterSpacing: '-0.1px', width: '36px', textAlign: 'right', flexShrink: 0, fontVariantNumeric: 'tabular-nums', color: p.delta === undefined ? '#707070' : p.delta > 0 ? '#34c759' : p.delta < 0 ? '#b64400' : '#707070' }}>
+        <Typography
+          sx={{
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            width: '38px',
+            textAlign: 'right',
+            flexShrink: 0,
+            fontVariantNumeric: 'tabular-nums',
+            color: p.delta === undefined ? 'text.secondary'
+              : p.delta > 0 ? 'success.dark'
+                : p.delta < 0 ? 'error.dark' : 'text.secondary',
+          }}
+        >
           {p.delta === undefined ? '—' : p.delta > 0 ? `+${p.delta}` : p.delta === 0 ? '—' : `${p.delta}`}
         </Typography>
-        <Typography sx={{ fontSize: '12px', fontWeight: 500, letterSpacing: '-0.1px', color: '#707070', width: '110px', textAlign: 'right', flexShrink: 0 }}>
+        <Typography
+          sx={{
+            fontSize: '0.75rem',
+            fontWeight: 500,
+            color: 'text.secondary',
+            width: '118px',
+            textAlign: 'right',
+            flexShrink: 0,
+          }}
+        >
           {p.statusLabel}
         </Typography>
       </Box>
     ))}
-  </Box>
-);
-
-const EmptyState: React.FC = () => (
-  <Box sx={{ py: '48px', textAlign: 'center', border: '1.5px dashed #e8e8ed', borderRadius: '28px' }}>
-    <Typography sx={{ fontSize: '15px', fontWeight: 500, color: '#707070', letterSpacing: '-0.1px' }}>
-      Run your first evaluation to begin tracking compliance progression over time.
-    </Typography>
   </Box>
 );
 
@@ -273,14 +339,41 @@ export interface ScoreTrendProps {
 }
 
 const ScoreTrend: React.FC<ScoreTrendProps> = ({ evaluations, loading = false, selectedFramework, onFrameworkChange }) => {
+  const theme = useTheme();
   const displayPoints = useMemo(() => toDisplayPoints(evaluations), [evaluations]);
   const chartGeometry = useMemo(() => buildGeometry(displayPoints), [displayPoints]);
 
+  const light = theme.palette.mode === 'light';
+  const pal: ChartPalette = {
+    ink: theme.palette.text.primary,
+    soft: theme.palette.text.secondary,
+    grid: theme.palette.divider,
+    track: light ? '#EEF2F7' : 'rgba(255,255,255,0.08)',
+    good: theme.palette.success.main,
+    warn: theme.palette.warning.main,
+    bad: theme.palette.error.main,
+  };
+
   return (
-    <Paper sx={{ borderRadius: '28px', p: '28px', mb: '12px', boxShadow: 'none', border: '1px solid', borderColor: '#f5f5f7' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: '24px' }}>
-        <Typography sx={{ fontSize: '22px', fontWeight: 700, letterSpacing: '-0.4px', color: '#1d1d1f' }}>Compliance History</Typography>
-        <FrameworkTabs selected={selectedFramework} onChange={onFrameworkChange} />
+    <Paper
+      sx={{
+        borderRadius: RADIUS.lg,
+        p: 3,
+        mb: 1.5,
+        boxShadow: 'none',
+        border: '1px solid',
+        borderColor: 'divider',
+      }}
+    >
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 1.5 }}>
+        <Typography sx={{ fontSize: '1.25rem', fontWeight: 700, letterSpacing: '-0.4px', color: 'text.primary' }}>
+          Compliance History
+        </Typography>
+        <Segmented
+          options={FRAMEWORKS.map(f => ({ value: f.id, label: f.label }))}
+          value={selectedFramework}
+          onChange={(fw) => onFrameworkChange(fw as 1 | 2 | 3 | 4)}
+        />
       </Box>
       {loading ? (
         <Box>
@@ -289,12 +382,16 @@ const ScoreTrend: React.FC<ScoreTrendProps> = ({ evaluations, loading = false, s
           <Skeleton variant="rectangular" height={200} sx={{ borderRadius: '12px' }} />
         </Box>
       ) : evaluations.length === 0 ? (
-        <EmptyState />
+        <EmptyState
+          dashed
+          title="No evaluations for this framework yet"
+          description="Run your first evaluation to begin tracking compliance progression over time."
+        />
       ) : (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.35, ease: 'easeOut' }}>
-          <ScoreHero pts={displayPoints} />
-          <TrendChart pts={displayPoints} geo={chartGeometry} />
-          <EvaluationTable pts={displayPoints} />
+          <ScoreHero pts={displayPoints} pal={pal} />
+          <TrendChart pts={displayPoints} geo={chartGeometry} pal={pal} />
+          <EvaluationTable pts={displayPoints} pal={pal} />
         </motion.div>
       )}
     </Paper>

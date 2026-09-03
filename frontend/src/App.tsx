@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
-import { Box, CircularProgress } from '@mui/material';
+import { Box, CircularProgress, CssBaseline } from '@mui/material';
+import { ThemeProvider } from '@mui/material/styles';
 import { HashRouter, Routes, Route, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -8,6 +9,8 @@ import AppShell from './components/layout/AppShell';
 import { LicenseProvider } from './contexts/LicenseContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { isElectronMode } from './services/electron';
+import { useColorMode } from './hooks/useColorMode';
+import { getTheme } from './theme';
 
 // Route-level code splitting: each page is loaded on first navigation instead
 // of shipping the whole app (MUI + framer-motion) in one bundle.
@@ -31,7 +34,12 @@ function PageFallback() {
   );
 }
 
-function AppContent() {
+interface AppContentProps {
+  mode: 'light' | 'dark';
+  onToggleMode: () => void;
+}
+
+function AppContent({ mode, onToggleMode }: AppContentProps) {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const isElectron = isElectronMode();
@@ -62,7 +70,7 @@ function AppContent() {
   }
 
   return (
-    <AppShell selectedFramework={selectedFramework}>
+    <AppShell mode={mode} onToggleMode={onToggleMode} selectedFramework={selectedFramework}>
       <ErrorBoundary>
         <Suspense fallback={<PageFallback />}>
           <Routes>
@@ -78,16 +86,28 @@ function AppContent() {
   );
 }
 
-function App() {
+function ThemedApp() {
+  // One theme for the whole app — including the pre-auth screens (login,
+  // verify-email, reset-password) that previously rendered with default MUI.
+  const { mode, toggle } = useColorMode();
   return (
-    <QueryClientProvider client={queryClient}>
+    <ThemeProvider theme={getTheme(mode)}>
+      <CssBaseline />
       <AuthProvider>
         <LicenseProvider>
           <HashRouter>
-            <AppContent />
+            <AppContent mode={mode} onToggleMode={toggle} />
           </HashRouter>
         </LicenseProvider>
       </AuthProvider>
+    </ThemeProvider>
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemedApp />
     </QueryClientProvider>
   );
 }

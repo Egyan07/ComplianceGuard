@@ -1,8 +1,11 @@
 import React, { useEffect } from 'react';
 import { Box, Card, CardContent, Skeleton, Typography } from '@mui/material';
+import { alpha, useTheme } from '@mui/material/styles';
 import { motion, useSpring, useTransform, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { ComplianceEvaluation } from '../services/api';
+import StatusChip from './ui/StatusChip';
+import { RADIUS, Tone, toneColors } from '../theme';
 
 interface ScoreHeroProps {
   evaluation: ComplianceEvaluation | null;
@@ -17,22 +20,26 @@ const FRAMEWORKS = [
   { id: 4, label: 'GDPR' },
 ];
 
+const STATUS_TONE: Record<string, Tone> = {
+  'GOOD STANDING': 'success',
+  'ON TRACK': 'warning',
+  'NEEDS ATTENTION': 'error',
+};
+
+const SCORE_TONE = [
+  { min: 80, tone: 'success' as Tone },
+  { min: 60, tone: 'warning' as Tone },
+  { min: 0, tone: 'error' as Tone },
+];
+
 function getStatusLabel(score: number): string {
   if (score >= 90) return 'GOOD STANDING';
   if (score >= 70) return 'ON TRACK';
   return 'NEEDS ATTENTION';
 }
 
-function getStatusColors(score: number): { color: string; bg: string } {
-  if (score >= 90) return { color: '#065F46', bg: '#D1FAE5' };
-  if (score >= 70) return { color: '#92400E', bg: '#FEF3C7' };
-  return { color: '#991B1B', bg: '#FEE2E2' };
-}
-
-function getScoreColor(score: number): string {
-  if (score >= 80) return '#10B981';
-  if (score >= 60) return '#F59E0B';
-  return '#EF4444';
+function scoreTone(score: number): Tone {
+  return SCORE_TONE.find(t => score >= t.min)?.tone ?? 'error';
 }
 
 const ScoreHero: React.FC<ScoreHeroProps> = ({
@@ -40,6 +47,7 @@ const ScoreHero: React.FC<ScoreHeroProps> = ({
   loading = false,
   selectedFramework = 1,
 }) => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const scoreSpring = useSpring(0, { stiffness: 60, damping: 15 });
   const displayScore = useTransform(scoreSpring, v => Math.round(v));
@@ -52,7 +60,7 @@ const ScoreHero: React.FC<ScoreHeroProps> = ({
     return (
       <Card sx={{ height: '100%', minHeight: 280 }}>
         <CardContent sx={{ p: 3 }}>
-          <Skeleton variant="rectangular" width={120} height={80} sx={{ borderRadius: 2, mb: 1.5 }} />
+          <Skeleton variant="rectangular" width={120} height={80} sx={{ borderRadius: RADIUS.md, mb: 1.5 }} />
           <Skeleton variant="rounded" width={140} height={28} sx={{ mb: 3 }} />
           <Box sx={{ display: 'flex', gap: 1 }}>
             {[0, 1, 2].map(i => (
@@ -65,7 +73,9 @@ const ScoreHero: React.FC<ScoreHeroProps> = ({
   }
 
   const score = evaluation ? Math.round(evaluation.overall_score) : 0;
-  const statusColors = getStatusColors(score);
+  const statusLabel = getStatusLabel(score);
+  const tone = scoreTone(score);
+  const tc = toneColors(theme, tone);
 
   return (
     <Card sx={{ height: '100%', minHeight: 280, borderTop: '3px solid', borderTopColor: 'primary.main' }}>
@@ -74,9 +84,16 @@ const ScoreHero: React.FC<ScoreHeroProps> = ({
           {evaluation ? (
             <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5 }}>
               <motion.span
-                animate={{ color: getScoreColor(score) }}
+                animate={{ color: tc.main }}
                 transition={{ duration: 0.6, ease: 'easeOut' }}
-                style={{ fontSize: '5rem', fontWeight: 800, lineHeight: 1, letterSpacing: '-3px', fontFamily: 'inherit' }}
+                style={{
+                  fontSize: '5rem',
+                  fontWeight: 800,
+                  lineHeight: 1,
+                  letterSpacing: '-3px',
+                  fontVariantNumeric: 'tabular-nums',
+                  fontFamily: 'inherit',
+                }}
               >
                 <motion.span>{displayScore}</motion.span>
               </motion.span>
@@ -87,12 +104,18 @@ const ScoreHero: React.FC<ScoreHeroProps> = ({
           ) : (
             <Box
               sx={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center',
-                justifyContent: 'center', py: 4, gap: 2,
-                border: '1.5px dashed', borderColor: 'divider', borderRadius: 2,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                py: 4,
+                gap: 1.5,
+                border: '1.5px dashed',
+                borderColor: 'divider',
+                borderRadius: '12px',
               }}
             >
-              <Typography sx={{ color: 'text.disabled', fontSize: '0.85rem', textAlign: 'center' }}>
+              <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem', textAlign: 'center' }}>
                 No evaluation yet.<br />Run an evaluation to see your compliance score.
               </Typography>
             </Box>
@@ -113,18 +136,7 @@ const ScoreHero: React.FC<ScoreHeroProps> = ({
               transition={{ type: 'spring', stiffness: 200, damping: 20 }}
               style={{ display: 'inline-block', marginBottom: 20 }}
             >
-              <Box
-                sx={{
-                  display: 'inline-flex', alignItems: 'center', gap: 0.5,
-                  px: 1.5, py: 0.5, borderRadius: 20,
-                  backgroundColor: statusColors.bg,
-                  color: statusColors.color,
-                  fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.5px',
-                }}
-              >
-                <Box sx={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: statusColors.color }} />
-                {getStatusLabel(score)}
-              </Box>
+              <StatusChip tone={STATUS_TONE[statusLabel]} label={statusLabel} dot pill size="md" />
             </motion.div>
           )}
         </AnimatePresence>
@@ -140,20 +152,30 @@ const ScoreHero: React.FC<ScoreHeroProps> = ({
                   data-fw={fw.id}
                   onClick={() => navigate(`/?fw=${fw.id}`)}
                   sx={{
-                    flex: 1, p: 1.5, borderRadius: 2, cursor: 'pointer',
+                    flex: 1,
+                    p: 1.5,
+                    borderRadius: '8px',
+                    cursor: 'pointer',
                     border: '1px solid',
                     borderColor: isActive ? 'primary.main' : 'divider',
                     borderLeft: '3px solid',
                     borderLeftColor: isActive ? 'primary.main' : 'transparent',
-                    backgroundColor: isActive ? 'rgba(37,99,235,0.04)' : 'transparent',
+                    backgroundColor: isActive ? alpha(theme.palette.primary.main, 0.05) : 'transparent',
                     transition: 'all 0.15s',
                     '&:hover': { backgroundColor: 'action.hover', transform: 'translateY(-1px)' },
                   }}
                 >
-                  <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary', mb: 0.25 }}>
+                  <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', mb: 0.25 }}>
                     {fw.label}
                   </Typography>
-                  <Typography sx={{ fontSize: '1rem', fontWeight: 700, color: isActive && isCurrentEval ? 'primary.main' : 'text.primary' }}>
+                  <Typography
+                    sx={{
+                      fontSize: '1.05rem',
+                      fontWeight: 700,
+                      fontVariantNumeric: 'tabular-nums',
+                      color: isActive && isCurrentEval ? 'primary.main' : 'text.primary',
+                    }}
+                  >
                     {isActive && isCurrentEval ? `${score}%` : '--'}
                   </Typography>
                 </Box>
@@ -164,14 +186,14 @@ const ScoreHero: React.FC<ScoreHeroProps> = ({
 
         {evaluation && (
           <Box sx={{ mt: 2, pt: 1.5, borderTop: '1px solid', borderColor: 'divider' }}>
-            <Typography variant="caption" color="text.secondary">
+            <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', lineHeight: 1.6 }}>
               {evaluation.compliant_controls}/{evaluation.total_controls} controls compliant
               {typeof evaluation.not_assessed_controls === 'number' && evaluation.not_assessed_controls > 0 && (
                 <> · {evaluation.not_assessed_controls} not yet assessed</>
               )}{' '}
               · Last evaluated {new Date(evaluation.evaluation_date).toLocaleDateString()}
             </Typography>
-            <Typography variant="caption" sx={{ display: 'block', color: 'text.disabled', mt: 0.5 }}>
+            <Typography sx={{ display: 'block', fontSize: '0.75rem', color: 'text.secondary', mt: 0.5, opacity: 0.85 }}>
               Score = share of required control evidence demonstrated; unassessed controls lower it until evidence is collected.
             </Typography>
           </Box>

@@ -4,6 +4,7 @@ import {
   ListItem, ListItemText, Chip, CircularProgress, Alert, MenuItem,
 } from '@mui/material';
 import { Security, History, Download, Group } from '@mui/icons-material';
+import SectionHeader from './settings/SectionHeader';
 import { useEnterpriseFeature } from '../hooks/useEnterpriseFeature';
 import { getElectronAPI, isElectronMode } from '../services/electron';
 import type { AuditEntry, RemediationRow } from '../services/api.types';
@@ -159,11 +160,9 @@ const EnterprisePanel: React.FC = () => {
       {/* Branding */}
       <Paper sx={{ mb: 3 }}>
         <Box sx={{ p: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-            <Security color="primary" />
-            <Typography sx={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'text.disabled' }}>Branding</Typography>
+          <SectionHeader icon={<Security />} title="Branding">
             <Chip label="ENTERPRISE" size="small" color="primary" />
-          </Box>
+          </SectionHeader>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
             <TextField size="small" label="Company Name" value={companyName} onChange={e => setCompanyName(e.target.value)} />
             <TextField size="small" label="Report Footer (optional)" value={reportFooter} onChange={e => setReportFooter(e.target.value)} />
@@ -190,10 +189,7 @@ const EnterprisePanel: React.FC = () => {
       {/* Remediation Plan */}
       <Paper sx={{ mb: 3 }}>
         <Box sx={{ p: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-            <Security color="primary" />
-            <Typography sx={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'text.disabled' }}>Remediation Plan</Typography>
-          </Box>
+          <SectionHeader icon={<Security />} title="Remediation Plan" />
           <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', mb: 1.5 }}>
             Assign an owner and target date to a control. These appear in the report's Remediation Roadmap and per-control detail.
           </Typography>
@@ -215,7 +211,7 @@ const EnterprisePanel: React.FC = () => {
                     <ListItemText
                       primary={`${r.control_id} — ${r.owner || 'unassigned'}`}
                       secondary={`Target: ${r.target_date || '—'}${r.notes ? ` · ${r.notes}` : ''}`}
-                      slotProps={{ primary: { sx: { fontSize: '0.8rem' } }, secondary: { sx: { fontSize: '0.7rem' } } }}
+                      slotProps={{ primary: { sx: { fontSize: '0.875rem' } }, secondary: { sx: { fontSize: '0.75rem' } } }}
                     />
                   </ListItem>
                   {i < remRows.length - 1 && <Divider component="li" />}
@@ -229,10 +225,7 @@ const EnterprisePanel: React.FC = () => {
       {/* Audit Log */}
       <Paper sx={{ mb: 3 }}>
         <Box sx={{ p: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-            <History color="primary" />
-            <Typography sx={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'text.disabled' }}>Audit Log</Typography>
-          </Box>
+          <SectionHeader icon={<History />} title="Audit Log" />
           <Button variant="outlined" size="small" onClick={handleLoadAuditLog} disabled={auditLoading} sx={{ mb: 1 }}>
             {auditLoading ? <CircularProgress size={14} /> : 'Load Audit Log'}
           </Button>
@@ -244,7 +237,7 @@ const EnterprisePanel: React.FC = () => {
                     <ListItemText
                       primary={e.event_type}
                       secondary={`${e.framework ?? '—'} · Score: ${e.score ?? '—'} · ${e.created_at}`}
-                      slotProps={{ primary: { sx: { fontSize: '0.8rem' } }, secondary: { sx: { fontSize: '0.7rem' } } }}
+                      slotProps={{ primary: { sx: { fontSize: '0.875rem' } }, secondary: { sx: { fontSize: '0.75rem' } } }}
                     />
                   </ListItem>
                   {i < auditEntries.length - 1 && <Divider component="li" />}
@@ -258,11 +251,8 @@ const EnterprisePanel: React.FC = () => {
       {/* Users & Roles — web only */}
       {!isElectron && (
         <Paper sx={{ mb: 3 }}>
-          <Box sx={{ p: 3 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-              <Group color="primary" />
-              <Typography sx={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'text.disabled' }}>Users &amp; Roles</Typography>
-            </Box>
+        <Box sx={{ p: 3 }}>
+          <SectionHeader icon={<Group />} title="Users & Roles" />
             <Typography variant="body2" color="text.secondary">
               RBAC user management is available via the web API endpoints for Enterprise deployments.
             </Typography>
@@ -273,10 +263,7 @@ const EnterprisePanel: React.FC = () => {
       {/* Data Export */}
       <Paper sx={{ mb: 3 }}>
         <Box sx={{ p: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-            <Download color="primary" />
-            <Typography sx={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'text.disabled' }}>Data Export</Typography>
-          </Box>
+          <SectionHeader icon={<Download />} title="Data Export" />
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             Export all compliance data — evidence, evaluations, and audit log — as a NDJSON file.
           </Typography>

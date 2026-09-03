@@ -38,9 +38,9 @@ export default function VerifyEmail() {
   }, [token]);
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#f5f5f7', p: 2 }}>
-      <Paper sx={{ p: 5, maxWidth: 440, width: '100%', textAlign: 'center', borderRadius: '20px' }}>
-        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Email Verification</Typography>
+    <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'background.default', p: 2 }}>
+      <Paper sx={{ p: 5, maxWidth: 440, width: '100%', textAlign: 'center' }}>
+        <Typography component="h1" sx={{ mb: 2, fontWeight: 650, fontSize: '1.125rem' }}>Email Verification</Typography>
         {status === 'verifying' && (
           <Box sx={{ py: 2 }}><CircularProgress /><Typography sx={{ mt: 2 }} color="text.secondary">Verifying your email…</Typography></Box>
         )}

@@ -7,14 +7,21 @@ interface SectionHeaderProps {
   children?: React.ReactNode;
 }
 
-/** Consistent Settings section header: icon + overline title + optional extras. */
+/** Consistent Settings section header: icon + title + optional trailing extras. */
 const SectionHeader: React.FC<SectionHeaderProps> = ({ icon, title, children }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-    {icon}
-    <Typography sx={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'text.disabled' }}>
+  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 2.5 }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', color: 'primary.main' }}>{icon}</Box>
+    <Typography
+      sx={{
+        fontSize: '0.9rem',
+        fontWeight: 650,
+        letterSpacing: '-0.1px',
+        color: 'text.primary',
+      }}
+    >
       {title}
     </Typography>
-    {children}
+    {children && <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>{children}</Box>}
   </Box>
 );
 

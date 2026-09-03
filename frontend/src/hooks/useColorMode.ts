@@ -8,7 +8,11 @@ function getInitialMode(): ColorMode {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored === 'light' || stored === 'dark') return stored;
   } catch { /* localStorage unavailable (private browsing) */ }
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  try {
+    // jsdom and some webviews don't implement matchMedia — default to light.
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark';
+  } catch { /* ignore */ }
+  return 'light';
 }
 
 export function useColorMode() {

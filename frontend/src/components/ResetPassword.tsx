@@ -44,9 +44,9 @@ export default function ResetPassword() {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#f5f5f7', p: 2 }}>
-      <Paper sx={{ p: 5, maxWidth: 440, width: '100%', borderRadius: '20px' }}>
-        <Typography variant="h6" sx={{ mb: 3, fontWeight: 600, textAlign: 'center' }}>Reset Password</Typography>
+    <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'background.default', p: 2 }}>
+      <Paper sx={{ p: 5, maxWidth: 440, width: '100%' }}>
+        <Typography component="h1" sx={{ mb: 3, fontWeight: 650, fontSize: '1.125rem', textAlign: 'center' }}>Reset Password</Typography>
         {done ? (
           <>
             <Alert severity="success" sx={{ mb: 3 }}>Your password has been reset. You can now sign in.</Alert>

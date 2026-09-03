@@ -8,6 +8,7 @@ import {
   Box,
 } from '@mui/material';
 import { Lock } from '@mui/icons-material';
+import { RADIUS } from '../theme';
 
 interface UpgradePromptProps {
   feature: string;
@@ -27,7 +28,7 @@ const UpgradePrompt: React.FC<UpgradePromptProps> = ({
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
       <DialogTitle sx={{ textAlign: 'center', pt: 4 }}>
-        <Lock sx={{ fontSize: 48, color: '#2563EB', mb: 1 }} />
+        <Lock sx={{ fontSize: 48, color: 'primary.main', mb: 1 }} />
         <Typography variant="h6" component="div">
           {feature} — Pro Feature
         </Typography>
@@ -36,8 +37,8 @@ const UpgradePrompt: React.FC<UpgradePromptProps> = ({
         <Typography variant="body2" color="text.secondary">
           {description}
         </Typography>
-        <Box sx={{ mt: 2, p: 2, backgroundColor: '#EFF6FF', borderRadius: 2 }}>
-          <Typography variant="body2" sx={{ color: '#1E40AF', fontWeight: 500 }}>
+        <Box sx={{ mt: 2, p: 2, backgroundColor: 'info.light', borderRadius: RADIUS.md }}>
+          <Typography variant="body2" sx={{ color: 'info.dark', fontWeight: 500 }}>
             Upgrade to Pro to unlock all 54 controls, PDF reports,
             evaluation history, and more.
           </Typography>

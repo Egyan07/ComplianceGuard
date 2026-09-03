@@ -37,7 +37,6 @@ const Settings: React.FC = () => {
   const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [darkMode, setDarkMode] = useState(false);
   const [cloudConfig, setCloudConfig] = useState<CloudSyncConfig | null>(null);
   const { tier, licenseInfo, activateLicense, deactivateLicense } = useLicense();
   const [schedule, setScheduleState] = useState<ScheduleState | null>(null);
@@ -48,9 +47,6 @@ const Settings: React.FC = () => {
 
       api.getAppVersion().then((v: string) => setAppVersion(v)).catch(() => {});
       api.getSystemInfo().then((info) => setSystemInfo(info)).catch(() => {});
-      api.getUserSetting('dark_mode', 'false').then((val) => {
-        setDarkMode(String(val) === 'true');
-      }).catch(() => {});
       api.cloudGetConfig().then((cfg) => setCloudConfig(cfg)).catch(() => {});
       api.getSchedule().then((s) => setScheduleState(s)).catch(() => {});
     }
@@ -128,7 +124,7 @@ const Settings: React.FC = () => {
 
   return (
     <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', mb: 3 }}>
+      <Typography component="h1" sx={{ fontWeight: 700, fontSize: '1.5rem', letterSpacing: '-0.6px', mb: 3 }}>
         Settings
       </Typography>
 
@@ -165,7 +161,7 @@ const Settings: React.FC = () => {
         />
       )}
 
-      <DisplaySection darkMode={darkMode} />
+      <DisplaySection />
 
       <FrameworksSection />
 

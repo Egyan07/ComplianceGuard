@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Paper, Typography, Chip, Button } from '@mui/material';
+import { Box, Paper, Typography, Chip, Button, TextField } from '@mui/material';
 import { Cloud } from '@mui/icons-material';
 import SectionHeader from './SectionHeader';
 import { getErrorMessage } from '../../lib/errors';
@@ -75,26 +75,28 @@ const CloudSyncSection: React.FC<CloudSyncSectionProps> = ({
               Connect to your ComplianceGuard web server to sync compliance data to the Cloud Dashboard.
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-              <input
-                type="text"
+              <TextField
+                size="small"
                 placeholder="Server URL (e.g. https://compliance.yourcompany.com)"
                 value={cloudUrl}
                 onChange={(e) => setCloudUrl(e.target.value)}
-                style={{ width: '100%', padding: '10px 12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px' }}
+                fullWidth
               />
-              <input
+              <TextField
                 type="email"
+                size="small"
                 placeholder="Email"
                 value={cloudEmail}
                 onChange={(e) => setCloudEmail(e.target.value)}
-                style={{ width: '100%', padding: '10px 12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px' }}
+                fullWidth
               />
-              <input
+              <TextField
                 type="password"
+                size="small"
                 placeholder="Password"
                 value={cloudPassword}
                 onChange={(e) => setCloudPassword(e.target.value)}
-                style={{ width: '100%', padding: '10px 12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '14px' }}
+                fullWidth
               />
               <Button
                 variant="contained"

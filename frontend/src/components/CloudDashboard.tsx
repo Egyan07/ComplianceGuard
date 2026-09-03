@@ -10,7 +10,6 @@ import {
   Box,
   Container,
   Paper,
-  Typography,
   Button,
   CircularProgress,
   Chip,
@@ -25,6 +24,10 @@ import {
 import { Refresh, SyncProblem } from '@mui/icons-material';
 import { useLicense } from '../contexts/LicenseContext';
 import { getFleetStats, getMachines, FleetStats, MachineRecord } from '../services/api';
+import PageHeader from './ui/PageHeader';
+import EmptyState from './ui/EmptyState';
+import StatCard from './ui/StatCard';
+import { RADIUS, Tone } from '../theme';
 
 const STALE_THRESHOLD_DAYS = 7;
 
@@ -51,30 +54,12 @@ function getStatusLabel(complianceLevel: string | null): string {
   return '\u2014';
 }
 
-function getStatusColor(
-  complianceLevel: string | null
-): 'success' | 'warning' | 'error' | 'default' {
+function getTone(complianceLevel: string | null): Tone {
   if (complianceLevel === 'compliant') return 'success';
   if (complianceLevel === 'at_risk') return 'warning';
   if (complianceLevel === 'critical') return 'error';
-  return 'default';
+  return 'neutral';
 }
-
-interface StatCardProps {
-  label: string;
-  value: string | number;
-}
-
-const StatCard: React.FC<StatCardProps> = ({ label, value }) => (
-  <Paper sx={{ p: 3, flex: 1, minWidth: 140, textAlign: 'center' }}>
-    <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-      {value}
-    </Typography>
-    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-      {label}
-    </Typography>
-  </Paper>
-);
 
 interface CloudDashboardProps {
   onNavigate?: (page: string) => void;
@@ -109,13 +94,11 @@ const CloudDashboard: React.FC<CloudDashboardProps> = () => {
   if (tier === 'free') {
     return (
       <Container maxWidth="xl" sx={{ mt: 4 }}>
-        <Paper sx={{ p: 6, textAlign: 'center' }}>
-          <Typography variant="h5">
-            Cloud Dashboard — Pro Feature
-          </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
-            Upgrade to Pro or Enterprise to access the Cloud Dashboard and fleet management.
-          </Typography>
+        <Paper sx={{ borderRadius: RADIUS.lg }}>
+          <EmptyState
+            title="Cloud Dashboard — Pro Feature"
+            description="Upgrade to Pro or Enterprise to access the Cloud Dashboard and fleet management."
+          />
         </Paper>
       </Container>
     );
@@ -133,53 +116,46 @@ const CloudDashboard: React.FC<CloudDashboardProps> = () => {
 
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-      {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold' }}>
-          Cloud Dashboard
-        </Typography>
-        <Button
-          variant="outlined"
-          startIcon={<Refresh />}
-          onClick={fetchData}
-          disabled={loading}
-          aria-label="Refresh"
-        >
-          Refresh
-        </Button>
-      </Box>
+      <PageHeader
+        title="Cloud Dashboard"
+        subtitle="Fleet-wide compliance status across synced machines"
+        actions={
+          <Button
+            variant="outlined"
+            startIcon={<Refresh />}
+            onClick={fetchData}
+            disabled={loading}
+            aria-label="Refresh"
+          >
+            Refresh
+          </Button>
+        }
+      />
 
       {/* Fleet Stats Cards */}
       {fleetStats && (
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 4 }}>
-          <StatCard label="Total Machines" value={fleetStats.total_machines} />
+          <StatCard label="Total Machines" value={fleetStats.total_machines} tone="info" />
           {/* Compliant card with avg score — label uses "Fleet Compliant" to avoid
               collision with the "Compliant" status chip rendered in the machine table */}
-          <Paper sx={{ p: 3, flex: 1, minWidth: 140, textAlign: 'center' }}>
-            <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-              {fleetStats.compliant}
-            </Typography>
-            {fleetStats.avg_score !== null && (
-              <Typography variant="body1" sx={{ color: 'success.main', fontWeight: 600 }}>
-                {fleetStats.avg_score.toFixed(1)}%
-              </Typography>
-            )}
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              Fleet Compliant
-            </Typography>
-          </Paper>
-          <StatCard label="At Risk Machines" value={fleetStats.at_risk} />
-          <StatCard label="Critical Machines" value={fleetStats.critical} />
+          <StatCard
+            label="Fleet Compliant"
+            value={fleetStats.compliant}
+            tone="success"
+            secondary={fleetStats.avg_score !== null ? `${fleetStats.avg_score.toFixed(1)}%` : undefined}
+          />
+          <StatCard label="At Risk Machines" value={fleetStats.at_risk} tone="warning" />
+          <StatCard label="Critical Machines" value={fleetStats.critical} tone="error" />
         </Box>
       )}
 
       {/* Machines Table */}
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
         <Table aria-label="machines table">
           <TableHead>
             <TableRow>
               <TableCell>Machine</TableCell>
-              <TableCell>OS</TableCell>
+              <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>OS</TableCell>
               <TableCell>Score</TableCell>
               <TableCell>Last Sync</TableCell>
               <TableCell>Status</TableCell>
@@ -189,13 +165,17 @@ const CloudDashboard: React.FC<CloudDashboardProps> = () => {
             {machines.map((machine) => {
               const stale = isStale(machine.last_sync_at);
               const statusLabel = getStatusLabel(machine.compliance_level);
-              const statusColor = getStatusColor(machine.compliance_level);
+              const tone = getTone(machine.compliance_level);
 
               return (
-                <TableRow key={machine.id}>
-                  <TableCell>{machine.hostname}</TableCell>
-                  <TableCell>{machine.os_version ?? '\u2014'}</TableCell>
-                  <TableCell>{formatScore(machine.last_score)}</TableCell>
+                <TableRow key={machine.id} hover>
+                  <TableCell sx={{ fontWeight: 600 }}>{machine.hostname}</TableCell>
+                  <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
+                    {machine.os_version ?? '\u2014'}
+                  </TableCell>
+                  <TableCell sx={{ fontVariantNumeric: 'tabular-nums' }}>
+                    {formatScore(machine.last_score)}
+                  </TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       {formatLastSync(machine.last_sync_at)}
@@ -215,7 +195,14 @@ const CloudDashboard: React.FC<CloudDashboardProps> = () => {
                       <Chip
                         label={statusLabel}
                         size="small"
-                        color={statusColor}
+                        sx={{
+                          fontSize: '0.7rem',
+                          fontWeight: 600,
+                          color: `${tone}.dark`,
+                          backgroundColor: `${tone}.light`,
+                          border: '1px solid',
+                          borderColor: 'divider',
+                        }}
                       />
                     ) : (
                       '\u2014'

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Paper, Typography, List, ListItem, ListItemText, Divider, Chip, Button } from '@mui/material';
+import { Box, Paper, Typography, List, ListItem, ListItemText, Divider, Chip, Button, TextField } from '@mui/material';
 import { VpnKey } from '@mui/icons-material';
 import SectionHeader from './SectionHeader';
 import { getErrorMessage } from '../../lib/errors';
@@ -90,18 +90,14 @@ const LicenseSection: React.FC<LicenseSectionProps> = ({
             </Typography>
             <Box sx={{ display: 'flex', gap: 1 }}>
               <Box sx={{ flex: 1 }}>
-                <input
-                  type="text"
+                <TextField
+                  fullWidth
+                  size="small"
                   placeholder="Paste your license key here"
                   value={licenseKey}
                   onChange={(e) => setLicenseKey(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: '1px solid #D1D5DB',
-                    borderRadius: '8px',
-                    fontSize: '0.8rem',
-                    fontFamily: 'monospace',
+                  slotProps={{
+                    input: { style: { fontFamily: 'SFMono-Regular, Consolas, monospace', fontSize: '0.8125rem' } },
                   }}
                 />
               </Box>

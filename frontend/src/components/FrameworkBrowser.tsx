@@ -20,7 +20,10 @@ import {
   InputAdornment,
   Paper,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import { ExpandMore, Search } from '@mui/icons-material';
+import PageHeader from './ui/PageHeader';
+import { RADIUS, toneColors } from '../theme';
 import type { FrameworkControl, FrameworkData, FrameworkDataError } from '../types/electron';
 
 type RiskFilter = 'all' | 'high' | 'medium' | 'low';
@@ -32,16 +35,7 @@ const FRAMEWORKS = [
   { id: 4, label: 'GDPR' },
 ] as const;
 
-const RISK_CHIP_SX: Record<string, object> = {
-  high:   { backgroundColor: '#FEE2E2', color: '#991B1B' },
-  medium: { backgroundColor: '#FEF3C7', color: '#92400E' },
-  low:    { backgroundColor: '#D1FAE5', color: '#065F46' },
-};
 
-const SPEC_TYPE_SX: Record<string, object> = {
-  required:    { backgroundColor: '#EFF6FF', color: '#1E40AF' },
-  addressable: { backgroundColor: '#F3F4F6', color: '#374151' },
-};
 
 function groupByCategory(controls: FrameworkControl[]): Record<string, FrameworkControl[]> {
   return controls.reduce<Record<string, FrameworkControl[]>>((acc, control) => {
@@ -67,6 +61,21 @@ const FrameworkBrowser: React.FC = () => {
   const [riskFilter, setRiskFilter] = useState<RiskFilter>('all');
   const [frameworks, setFrameworks] = useState<Record<number, FrameworkData | FrameworkDataError>>({});
   const [loading, setLoading] = useState<Record<number, boolean>>({});
+
+  const theme = useTheme();
+  const chipFor = (tone: 'error' | 'warning' | 'success' | 'info' | 'neutral') => {
+    const c = toneColors(theme, tone);
+    return { backgroundColor: c.surface, color: c.onSurface, border: `1px solid ${c.border}` };
+  };
+  const RISK_CHIP_SX: Record<string, object> = {
+    high: chipFor('error'),
+    medium: chipFor('warning'),
+    low: chipFor('success'),
+  };
+  const SPEC_TYPE_SX: Record<string, object> = {
+    required: chipFor('info'),
+    addressable: chipFor('neutral'),
+  };
 
   const api = window.electronAPI;
   const currentFrameworkId = FRAMEWORKS[activeTab].id;
@@ -117,16 +126,13 @@ const FrameworkBrowser: React.FC = () => {
 
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" sx={{ fontWeight: 600, color: '#111827' }}>Browse Frameworks</Typography>
-        <Typography variant="body2" color="text.secondary">Read-only reference library</Typography>
-      </Box>
+      <PageHeader title="Browse Frameworks" subtitle="Read-only reference library" />
 
       <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
         <Tabs
           value={activeTab}
           onChange={handleTabChange}
-          slotProps={{ indicator: { style: { height: 2, borderRadius: 2 } } }}
+          slotProps={{ indicator: { style: { height: 2, borderRadius: RADIUS.pill } } }}
           sx={{ borderBottom: '1px solid', borderColor: 'divider', px: 2 }}
         >
           {FRAMEWORKS.map(f => <Tab key={f.id} label={f.label} />)}
@@ -221,27 +227,27 @@ const FrameworkBrowser: React.FC = () => {
                         <AccordionDetails sx={{ backgroundColor: '#F8FAFC', p: 2 }}>
                           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                             <Box>
-                              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: 'block' }}>
-                                DESCRIPTION
+                              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 650, display: 'block', letterSpacing: '0.4px', textTransform: 'uppercase' }}>
+                                Description
                               </Typography>
                               <Typography variant="body2">{control.description}</Typography>
                             </Box>
                             <Box>
-                              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: 'block' }}>
-                                OBJECTIVE
+                              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 650, display: 'block', letterSpacing: '0.4px', textTransform: 'uppercase' }}>
+                                Objective
                               </Typography>
                               <Typography variant="body2">{control.control_objective}</Typography>
                             </Box>
                             <Box>
-                              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: 'block' }}>
-                                IMPLEMENTATION GUIDANCE
+                              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 650, display: 'block', letterSpacing: '0.4px', textTransform: 'uppercase' }}>
+                                Implementation guidance
                               </Typography>
                               <Typography variant="body2">{control.implementation_guidance}</Typography>
                             </Box>
                             {control.specification_type && (
                               <Box>
-                                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: 'block' }}>
-                                  TYPE
+                                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 650, display: 'block', letterSpacing: '0.4px', textTransform: 'uppercase' }}>
+                                  Type
                                 </Typography>
                                 <Chip
                                   label={control.specification_type}

@@ -52,30 +52,33 @@ export default function LoginPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#F8FAFC',
+        backgroundColor: 'background.default',
+        px: 2,
       }}
     >
-      <Card sx={{ width: 420, mx: 2 }}>
+      <Card sx={{ width: 420, maxWidth: '100%' }}>
         <CardContent sx={{ p: 4 }}>
-          {/* Logo */}
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, justifyContent: 'center' }}>
+          {/* Brand */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3, gap: 1.5 }}>
             <Box
               sx={{
-                width: 36,
-                height: 36,
+                width: 42,
+                height: 42,
                 borderRadius: '10px',
-                backgroundColor: '#2563EB',
+                backgroundColor: 'primary.main',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                mr: 1.5,
               }}
             >
-              <Typography sx={{ color: '#FFF', fontWeight: 700, fontSize: '0.85rem', letterSpacing: '-0.5px' }}>
+              <Typography sx={{ color: '#fff', fontWeight: 700, fontSize: '1rem', letterSpacing: '-0.5px' }}>
                 CG
               </Typography>
             </Box>
-            <Typography variant="h5" sx={{ fontWeight: 700, color: '#111827', letterSpacing: '-0.5px' }}>
+            <Typography
+              component="h1"
+              sx={{ fontWeight: 700, fontSize: '1.25rem', letterSpacing: '-0.5px', color: 'text.primary' }}
+            >
               ComplianceGuard
             </Typography>
           </Box>
@@ -140,13 +143,15 @@ export default function LoginPage() {
               variant="contained"
               fullWidth
               disabled={submitting}
-              sx={{ py: 1.2 }}
+              sx={{ height: 40 }}
             >
               {submitting ? <CircularProgress size={22} color="inherit" /> : tab === 0 ? 'Sign In' : 'Create Account'}
             </Button>
           </form>
 
-          <Typography variant="caption" sx={{ display: 'block', textAlign: 'center', mt: 3, color: '#9CA3AF' }}>
+          <Typography
+            sx={{ display: 'block', textAlign: 'center', mt: 3, fontSize: '0.75rem', color: 'text.secondary' }}
+          >
             SOC 2 Type II Compliance Automation
           </Typography>
         </CardContent>

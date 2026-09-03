@@ -3,6 +3,7 @@ import {
   Box, Paper, Typography, List, ListItem, ListItemText, ListItemSecondaryAction,
   Divider, Switch, FormControl, Select, MenuItem, TextField, Button, CircularProgress,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import { Schedule } from '@mui/icons-material';
 import type { ScheduleConfig, CollectionResult } from '../../types/electron';
 import SectionHeader from './SectionHeader';
@@ -22,6 +23,7 @@ interface ScheduleSectionProps {
 
 /** Automatic Collection section: enable toggle, frequency/time, run now, last run. */
 const ScheduleSection: React.FC<ScheduleSectionProps> = ({ schedule, onChange, onRunNow }) => {
+  const theme = useTheme();
   const [runningNow, setRunningNow] = useState(false);
 
   const handleRunNow = async () => {
@@ -88,7 +90,7 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({ schedule, onChange, o
                   : 'Never'
               }
               slotProps={{
-                secondary: { style: { color: schedule?.last_result && !schedule.last_result.success ? 'red' : undefined } },
+                secondary: { style: { color: schedule?.last_result && !schedule.last_result.success ? theme.palette.error.main : undefined } },
               }}
             />
             {schedule?.next_run_at && (

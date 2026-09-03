@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 import { Box, Paper, Typography, LinearProgress, Chip, Button } from '@mui/material';
+import { alpha, useTheme } from '@mui/material/styles';
 import type { ControlResult } from '../services/api';
+import StatusChip from './ui/StatusChip';
+import EmptyState from './ui/EmptyState';
+import Segmented from './ui/Segmented';
+import { RADIUS, Tone, toneColors } from '../theme';
 
 const CONTROL_NAMES: Record<string, string> = {
   'CC1.1':'Control Environment','CC1.2':'Board Independence','CC1.3':'Management Philosophy',
@@ -34,11 +39,18 @@ const CATEGORIES: { label: string; ids: string[] }[] = [
 type Filter = 'all' | 'failing' | 'partial';
 type StatusKey = 'compliant' | 'non_compliant' | 'partial' | 'not_assessed';
 
-const STATUS_CONFIG: Record<StatusKey, { label: string; color: string; bg: string; border: string; barColor: string }> = {
-  compliant:     { label: 'Pass',    color: '#16A34A', bg: '#F0FDF4', border: '#BBF7D0', barColor: '#10B981' },
-  non_compliant: { label: 'Fail',    color: '#DC2626', bg: '#FEF2F2', border: '#FECACA', barColor: '#EF4444' },
-  partial:       { label: 'Partial', color: '#D97706', bg: '#FFFBEB', border: '#FDE68A', barColor: '#F59E0B' },
-  not_assessed:  { label: 'N/A',     color: '#94A3B8', bg: '#F8FAFC', border: '#E2E8F0', barColor: '#CBD5E1' },
+const STATUS_TONE: Record<StatusKey, Tone> = {
+  compliant: 'success',
+  non_compliant: 'error',
+  partial: 'warning',
+  not_assessed: 'neutral',
+};
+
+const STATUS_LABEL: Record<StatusKey, string> = {
+  compliant: 'Pass',
+  non_compliant: 'Fail',
+  partial: 'Partial',
+  not_assessed: 'N/A',
 };
 
 const AUTOMATABLE_CONTROLS = new Set(['CC6.1','CC6.2','CC6.3','CC7.1','A3.2','A1.5']);
@@ -69,6 +81,7 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
   onDownloadScript,
   onRescan,
 }) => {
+  const theme = useTheme();
   const [filter, setFilter] = useState<Filter>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [remediationStates, setRemediationStates] = useState<Record<string, RemediationState>>({});
@@ -79,49 +92,59 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
     return true;
   };
 
+  const c = (tone: Tone) => toneColors(theme, tone);
+
   return (
-    <Paper sx={{ borderRadius: 3.5, overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
+    <Paper sx={{ borderRadius: RADIUS.lg, overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
       {/* Header */}
-      <Box sx={{ px: 2.5, py: 1.75, borderBottom: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: 'text.primary', display: 'flex', alignItems: 'center', gap: 1 }}>
-          Controls
-          <Box component="span" sx={{ fontSize: '0.6rem', color: 'text.disabled', fontWeight: 400 }}>
+      <Box
+        sx={{
+          px: 2.5,
+          py: 1.75,
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 1,
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1.25, minWidth: 0 }}>
+          <Typography sx={{ fontSize: '1rem', fontWeight: 700, color: 'text.primary', letterSpacing: '-0.2px' }}>
+            Controls
+          </Typography>
+          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', fontWeight: 500 }}>
             SOC 2 Type II · 54 controls
-          </Box>
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 0.75 }}>
-          {([['all', 'All'], ['failing', 'Failing'], ['partial', 'Partial']] as [Filter, string][]).map(([f, label]) => (
-            <Chip
-              key={f}
-              label={label}
-              size="small"
-              onClick={() => { setFilter(f); setExpandedId(null); }}
-              sx={{
-                fontSize: '0.6rem', fontWeight: 600, height: 24, cursor: 'pointer',
-                bgcolor: filter === f ? '#EFF6FF' : 'transparent',
-                color: filter === f ? '#1D4ED8' : 'text.secondary',
-                border: '1px solid', borderColor: filter === f ? '#BFDBFE' : 'divider',
-              }}
-            />
-          ))}
+          </Typography>
         </Box>
+        <Segmented
+          options={[
+            { value: 'all' as Filter, label: 'All' },
+            { value: 'failing' as Filter, label: 'Failing' },
+            { value: 'partial' as Filter, label: 'Partial' },
+          ]}
+          value={filter}
+          onChange={(f) => { setFilter(f); setExpandedId(null); }}
+        />
       </Box>
 
       {/* Body */}
       <Box sx={{ px: 1.25, py: 0.75 }}>
         {!controlResults ? (
-          <Box sx={{ py: 6, textAlign: 'center', border: '1.5px dashed', borderColor: 'divider', borderRadius: 2, mx: 1, my: 1 }}>
-            <Typography sx={{ fontSize: '0.75rem', color: 'text.disabled' }}>
-              Run an evaluation to see control status
-            </Typography>
-          </Box>
+          <EmptyState
+            dashed
+            title="No evaluation results yet"
+            description="Run an evaluation to see each control's status and score."
+            sx={{ py: 5 }}
+          />
         ) : !isProTier ? (
-          <Box sx={{ py: 5, textAlign: 'center' }}>
-            <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', mb: 1 }}>
-              Per-control breakdown requires Pro
-            </Typography>
-            <Chip label="Upgrade to Pro" size="small" color="primary" variant="outlined" />
-          </Box>
+          <EmptyState
+            title="Per-control breakdown requires Pro"
+            description="Upgrade to unlock control-by-control scoring, evidence gaps, and remediation guidance."
+            action={<Chip label="Upgrade to Pro" size="small" color="primary" variant="outlined" />}
+            sx={{ py: 5 }}
+          />
         ) : (
           CATEGORIES.map(cat => {
             const visibleIds = cat.ids.filter(id => {
@@ -131,49 +154,89 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
             if (visibleIds.length === 0) return null;
             return (
               <Box key={cat.label}>
-                <Typography sx={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'text.disabled', px: 1, pt: 1, pb: 0.5 }}>
+                <Typography
+                  sx={{
+                    fontSize: '0.72rem',
+                    fontWeight: 650,
+                    color: 'text.secondary',
+                    px: 1,
+                    pt: 1.25,
+                    pb: 0.5,
+                  }}
+                >
                   {cat.label}
                 </Typography>
                 {visibleIds.map(id => {
                   const r = controlResults[id];
                   const status: StatusKey = r?.status ?? 'not_assessed';
-                  const cfg = STATUS_CONFIG[status];
+                  const tone = STATUS_TONE[status];
+                  const toneC = c(tone);
                   const score = Math.max(0, Math.min(100, r?.score ?? 0));
                   const isFail = status === 'non_compliant';
                   const isAutomatable = AUTOMATABLE_CONTROLS.has(id);
+                  const failBg = alpha(theme.palette.error.main, theme.palette.mode === 'light' ? 0.04 : 0.06);
 
                   return (
                     <React.Fragment key={id}>
                       <Box
                         sx={{
-                          display: 'flex', alignItems: 'center', gap: 1.25,
-                          px: 1, py: 0.875, borderRadius: 1.5, mb: 0.25,
-                          bgcolor: isFail ? '#FFF8F8' : 'transparent',
-                          '&:hover': { bgcolor: isFail ? '#FFF3F3' : 'action.hover' },
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1.5,
+                          px: 1.25,
+                          py: 0.9,
+                          borderRadius: '8px',
+                          mb: 0.25,
+                          flexWrap: { xs: 'wrap', md: 'nowrap' },
+                          bgcolor: isFail ? failBg : 'transparent',
+                          '&:hover': { bgcolor: isFail ? failBg : 'action.hover' },
                         }}
                       >
-                        <Typography sx={{ fontSize: '0.58rem', fontWeight: 700, color: isFail ? '#DC2626' : 'text.disabled', width: 42, flexShrink: 0 }}>
+                        <Typography
+                          sx={{
+                            fontSize: '0.72rem',
+                            fontWeight: 700,
+                            fontVariantNumeric: 'tabular-nums',
+                            color: isFail ? 'error.main' : 'text.secondary',
+                            width: 46,
+                            flexShrink: 0,
+                          }}
+                        >
                           {id}
                         </Typography>
-                        <Typography sx={{ fontSize: '0.65rem', fontWeight: isFail ? 600 : 500, color: isFail ? 'text.primary' : 'text.secondary', flex: 1 }}>
+                        <Typography
+                          sx={{
+                            fontSize: '0.8125rem',
+                            fontWeight: isFail ? 600 : 500,
+                            color: isFail ? 'text.primary' : 'text.secondary',
+                            flex: 1,
+                            minWidth: 120,
+                            lineHeight: 1.4,
+                          }}
+                        >
                           {CONTROL_NAMES[id] ?? id}
                         </Typography>
-                        <Box sx={{ width: 80, flexShrink: 0 }}>
+                        <Box sx={{ width: { xs: '100%', md: 90 }, flexShrink: 0, order: { xs: 4, md: 0 } }}>
                           <LinearProgress
                             variant="determinate"
                             value={score}
                             aria-label={`${id} compliance score: ${Math.round(score)} percent`}
-                            sx={{ height: 5, borderRadius: 2, bgcolor: '#F1F5F9', '& .MuiLinearProgress-bar': { bgcolor: cfg.barColor, borderRadius: 2 } }}
+                            sx={{ height: 5, '& .MuiLinearProgress-bar': { bgcolor: toneC.main } }}
                           />
                         </Box>
-                        <Typography sx={{ fontSize: '0.58rem', color: isFail ? '#FCA5A5' : 'text.disabled', width: 30, textAlign: 'right', flexShrink: 0 }}>
+                        <Typography
+                          sx={{
+                            fontSize: '0.72rem',
+                            color: isFail ? 'error.main' : 'text.secondary',
+                            width: 40,
+                            textAlign: 'right',
+                            flexShrink: 0,
+                            fontVariantNumeric: 'tabular-nums',
+                          }}
+                        >
                           {Math.round(score)}%
                         </Typography>
-                        <Chip
-                          label={cfg.label}
-                          size="small"
-                          sx={{ fontSize: '0.55rem', fontWeight: 600, height: 20, bgcolor: cfg.bg, color: cfg.color, border: '1px solid', borderColor: cfg.border, flexShrink: 0 }}
-                        />
+                        <StatusChip tone={tone} label={STATUS_LABEL[status]} size="sm" />
                         {(status === 'non_compliant' || status === 'partial') && (
                           isElectron && isAutomatable
                             ? (
@@ -183,10 +246,18 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
                                 aria-controls={`accordion-${id}`}
                                 onClick={() => setExpandedId(prev => prev === id ? null : id)}
                                 sx={{
-                                  fontSize: '0.58rem', fontWeight: 600, px: 1.25, py: 0.5, minWidth: 0,
-                                  bgcolor: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE',
-                                  borderRadius: 1.5, flexShrink: 0, textTransform: 'none',
-                                  '&:hover': { bgcolor: '#DBEAFE' },
+                                  fontSize: '0.72rem',
+                                  fontWeight: 600,
+                                  px: 1.25,
+                                  height: 26,
+                                  minWidth: 0,
+                                  bgcolor: c('info').surface,
+                                  color: c('info').onSurface,
+                                  border: `1px solid ${c('info').border}`,
+                                  borderRadius: RADIUS.sm,
+                                  flexShrink: 0,
+                                  textTransform: 'none',
+                                  '&:hover': { bgcolor: c('info').surface, filter: 'brightness(0.97)' },
                                 }}
                               >
                                 Fix script
@@ -198,10 +269,18 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
                                 aria-controls={`accordion-${id}`}
                                 onClick={() => setExpandedId(prev => prev === id ? null : id)}
                                 sx={{
-                                  fontSize: '0.58rem', fontWeight: 600, px: 1.25, py: 0.5, minWidth: 0,
-                                  bgcolor: '#FFFBEB', color: '#B45309', border: '1px solid #FDE68A',
-                                  borderRadius: 1.5, flexShrink: 0, textTransform: 'none',
-                                  '&:hover': { bgcolor: '#FEF3C7' },
+                                  fontSize: '0.72rem',
+                                  fontWeight: 600,
+                                  px: 1.25,
+                                  height: 26,
+                                  minWidth: 0,
+                                  bgcolor: c('warning').surface,
+                                  color: c('warning').onSurface,
+                                  border: `1px solid ${c('warning').border}`,
+                                  borderRadius: RADIUS.sm,
+                                  flexShrink: 0,
+                                  textTransform: 'none',
+                                  '&:hover': { bgcolor: c('warning').surface, filter: 'brightness(0.97)' },
                                 }}
                               >
                                 How to fix
@@ -210,73 +289,151 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
                         )}
                       </Box>
                       {expandedId === id && (status === 'non_compliant' || status === 'partial') && (
-                        <Box id={`accordion-${id}`} role="region" aria-label={`${id} remediation details`} sx={{ mx: 0.5, mb: 0.75, border: '1px solid #E2E8F0', borderRadius: 2, overflow: 'hidden' }}>
-                          {/* Accordion header */}
-                          <Box sx={{ px: 2, py: 1.25, borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <Box
+                          id={`accordion-${id}`}
+                          role="region"
+                          aria-label={`${id} remediation details`}
+                          sx={{
+                            mx: 0.5,
+                            mb: 1,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: RADIUS.md,
+                            overflow: 'hidden',
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              px: 2,
+                              py: 1.25,
+                              borderBottom: '1px solid',
+                              borderColor: 'divider',
+                              bgcolor: 'background.paper',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              flexWrap: 'wrap',
+                              gap: 1,
+                            }}
+                          >
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Typography sx={{ fontSize: '0.65rem', fontWeight: 700 }}>
+                              <Typography sx={{ fontSize: '0.8rem', fontWeight: 700 }}>
                                 {id} — {CONTROL_NAMES[id] ?? id}
                               </Typography>
                               {isAutomatable ? (
-                                <Chip
-                                  label="PowerShell · Run as Admin"
-                                  size="small"
-                                  sx={{ fontSize: '0.55rem', fontWeight: 600, height: 18, bgcolor: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE' }}
-                                />
+                                <StatusChip tone="info" label="PowerShell · Run as Admin" size="sm" />
                               ) : (
-                                <Chip
-                                  label="Guidance only"
-                                  size="small"
-                                  sx={{ fontSize: '0.55rem', fontWeight: 600, height: 18, bgcolor: '#F8FAFC', color: '#64748B', border: '1px solid #E2E8F0' }}
-                                />
+                                <StatusChip tone="neutral" label="Guidance only" size="sm" />
                               )}
                             </Box>
                           </Box>
 
-                          {/* Accordion body */}
-                          <Box sx={{ p: 2, display: 'grid', gridTemplateColumns: r?.gaps?.length ? '1fr 1.2fr' : '1fr', gap: 2, bgcolor: '#F8FAFC' }}>
+                          <Box
+                            sx={{
+                              p: 2,
+                              display: 'grid',
+                              gridTemplateColumns: { xs: '1fr', md: r?.gaps?.length ? '1fr 1.2fr' : '1fr' },
+                              gap: 2,
+                              bgcolor: theme.palette.mode === 'light' ? '#F8FAFC' : 'rgba(255,255,255,0.02)',
+                            }}
+                          >
                             {r?.gaps && r.gaps.length > 0 && (
                               <Box>
-                                <Typography sx={{ fontSize: '0.55rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'text.disabled', mb: 0.75 }}>
+                                <Typography
+                                  sx={{
+                                    fontSize: '0.72rem',
+                                    fontWeight: 650,
+                                    color: 'text.secondary',
+                                    mb: 0.75,
+                                  }}
+                                >
                                   Evidence gaps
                                 </Typography>
                                 {r.gaps.map((gap: string) => (
                                   <Box key={gap} sx={{ display: 'flex', gap: 0.75, mb: 0.5 }}>
-                                    <Typography sx={{ fontSize: '0.58rem', color: '#DC2626', fontWeight: 700, flexShrink: 0 }}>✕</Typography>
-                                    <Typography sx={{ fontSize: '0.62rem', color: '#DC2626' }}>{gap.replace(/_/g, ' ')}</Typography>
+                                    <Typography sx={{ fontSize: '0.75rem', color: 'error.main', fontWeight: 700, flexShrink: 0 }}>✕</Typography>
+                                    <Typography sx={{ fontSize: '0.8125rem', color: 'error.main', lineHeight: 1.5 }}>
+                                      {gap.replace(/_/g, ' ')}
+                                    </Typography>
                                   </Box>
                                 ))}
                               </Box>
                             )}
                             {isAutomatable ? (
                               <Box>
-                                <Typography sx={{ fontSize: '0.55rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'text.disabled', mb: 0.75 }}>
+                                <Typography
+                                  sx={{
+                                    fontSize: '0.72rem',
+                                    fontWeight: 650,
+                                    color: 'text.secondary',
+                                    mb: 0.75,
+                                  }}
+                                >
                                   Script preview
                                 </Typography>
-                                <Box sx={{ bgcolor: '#F1F5F9', border: '1px solid #E2E8F0', borderRadius: 1.5, p: 1.5, fontFamily: '"SF Mono","Fira Code",monospace', fontSize: '0.58rem', lineHeight: 1.8, color: '#334155' }}>
-                                  <Box component="span" sx={{ color: '#94A3B8', fontStyle: 'italic', display: 'block' }}>
+                                <Box
+                                  sx={{
+                                    bgcolor: c('neutral').surface,
+                                    border: '1px solid',
+                                    borderColor: 'divider',
+                                    borderRadius: RADIUS.md,
+                                    p: 1.5,
+                                    fontFamily: '"SF Mono","Fira Code",ui-monospace,monospace',
+                                    fontSize: '0.72rem',
+                                    lineHeight: 1.7,
+                                    color: 'text.secondary',
+                                  }}
+                                >
+                                  <Box component="span" sx={{ color: 'text.secondary', fontStyle: 'italic', display: 'block' }}>
                                     {'# ' + id + ' Remediation — run as Administrator'}
                                   </Box>
-                                  <Box component="span" sx={{ color: '#1D4ED8', fontWeight: 600, fontSize: '0.58rem', display: 'block', mt: 0.5 }}>
+                                  <Box
+                                    component="span"
+                                    sx={{
+                                      color: c('info').onSurface,
+                                      fontWeight: 600,
+                                      display: 'block',
+                                      mt: 0.5,
+                                    }}
+                                  >
                                     {SCRIPT_ACTIONS[id] ?? 'See downloaded .ps1 for full script'}
                                   </Box>
                                 </Box>
                               </Box>
                             ) : (
                               <Box>
-                                <Typography sx={{ fontSize: '0.55rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'text.disabled', mb: 0.75 }}>
+                                <Typography
+                                  sx={{
+                                    fontSize: '0.72rem',
+                                    fontWeight: 650,
+                                    color: 'text.secondary',
+                                    mb: 0.75,
+                                  }}
+                                >
                                   Steps to fix
                                 </Typography>
-                                <Typography sx={{ fontSize: '0.62rem', color: 'text.secondary' }}>
+                                <Typography sx={{ fontSize: '0.8125rem', color: 'text.secondary', lineHeight: 1.5 }}>
                                   Manual action required — see compliance documentation.
                                 </Typography>
                               </Box>
                             )}
                           </Box>
 
-                          {/* Accordion footer */}
-                          <Box sx={{ px: 2, py: 1.25, borderTop: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <Typography sx={{ fontSize: '0.6rem', color: 'text.disabled' }}>
+                          <Box
+                            sx={{
+                              px: 2,
+                              py: 1.25,
+                              borderTop: '1px solid',
+                              borderColor: 'divider',
+                              bgcolor: 'background.paper',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              flexWrap: 'wrap',
+                              gap: 1,
+                            }}
+                          >
+                            <Typography sx={{ fontSize: '0.72rem', color: 'text.secondary' }}>
                               {isAutomatable ? 'Reversible · Requires Admin' : 'Manual action required'}
                             </Typography>
                             {isAutomatable && isElectron && (() => {
@@ -294,7 +451,7 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
                                         setRemediationStates(prev => ({ ...prev, [id]: 'downloaded' }));
                                       }
                                     }}
-                                    sx={{ fontSize: '0.65rem', fontWeight: 600, px: 1.75, py: 0.625, borderRadius: 2, boxShadow: '0 1px 3px rgba(37,99,235,0.3)', textTransform: 'none' }}
+                                    sx={{ fontSize: '0.75rem', fontWeight: 600, px: 1.75, height: 30, textTransform: 'none' }}
                                   >
                                     Download .ps1
                                   </Button>
@@ -303,7 +460,7 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
                               if (rs === 'downloaded') {
                                 return (
                                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                    <Typography sx={{ fontSize: '0.6rem', color: '#059669' }}>
+                                    <Typography sx={{ fontSize: '0.72rem', color: 'success.dark' }}>
                                       Downloaded — run the script, then re-scan
                                     </Typography>
                                     <Button
@@ -320,7 +477,18 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
                                           setRemediationStates(prev => ({ ...prev, [id]: 'verification_failed' }));
                                         }
                                       }}
-                                      sx={{ fontSize: '0.62rem', fontWeight: 600, px: 1.25, py: 0.5, bgcolor: '#F0FDF4', color: '#16A34A', border: '1px solid #BBF7D0', borderRadius: 1.5, textTransform: 'none', '&:hover': { bgcolor: '#DCFCE7' } }}
+                                      sx={{
+                                        fontSize: '0.75rem',
+                                        fontWeight: 600,
+                                        px: 1.25,
+                                        height: 28,
+                                        bgcolor: c('success').surface,
+                                        color: c('success').onSurface,
+                                        border: `1px solid ${c('success').border}`,
+                                        borderRadius: RADIUS.sm,
+                                        textTransform: 'none',
+                                        '&:hover': { bgcolor: c('success').surface, filter: 'brightness(0.97)' },
+                                      }}
                                     >
                                       Re-scan now
                                     </Button>
@@ -329,7 +497,7 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
                               }
                               if (rs === 'rescanning') {
                                 return (
-                                  <Typography sx={{ fontSize: '0.6rem', color: 'text.disabled' }}>Scanning...</Typography>
+                                  <Typography sx={{ fontSize: '0.72rem', color: 'text.secondary' }}>Scanning...</Typography>
                                 );
                               }
                               return null;

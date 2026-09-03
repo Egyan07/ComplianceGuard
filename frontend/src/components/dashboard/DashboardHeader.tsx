@@ -1,6 +1,7 @@
 import React from 'react';
-import { Box, Button, ButtonGroup, CircularProgress, Typography } from '@mui/material';
+import { Box, Button, ButtonGroup, CircularProgress } from '@mui/material';
 import MotionButton from '../ui/MotionButton';
+import PageHeader from '../ui/PageHeader';
 import { Refresh, CloudUpload, Assessment, Upload, PictureAsPdf, CloudSync as CloudSyncIcon } from '@mui/icons-material';
 import { useLicense } from '../../contexts/LicenseContext';
 import { ComplianceEvaluation } from '../../services/api';
@@ -34,17 +35,11 @@ const DashboardHeader: React.FC<Props> = ({
 
   return (
     <Box sx={{ mb: 4 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 2 }}>
-        <Box>
-          <Typography variant="h4" component="h1" gutterBottom>
-            Dashboard
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Monitor your compliance status across SOC 2, ISO 27001, HIPAA and GDPR
-          </Typography>
-        </Box>
-
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+      <PageHeader
+        title="Dashboard"
+        subtitle="Monitor your compliance status across SOC 2, ISO 27001, HIPAA and GDPR"
+        actions={
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
           <Button
             variant="text"
             color="inherit"
@@ -111,8 +106,9 @@ const DashboardHeader: React.FC<Props> = ({
           <MotionButton variant="contained" startIcon={<CloudUpload />} onClick={onCollect} disabled={collectingEvidence}>
             {collectingEvidence ? 'Collecting...' : 'Collect Evidence'}
           </MotionButton>
-        </Box>
-      </Box>
+          </Box>
+        }
+      />
     </Box>
   );
 };

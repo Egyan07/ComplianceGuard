@@ -7,6 +7,7 @@ source information, and filtering capabilities using Material-UI.
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { RADIUS } from '../theme';
 import {
   Card,
   CardContent,
@@ -239,7 +240,7 @@ const EvidenceList: React.FC<EvidenceListProps> = ({
                   sx={{
                     border: 1,
                     borderColor: 'divider',
-                    borderRadius: 1,
+                    borderRadius: RADIUS.sm,
                     mb: 1,
                     py: 0.875,
                     px: 2,
@@ -284,7 +285,7 @@ const EvidenceList: React.FC<EvidenceListProps> = ({
                     <Box sx={{
                       backgroundColor: 'rgba(0,0,0,0.02)',
                       p: 2,
-                      borderRadius: 1,
+                      borderRadius: RADIUS.sm,
                       fontFamily: 'monospace',
                       fontSize: '0.875rem'
                     }}>
