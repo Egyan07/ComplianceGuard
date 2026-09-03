@@ -531,8 +531,8 @@ Free gets you hooked. Pro makes you audit-ready. Enterprise makes you untouchabl
 
 | | **Pro Managed** | **Enterprise Managed** |
 |---|---|---|
-| **Price** | Contact us | Contact us |
-| **Billed annually** | — | — |
+| **Price** | $229/mo | $999/mo |
+| **Billed annually** | $2,748/yr | $11,988/yr |
 | Everything in Self-Hosted Pro/Enterprise | ✅ | ✅ |
 | Zero server setup required | ✅ | ✅ |
 | We handle uptime, backups, updates | ✅ | ✅ |
