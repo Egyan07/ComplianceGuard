@@ -38,9 +38,9 @@ How it works: the desktop app collects OS-level evidence → maps it to complian
 
 ## Demo
 
-<video src="https://github.com/user-attachments/assets/ae1dfc02-fac4-4c9e-9736-9cd7b96b22af" controls width="100%"></video>
+<video src="https://github.com/user-attachments/assets/361db401-fa40-4217-8259-681a21d914dc" controls width="100%"></video>
 
-_A walkthrough of ComplianceGuard in action — collecting endpoint evidence, evaluating compliance across SOC 2 controls, drilling into the per-control heatmap, downloading a remediation script, tracking score trends over time, and exporting an audit-ready PDF report._
+_From months to minutes — continuous endpoint evidence, real-time compliance tracking, and instant audit-ready reports, all self-hosted and privacy-first._
 
 ## Screenshots
 
@@ -456,7 +456,7 @@ ComplianceGuard/
 │   │   ├── theme.ts                    # Light (Clean Enterprise) + dark (Dark Professional) MUI themes
 │   │   ├── components/                 # Dashboard, ScoreHero, Evidence, History, Settings, Login
 │   │   │   ├── layout/                 # AppShell, Topbar, ContextSidebar, PageTransition
-│   │   │   ├── ui/                     # MotionCard, MotionButton reusable wrappers
+│   │   │   ├── ui/                     # Reusable primitives: MotionCard, MotionButton, StatCard, StatusChip, Segmented, EmptyState, PageHeader
 │   │   │   └── dashboard/              # DashboardHeader, CollectionSummary sub-components
 │   │   ├── hooks/useDashboard.ts       # Data fetching + action handlers (react-query)
 │   │   ├── contexts/AuthContext.tsx     # JWT auth state, login/register/logout
