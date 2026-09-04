@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="#quick-start"><img src="https://img.shields.io/badge/version-3.9.0-2563EB" alt="Version"></a>
+  <a href="#quick-start"><img src="https://img.shields.io/badge/version-3.9.1-2563EB" alt="Version"></a>
   <img src="https://img.shields.io/badge/license-BSL%201.1-orange" alt="License">
   <a href="#compliance-frameworks"><img src="https://img.shields.io/badge/frameworks-SOC%202%20%7C%20ISO%2027001%20%7C%20HIPAA%20%7C%20GDPR-10B981" alt="Frameworks"></a>
   <img src="https://img.shields.io/badge/tests-~1075%20total-10B981?logo=pytest&logoColor=white" alt="Tests">
@@ -506,7 +506,6 @@ ComplianceGuard/
 
 ComplianceGuard supports Windows, macOS, and Linux endpoints. The following limitations apply in the current release:
 
-- **Windows + macOS + Linux** — evidence collection is supported on Windows (PowerShell/WMI), macOS (system commands), and Linux (systemd/journald, iproute2, ufw/iptables/nftables, dpkg/rpm/pacman).
 - **Automatic scheduling** — Daily or Weekly evidence collection runs automatically while the desktop app is open. Configure in Settings → Automatic Collection.
 - **Per-machine view in desktop mode** — the Electron app shows one machine at a time. Use web mode (self-hosted or managed) with the Cloud Dashboard to monitor multiple machines centrally.
 - **AWS only for cloud evidence** — the web backend collects S3 and IAM evidence from AWS. GCP and Azure are not yet implemented.
@@ -720,12 +719,6 @@ drills) live in [`docs/disaster-recovery.md`](docs/disaster-recovery.md):
 
 ### Is the source code auditable?
 > Yes. The full source is available in this repository under the Business Source License. You can inspect every line of the evidence collection and scoring logic.
-
-### Is macOS supported?
-> Yes. ComplianceGuard runs natively on macOS (Intel and Apple Silicon) and collects the same 8 categories of evidence using native macOS system commands. Download the unsigned DMG from the latest release and follow the Gatekeeper bypass instructions in Quick Start.
-
-### Is Linux supported?
-> Yes. ComplianceGuard ships an AppImage and a `.deb` installer for 64-bit Linux, and the evidence collector uses native Linux tooling: journald for event logs, systemd for services, ufw/iptables/nftables for firewall state, iproute2 for network config, dpkg/rpm/pacman for installed software, and `/etc` policy files (login.defs, PAM, auditd) for security settings — the same 8 evidence categories as Windows and macOS.
 
 ### How do I get a Pro or Enterprise license key?
 > Contact [alexisegyan1232@gmail.com](mailto:alexisegyan1232@gmail.com) for licensing. Managed hosted instances are also available — we handle deployment and infrastructure for you.
