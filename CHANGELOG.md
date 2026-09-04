@@ -8,6 +8,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [4.0.0] — 2026-09-05
+
+### Security
+
+- **License key verification updated** — Pro/Enterprise keys issued before
+  v4.0.0 are no longer accepted and must be re-issued (contact support for a
+  replacement key). License-signing key material is now generated and stored
+  outside the application package, and release builds are automatically
+  scanned for signing material.
+
+### Added
+
+- `ALLOWED_HOSTS` is now enforced when configured: requests with a Host
+  header outside the allowlist are rejected with HTTP 400.
+- Web evidence collection now reports explicit `not_configured` / partial /
+  failed states instead of presenting an empty run as a success.
+- Production deployments refuse to start when email delivery is disabled,
+  instead of creating accounts that can never complete verification.
+
+### Fixed
+
+- Evaluations with no assessed controls are now shown as **Not Assessed**
+  (neutral) across the dashboard, history, and reports — no longer as a red
+  failed state.
+- Web evidence items now show their real status (compliant / non-compliant /
+  error) instead of always appearing compliant.
+- The dashboard now shows an explicit load-error banner when the backend is
+  unreachable, instead of appearing as an empty healthy workspace.
+
 ## [3.9.2] — 2026-09-04
 
 ### Fixed
