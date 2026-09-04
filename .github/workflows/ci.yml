@@ -72,7 +72,26 @@ jobs:
       # Supply-chain: fail on high/critical npm advisories. The only remaining
       # known findings are moderate react-router (<6→7 migration required) and
       # are tracked as accepted risk; --audit-level=high gates regressions.
-      - run: npm audit --audit-level=high
+      # npm falls back to the retired /audits/quick endpoint whenever the bulk
+      # advisory endpoint hiccups, which 400s with "Invalid package tree" (the
+      # tree is fine — npm ci's own audit passes). Retry transient infra
+      # failures, but never genuine findings (those exit 1 without "npm error").
+      - name: npm audit (frontend)
+        run: |
+          for attempt in 1 2 3; do
+            if output="$(npm audit --audit-level=high 2>&1)"; then
+              printf '%s\n' "$output"
+              exit 0
+            fi
+            status=$?
+            printf '%s\n' "$output"
+            if ! printf '%s\n' "$output" | grep -q 'npm error'; then
+              exit "$status"
+            fi
+            echo "npm audit attempt $attempt/3 hit a transient registry error — retrying in 15s"
+            sleep 15
+          done
+          exit 1
       # Evidence vocabulary parity: the committed upload catalog must match the
       # canonical shared framework data (Phase 11) — drift fails CI.
       - run: npm run check:evidence
@@ -101,7 +120,26 @@ jobs:
       - name: Install dependencies
         run: npm ci
       # Supply-chain: fail on high/critical npm advisories in the desktop app.
-      - run: npm audit --audit-level=high
+      # npm's standalone audit falls back to the retired /audits/quick endpoint
+      # whenever the bulk advisory endpoint hiccups, which 400s with "Invalid
+      # package tree". Retry transient infra failures only — genuine findings
+      # exit 1 without an "npm error" line and must not be retried.
+      - name: npm audit (desktop)
+        run: |
+          for attempt in 1 2 3; do
+            if output="$(npm audit --audit-level=high 2>&1)"; then
+              printf '%s\n' "$output"
+              exit 0
+            fi
+            status=$?
+            printf '%s\n' "$output"
+            if ! printf '%s\n' "$output" | grep -q 'npm error'; then
+              exit "$status"
+            fi
+            echo "npm audit attempt $attempt/3 hit a transient registry error — retrying in 15s"
+            sleep 15
+          done
+          exit 1
       # vitest runs the electron tests under Node. better-sqlite3 >= 13 is
       # N-API based, so the same prebuilt binary works for the Node test run
       # and the packaged Electron app (no per-ABI rebuild needed).
