@@ -10,6 +10,14 @@ vi.mock('./logger', () => ({
   warn: vi.fn(),
 }));
 
+// The scheduler runs the real platform collector on the host machine. These
+// tests exercise scheduler logic (due-date handling, result persistence) — not
+// collection — so mock the collector to keep checkAndRun hermetic and fast on
+// every platform. The real Windows/macOS/Linux collectors have their own suites.
+vi.mock('./system/collector', () => ({
+  collectEvidence: vi.fn().mockResolvedValue({}),
+}));
+
 import { calcNextRunAt, checkAndRun, start } from './scheduler.js';
 
 const makeDb = (overrides = {}) => ({
