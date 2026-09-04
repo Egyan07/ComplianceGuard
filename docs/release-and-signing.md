@@ -22,11 +22,16 @@ A packaged ComplianceGuard build:
 Disabled entirely in development (unpackaged) runs.
 
 **Integrity:** every installer published by electron-builder is accompanied by
-`latest.yml` (sha512 + size). electron-updater verifies the checksum before
-installing, and — once code signing is configured — the Windows installer's
-Authenticode signature is verified against `publisherName: ComplianceGuard LLC`
+`latest.yml` (Windows), `latest-mac.yml`, and `latest-linux.yml` (sha512 +
+size). electron-updater verifies the checksum before installing, and — once
+code signing is configured — the Windows installer's Authenticode signature is
+verified against `publisherName: ComplianceGuard LLC`
 (`verifyUpdateCodeSignature: true`). A signed update that fails verification is
 rejected.
+
+**Linux:** the AppImage auto-updates on quit exactly like the Windows Setup
+build (electron-updater reads `latest-linux.yml`). The `.deb` installer is a
+fixed install — reinstall the new `.deb` from each release to upgrade.
 
 **Portable builds** (`ComplianceGuard-Portable-*.exe`) are single-file and **do
 not** support auto-update. They are a distribution convenience, not the
@@ -48,8 +53,9 @@ git push origin v3.9.0
 
 CI then: runs all suites → builds the Windows installer (signed if credentials
 are configured) → publishes to a **draft** GitHub release → builds + publishes
-the macOS DMG to the same draft → the `release-integrity` job verifies the
-artifacts and uploads `SHA256SUMS.txt`.
+the macOS DMG to the same draft → builds + publishes the Linux AppImage + `.deb`
+to the same draft → the `release-integrity` job verifies the artifacts and
+uploads `SHA256SUMS.txt`.
 
 **The draft is never auto-published.** Review the draft (attachments,
 `SHA256SUMS.txt`, release notes) and click **Publish release** when ready.
@@ -126,8 +132,15 @@ trigger Gatekeeper warnings.
 npm ci && cd frontend && npm ci && cd ..
 npm run publish            # --publish always → draft GitHub release
 
+# macOS (on a Mac):
+npm run publish:mac
+
+# Linux (AppImage + .deb, no signing needed):
+npm run package:linux
+gh release upload v3.9.0 dist/*.AppImage dist/*.deb dist/latest-linux.yml --clobber
+
 # Add checksums:
-(cd dist && sha256sum *.exe *.yml > SHA256SUMS.txt)
+(cd dist && sha256sum *.exe *.dmg *.AppImage *.deb *.yml > SHA256SUMS.txt)
 gh release upload v3.9.0 dist/SHA256SUMS.txt --clobber
 ```
 
@@ -163,6 +176,8 @@ gh release upload v3.9.0 dist/SHA256SUMS.txt --clobber
 - [ ] Signing secrets configured (Windows; macOS if shipping DMGs)
 - [ ] Draft release contains: `ComplianceGuard-Setup-<ver>.exe` (+`.blockmap`),
       `ComplianceGuard-Portable-<ver>.exe`, `latest.yml`,
-      `ComplianceGuard-<ver>.dmg`, `latest-mac.yml`, `SHA256SUMS.txt`
+      `ComplianceGuard-<ver>.dmg`, `latest-mac.yml`,
+      `ComplianceGuard-<ver>.AppImage`, `ComplianceGuard_<ver>_amd64.deb`,
+      `latest-linux.yml`, `SHA256SUMS.txt`
 - [ ] `release-integrity` job passed (artifacts present + checksums uploaded)
 - [ ] Draft reviewed and **manually published**

@@ -175,7 +175,7 @@ jobs:
     name: Release Windows Installer
     runs-on: windows-latest
     # All test suites + build must pass before we cut a release. electron-tests
-    # gates here because the desktop app IS the shipped Windows/macOS artifact.
+    # gates here because the desktop app IS the shipped cross-platform artifact.
     needs: [backend-tests, lint-and-test, electron-tests, e2e-tests, build]
     if: startsWith(github.ref, 'refs/tags/v')
     # Needed to upload installers + latest.yml to the draft release.
@@ -370,10 +370,79 @@ jobs:
             dist/latest-mac.yml \
             --clobber
 
+  release-linux:
+    name: Release Linux AppImage + deb
+    runs-on: ubuntu-latest
+    # Serialized after the Windows release job so all platform artifacts land
+    # in ONE draft release (see the release-mac comment for the race that
+    # motivated this). Linux needs no code-signing secrets — the artifacts are
+    # self-verifiable via SHA256SUMS.txt + the SBOM.
+    needs: [backend-tests, lint-and-test, electron-tests, build, release]
+    if: startsWith(github.ref, 'refs/tags/v')
+    # Needed to upload the AppImage/deb to the same draft release.
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Electron 43's toolchain requires Node >= 22.12 (matches the
+          # electron-tests job).
+          node-version: 22
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install frontend dependencies
+        run: cd frontend && npm ci
+
+      - name: Sync version from tag into constants.json
+        shell: bash
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          echo "Setting VERSION to $TAG_VERSION in shared/constants.json"
+          node -e "
+            const fs = require('fs');
+            const p = 'shared/constants.json';
+            const data = JSON.parse(fs.readFileSync(p, 'utf8'));
+            data.VERSION = '$TAG_VERSION';
+            fs.writeFileSync(p, JSON.stringify(data, null, 2) + '\\n');
+          "
+          cat shared/constants.json
+
+      # Same pre-create as the Windows job; idempotent insurance for re-runs.
+      - name: Create draft release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "${{ github.ref_name }}" --json isDraft --jq .isDraft >/dev/null 2>&1; then
+            echo "Draft release ${{ github.ref_name }} already exists"
+          else
+            gh release create "${{ github.ref_name }}" --draft \
+              --title "ComplianceGuard ${{ github.ref_name }}" \
+              --notes "ComplianceGuard ${{ github.ref_name }} — draft release. Installers are uploaded by CI; publish manually after verification."
+          fi
+
+      - name: Build Linux installers (AppImage + deb)
+        run: npm run package:linux
+
+      - name: Upload artifacts to draft release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ github.ref_name }}" \
+            dist/ComplianceGuard-*.AppImage \
+            dist/ComplianceGuard_*.deb \
+            dist/latest-linux.yml \
+            --clobber
+
   release-integrity:
     name: Verify Release Integrity
     runs-on: ubuntu-latest
-    needs: [release, release-mac]
+    needs: [release, release-mac, release-linux]
     if: startsWith(github.ref, 'refs/tags/v')
     # Needs write to upload SHA256SUMS.txt to the draft release.
     permissions:
@@ -386,12 +455,12 @@ jobs:
       - name: Fetch draft release artifacts
         run: |
           gh release view "${{ github.ref_name }}" --json isDraft,assets --jq '{draft: .isDraft, assets: [.assets[].name]}'
-          gh release download "${{ github.ref_name }}" --pattern '*.exe' --pattern '*.dmg' --pattern 'latest.yml' --dir release-assets
+          gh release download "${{ github.ref_name }}" --pattern '*.exe' --pattern '*.dmg' --pattern '*.AppImage' --pattern '*.deb' --pattern 'latest.yml' --pattern 'latest-mac.yml' --pattern 'latest-linux.yml' --dir release-assets
           ls -la release-assets
 
       - name: Fail if artifacts are missing
         run: |
-          for f in 'ComplianceGuard-Setup-*.exe' 'ComplianceGuard-*.dmg' 'latest.yml'; do
+          for f in 'ComplianceGuard-Setup-*.exe' 'ComplianceGuard-*.dmg' 'ComplianceGuard-*.AppImage' 'ComplianceGuard_*.deb' 'latest.yml' 'latest-linux.yml'; do
             matches=$(ls release-assets/$f 2>/dev/null || true)
             if [ -z "$matches" ]; then
               echo "::error::Missing required release artifact: $f"
@@ -402,7 +471,7 @@ jobs:
 
       - name: Generate and upload SHA256SUMS.txt
         run: |
-          (cd release-assets && sha256sum *.exe *.dmg *.yml > SHA256SUMS.txt && cat SHA256SUMS.txt)
+          (cd release-assets && sha256sum *.exe *.dmg *.AppImage *.deb *.yml > SHA256SUMS.txt && cat SHA256SUMS.txt)
           gh release upload "${{ github.ref_name }}" release-assets/SHA256SUMS.txt --clobber
 
       # Supply-chain visibility: ship an SPDX SBOM alongside the installers so

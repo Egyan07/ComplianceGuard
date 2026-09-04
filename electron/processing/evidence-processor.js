@@ -88,8 +88,15 @@ class LocalEvidenceProcessor {
     return hashSum.digest('hex');
   }
 
+  /**
+   * Shared collector pipeline — Windows, macOS, and Linux evidence all flow
+   * through here (the name predates the cross-platform collectors; the
+   * buckets and canonical evidence types are identical on every platform).
+   */
   async processWindowsEvidence(windowsEvidence, frameworkId) {
     const processedEvidence = [];
+    const platform = this.getPlatformLabel(windowsEvidence);
+    const platformKey = this.getPlatformKey(windowsEvidence);
 
     // Process system information
     // Evidence type: system_configs (used by all frameworks)
@@ -98,8 +105,8 @@ class LocalEvidenceProcessor {
         framework_id: frameworkId,
         control_id: null, // canonical engine maps evidence_type -> control
         evidence_type: 'system_configs',
-        title: 'Windows System Information',
-        description: 'Automatically collected Windows system configuration',
+        title: `${platform} System Information`,
+        description: `Automatically collected ${platform} system configuration`,
         file_path: null,
         file_hash: null,
         metadata: windowsEvidence.systemInfo
@@ -114,7 +121,7 @@ class LocalEvidenceProcessor {
         framework_id: frameworkId,
         control_id: null, // canonical engine maps evidence_type -> control
         evidence_type: 'security_policies',
-        title: 'Windows Security Settings',
+        title: `${platform} Security Settings`,
         description: 'Password policies, audit policies, and security configurations',
         file_path: null,
         file_hash: null,
@@ -135,15 +142,15 @@ class LocalEvidenceProcessor {
 
           const savedFile = await this.saveEvidenceFile(
             fileBuffer, fileName, 'SystemLogs',
-            { log_type: logType, source: 'windows_event_logs' }
+            { log_type: logType, source: `${platformKey}_event_logs` }
           );
 
           const id = await this.db.addEvidence({
             framework_id: frameworkId,
             control_id: null, // canonical engine maps evidence_type -> control
             evidence_type: 'event_logs',
-            title: `Windows ${logType} Event Logs`,
-            description: `Collected Windows ${logType} event logs for compliance monitoring`,
+            title: `${platform} ${logType} Event Logs`,
+            description: `Collected ${platform} ${logType} event logs for compliance monitoring`,
             file_path: savedFile.file_path,
             file_hash: savedFile.file_hash,
             metadata: savedFile.metadata
@@ -160,8 +167,8 @@ class LocalEvidenceProcessor {
         framework_id: frameworkId,
         control_id: null, // canonical engine maps evidence_type -> control
         evidence_type: 'system_configs',
-        title: 'Windows Services Status',
-        description: 'Critical Windows services and their operational status',
+        title: `${platform} Services Status`,
+        description: `Critical ${platform} services and their operational status`,
         file_path: null,
         file_hash: null,
         metadata: windowsEvidence.services
@@ -176,8 +183,8 @@ class LocalEvidenceProcessor {
         framework_id: frameworkId,
         control_id: null, // canonical engine maps evidence_type -> control
         evidence_type: 'firewall_configs',
-        title: 'Windows Firewall Status',
-        description: 'Windows Firewall configuration and profile status',
+        title: `${platform} Firewall Status`,
+        description: `${platform} firewall configuration and profile status`,
         file_path: null,
         file_hash: null,
         metadata: windowsEvidence.firewall
@@ -208,7 +215,7 @@ class LocalEvidenceProcessor {
         framework_id: frameworkId,
         control_id: null, // canonical engine maps evidence_type -> control
         evidence_type: 'user_provisioning',
-        title: 'Windows User Accounts',
+        title: `${platform} User Accounts`,
         description: 'Local user accounts and administrator group membership',
         file_path: null,
         file_hash: null,
@@ -219,7 +226,7 @@ class LocalEvidenceProcessor {
 
     // Store full system evidence for trend analysis
     await this.db.storeSystemEvidence(
-      'windows_comprehensive',
+      `${platformKey}_comprehensive`,
       'local_collection',
       windowsEvidence
     );
@@ -227,7 +234,7 @@ class LocalEvidenceProcessor {
     // Audit log
     await this.db.logAudit(
       'COLLECT',
-      'windows_evidence',
+      `${platformKey}_evidence`,
       frameworkId,
       null,
       { evidence_count: processedEvidence.length }
@@ -312,6 +319,30 @@ class LocalEvidenceProcessor {
     }
 
     throw new Error('Invalid evidence data: must provide file or content');
+  }
+
+  /**
+   * Human-readable platform label for evidence titles. All collectors set
+   * systemInfo.platform (os.platform()); fall back to Windows when absent.
+   */
+  getPlatformLabel(evidence) {
+    const p = evidence && evidence.systemInfo && evidence.systemInfo.platform;
+    if (p === 'darwin') return 'macOS';
+    if (p === 'linux') return 'Linux';
+    return 'Windows';
+  }
+
+  /**
+   * Storage-safe platform key ('windows' | 'macos' | 'linux') for system
+   * evidence types, audit entity types, and file metadata. Maps the collector
+   * os.platform() values (win32/darwin/linux) so the legacy 'windows_*' keys
+   * stay byte-identical for existing Windows databases.
+   */
+  getPlatformKey(evidence) {
+    const p = evidence && evidence.systemInfo && evidence.systemInfo.platform;
+    if (p === 'darwin') return 'macos';
+    if (p === 'linux') return 'linux';
+    return 'windows';
   }
 
   async getEvidenceSummary(frameworkId) {

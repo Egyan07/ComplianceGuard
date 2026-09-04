@@ -9,9 +9,9 @@ each type means, and where the product ceiling sits. Source of truth:
 ```
 Collectors                      Canonical Evidence Model          Scoring
 ──────────                      ──────────────────────            ───────
-Windows/macOS collector  ─┐
-AWS collector            ─┤→ evidence_type ─→ translate() ─→ required_evidence
-Manual upload (UI)       ─┘   (13 canonical types)                per control
+Windows/macOS/Linux collector ─┐
+AWS collector                ─┤→ evidence_type ─→ translate() ─→ required_evidence
+Manual upload (UI)           ─┘   (13 canonical types)                per control
                                 │ legacy aliases
                                 ▼
                      shared/frameworks/evidence-vocabulary.json
@@ -32,15 +32,15 @@ Manual upload (UI)       ─┘   (13 canonical types)                per contro
 | audit_reports | manual | 33 | 18 | 27 | 14 | Manual only |
 | backup_logs | manual | 4 | 3 | 0 | 1 | Manual only |
 | encryption_policies | manual (+ AWS via `s3_encryption` alias) | 1 | 2 | 2 | 2 | Manual; AWS alias auto |
-| event_logs | windows/macos/aws collector, manual | 11 | 4 | 2 | 4 | Automatic + manual |
-| firewall_configs | windows/macos collector, manual | 2 | 3 | 0 | 1 | Automatic + manual |
+| event_logs | windows/macos/linux/aws collector, manual | 11 | 4 | 2 | 4 | Automatic + manual |
+| firewall_configs | windows/macos/linux collector, manual | 2 | 3 | 0 | 1 | Automatic + manual |
 | incident_reports | manual | 2 | 3 | 1 | 2 | Manual only |
-| network_configs | windows/macos collector, manual | 3 | 3 | 2 | 1 | Automatic + manual |
+| network_configs | windows/macos/linux collector, manual | 3 | 3 | 2 | 1 | Automatic + manual |
 | policy_document | manual | 33 | 24 | 26 | 26 | Manual only |
-| security_policies | windows/macos collector, manual | 2 | 9 | 13 | 13 | Automatic + manual |
-| system_configs | windows/macos collector, manual | 11 | 15 | 8 | 9 | Automatic + manual |
+| security_policies | windows/macos/linux collector, manual | 2 | 9 | 13 | 13 | Automatic + manual |
+| system_configs | windows/macos/linux collector, manual | 11 | 15 | 8 | 9 | Automatic + manual |
 | training_records | manual | 4 | 1 | 4 | 0 | Manual only |
-| user_provisioning | windows/macos collector (+ AWS via `iam_policy` alias), manual | 3 | 10 | 10 | 3 | Automatic + manual |
+| user_provisioning | windows/macos/linux collector (+ AWS via `iam_policy` alias), manual | 3 | 10 | 10 | 3 | Automatic + manual |
 
 Counts = number of controls in that framework whose `required_evidence` lists
 the type. Verified against the canonical YAMLs (control counts 54/47/47/38).
@@ -50,7 +50,8 @@ the type. Verified against the canonical YAMLs (control counts 54/47/47/38).
 - **All 13 canonical types are reachable** (every type can be produced by at
   least one path: collector, AWS alias, or manual upload). No dead types.
 - **Collector-produced types map to canonical types** — no collector output is
-  orphaned. The desktop collectors emit `system_configs`, `security_policies`,
+  orphaned. The desktop collectors (Windows, macOS, and Linux) emit
+  `system_configs`, `security_policies`,
   `event_logs`, `firewall_configs`, `network_configs`, `user_provisioning`; the
   AWS collector emits `s3_encryption`/`iam_policy` (legacy aliases that
   translate to `encryption_policies`/`user_provisioning`).

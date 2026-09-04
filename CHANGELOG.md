@@ -8,6 +8,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Linux support** — native evidence collection on 64-bit Linux across all 8
+  categories: system info (`/etc/os-release` + `uname`), security settings
+  (`login.defs`, PAM common-password/system-auth, auditd, sshd policy),
+  event logs (journald last 24h + auth/syslog fallback), services (systemd
+  running units + `is-active` probes for ssh/cron/rsyslog/firewall/
+  unattended-upgrades), firewall (ufw status + iptables/nftables fallback),
+  pending updates (apt/dnf/pacman + reboot-required), user accounts
+  (`/etc/passwd` UID ≥ 1000 + sudo/wheel groups + last logins), installed
+  software (dpkg/rpm/pacman + running processes), network (iproute2
+  interfaces/ports/routes), and file permissions on critical `/etc` paths.
+  `electron/system/collector.js` now routes `linux` to the new collector with
+  the same 10-bucket schema and `Promise.allSettled` error isolation as
+  Windows/macOS; evidence titles are now platform-aware instead of
+  hard-coded "Windows". New `electron/linux.test.js` (25 tests) mirrors the
+  macOS suite; `collector.test.js` gained the linux dispatch case.
+- **Linux distribution** — new `build.linux` target (AppImage + .deb),
+  `package:linux` script (`--publish never`), and a `release-linux` CI job
+  that uploads the AppImage, `.deb`, and `latest-linux.yml` to the draft
+  release; `release-integrity` now verifies and checksums the Linux artifacts
+  alongside the Windows/macOS ones. AppImage builds auto-update on quit
+  (latest-linux.yml + sha512); `.deb` installs upgrade via reinstall.
+- **Linux collector registered in the evidence vocabulary** — the six
+  collector-produced canonical types (`event_logs`, `firewall_configs`,
+  `network_configs`, `security_policies`, `system_configs`,
+  `user_provisioning`) now list `linux_collector` as a producer in
+  `shared/frameworks/evidence-vocabulary.json`.
+
 ## [3.9.0] — 2026-09-03
 
 ### Changed

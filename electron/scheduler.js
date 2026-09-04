@@ -1,7 +1,8 @@
 const { powerMonitor, Notification } = require('electron');
 const log = require('./logger');
-// Platform-aware collector (Windows or macOS) — mirrors main.js. Using the
-// Windows collector directly produced hollow/empty evidence on scheduled macOS runs.
+// Platform-aware collector (Windows, macOS, or Linux) — mirrors main.js. Using
+// the Windows collector directly produced hollow/empty evidence on scheduled
+// non-Windows runs.
 const { collectEvidence } = require('./system/collector');
 
 const FRAMEWORKS = [1, 2, 3, 4];

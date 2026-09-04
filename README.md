@@ -7,14 +7,14 @@
   <img src="https://img.shields.io/badge/license-BSL%201.1-orange" alt="License">
   <a href="#compliance-frameworks"><img src="https://img.shields.io/badge/frameworks-SOC%202%20%7C%20ISO%2027001%20%7C%20HIPAA%20%7C%20GDPR-10B981" alt="Frameworks"></a>
   <img src="https://img.shields.io/badge/tests-~1075%20total-10B981?logo=pytest&logoColor=white" alt="Tests">
-  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
+  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
   <a href="https://github.com/Egyan07/ComplianceGuard/actions"><img src="https://img.shields.io/github/actions/workflow/status/Egyan07/ComplianceGuard/ci.yml?label=CI&logo=githubactions&logoColor=white" alt="CI"></a>
 </p>
 
 
 Compliance tools like Vanta, Drata, and Sprinto scan your cloud infrastructure. That's useful — but they can't see what's happening **on the machines themselves**. Password policies, firewall rules, event logs, running services, local user accounts — that evidence lives on the endpoint, not in AWS.
 
-ComplianceGuard lives on the endpoint too. It collects evidence directly from Windows and macOS, scores it against SOC 2 Type II, ISO 27001:2013, HIPAA Security Rule, and GDPR controls, and tells you exactly where the gaps are — across all four frameworks in a single collection pass. Run it as a desktop app or deploy the web version with Docker — everything stays under your control.
+ComplianceGuard lives on the endpoint too. It collects evidence directly from Windows, macOS, and Linux, scores it against SOC 2 Type II, ISO 27001:2013, HIPAA Security Rule, and GDPR controls, and tells you exactly where the gaps are — across all four frameworks in a single collection pass. Run it as a desktop app or deploy the web version with Docker — everything stays under your control.
 
 How it works: the desktop app collects OS-level evidence → maps it to compliance controls → scores your readiness → optionally syncs to a multi-machine cloud dashboard.
 
@@ -84,7 +84,6 @@ Browse the full control library offline — SOC 2 Type II (54 controls), ISO 270
 ## Not a Good Fit If
 
 - You only need cloud compliance — [Vanta](https://www.vanta.com/) or [Drata](https://drata.com/) cover that better
-- Your endpoints run Linux (Windows and macOS are supported; Linux is on the roadmap)
 - You want a fully managed SaaS with zero self-hosting involvement
 
 ## Choose Your Privacy Level
@@ -118,6 +117,26 @@ Download `ComplianceGuard-Setup.exe` from the [latest release](https://github.co
 > **Requirements:** Windows 10/11 (64-bit)
 >
 > **Auto-updates:** packaged builds check for updates shortly after launch and every 4 hours, download them automatically, and install on quit. Release integrity and signing details live in [`docs/release-and-signing.md`](docs/release-and-signing.md). Portable builds don't auto-update — use the Setup installer.
+
+<details>
+<summary>Desktop — Linux (AppImage + .deb)</summary>
+
+1. Download `ComplianceGuard-{version}.AppImage` (portable, no install) or
+   `ComplianceGuard_{version}_amd64.deb` (Debian/Ubuntu installer)
+   from the [latest release](https://github.com/Egyan07/ComplianceGuard/releases/latest)
+2. **AppImage:** `chmod +x ComplianceGuard-*.AppImage && ./ComplianceGuard-*.AppImage`
+   (or install [AppImageLauncher](https://github.com/TheAssassin/AppImageLauncher) for desktop integration)
+3. **.deb:** `sudo apt install ./ComplianceGuard_{version}_amd64.deb`, then launch
+   ComplianceGuard from your application menu
+
+> **Auto-updates:** AppImage builds check for updates and install them on quit,
+> like the Windows Setup build. `.deb` installs are fixed to the installed
+> version — reinstall the new `.deb` from each release to upgrade.
+
+> **Requirements:** 64-bit Linux with a desktop environment; glibc 2.31+.
+> Some distros need `libfuse2` to run AppImages (`sudo apt install libfuse2`).
+
+</details>
 
 <details>
 <summary>Desktop — macOS (unsigned)</summary>
@@ -206,10 +225,12 @@ Contact us at [alexisegyan1232@gmail.com](mailto:alexisegyan1232@gmail.com) to s
 </details>
 
 <details>
-<summary>Build Windows Installer</summary>
+<summary>Build Installers</summary>
 
 ```bash
-npm run package    # outputs to dist/
+npm run package         # Windows (NSIS + portable) → dist/
+npm run package:mac     # macOS (Intel + Apple Silicon DMGs) → dist/
+npm run package:linux   # Linux (AppImage + .deb) → dist/
 ```
 
 </details>
@@ -231,7 +252,7 @@ They scan the cloud. We scan the machine. Use both and you have covered the full
 
 ## What It Collects
 
-ComplianceGuard pulls 8 categories of evidence from Windows and macOS:
+ComplianceGuard pulls 8 categories of evidence from Windows, macOS, and Linux:
 
 | Category | What's Collected | Maps To |
 |----------|-----------------|---------|
@@ -391,8 +412,8 @@ ComplianceGuard runs in two modes: Desktop (Electron + SQLite) for offline use, 
 │           └─────────────────────┘                             │
 │                      ▲                                        │
 │           ┌──────────┴──────────┐  ┌────────────────────┐    │
-│           │ Windows Collector   │  │ License Manager     │    │
-│           │ PowerShell + WMI    │  │ Ed25519 · Offline   │    │
+│           │ Platform Collector  │  │ License Manager     │    │
+│           │ Win/macOS/Linux     │  │ Ed25519 · Offline   │    │
 │           └─────────────────────┘  └────────────────────┘    │
 └──────────────────────┬────────────────────────────────────────┘
                        │ IPC (context-isolated, validated)
@@ -448,7 +469,7 @@ ComplianceGuard/
 │   │   ├── canonical-engine.js         # Canonical scoring engine (JS port of the shared model)
 │   │   ├── evidence-processor.js       # Evidence collection + storage
 │   │   └── report-generator.js         # HTML → PDF report generation
-│   └── system/windows.js               # Windows evidence collector
+│   └── system/                         # windows.js · macos.js · linux.js evidence collectors
 ├── shared/frameworks/                  # Source of truth: canonical control definitions (4 YAMLs) + evidence vocabulary (JSON)
 ├── frontend/
 │   ├── src/
@@ -483,9 +504,9 @@ ComplianceGuard/
 
 ## Limitations
 
-ComplianceGuard supports Windows and macOS endpoints. The following limitations apply in the current release:
+ComplianceGuard supports Windows, macOS, and Linux endpoints. The following limitations apply in the current release:
 
-- **Windows + macOS** — evidence collection is supported on Windows (PowerShell/WMI) and macOS (system commands). Linux support is on the roadmap.
+- **Windows + macOS + Linux** — evidence collection is supported on Windows (PowerShell/WMI), macOS (system commands), and Linux (systemd/journald, iproute2, ufw/iptables/nftables, dpkg/rpm/pacman).
 - **Automatic scheduling** — Daily or Weekly evidence collection runs automatically while the desktop app is open. Configure in Settings → Automatic Collection.
 - **Per-machine view in desktop mode** — the Electron app shows one machine at a time. Use web mode (self-hosted or managed) with the Cloud Dashboard to monitor multiple machines centrally.
 - **AWS only for cloud evidence** — the web backend collects S3 and IAM evidence from AWS. GCP and Azure are not yet implemented.
@@ -586,6 +607,8 @@ For reporting security vulnerabilities, see [SECURITY.md](SECURITY.md).
 npm run dev              # Electron + React dev server
 npm run build            # Build frontend
 npm run package          # Windows installers (NSIS + portable .exe)
+npm run package:mac      # macOS DMGs (Intel + Apple Silicon)
+npm run package:linux    # Linux AppImage + .deb
 ```
 
 ### Web / Backend
@@ -699,16 +722,16 @@ drills) live in [`docs/disaster-recovery.md`](docs/disaster-recovery.md):
 > Yes. The full source is available in this repository under the Business Source License. You can inspect every line of the evidence collection and scoring logic.
 
 ### Is macOS supported?
-> Yes. ComplianceGuard runs natively on macOS (Intel and Apple Silicon) and collects the same 8 categories of evidence using native macOS system commands. Download the unsigned DMG from the latest release and follow the Gatekeeper bypass instructions in Quick Start. Linux support is on the roadmap.
+> Yes. ComplianceGuard runs natively on macOS (Intel and Apple Silicon) and collects the same 8 categories of evidence using native macOS system commands. Download the unsigned DMG from the latest release and follow the Gatekeeper bypass instructions in Quick Start.
 
-### Will Linux be supported?
-> Linux is on the roadmap. The backend and frontend are already cross-platform. The remaining work is porting the evidence collector to Linux equivalents.
+### Is Linux supported?
+> Yes. ComplianceGuard ships an AppImage and a `.deb` installer for 64-bit Linux, and the evidence collector uses native Linux tooling: journald for event logs, systemd for services, ufw/iptables/nftables for firewall state, iproute2 for network config, dpkg/rpm/pacman for installed software, and `/etc` policy files (login.defs, PAM, auditd) for security settings — the same 8 evidence categories as Windows and macOS.
 
 ### How do I get a Pro or Enterprise license key?
 > Contact [alexisegyan1232@gmail.com](mailto:alexisegyan1232@gmail.com) for licensing. Managed hosted instances are also available — we handle deployment and infrastructure for you.
 
 ### What is the Cloud Dashboard?
-> The Cloud Dashboard allows you to monitor multiple machines from one centralized web view. Each Windows machine runs the Electron desktop app. Go to Settings > Cloud Sync, enter your web server URL and credentials, and click Sync to Cloud. The web dashboard then shows all machines' compliance scores, last sync time, and fleet-level stats. Available for Pro and Enterprise users.
+> The Cloud Dashboard allows you to monitor multiple machines from one centralized web view. Each endpoint (Windows, macOS, or Linux) runs the Electron desktop app. Go to Settings > Cloud Sync, enter your web server URL and credentials, and click Sync to Cloud. The web dashboard then shows all machines' compliance scores, last sync time, and fleet-level stats. Available for Pro and Enterprise users.
 
 ### Can I use this in an air-gapped environment?
 > Yes. The Desktop (Electron) mode works completely offline with no network traffic. Evidence is collected locally, stored in SQLite, and never leaves the machine unless you configure cloud sync. Perfect for classified, government, or highly regulated environments.
@@ -729,7 +752,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 
 | Done | Up Next |
 |------|---------|
-| Evidence collection (8 categories — event logs, registry, services, firewall, users, network, software, file permissions) | Linux support |
+| Evidence collection (8 categories — event logs, registry, services, firewall, users, network, software, file permissions) | |
+| **Linux support** — native evidence collection via systemd/journald, iproute2, ufw/iptables/nftables, dpkg/rpm/pacman; AppImage + .deb distribution | |
 | **macOS support** — native evidence collection on Intel + Apple Silicon; unsigned DMG distribution with Gatekeeper bypass | |
 | SOC 2 Type II (54 controls), ISO 27001:2013 (47 controls), HIPAA Security Rule (47 safeguards), GDPR (38 obligations) | GCP and Azure cloud evidence |
 | Scheduled automatic evidence collection (Daily/Weekly) | PCI DSS framework |

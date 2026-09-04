@@ -12,10 +12,10 @@
     "build": "cd frontend && npm run build",
     "package": "npm run build && electron-builder --win --x64 --publish never",
     "publish": "npm run build && electron-builder --win --x64 --publish always",
-    "package:linux": "npm run build && electron-builder --linux",
+    "package:linux": "npm run build && electron-builder --linux --publish never",
     "package:mac": "npm run build && electron-builder --mac --x64 --arm64 --publish never",
     "publish:mac": "npm run build && electron-builder --mac --x64 --arm64 --publish always",
-    "package:all": "npm run build && electron-builder --win --x64 --linux --mac",
+    "package:all": "npm run build && electron-builder --win --x64 --linux --mac --publish never",
     "dist": "npm run build && electron-builder",
     "postinstall": "electron-builder install-app-deps",
     "test:scheduler": "npx vitest run --config vitest.config.electron.cjs",
@@ -92,6 +92,22 @@
       "owner": "Egyan07",
       "repo": "ComplianceGuard",
       "releaseType": "draft"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "resources/icons/icon.png",
+      "category": "Utility",
+      "maintainer": "Egyan07 <alexisegyan1232@gmail.com>",
+      "synopsis": "ComplianceGuard — endpoint evidence collection and compliance scoring"
+    },
+    "appImage": {
+      "artifactName": "${productName}-${version}.${ext}"
+    },
+    "deb": {
+      "artifactName": "${productName}_${version}_${arch}.${ext}"
     },
     "mac": {
       "target": [

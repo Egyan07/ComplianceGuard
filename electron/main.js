@@ -62,7 +62,11 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false
     },
-    icon: path.join(__dirname, '../resources/icons/icon.ico')
+    // PNG on macOS/Linux (ICO is a Windows format); electron-builder applies
+    // the platform desktop icon to packaged builds either way.
+    icon: process.platform === 'win32'
+      ? path.join(__dirname, '../resources/icons/icon.ico')
+      : path.join(__dirname, '../resources/icons/icon.png')
   });
 
   if (isDev) {

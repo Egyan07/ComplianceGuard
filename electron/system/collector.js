@@ -8,6 +8,10 @@ async function collectEvidence() {
     const { collectMacOSEvidence } = await import('./macos.js');
     return collectMacOSEvidence();
   }
+  if (process.platform === 'linux') {
+    const { collectLinuxEvidence } = await import('./linux.js');
+    return collectLinuxEvidence();
+  }
   const { collectWindowsEvidence } = await import('./windows.js');
   return collectWindowsEvidence();
 }
