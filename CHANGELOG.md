@@ -8,6 +8,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [3.9.2] — 2026-09-04
+
+### Fixed
+
+- **Evidence collection failing on every platform** — auto-collected evidence
+  is stored by evidence type with `control_id = null` (the canonical engine
+  maps types to controls at scoring time), but the `evidence_items` schema
+  still declared `control_id NOT NULL`, so the first insert threw
+  `NOT NULL constraint failed: evidence_items.control_id` and collection
+  never completed (regression introduced in the v3.9.0 redesign). `control_id`
+  is now nullable on fresh databases, with an idempotent migration that
+  rebuilds existing tables on first launch (existing evidence is preserved).
+  Manual evidence uploaded against a specific control is unchanged.
+- **Enterprise audit trail missing collection events** — the tamper-evident
+  hash chain never recorded `evidence_collected` events because the evidence
+  processor passed the database wrapper instead of the raw connection; the
+  audit service now accepts either handle.
+
 ## [3.9.1] — 2026-09-04
 
 ### Added
