@@ -26,11 +26,15 @@ function computeEntryHash(prevHash, eventType, userId, framework, score, detail,
 }
 
 function logAuditEvent(db, eventType, { userId = null, framework = null, score = null, detail = {} } = {}) {
-  const last = db.prepare('SELECT entry_hash FROM enterprise_audit_log ORDER BY id DESC LIMIT 1').get();
+  // Accept either a raw better-sqlite3 handle or the ComplianceGuardDatabase
+  // wrapper (which exposes the raw connection as .db) so callers can pass
+  // whichever they hold. The evidence processor passes the wrapper.
+  const handle = (db && db.db) || db;
+  const last = handle.prepare('SELECT entry_hash FROM enterprise_audit_log ORDER BY id DESC LIMIT 1').get();
   const prevHash = last ? last.entry_hash : null;
   const createdAt = new Date().toISOString();
   const entryHash = computeEntryHash(prevHash, eventType, userId, framework, score, detail, createdAt);
-  db.prepare(`
+  handle.prepare(`
     INSERT INTO enterprise_audit_log (event_type, user_id, framework, score, detail_json, prev_hash, entry_hash, created_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `).run(eventType, userId, framework, score, JSON.stringify(detail), prevHash, entryHash, createdAt);

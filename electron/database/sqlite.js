@@ -92,10 +92,14 @@ class ComplianceGuardDatabase {
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
 
+      // control_id is nullable: auto-collected evidence is stored by
+      // evidence_type with control_id = null (the canonical engine maps
+      // types to controls at scoring time); only manual evidence (uploaded
+      // against a specific control) sets control_id.
       `CREATE TABLE IF NOT EXISTS evidence_items (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         framework_id INTEGER,
-        control_id TEXT NOT NULL,
+        control_id TEXT,
         evidence_type TEXT NOT NULL,
         title TEXT NOT NULL,
         description TEXT,
@@ -247,6 +251,51 @@ class ComplianceGuardDatabase {
           throw err;
         }
       }
+    }
+
+    // Migrate: evidence_items.control_id was declared NOT NULL, but the
+    // collector pipeline stores auto-collected evidence by evidence_type
+    // with control_id = null (the canonical engine maps evidence types to
+    // controls at scoring time). SQLite cannot drop a column constraint via
+    // ALTER TABLE, so rebuild the table when an existing DB still carries the
+    // old NOT NULL constraint. Runs only once per DB (idempotent).
+    const evidenceTableInfo = this.db.prepare('PRAGMA table_info(evidence_items)').all();
+    const controlIdColumn = evidenceTableInfo.find((c) => c.name === 'control_id');
+    if (controlIdColumn && controlIdColumn.notnull === 1) {
+      log.info('Migrating evidence_items.control_id from NOT NULL to nullable...');
+      this.db.exec('BEGIN');
+      try {
+        this.db.exec(`
+          CREATE TABLE evidence_items_new (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            framework_id INTEGER,
+            control_id TEXT,
+            evidence_type TEXT NOT NULL,
+            title TEXT NOT NULL,
+            description TEXT,
+            file_path TEXT,
+            file_hash TEXT,
+            metadata_json TEXT,
+            collected_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            created_by TEXT DEFAULT 'system',
+            FOREIGN KEY (framework_id) REFERENCES compliance_frameworks(id) ON DELETE CASCADE
+          );
+          INSERT INTO evidence_items_new
+            (id, framework_id, control_id, evidence_type, title, description, file_path, file_hash, metadata_json, collected_at, created_by)
+            SELECT id, framework_id, control_id, evidence_type, title, description, file_path, file_hash, metadata_json, collected_at, created_by
+            FROM evidence_items;
+          DROP TABLE evidence_items;
+          ALTER TABLE evidence_items_new RENAME TO evidence_items;
+        `);
+        this.db.exec('COMMIT');
+      } catch (err) {
+        this.db.exec('ROLLBACK');
+        log.error('evidence_items control_id migration failed:', err);
+        throw err;
+      }
+      // DROP TABLE removed the indexes; recreate them.
+      this.db.exec('CREATE INDEX IF NOT EXISTS idx_evidence_framework ON evidence_items(framework_id)');
+      this.db.exec('CREATE INDEX IF NOT EXISTS idx_evidence_control ON evidence_items(control_id)');
     }
 
     log.info('Database schema initialized successfully');

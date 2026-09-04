@@ -182,3 +182,100 @@ describe('ComplianceGuardDatabase', () => {
     });
   });
 });
+
+describe('evidence_items.control_id nullable (auto-collected evidence)', () => {
+  it('accepts evidence rows with control_id = null on a fresh database', async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cg-null-'));
+    const fresh = new ComplianceGuardDatabase();
+    try {
+      await fresh.initialize(tmpDir);
+      const id = await fresh.addEvidence({
+        framework_id: 1,
+        control_id: null, // auto-collected evidence is stored by evidence_type
+        evidence_type: 'system_configs',
+        title: 'Auto-collected system info',
+        description: 'collected by the platform collector',
+        file_path: null,
+        file_hash: null,
+        metadata: { platform: 'linux' }
+      });
+      expect(id).toBeGreaterThan(0);
+      const row = await fresh.get('SELECT * FROM evidence_items WHERE id = ?', [id]);
+      expect(row.control_id).toBeNull();
+    } finally {
+      await fresh.close();
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it('migrates a legacy NOT NULL evidence_items table and preserves rows', async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cg-legacy-'));
+    const dbPath = path.join(tmpDir, 'complianceguard.db');
+    const Database = require('better-sqlite3');
+
+    // Simulate a pre-fix database: frameworks already seeded, evidence_items
+    // with control_id TEXT NOT NULL and an existing evidence row.
+    const legacy = new Database(dbPath);
+    legacy.exec(`
+      CREATE TABLE compliance_frameworks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL UNIQUE,
+        version TEXT DEFAULT '1.0',
+        description TEXT,
+        controls_json TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+      INSERT INTO compliance_frameworks (id, name, version) VALUES (1, 'SOC 2 Type II', '2017');
+      CREATE TABLE evidence_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        framework_id INTEGER,
+        control_id TEXT NOT NULL,
+        evidence_type TEXT NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT,
+        file_path TEXT,
+        file_hash TEXT,
+        metadata_json TEXT,
+        collected_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        created_by TEXT DEFAULT 'system'
+      );
+      INSERT INTO evidence_items (framework_id, control_id, evidence_type, title)
+        VALUES (1, 'CC6.1', 'system_configs', 'Legacy evidence');
+    `);
+    legacy.close();
+
+    const migrated = new ComplianceGuardDatabase();
+    try {
+      await migrated.initialize(tmpDir);
+
+      const col = migrated.db
+        .prepare('PRAGMA table_info(evidence_items)')
+        .all()
+        .find((c) => c.name === 'control_id');
+      expect(col.notnull).toBe(0); // constraint dropped by the rebuild
+
+      // Existing rows survived the rebuild.
+      const row = migrated.db
+        .prepare('SELECT title FROM evidence_items WHERE title = ?')
+        .get('Legacy evidence');
+      expect(row).toBeDefined();
+
+      // The whole point: null control_id inserts fine post-migration.
+      const id = await migrated.addEvidence({
+        framework_id: 1,
+        control_id: null,
+        evidence_type: 'firewall_configs',
+        title: 'Post-migration auto evidence',
+        description: '',
+        file_path: null,
+        file_hash: null,
+        metadata: {}
+      });
+      expect(id).toBeGreaterThan(0);
+    } finally {
+      await migrated.close();
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+});
