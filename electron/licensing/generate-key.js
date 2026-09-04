@@ -3,9 +3,11 @@
  * License Key Generator (DEV ONLY — never ship this file)
  *
  * SECURITY (rotation in v4.0.0): the signing keypair must NEVER be
- * generated inside the repository. electron-builder packages `electron/**/*`
- * (including dotfiles) into the application ASAR, so a keypair written here
- * would ship to every user and void the offline license model.
+ * generated inside the repository. electron-builder packages the entire
+ * electron/ directory tree (dotfiles included) into the application ASAR, so
+ * a keypair written here would ship to every user and void the offline
+ * license model. (NOTE: keep this comment free of the literal sequence
+ * asterisk-slash so the block comment cannot close early.)
  *
  * Usage:
  *   node generate-key.js --init [--dir <outside-repo-path>]   # Generate keypair
