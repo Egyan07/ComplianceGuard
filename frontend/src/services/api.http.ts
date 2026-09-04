@@ -13,6 +13,7 @@ import type {
   FleetStats,
   HttpEvaluationRecord,
   HttpEvaluationResponse,
+  HttpEvidenceCollectionResponse,
   HttpEvidenceItem,
   LicenseInfoPayload,
   MachineRecord,
@@ -131,8 +132,17 @@ export async function httpGetEvidenceSummary(): Promise<EvidenceSummary> {
 }
 
 export async function httpCollectEvidence(request: EvidenceCollectionRequest): Promise<EvidenceCollectionResult> {
-  const response = await apiClient.post('/evidence/collect', request);
-  return response.data;
+  const response = await apiClient.post<HttpEvidenceCollectionResponse>('/evidence/collect', request);
+  const data = response.data ?? {};
+  // CG-M3: surface the real collection status. A 200 with status
+  // 'not_configured' or 'partial_failure' is NOT a successful collection —
+  // the caller must not announce "collection complete!".
+  return {
+    success: data.status === 'success',
+    collection_status: data.status,
+    evidence_count: data.evidence_count,
+    failed_count: data.failed_count,
+  };
 }
 
 export async function httpGetEvidenceItems(status?: string, search?: string): Promise<EvidenceItem[]> {
@@ -154,7 +164,7 @@ export async function httpGetEvidenceItems(status?: string, search?: string): Pr
 export async function httpGetScoreTrend(frameworkId: 1 | 2 | 3 | 4): Promise<Array<{
   date: string;
   score: number;
-  status: 'compliant' | 'partial' | 'non_compliant';
+  status: 'compliant' | 'partial' | 'non_compliant' | 'not_assessed';
 }>> {
   const response = await apiClient.get<HttpEvaluationRecord[]>('/compliance/evaluations/history');
   const rows: HttpEvaluationRecord[] = response.data ?? [];

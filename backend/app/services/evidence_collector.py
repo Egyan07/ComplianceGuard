@@ -12,6 +12,77 @@ from app.integrations.aws import AWSEvidenceCollector
 logger = logging.getLogger(__name__)
 
 
+def _collect_compliance_statuses(value: Any) -> List[str]:
+    """Recursively collect every ``compliance_status`` marker in a payload.
+
+    AWS collectors embed per-resource compliance_status values inside lists
+    (e.g. ``bucket_encryption_status``, ``policy_analysis``); each entry is one
+    of ``compliant`` / ``non_compliant`` / ``error``.
+    """
+    statuses: List[str] = []
+    if isinstance(value, dict):
+        for key, child in value.items():
+            if key == "compliance_status" and isinstance(child, str):
+                statuses.append(child)
+            else:
+                statuses.extend(_collect_compliance_statuses(child))
+    elif isinstance(value, list):
+        for child in value:
+            statuses.extend(_collect_compliance_statuses(child))
+    return statuses
+
+
+def derive_evidence_item_status(evidence_item: Optional[Dict[str, Any]]) -> str:
+    """Derive a truthful status for one collected evidence item from its payload.
+
+    Never fabricates compliance — the status reflects what the evidence
+    actually says:
+
+      - ``error``         the collector reported an error (failed collection
+                          entries carry ``error`` / ``error_message``)
+      - ``non_compliant`` at least one per-resource marker is non_compliant,
+                          or the aggregate compliance rate is below 100%
+      - ``compliant``     evidence was collected and shows no violation
+                          (explicit compliant markers present, or an aggregate
+                          rate of 100%)
+      - ``not_assessed``  the payload carries no compliance information at all
+                          (never default to compliant on unknown payloads)
+
+    This replaces the previous hardcoded ``status="compliant"`` on every
+    persisted item (CG-M1), which painted non-compliant resources green.
+    """
+    if not isinstance(evidence_item, dict):
+        return "not_assessed"
+
+    # Collector failure entries: {'evidence_type': ..., 'error': str, ...}.
+    if evidence_item.get("error") or evidence_item.get("error_message"):
+        return "error"
+
+    markers = _collect_compliance_statuses(evidence_item)
+    if any(m == "error" for m in markers):
+        return "error"
+    if any(m == "non_compliant" for m in markers):
+        return "non_compliant"
+
+    # Aggregate rates (s3_encryption -> encryption_compliance_rate,
+    # iam_policy -> compliance_rate). A sub-100% rate implies violations.
+    aggregate_rate = None
+    for rate_key in ("compliance_rate", "encryption_compliance_rate"):
+        raw = evidence_item.get(rate_key)
+        if isinstance(raw, (int, float)):
+            aggregate_rate = float(raw)
+            break
+    if aggregate_rate is not None:
+        return "non_compliant" if aggregate_rate < 100.0 else "compliant"
+
+    # Collected evidence with explicit compliant markers and no violations.
+    if any(m == "compliant" for m in markers):
+        return "compliant"
+
+    # Unknown evidence shape with no compliance information — do not guess.
+    return "not_assessed"
+
+
 class EvidenceCollectionService:
     """
     Service for collecting compliance evidence from various sources
@@ -48,13 +119,35 @@ class EvidenceCollectionService:
         evidence_items = []
         failed_collections = []
 
-        # Collect AWS evidence if credentials provided
-        if aws_access_key_id and aws_secret_access_key:
-            aws_evidence = self._collect_aws_evidence(
-                aws_access_key_id, aws_secret_access_key, region_name
+        # CG-M3: with no credentials configured there is nothing to collect.
+        # Report 'not_configured' explicitly instead of a fake 'success' with
+        # zero items, so the UI can say "configure AWS" rather than
+        # "collection complete! 0 items".
+        if not (aws_access_key_id and aws_secret_access_key):
+            logger.warning(
+                "Evidence collection: no AWS credentials configured — nothing to collect"
             )
-            evidence_items.extend(aws_evidence['successful_collections'])
-            failed_collections.extend(aws_evidence['failed_collections'])
+            return {
+                'collection_id': f"evidence_{self.collection_timestamp.strftime('%Y%m%d_%H%M%S')}",
+                'collection_timestamp': self.collection_timestamp.isoformat() + 'Z',
+                'collection_status': 'not_configured',
+                'evidence_count': 0,
+                'evidence_items': [],
+                'failed_collections': [],
+                'summary': {
+                    'total_sources': 0,
+                    'successful_collections': 0,
+                    'failed_collections': 0,
+                    'message': 'No evidence sources configured — add AWS credentials in Settings first.',
+                },
+            }
+
+        # Collect AWS evidence if credentials provided
+        aws_evidence = self._collect_aws_evidence(
+            aws_access_key_id, aws_secret_access_key, region_name
+        )
+        evidence_items.extend(aws_evidence['successful_collections'])
+        failed_collections.extend(aws_evidence['failed_collections'])
 
         # Determine overall collection status
         if not evidence_items and failed_collections:

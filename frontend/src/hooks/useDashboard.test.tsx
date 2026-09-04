@@ -86,19 +86,22 @@ describe('useDashboard (web mode)', () => {
     expect(api.getEvidenceItems).toHaveBeenCalled();
   });
 
-  it('falls back to mock summary when the real fetch fails', async () => {
-    vi.mocked(api.getEvidenceSummary).mockRejectedValueOnce(new Error('down'));
+  it('surfaces a load error instead of mock data when the summary fetch fails (CG-M4)', async () => {
+    vi.mocked(api.getEvidenceSummary).mockRejectedValue(new Error('down'));
     const { result } = renderHook(() => useDashboard(), { wrapper: makeWrapper() });
 
-    await waitFor(() => expect(result.current.summary).toEqual(mockSummary));
-    expect(api.getMockEvidenceSummary).toHaveBeenCalled();
+    await waitFor(() => expect(result.current.dashboardLoadError).not.toBeNull());
+    expect(result.current.summary).toBeNull();
+    // The outage must NOT be masked as a healthy empty/mock dashboard.
+    expect(api.getMockEvidenceSummary).not.toHaveBeenCalled();
   });
 
-  it('falls back to an empty item list when fetching items fails', async () => {
-    vi.mocked(api.getEvidenceItems).mockRejectedValueOnce(new Error('down'));
+  it('surfaces a load error when fetching items fails (CG-M4)', async () => {
+    vi.mocked(api.getEvidenceItems).mockRejectedValue(new Error('down'));
     const { result } = renderHook(() => useDashboard(), { wrapper: makeWrapper() });
 
-    await waitFor(() => expect(result.current.evidenceItems).toEqual([]));
+    await waitFor(() => expect(result.current.dashboardLoadError).not.toBeNull());
+    expect(api.getMockEvidenceSummary).not.toHaveBeenCalled();
   });
 
   it('handleCollectEvidence reports the collected count on success', async () => {
@@ -279,6 +282,8 @@ describe('useDashboard (electron mode)', () => {
     await act(async () => {
       await result.current.handleEvaluateCompliance();
     });
+    // Wait for the summary query to resolve — cloud sync reports its count.
+    await waitFor(() => expect(result.current.summary).toEqual(mockSummary));
     await act(async () => {
       await result.current.handleSyncToCloud();
     });

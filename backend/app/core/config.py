@@ -376,6 +376,33 @@ def validate_production_settings() -> List[str]:
     return warnings
 
 
+def assert_email_configuration_allows_onboarding(cfg: "Settings | None" = None) -> None:
+    """Fail fast when a production deployment cannot onboard users.
+
+    Every web account must verify an email address before it can use any
+    protected endpoint (see ``app.api.deps.get_current_user``). When
+    ``EMAIL_ENABLED=false`` no verification email is ever sent, so in
+    production the platform would silently dead-end every registration (all
+    new accounts stuck at 403 "Email address not verified").
+
+    Development/testing environments are exempt: when email is disabled there,
+    ``app.core.email`` logs the verification link instead, so local
+    development stays usable.
+
+    Raised at module import time (app.core.config import) in production, so
+    the backend refuses to boot under a broken configuration.
+    """
+    cfg = cfg or settings
+    if cfg.environment == Environment.PRODUCTION and not cfg.email_enabled:
+        raise RuntimeError(
+            "EMAIL_ENABLED=false in a production environment: no user can ever "
+            "complete registration, because verification emails are not sent and "
+            "the verification token is never surfaced to the user (all protected "
+            "endpoints return 403). Set EMAIL_ENABLED=true and configure "
+            "SMTP_HOST/SMTP_USER/SMTP_PASSWORD/APP_BASE_URL (see .env.example)."
+        )
+
+
 # Environment-specific overrides are applied inside Settings._apply_environment_overrides
 # at construction time — no post-init mutation here.
 
@@ -386,3 +413,5 @@ if settings.environment == Environment.PRODUCTION:
         import warnings
         for warning in production_warnings:
             warnings.warn(warning, UserWarning)
+    # CG-H1: refuse to boot a production backend that cannot verify emails.
+    assert_email_configuration_allows_onboarding(settings)

@@ -11,6 +11,7 @@
  *   - status: 0 → not_assessed; <0.5 → non_compliant; 0.5–0.99 → partial; 1.0 → compliant
  *   - overall = Σ coverage(c) / N over ALL controls (not_assessed included)
  *   - score thresholds: ≥90 compliant, ≥70 partial (0–100 scale)
+ *   - all controls not_assessed → overall status not_assessed (CG-M2), never non_compliant
  *
  * Legacy translation: evidence stored under the old Python vocabulary is
  * translated to canonical types via shared/frameworks/evidence-vocabulary.json
@@ -172,8 +173,15 @@ class CanonicalEngine {
       ? ids.reduce((sum, id) => sum + controlResults[id].score, 0) / total
       : 0;
 
+    // CG-M2: with every control not_assessed there is nothing to be
+    // non-compliant about — the overall status must say "not assessed", not
+    // "non compliant". Label-only change: the numeric average is unchanged.
+    const allNotAssessed = Object.values(controlResults).every(
+      (r) => r.status === STATUS.NOT_ASSESSED,
+    );
     let status;
-    if (overall >= 90) status = STATUS.COMPLIANT;
+    if (allNotAssessed) status = STATUS.NOT_ASSESSED;
+    else if (overall >= 90) status = STATUS.COMPLIANT;
     else if (overall >= 70) status = STATUS.PARTIAL;
     else status = STATUS.NON_COMPLIANT;
 

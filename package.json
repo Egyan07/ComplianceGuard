@@ -1,6 +1,6 @@
 {
   "name": "complianceguard-desktop",
-  "version": "3.9.2",
+  "version": "4.0.0",
   "description": "ComplianceGuard - SOC 2 Automation Desktop Application",
   "main": "electron/main.js",
   "author": "Egyan07",
@@ -19,7 +19,8 @@
     "dist": "npm run build && electron-builder",
     "postinstall": "electron-builder install-app-deps",
     "test:scheduler": "npx vitest run --config vitest.config.electron.cjs",
-    "pretest:scheduler": "npm rebuild better-sqlite3"
+    "pretest:scheduler": "npm rebuild better-sqlite3",
+    "check:package-secrets": "node scripts/check-package-secrets.js"
   },
   "dependencies": {
     "better-sqlite3": "^13.0.3",
@@ -53,7 +54,13 @@
       "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
       "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
       "!**/node_modules/*.d.ts",
-      "!**/node_modules/.bin"
+      "!**/node_modules/.bin",
+      "!**/*.pem",
+      "!**/*.key",
+      "!**/*.p12",
+      "!**/*.pfx",
+      "!electron/**/*.test.js",
+      "!electron/licensing/generate-key.js"
     ],
     "extraResources": [
       {

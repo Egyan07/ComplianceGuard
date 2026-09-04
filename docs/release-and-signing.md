@@ -39,6 +39,57 @@ auto-updated artifact.
 
 ---
 
+## 1b. License-signing keys (Ed25519) — never inside the packaged tree
+
+ComplianceGuard licenses are Ed25519-signed and verified offline against a
+public key embedded in the app (`electron/licensing/license-crypto.js`,
+`backend/app/core/license.py`). The matching **private** key must never exist
+under any directory electron-builder packages.
+
+**Rotation event (v4.0.0):** the pre-v4.0.0 signing keypair was generated
+inside `electron/licensing/` — a directory matched by `build.files`
+(`electron/**/*`, dotfiles included) — so the private key shipped inside the
+application ASAR. That keypair is **compromised and revoked**: its public key
+is no longer in the accepted-keys lists, and licenses signed with it are
+rejected. Any previously issued licenses must be re-issued with the current
+keypair.
+
+### Generating / storing the keypair
+
+```bash
+# Key material defaults to ~/.complianceguard-licensing (OUTSIDE the repo).
+# --init refuses to write inside the repository.
+node electron/licensing/generate-key.js --init --dir "$HOME/.complianceguard-licensing"
+
+# Paste the printed PUBLIC key into:
+#   electron/licensing/license-crypto.js  (ACCEPTED_PUBLIC_KEYS)
+#   backend/app/core/license.py           (PUBLIC_KEYS)
+# Keep the private key in a password manager / encrypted drive. Never commit it.
+
+# Issue licenses from the same external key directory:
+node electron/licensing/generate-key.js --tier pro --email customer@x.com --days 365 \
+  --dir "$HOME/.complianceguard-licensing"
+```
+
+### Belt-and-braces packaging exclusions
+
+Even though the workflow never writes keys in-tree, `package.json`
+`build.files` also excludes `**/*.pem`, `**/*.key`, `**/*.p12`, `**/*.pfx`,
+`electron/**/*.test.js`, and `electron/licensing/generate-key.js` from the
+package, and the CI jobs run the artifact guard:
+
+```bash
+npm run check:package-secrets          # source inputs (electron/**, shared/**)
+node scripts/check-package-secrets.js dist   # actual electron-builder output
+```
+
+The guard scans **actual release artifacts** (the unpacked app tree and the
+raw `app.asar` bytes, where private PEM blocks are visible) and fails the
+release if any private key material is found. `scripts/check-package-secrets.js`
+has its own regression tests in `electron/licensing/packaging-guard.test.js`.
+
+---
+
 ## 2. Tagging a release
 
 The release jobs run only on tag pushes matching `v*`:
@@ -47,8 +98,8 @@ The release jobs run only on tag pushes matching `v*`:
 # 1. Bump "version" in package.json (root). The version here drives the
 #    installer name, latest.yml, and the update check.
 # 2. Commit, then tag and push:
-git tag v3.9.2
-git push origin v3.9.2
+git tag v4.0.0
+git push origin v4.0.0
 ```
 
 CI then: runs all suites → builds the Windows installer (signed if credentials
@@ -102,7 +153,7 @@ Azure Trusted Signing requires the `trusted-signing` Azure extension; see
 ### Verifying a signature locally (Windows)
 
 ```powershell
-Get-AuthenticodeSignature .\dist\ComplianceGuard-Setup-3.9.2.exe
+Get-AuthenticodeSignature .\dist\ComplianceGuard-Setup-4.0.0.exe
 # Status: Valid
 # SignerCertificate.Subject: CN=…, O=ComplianceGuard LLC, …
 ```
@@ -137,11 +188,11 @@ npm run publish:mac
 
 # Linux (AppImage + .deb, no signing needed):
 npm run package:linux
-gh release upload v3.9.2 dist/*.AppImage dist/*.deb dist/latest-linux.yml --clobber
+gh release upload v4.0.0 dist/*.AppImage dist/*.deb dist/latest-linux.yml --clobber
 
 # Add checksums:
 (cd dist && sha256sum *.exe *.dmg *.AppImage *.deb *.yml > SHA256SUMS.txt)
-gh release upload v3.9.2 dist/SHA256SUMS.txt --clobber
+gh release upload v4.0.0 dist/SHA256SUMS.txt --clobber
 ```
 
 `npm run package` builds locally without publishing (`--publish never`).
@@ -180,4 +231,8 @@ gh release upload v3.9.2 dist/SHA256SUMS.txt --clobber
       `ComplianceGuard-<ver>.AppImage`, `ComplianceGuard_<ver>_amd64.deb`,
       `latest-linux.yml`, `SHA256SUMS.txt`
 - [ ] `release-integrity` job passed (artifacts present + checksums uploaded)
+- [ ] Packaging secret guard passed on `dist/` in the release jobs
+      (`npm run check:package-secrets`; fails the release on private key material)
+- [ ] License-signing keypair lives OUTSIDE the repo (`~/.complianceguard-licensing`
+      or equivalent); no `.pem`/`.key` files under any packaged path
 - [ ] Draft reviewed and **manually published**

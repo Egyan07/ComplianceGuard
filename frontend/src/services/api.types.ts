@@ -33,6 +33,11 @@ export interface EvidenceCollectionResult {
   success?: boolean;
   error?: string;
   evidence_count?: number;
+  // Web mode: the canonical collection status from POST /evidence/collect
+  // ('success' | 'partial_failure' | 'not_configured' | ...). CG-M3: a
+  // collection that produced nothing must not read as "success".
+  collection_status?: string;
+  failed_count?: number;
 }
 
 export interface ControlResult {
@@ -65,12 +70,13 @@ export interface ComplianceEvaluation {
 export interface TrendPoint {
   date: string;          // ISO 8601 — always chronologically ascending (invariant enforced by getScoreTrend)
   score: number;         // 0–100
-  status: 'compliant' | 'partial' | 'non_compliant';
+  // CG-M2: not_assessed (nothing assessed) is distinct from non_compliant.
+  status: 'compliant' | 'partial' | 'non_compliant' | 'not_assessed';
 }
 
 export interface TrendDisplayPoint extends TrendPoint {
   formattedDate: string;  // e.g. "Jun 1"
-  statusLabel: string;    // "Good Standing" | "On Track" | "Needs Attention"
+  statusLabel: string;    // "Good Standing" | "On Track" | "Needs Attention" | "Not Assessed"
   delta?: number;         // undefined for first point; thisScore - previousScore for rest
 }
 
@@ -115,6 +121,15 @@ export interface HttpEvidenceItem {
   data?: Record<string, unknown>;
   created_at?: string;
   source?: string;
+}
+
+/** Web POST /evidence/collect response. */
+export interface HttpEvidenceCollectionResponse {
+  collection_id?: string;
+  status?: string;
+  evidence_count?: number;
+  failed_count?: number;
+  items?: unknown[];
 }
 
 /** Web evaluate-from-evidence response (canonical 0-100 contract). */

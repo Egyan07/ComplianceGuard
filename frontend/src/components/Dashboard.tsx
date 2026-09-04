@@ -33,7 +33,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     state, collectingEvidence, evaluating, exportingPDF, syncingCloud,
     cloudConnected, fetchDashboardData, handleCollectEvidence,
     handleEvaluateCompliance, handleExportPDF, handleSyncToCloud, clearMessage,
-    selectedFramework, setSelectedFramework, handleRescan,
+    selectedFramework, setSelectedFramework, handleRescan, dashboardLoadError,
   } = useDashboard();
 
   const { isFeatureAllowed } = useLicense();
@@ -81,9 +81,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         onUpgradePrompt={(feature, description) => setUpgradePrompt({ open: true, feature, description })}
       />
 
-      {state.error && (
-        <Alert severity="error" sx={{ mb: 3 }} action={<button onClick={fetchDashboardData}>Retry</button>}>
-          {state.error}
+      {(state.error || dashboardLoadError) && (
+        <Alert
+          severity={state.error ? 'error' : 'warning'}
+          sx={{ mb: 3 }}
+          action={<button onClick={fetchDashboardData}>Retry</button>}
+        >
+          {state.error ?? dashboardLoadError}
         </Alert>
       )}
 

@@ -1,13 +1,26 @@
 const crypto = require('crypto');
 
-// Ed25519 public key for verifying license signatures.
-// The private key is kept offline and never shipped with the app.
-// Generate a keypair with: node generate-key.js --init
-const PUBLIC_KEY_PEM = `-----BEGIN PUBLIC KEY-----
-MCowBQYDK2VwAyEARu9Q8wPUkdj2SaTNXwD5nPHOsYBg72zt9pN9BEZmn54=
------END PUBLIC KEY-----`;
+// Ed25519 public keys used to verify license signatures.
+//
+// SECURITY (rotation in v4.0.0): the previous signing keypair was
+// generated inside the packaged source tree (electron/licensing/), so the
+// private key could end up inside the application ASAR. That keypair is
+// treated as COMPROMISED and REVOKED: its public key is NOT listed below, so
+// licenses signed with the old private key are rejected. Existing licenses
+// therefore need to be re-issued with the current keypair (see
+// docs/release-and-signing.md / generate-key.js).
+//
+// Only the public key ships with the app. The matching private key is held
+// outside the repository (see generate-key.js --dir) and must never be
+// written under any directory that electron-builder packages.
+const ACCEPTED_PUBLIC_KEYS = [
+  // v4.0.0 production keypair (rotated 2026-09-04).
+  `-----BEGIN PUBLIC KEY-----
+MCowBQYDK2VwAyEAAXl/LPC87Mil4AJn5P4zYz5rTVJKR6RfHwq2fU1LsjU=
+-----END PUBLIC KEY-----`,
+];
 
-function verifyLicenseKey(keyString) {
+function verifyLicenseKey(keyString, acceptedPublicKeys = ACCEPTED_PUBLIC_KEYS) {
   try {
     if (!keyString || typeof keyString !== 'string') {
       return { valid: false, error: 'Invalid key format' };
@@ -34,15 +47,22 @@ function verifyLicenseKey(keyString) {
       return { valid: false, error: 'Incomplete license data' };
     }
 
-    // Verify signature
-    const isValid = crypto.verify(
-      null, // Ed25519 doesn't use a separate hash
-      payloadBuffer,
-      PUBLIC_KEY_PEM,
-      signatureBuffer
-    );
+    // Verify signature against every accepted public key. The signature is
+    // over the raw payload bytes, so each candidate key is tried until one
+    // verifies (keys are explicit and few; deterministic order).
+    let signatureValid = false;
+    for (const pem of acceptedPublicKeys || []) {
+      try {
+        if (crypto.verify(null, payloadBuffer, pem, signatureBuffer)) {
+          signatureValid = true;
+          break;
+        }
+      } catch {
+        // Malformed key material — try the next accepted key.
+      }
+    }
 
-    if (!isValid) {
+    if (!signatureValid) {
       return { valid: false, error: 'Invalid license signature' };
     }
 
@@ -80,4 +100,4 @@ function verifyLicenseKey(keyString) {
   }
 }
 
-module.exports = { verifyLicenseKey };
+module.exports = { verifyLicenseKey, ACCEPTED_PUBLIC_KEYS };

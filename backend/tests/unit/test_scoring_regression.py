@@ -91,9 +91,13 @@ def test_status_vocabulary_is_canonical_only():
 
 
 def test_overall_status_derived_from_score_thresholds():
-    """One threshold system: <70 non_compliant, 70-89 partial, >=90 compliant."""
-    low = ENGINE.evaluate("soc2", [])
-    assert low.overall_score == 0.0
+    """One threshold system: <70 non_compliant, 70-89 partial, >=90 compliant.
+
+    The all-not-assessed (empty evidence) case is the single exception and is
+    labelled not_assessed (CG-M2) — covered in test_scoring_contract.
+    """
+    low = ENGINE.evaluate("soc2", ["event_logs"])
+    assert 0.0 < low.overall_score < 70.0
     assert low.status == "non_compliant"
 
 

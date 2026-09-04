@@ -61,4 +61,46 @@ describe('ScoreTrend', () => {
     wrap(<ScoreTrend evaluations={[]} loading selectedFramework={1} onFrameworkChange={noop} />);
     expect(screen.queryByText('82')).not.toBeInTheDocument();
   });
+
+  // N-1 (CG-M2 consistency): an all-not-assessed evaluation must read as
+  // "Not Assessed" (neutral) in the mini-hero too, never as the red
+  // "Needs Attention" its zero numeric score would otherwise imply.
+  it('mini-hero shows neutral Not Assessed for an all-not-assessed evaluation (N-1)', () => {
+    const { container } = wrap(<ScoreTrend
+      evaluations={[{ date: '2026-01-01T00:00:00', score: 0, status: 'not_assessed' }]}
+      selectedFramework={1}
+      onFrameworkChange={noop}
+    />);
+    // Mini-hero label + table row label both say "Not Assessed".
+    expect(screen.getAllByText('Not Assessed').length).toBe(2);
+    expect(screen.queryByText('NEEDS ATTENTION')).not.toBeInTheDocument();
+    expect(screen.queryByText('Needs Attention')).not.toBeInTheDocument();
+    // The mini-hero dot is the neutral state, not the failure/attention band.
+    const dot = container.querySelector('[data-state="not_assessed"]');
+    expect(dot).not.toBeNull();
+    expect(container.querySelector('[data-state="attention"]')).toBeNull();
+  });
+
+  it('mini-hero keeps Needs Attention for a genuinely non-compliant evaluation (N-1)', () => {
+    const { container } = wrap(<ScoreTrend
+      evaluations={[{ date: '2026-01-01T00:00:00', score: 40, status: 'non_compliant' }]}
+      selectedFramework={1}
+      onFrameworkChange={noop}
+    />);
+    expect(screen.getByText('NEEDS ATTENTION')).toBeInTheDocument();
+    expect(screen.queryByText('Not Assessed')).not.toBeInTheDocument();
+    const dot = container.querySelector('[data-state="attention"]');
+    expect(dot).not.toBeNull();
+  });
+
+  it('mini-hero keeps Good Standing for a compliant evaluation (N-1)', () => {
+    const { container } = wrap(<ScoreTrend
+      evaluations={[{ date: '2026-01-01T00:00:00', score: 92, status: 'compliant' }]}
+      selectedFramework={1}
+      onFrameworkChange={noop}
+    />);
+    expect(screen.getByText('GOOD STANDING')).toBeInTheDocument();
+    expect(container.querySelector('[data-state="good"]')).not.toBeNull();
+    expect(screen.queryByText('Not Assessed')).not.toBeInTheDocument();
+  });
 });

@@ -3,14 +3,26 @@ Email delivery for ComplianceGuard.
 
 Sends verification and password-reset emails via SMTP.
 Set EMAIL_ENABLED=true and configure SMTP_* env vars to activate.
-When EMAIL_ENABLED=false (default) all functions are silent no-ops — safe for dev/test.
+
+When EMAIL_ENABLED=false (default) no email is sent:
+  - In non-production environments the verification/reset link is LOGGED so
+    local / self-hosted development remains usable (you can open the link from
+    the backend console). This matches the .env.example documentation.
+  - In production this is a fatal misconfiguration: every account requires
+    email verification, so with delivery disabled no user can ever complete
+    registration (every protected endpoint returns 403). app.main refuses to
+    start in that state; callers here still log loudly as a second line of
+    defense.
 """
 
+import logging
 import aiosmtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from app.core.config import settings
+from app.core.config import settings, Environment
+
+logger = logging.getLogger(__name__)
 
 
 def _build_message(to: str, subject: str, html_body: str) -> MIMEMultipart:
@@ -38,8 +50,27 @@ async def _smtp_send(msg: MIMEMultipart, to: str) -> None:
 
 
 async def send_verification_email(email: str, token: str) -> None:
-    """Send email verification link. No-op when EMAIL_ENABLED=false."""
+    """Send email verification link.
+
+    When EMAIL_ENABLED=false the delivery is skipped: in non-production
+    environments the link is logged (never silently dropped), in production it
+    is logged as an error. Production startup is gated separately in
+    app.main._assert_valid_production_config.
+    """
     if not settings.email_enabled:
+        link = f"{settings.app_base_url}/#/verify-email?token={token}"
+        if settings.environment != Environment.PRODUCTION:
+            logger.warning(
+                "EMAIL_ENABLED=false (no SMTP): verification link for %s -> %s",
+                email, link,
+            )
+        else:
+            logger.error(
+                "EMAIL_ENABLED=false in production: verification email for %s was NOT "
+                "sent (link exists only here: %s). Configure SMTP or this account "
+                "cannot be verified.",
+                email, link,
+            )
         return
 
     html = f"""
@@ -55,8 +86,24 @@ async def send_verification_email(email: str, token: str) -> None:
 
 
 async def send_password_reset_email(email: str, token: str) -> None:
-    """Send password reset link. No-op when EMAIL_ENABLED=false."""
+    """Send password reset link.
+
+    Same disabled-email behavior as send_verification_email: non-production
+    logs the reset link so local development stays usable; production logs an
+    error (startup is gated separately).
+    """
     if not settings.email_enabled:
+        link = f"{settings.app_base_url}/#/reset-password?token={token}"
+        if settings.environment != Environment.PRODUCTION:
+            logger.warning(
+                "EMAIL_ENABLED=false (no SMTP): password reset link for %s -> %s",
+                email, link,
+            )
+        else:
+            logger.error(
+                "EMAIL_ENABLED=false in production: password reset email for %s was NOT sent.",
+                email,
+            )
         return
 
     html = f"""

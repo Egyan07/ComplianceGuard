@@ -11,6 +11,7 @@ Scoring semantics (ratified Phase 3 spec):
   - status: 0 → not_assessed; <0.5 → non_compliant; 0.5–0.99 → partial; 1.0 → compliant
   - overall = Σ coverage(c) / N over ALL controls (not_assessed included)
   - score thresholds: ≥90 compliant, ≥70 partial (0–100 scale)
+  - all controls not_assessed → overall status not_assessed (CG-M2), never non_compliant
 
 Legacy translation: web-mode evidence stored under the old Python vocabulary
 (evidence_mapping.py / *_evidence_map.py keys) is translated to its canonical
@@ -251,7 +252,13 @@ class CanonicalEngine:
         total = len(control_results)
         overall = (sum(r.score for r in control_results.values()) / total) if total else 0.0
 
-        if overall >= 90:
+        # CG-M2: with every control not_assessed there is nothing to be
+        # non-compliant about — the overall status must say "not assessed",
+        # not "non compliant". This is a status-label fix only: the numeric
+        # average (0) is unchanged and all other thresholds are untouched.
+        if all(r.status == STATUS_NOT_ASSESSED for r in control_results.values()):
+            status = STATUS_NOT_ASSESSED
+        elif overall >= 90:
             status = STATUS_COMPLIANT
         elif overall >= 70:
             status = STATUS_PARTIAL

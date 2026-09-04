@@ -75,7 +75,8 @@ describe('evaluate-compliance (canonical path)', () => {
     const result = await ipcMain.registeredHandlers['evaluate-compliance'](null, SOC2);
 
     expect(result.overall_score).toBe(0);
-    expect(result.status).toBe('non_compliant');
+    // CG-M2: nothing assessed is not a failed assessment.
+    expect(result.status).toBe('not_assessed');
     expect(result.not_assessed_controls).toBe(54);
     expect(ctx.showNotification).toHaveBeenCalled();
   });

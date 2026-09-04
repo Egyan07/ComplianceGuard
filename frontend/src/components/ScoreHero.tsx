@@ -53,8 +53,12 @@ const ScoreHero: React.FC<ScoreHeroProps> = ({
   const score = evaluation ? Math.round(evaluation.overall_score) : 0;
   // One readiness scale across the app: bands mirror the trend-chart zones.
   const band = scoreBand(score);
-  const statusLabel = SCORE_BAND_LABEL[band];
-  const tone = SCORE_BAND_TONE[band];
+  // CG-M2: an evaluation with nothing assessed is "Not Assessed", not a
+  // failed assessment — do not present a 0-score all-not-assessed evaluation
+  // as red "Needs Attention".
+  const notAssessed = !!evaluation && evaluation.status === 'not_assessed';
+  const statusLabel = notAssessed ? 'Not Assessed' : SCORE_BAND_LABEL[band];
+  const tone = notAssessed ? 'neutral' : SCORE_BAND_TONE[band];
   const tc = toneColors(theme, tone);
 
   return (

@@ -6,12 +6,13 @@ and SOC 2 audit workflows.
 """
 
 import asyncio
+import json
 import logging
 import os
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from typing import Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
 import sentry_sdk
 import uvicorn
@@ -19,6 +20,7 @@ from alembic import command as alembic_command
 from alembic.config import Config as AlembicConfig
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse
 from sqlalchemy import text
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
@@ -54,6 +56,37 @@ from app.core.rate_limit import limiter
 import app.models  # noqa: F401
 
 logger = logging.getLogger(__name__)
+
+
+def parse_allowed_hosts(raw: Optional[str]) -> Optional[List[str]]:
+    """Parse the ALLOWED_HOSTS env var into a host allowlist, or None when unset.
+
+    Note the pydantic Settings layer requires the JSON array form for list
+    fields (``["a.example","b.example"]``); a plain comma string fails at
+    settings construction, so in practice this helper receives JSON arrays or
+    None. The comma split is kept defensively for robustness.
+
+    Returns None when the variable is absent or empty, meaning host-header
+    validation is NOT enforced (the deployment relies on the proxy/nginx to
+    constrain Host headers).
+    """
+    if raw is None:
+        return None
+    raw = raw.strip()
+    if not raw:
+        return None
+    values: List[str]
+    if raw.startswith("["):
+        try:
+            parsed = json.loads(raw)
+        except Exception:
+            parsed = [raw]
+        values = parsed if isinstance(parsed, list) else [raw]
+    else:
+        values = raw.split(",")
+    cleaned = [str(h).strip() for h in values if str(h).strip()]
+    return cleaned or None
+
 
 # Structured logging (LOG_FORMAT=json for JSON lines) + Prometheus build info.
 configure_logging(level=settings.log_level)
@@ -237,6 +270,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# CG-M5: ALLOWED_HOSTS finally does something. When the operator explicitly
+# sets it, host-header validation is enforced (TrustedHostMiddleware rejects
+# requests whose Host header is not allowed with HTTP 400). When unset the
+# middleware is NOT added, so default deployments behind nginx (which already
+# constrains Host at the proxy) keep working unchanged — the dead
+# security-looking configuration is either enforced or inert.
+_configured_hosts = parse_allowed_hosts(os.getenv("ALLOWED_HOSTS"))
+if _configured_hosts:
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=_configured_hosts)
 
 
 @app.middleware("http")

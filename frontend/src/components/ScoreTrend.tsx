@@ -27,6 +27,13 @@ function statusLabel(score: number): string {
   return 'Needs Attention';
 }
 
+// CG-M2: an evaluation with nothing assessed is "Not Assessed", not a failed
+// (Needs Attention) assessment — even though its numeric average is 0.
+function pointLabel(p: TrendPoint): string {
+  if (p.status === 'not_assessed') return 'Not Assessed';
+  return statusLabel(p.score);
+}
+
 function fmtDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
@@ -36,9 +43,10 @@ function toDisplayPoints(pts: TrendPoint[]): TrendDisplayPoint[] {
     ...p,
     formattedDate: fmtDate(p.date),
     // The canonical 0-100 readiness bands (≥85 good / ≥70 on track / <70
-    // attention) are the single display vocabulary — labels never depend on
-    // the engine's stored status string (whose thresholds differ).
-    statusLabel: statusLabel(p.score),
+    // attention) are the display vocabulary — labels never depend on the
+    // engine's stored status string (whose thresholds differ). The single
+    // exception (CG-M2): a not_assessed evaluation is labelled as such.
+    statusLabel: pointLabel(p),
     delta: i === 0 ? undefined : p.score - pts[i - 1].score,
   }));
 }
@@ -108,8 +116,24 @@ interface ChartPalette {
 const ScoreHero: React.FC<{ pts: TrendDisplayPoint[]; pal: ChartPalette }> = ({ pts, pal }) => {
   const latest = pts[pts.length - 1];
   const delta = pts.length >= 2 ? pts[pts.length - 1].score - pts[0].score : undefined;
+  // N-1 (CG-M2 consistency): an all-not-assessed evaluation scores 0 but its
+  // semantic status is 'not_assessed', not a failure. The mini-hero must show
+  // the same neutral "Not Assessed" state as ScoreHero and the table — never
+  // the red "Needs Attention" its zero score would imply via the score band.
+  const latestNotAssessed = !!latest && latest.status === 'not_assessed';
   const band = latest ? scoreBand(latest.score) : 'attention';
-  const dotColor = band === 'good' ? pal.good : band === 'on_track' ? pal.warn : pal.bad;
+  const dotColor = latestNotAssessed
+    ? pal.soft
+    : band === 'good'
+      ? pal.good
+      : band === 'on_track'
+        ? pal.warn
+        : pal.bad;
+  const latestLabel = latest
+    ? latestNotAssessed
+      ? 'Not Assessed'
+      : SCORE_BAND_LABEL[scoreBand(latest.score)]
+    : '';
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', mb: '28px', flexWrap: 'wrap', gap: 2 }}>
@@ -133,9 +157,9 @@ const ScoreHero: React.FC<{ pts: TrendDisplayPoint[]; pal: ChartPalette }> = ({ 
           <Typography sx={{ fontSize: '1.75rem', fontWeight: 600, letterSpacing: '-0.5px', color: 'text.secondary' }}>%</Typography>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px', mt: '8px' }}>
-          <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: dotColor }} />
+          <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: dotColor }} data-state={latestNotAssessed ? 'not_assessed' : band} />
           <Typography sx={{ fontSize: '0.8125rem', fontWeight: 500, color: 'text.secondary' }}>
-            {latest ? SCORE_BAND_LABEL[scoreBand(latest.score)] : ''}
+            {latestLabel}
           </Typography>
         </Box>
       </Box>

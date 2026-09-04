@@ -34,7 +34,7 @@ describe('EvidenceVocabulary (Electron)', () => {
 });
 
 describe('CanonicalEngine (Electron)', () => {
-  it('scores empty evidence as all not_assessed, overall 0', () => {
+  it('scores empty evidence as all not_assessed: overall 0 with not_assessed status (CG-M2)', () => {
     for (const fw of ['soc2', 'iso27001', 'hipaa', 'gdpr']) {
       const ev = engine.evaluate(fw, []);
       expect(Object.keys(ev.control_results).length).toBeGreaterThan(0);
@@ -42,8 +42,24 @@ describe('CanonicalEngine (Electron)', () => {
         expect(r.status).toBe(STATUS.NOT_ASSESSED);
       }
       expect(ev.overall_score).toBe(0);
-      expect(ev.status).toBe(STATUS.NON_COMPLIANT);
+      // Previously NON_COMPLIANT — nothing assessed is not the same as a
+      // failed assessment.
+      expect(ev.status).toBe(STATUS.NOT_ASSESSED);
     }
+  });
+
+  it('one compliant control among not_assessed stays non_compliant overall (mixed case unchanged)', () => {
+    // A1.3 (SOC 2) is fully covered by system_configs. The overall average is
+    // tiny, so the overall status stays NON_COMPLIANT (a real assessment gap)
+    // — only the all-not-assessed case is relabelled (CG-M2). Some controls
+    // share the type requirement and are partially covered; the key point is
+    // that not everything is not_assessed and the overall is a real low score.
+    const ev = engine.evaluate('soc2', ['system_configs']);
+    expect(ev.control_results['A1.3'].status).toBe(STATUS.COMPLIANT);
+    const total = Object.keys(ev.control_results).length;
+    expect(ev.counts[STATUS.COMPLIANT]).toBe(1);
+    expect(ev.counts[STATUS.NOT_ASSESSED]).toBeLessThan(total);
+    expect(ev.status).toBe(STATUS.NON_COMPLIANT);
   });
 
   it('single required type fully covered is compliant', () => {

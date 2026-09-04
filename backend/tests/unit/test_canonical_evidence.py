@@ -54,7 +54,21 @@ class TestCanonicalEngine:
             assert ev.control_results  # all controls present
             assert all(r.status == STATUS_NOT_ASSESSED for r in ev.control_results.values())
             assert ev.overall_score == 0.0
-            assert ev.status == STATUS_NON_COMPLIANT
+            # CG-M2: nothing assessed is not the same as a failed assessment.
+            assert ev.status == STATUS_NOT_ASSESSED
+
+    def test_one_assessed_rest_not_assessed_stays_non_compliant(self, engine):
+        # A single fully-covered control leaves the overall average near zero,
+        # so the overall status stays NON_COMPLIANT — only the degenerate
+        # all-not-assessed case is relabelled (CG-M2).
+        ev = engine.evaluate("soc2", ["system_configs"])  # A1.3 fully covered
+        assert ev.control_results["A1.3"].status == STATUS_COMPLIANT
+        # Some controls share the type requirement and are partially covered;
+        # the point is: not everything is not_assessed, and overall is a real
+        # (low) score -> NON_COMPLIANT.
+        assert ev.counts[STATUS_COMPLIANT] == 1
+        assert ev.counts[STATUS_NOT_ASSESSED] < len(ev.control_results)
+        assert ev.status == STATUS_NON_COMPLIANT
 
     def test_full_coverage_is_compliant(self, engine):
         vocab = EvidenceVocabulary()

@@ -117,9 +117,17 @@ def test_status_thresholds_hold_for_every_evidence_subset(framework):
     assert max_non_compliant < 70 <= min_partial
 
 
-def test_overall_zero_is_non_compliant():
+def test_overall_zero_is_not_assessed_not_non_compliant():
+    """CG-M2: nothing assessed is not a failed assessment."""
     r = ENGINE.evaluate("soc2", [])
     assert r.overall_score == 0.0
+    assert r.status == "not_assessed"
+
+
+def test_real_low_score_is_still_non_compliant():
+    """A genuine (non-empty) low score keeps the non_compliant label."""
+    r = ENGINE.evaluate("soc2", ["event_logs"])
+    assert 0.0 < r.overall_score < 70.0
     assert r.status == "non_compliant"
 
 

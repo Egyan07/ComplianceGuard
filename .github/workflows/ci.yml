@@ -111,6 +111,12 @@ jobs:
       # and the packaged Electron app (no per-ABI rebuild needed).
       - name: Run electron test suite
         run: npm run test:scheduler
+      # CG-C1 packaging guard (source inputs): fail fast if private signing
+      # key material exists anywhere electron-builder would package
+      # (electron/**, shared/**, frontend/dist). The release jobs re-run this
+      # against the ACTUAL dist/ artifacts after packaging.
+      - name: Packaging secret guard (source inputs)
+        run: npm run check:package-secrets
 
   e2e-tests:
     name: Full-stack E2E
@@ -266,6 +272,12 @@ jobs:
           AZURE_KEY_VAULT_NAME: ${{ secrets.AZURE_KEY_VAULT_NAME }}
           AZURE_CERT_NAME: ${{ secrets.AZURE_CERT_NAME }}
 
+      # CG-C1 packaging guard (release artifact): scan the real dist/ output
+      # (win-unpacked tree + app.asar bytes + installers) and abort the
+      # release if any private signing key material is present.
+      - name: Packaging secret guard (release artifacts)
+        run: node scripts/check-package-secrets.js dist
+
       - name: Verify installer Authenticode signature
         shell: pwsh
         run: |
@@ -363,6 +375,11 @@ jobs:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
+      # CG-C1 packaging guard (release artifact): scan the real dist/ output
+      # (app.asar + unpacked .app tree) before the .dmg is uploaded.
+      - name: Packaging secret guard (release artifacts)
+        run: node scripts/check-package-secrets.js dist
+
       - name: Upload artifacts to draft release
         shell: bash
         env:
@@ -431,6 +448,11 @@ jobs:
 
       - name: Build Linux installers (AppImage + deb)
         run: npm run package:linux
+
+      # CG-C1 packaging guard (release artifact): scan the real dist/ output
+      # (linux-unpacked tree + app.asar bytes) before upload.
+      - name: Packaging secret guard (release artifacts)
+        run: node scripts/check-package-secrets.js dist
 
       - name: Upload artifacts to draft release
         shell: bash

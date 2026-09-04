@@ -1,6 +1,6 @@
 const log = require('../logger');
 const { verifyLicenseKey } = require('./license-crypto');
-const { FREE_TIER_CONTROL_IDS, ALL_CONTROL_IDS, FEATURE_GATES } = require('./tier-constants');
+const { FEATURE_GATES } = require('./tier-constants');
 const secureStorage = require('../secure-storage');
 
 class LicenseManager {
@@ -65,10 +65,10 @@ class LicenseManager {
     return this.tier;
   }
 
-  getControlIds() {
-    // Paid tiers (pro and enterprise) get the full control set; only free is restricted.
-    return this.tier !== 'free' ? ALL_CONTROL_IDS : FREE_TIER_CONTROL_IDS;
-  }
+  // CG-M6: LicenseManager no longer restricts WHICH controls are scored.
+  // Every tier is evaluated against all framework controls (canonical
+  // engine); tiering gates FEATURES via isFeatureAllowed (per_control_scoring,
+  // pdf_reports, evaluation_history, remediation, ...). See tier-constants.js.
 
   isFeatureAllowed(featureName) {
     const gate = FEATURE_GATES[featureName];

@@ -91,6 +91,7 @@ const EvidenceList: React.FC<EvidenceListProps> = ({
         return 'warning';
       case 'non_compliant':
       case 'non-compliant':
+      case 'error':
         return 'error';
       default:
         return 'neutral';

@@ -26,7 +26,10 @@ from app.core.database import get_db
 from app.models.aws_credential import AwsCredential
 from app.models.evidence import EvidenceCollection, EvidenceItem
 from app.models.user import User
-from app.services.evidence_collector import EvidenceCollectionService
+from app.services.evidence_collector import (
+    EvidenceCollectionService,
+    derive_evidence_item_status,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -215,13 +218,15 @@ async def collect_evidence(
         db.add(collection)
         db.flush()  # get collection.id
 
-        # Persist individual evidence items
+        # Persist individual evidence items. Item status is DERIVED from the
+        # collected payload (CG-M1) — it is never hardcoded "compliant", which
+        # previously painted non-compliant/errored resources green.
         for item in bundle["evidence_items"]:
             db_item = EvidenceItem(
                 collection_id=collection.id,
                 evidence_type=item.get("evidence_type", "unknown"),
                 source=item.get("source", "aws"),
-                status="compliant",
+                status=derive_evidence_item_status(item),
                 data=item,
             )
             db.add(db_item)

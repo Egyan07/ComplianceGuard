@@ -77,4 +77,20 @@ describe('ScoreHero', () => {
     fireEvent.click(screen.getByText('ISO 27001').closest('[data-fw]')!);
     expect(mockNavigate).toHaveBeenCalledWith('/?fw=2');
   });
+
+  it('labels an all-not-assessed evaluation "Not Assessed", not a failed assessment (CG-M2)', () => {
+    const notAssessed = {
+      ...evaluation,
+      overall_score: 0,
+      status: 'not_assessed',
+      not_assessed_controls: 54,
+      compliant_controls: 0,
+    };
+    render(
+      <ScoreHero evaluation={notAssessed} loading={false} selectedFramework={1} />,
+      { wrapper }
+    );
+    expect(screen.getByText('Not Assessed')).toBeInTheDocument();
+    expect(screen.queryByText('Needs Attention')).not.toBeInTheDocument();
+  });
 });

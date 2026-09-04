@@ -96,7 +96,7 @@ def test_evaluate_failure_returns_generic_detail(client, auth_header, monkeypatc
     assert resp.json()["detail"] == "Evaluation failed. Please try again later."
 
 
-def test_evidence_collect_failure_returns_generic_detail(client, auth_header):
+def test_evidence_collect_failure_returns_generic_detail(client, auth_header, monkeypatch):
     """A failing evidence collection must return a safe message, never the internal error."""
     import app.api.evidence as evidence_mod
 
@@ -105,7 +105,9 @@ def test_evidence_collect_failure_returns_generic_detail(client, auth_header):
             raise RuntimeError("iam-credentials-rotated-at-3am")
 
     # No stored AWS creds for this user, so collect_all_evidence is called directly.
-    evidence_mod.EvidenceCollectionService = ExplodingCollector  # type: ignore
+    # monkeypatch (not direct assignment) so the fake cannot leak into later
+    # tests in the same session.
+    monkeypatch.setattr(evidence_mod, "EvidenceCollectionService", ExplodingCollector)
 
     resp = client.post("/api/v1/evidence/collect", json={}, headers=auth_header)
 

@@ -128,6 +128,8 @@ def test_evaluate_from_evidence_no_evidence_returns_zero(auth_client_no_evidence
     )
     assert resp.status_code == 200
     assert resp.json()["overall_score"] == 0.0
+    # CG-M2: no evidence assessed -> not_assessed, never non_compliant.
+    assert resp.json()["compliance_status"] == "not_assessed"
 
 
 def test_evaluate_from_evidence_unauthorized():

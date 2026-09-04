@@ -3,7 +3,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   getEvidenceSummary,
   getEvidenceItems,
-  getMockEvidenceSummary,
   collectEvidence,
   evaluateCompliance,
   evaluateComplianceWeb,
@@ -42,35 +41,30 @@ export interface DashboardState {
   const {
     data: summary = null,
     isLoading: summaryLoading,
+    isError: summaryError,
     refetch: refetchSummary,
   } = useQuery<EvidenceSummary | null>({
     queryKey: [...DASHBOARD_QUERY_KEYS.summary, selectedFramework],
-    queryFn: async () => {
-      try {
-        return await getEvidenceSummary(selectedFramework);
-      } catch {
-        return getMockEvidenceSummary();
-      }
-    },
+    queryFn: async () => getEvidenceSummary(selectedFramework),
     staleTime: 30_000,
     refetchOnWindowFocus: true,
+    // CG-M4: never mask a backend failure with mock/zero data. The error is
+    // surfaced as dashboardLoadError so the UI can say "unable to load"
+    // instead of pretending the workspace is empty and healthy.
+    retry: false,
   });
 
   const {
     data: evidenceItems = [],
     isLoading: itemsLoading,
+    isError: itemsError,
     refetch: refetchItems,
   } = useQuery<EvidenceItem[]>({
     queryKey: [...DASHBOARD_QUERY_KEYS.items, selectedFramework],
-    queryFn: async () => {
-      try {
-        return await getEvidenceItems(undefined, undefined, selectedFramework);
-      } catch {
-        return [];
-      }
-    },
+    queryFn: async () => getEvidenceItems(undefined, undefined, selectedFramework),
     staleTime: 30_000,
     refetchOnWindowFocus: true,
+    retry: false,
   });
 
   const [exportingPDF, setExportingPDF] = useState(false);
@@ -79,6 +73,11 @@ export interface DashboardState {
 
   // ── derived ────────────────────────────────────────────────────────────────
   const loading = summaryLoading || itemsLoading;
+  // CG-M4: infrastructure/application errors are surfaced, never converted
+  // into a healthy-looking empty dashboard.
+  const dashboardLoadError = (summaryError || itemsError)
+    ? 'Unable to load dashboard data. This is a connection or server problem — not an empty workspace. Retry or check that the API is reachable.'
+    : null;
 
   // ── actions ────────────────────────────────────────────────────────────────
   const fetchDashboardData = useCallback(async () => {
@@ -92,6 +91,28 @@ export interface DashboardState {
       const result = await collectEvidence(undefined, selectedFramework);
       if (result.error) {
         setState(prev => ({ ...prev, error: `Evidence collection failed: ${result.error}` }));
+        return;
+      }
+      // CG-M3: web mode reports a real collection_status. A 200 that produced
+      // nothing ('not_configured') or only partially succeeded must never be
+      // announced as "collection complete!". Desktop (IPC) results carry no
+      // collection_status and keep the original success messaging.
+      const status = result.collection_status;
+      if (status === 'not_configured') {
+        setState(prev => ({
+          ...prev,
+          error: 'No evidence sources configured. Add AWS credentials in Settings, then try again.',
+        }));
+      } else if (status === 'partial_failure') {
+        setState(prev => ({
+          ...prev,
+          error: `Evidence collection partially failed: ${result.evidence_count || 0} item(s) collected, ${result.failed_count ?? 0} source(s) errored.`,
+        }));
+      } else if (status && status !== 'success') {
+        setState(prev => ({
+          ...prev,
+          error: `Evidence collection did not complete (${status}). Check your AWS configuration.`,
+        }));
       } else {
         setState(prev => ({
           ...prev,
@@ -182,11 +203,17 @@ export interface DashboardState {
     setState(prev => ({ ...prev, error: null }));
     try {
       const api = getElectronAPI();
+      // Cloud machines triage domain is compliant | at_risk | critical
+      // (VALID_COMPLIANCE_LEVELS). CG-M2: an all-not-assessed evaluation used
+      // to be labelled non_compliant here (and mapped to critical); map
+      // not_assessed to critical explicitly so cloud sync keeps working — an
+      // un-assessed machine cannot be attested compliant.
       const levelMap: Record<string, string> = {
         compliant: 'compliant',
         partial_compliance: 'at_risk',
         at_risk: 'at_risk',
         non_compliant: 'critical',
+        not_assessed: 'critical',
       };
       const evaluation = state.evaluation;
       const result = await api.cloudSync({
@@ -223,6 +250,7 @@ export interface DashboardState {
     // server state
     summary,
     evidenceItems,
+    dashboardLoadError,
     // local state (merged for Dashboard compatibility)
     state: {
       summary,

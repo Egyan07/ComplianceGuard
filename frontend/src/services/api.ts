@@ -73,8 +73,11 @@ export function evaluationHistoryToTrend(history: EvaluationHistoryEntry[]): Tre
 // Canonical status vocabulary is compliant | partial | non_compliant | not_assessed.
 // The legacy synonyms below are mapped defensively for records saved before the
 // Phase 5 canonicalization; new evaluations store the canonical strings.
+// CG-M2: 'not_assessed' must pass through — an evaluation with nothing
+// assessed is NOT a failed (non_compliant) assessment.
 export function normaliseStatus(raw: string | undefined): TrendPoint['status'] {
   if (raw === 'compliant') return 'compliant';
+  if (raw === 'not_assessed') return 'not_assessed';
   if (raw === 'partial' || raw === 'partial_compliance' || raw === 'at_risk' || raw === 'partially_compliant') return 'partial';
   return 'non_compliant';
 }
