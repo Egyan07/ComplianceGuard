@@ -28,7 +28,7 @@
   <text x="142" y="172"
         font-family="Arial, 'Helvetica Neue', Helvetica, sans-serif"
         font-size="15" fill="#6B7280" font-weight="400">
-    SOC 2 Type II · Desktop Compliance Automation
+    SOC 2 Type II · ISO 27001 · HIPAA · GDPR — Desktop + Web
   </text>
 
   <!-- Tagline -->
@@ -42,7 +42,7 @@
   <g transform="translate(1060, 16)">
     <rect width="85" height="22" rx="11" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1"/>
     <text x="42.5" y="15" font-family="'Courier New', Courier, monospace"
-          font-size="11" fill="#2563EB" text-anchor="middle" font-weight="600">v3.2.0</text>
+          font-size="11" fill="#2563EB" text-anchor="middle" font-weight="600">v3.9.2</text>
   </g>
 
   <!-- Bottom accent -->

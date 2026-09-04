@@ -6,7 +6,7 @@
   <a href="#quick-start"><img src="https://img.shields.io/badge/version-3.9.2-2563EB" alt="Version"></a>
   <img src="https://img.shields.io/badge/license-BSL%201.1-orange" alt="License">
   <a href="#compliance-frameworks"><img src="https://img.shields.io/badge/frameworks-SOC%202%20%7C%20ISO%2027001%20%7C%20HIPAA%20%7C%20GDPR-10B981" alt="Frameworks"></a>
-  <img src="https://img.shields.io/badge/tests-~1075%20total-10B981?logo=pytest&logoColor=white" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-~1103%20total-10B981?logo=pytest&logoColor=white" alt="Tests">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
   <a href="https://github.com/Egyan07/ComplianceGuard/actions"><img src="https://img.shields.io/github/actions/workflow/status/Egyan07/ComplianceGuard/ci.yml?label=CI&logo=githubactions&logoColor=white" alt="CI"></a>
 </p>
@@ -662,7 +662,7 @@ evaluation history, evaluate) and exits non-zero if p95 exceeds
 `--max-p95-ms` (default 500 ms), so it can gate CI performance regressions.
 The bench user is auto-created and promoted to a verified Pro account.
 
-CI runs all tests on every push via GitHub Actions, and the desktop (Electron) test suite now gates releases. Backend: 332 unit + 35 integration + 8 e2e. Frontend: 235 Vitest unit + 456 Electron. Playwright e2e: 9.
+CI runs all tests on every push via GitHub Actions, and the desktop (Electron) test suite now gates releases. Backend: 332 unit + 35 integration + 8 e2e. Frontend: 235 Vitest unit + 484 Electron. Playwright e2e: 9.
 
 ## Deployment
 
