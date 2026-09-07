@@ -28,5 +28,5 @@ prometheus-client>=0.20,<1
 
 # Test tooling
 pytest>=7.4
-pytest-asyncio>=0.21
+pytest-asyncio>=1.4.0
 pytest-cov>=4.1
