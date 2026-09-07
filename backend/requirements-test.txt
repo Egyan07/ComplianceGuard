@@ -24,7 +24,7 @@ sentry-sdk[fastapi]>=2.0.0
 aiosmtplib>=3.0.0
 cryptography>=42.0.0
 PyYAML>=6.0,<7
-prometheus-client>=0.20,<1
+prometheus-client>=0.26.0,<1
 
 # Test tooling
 pytest>=7.4
