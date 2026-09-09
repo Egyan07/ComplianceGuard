@@ -6,7 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
-## [Unreleased]
+## [4.1.1] — 2026-09-09
+
+### Security
+
+- **API docs gated by environment:** `/docs`, `/redoc`, and `/openapi.json` are
+  served outside production and disabled in production unless
+  `API_DOCS_ENABLED=true`. The OpenAPI schema enumerates every route and
+  schema, and public platforms without an nginx layer (e.g. Railway) were
+  serving it by default.
+
+### Fixed
+
+- `electron/scheduler.test.js` no longer flakes under load: the two
+  end-to-end assertions get a 30s budget, and module state (the 60s interval
+  and the in-flight guard) is reset after every test instead of leaking.
+
+### Documentation
+
+- README rewritten for accuracy: corrected the stale `localhost:8000/docs`
+  pointer, merged the duplicated audience sections, rebuilt the Roadmap, and
+  fixed the managed-hosting contradiction in "Not a Good Fit If".
+- deployment.md: corrected DB pool defaults (5/5), documented the health
+  endpoint's 503 readiness semantics and /metrics access control, noted the
+  published frontend port 3000, documented the image's entrypoint migration
+  behavior, and fixed the multi-worker examples that bypassed the scale-out
+  guard by using uvicorn's `--workers` flag without the `WORKERS` env var.
+- SECURITY.md: supported-versions table refreshed for 4.x; security-model
+  bullets aligned with the current session, token-hashing, rate-limit, and
+  metrics controls.
+
+## [4.1.0] — 2026-09-09
 
 ### Security
 
