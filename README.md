@@ -6,15 +6,15 @@
   <a href="#quick-start"><img src="https://img.shields.io/badge/version-4.1.0-2563EB" alt="Version"></a>
   <img src="https://img.shields.io/badge/license-BSL%201.1-orange" alt="License">
   <a href="#compliance-frameworks"><img src="https://img.shields.io/badge/frameworks-SOC%202%20%7C%20ISO%2027001%20%7C%20HIPAA%20%7C%20GDPR-10B981" alt="Frameworks"></a>
-  <img src="https://img.shields.io/badge/tests-~1159%20total-10B981?logo=pytest&logoColor=white" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-~1183%20total-10B981?logo=pytest&logoColor=white" alt="Tests">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
   <a href="https://github.com/Egyan07/ComplianceGuard/actions"><img src="https://img.shields.io/github/actions/workflow/status/Egyan07/ComplianceGuard/ci.yml?label=CI&logo=githubactions&logoColor=white" alt="CI"></a>
 </p>
 
 
-Compliance tools like Vanta, Drata, and Sprinto scan your cloud infrastructure. That's useful — but they can't see what's happening **on the machines themselves**. Password policies, firewall rules, event logs, running services, local user accounts — that evidence lives on the endpoint, not in AWS.
+Compliance tools like Vanta, Drata, and Sprinto scan your cloud infrastructure. That is useful, but it misses what happens **on the machines themselves**. Password policies, firewall rules, event logs, running services, and local user accounts live on the endpoint, not in AWS.
 
-ComplianceGuard lives on the endpoint too. It collects evidence directly from Windows, macOS, and Linux, scores it against SOC 2 Type II, ISO 27001:2013, HIPAA Security Rule, and GDPR controls, and tells you exactly where the gaps are — across all four frameworks in a single collection pass. Run it as a desktop app or deploy the web version with Docker — everything stays under your control.
+ComplianceGuard lives on the endpoint too. It collects evidence directly from Windows, macOS, and Linux, scores it against SOC 2 Type II, ISO 27001:2013, HIPAA Security Rule, and GDPR controls, and tells you exactly where the gaps are, across all four frameworks in a single collection pass. Run it as a desktop app or deploy the web version with Docker; everything stays under your control.
 
 How it works: the desktop app collects OS-level evidence → maps it to compliance controls → scores your readiness → optionally syncs to a multi-machine cloud dashboard.
 
@@ -40,7 +40,7 @@ How it works: the desktop app collects OS-level evidence → maps it to complian
 
 <video src="https://github.com/user-attachments/assets/361db401-fa40-4217-8259-681a21d914dc" controls width="100%"></video>
 
-_From months to minutes — continuous endpoint evidence, real-time compliance tracking, and instant audit-ready reports, all self-hosted and privacy-first._
+_Continuous endpoint evidence, real-time compliance tracking, and audit-ready reports on demand. Self-hosted and privacy-first._
 
 ## Screenshots
 
@@ -48,13 +48,13 @@ _From months to minutes — continuous endpoint evidence, real-time compliance t
 
 ![ComplianceGuard Dashboard](assets/screenshots/Dashboard.png)
 
-Your real-time compliance score after a full evaluation — with one-click access to collect evidence, run an evaluation, upload manual evidence, and export an audit-ready PDF report.
+Your real-time compliance score after a full evaluation, with one-click access to collect evidence, run an evaluation, upload manual evidence, and export an audit-ready PDF report.
 
 ### Control Heatmap
 
 ![Control Heatmap](assets/screenshots/ControlHeatmap.png)
 
-Every SOC 2 control at a glance — passing, partial, and failing — with per-control gap details and inline remediation scripts for automatable findings.
+Every SOC 2 control at a glance: passing, partial, or failing, with per-control gap details and inline remediation scripts for automatable findings.
 
 ### Compliance Score Trend
 
@@ -66,60 +66,71 @@ Track your readiness over time on the History screen, with compliance zone bands
 
 ![Cloud Dashboard](assets/screenshots/CloudDashboard.png)
 
-Monitor every machine from one centralized web dashboard — compliance scores, fleet-level stats, and last-sync status across all your endpoints.
+Monitor every machine from one centralized web dashboard: compliance scores, fleet-level stats, and last-sync status for all your endpoints.
 
 ### Framework Browser
 
 ![Framework Browser](assets/screenshots/FrameworkBrowser.png)
 
-Browse the full control library offline — SOC 2 Type II (54 controls), ISO 27001 (47), HIPAA (47), and GDPR (38) with control objectives and implementation guidance.
+Browse the full control library offline: SOC 2 Type II (54 controls), ISO 27001 (47), HIPAA (47), and GDPR (38), with control objectives and implementation guidance.
 
 ## Who Is This For?
 
 - Security and IT teams preparing for SOC 2, ISO 27001, HIPAA, or GDPR audits
 - Companies that need endpoint-level evidence, not just cloud infrastructure scanning
 - Teams requiring self-hosting, air-gapped deployment, or strict data residency
-- Government bodies, NHS/healthcare, legal firms, and financial services needing full data sovereignty and tamper-evident compliance audit trails (Enterprise tier)
+
+| If you are... | Start with | Because |
+|---|---|---|
+| A startup getting audit-ready | Free, then Pro | Collect and score everything at no cost; upgrade when you need gap details and PDF reports |
+| A government contractor | Self-hosted Enterprise | Data sovereignty requirements |
+| NHS / healthcare | Self-hosted Enterprise | NHS DSPT, patient data governance |
+| A legal firm | Self-hosted Pro/Enterprise | Client confidentiality, SRA |
+| Financial services | Self-hosted Enterprise | FCA data residency |
+| An accounting firm | Self-hosted or Managed Pro | HMRC data, GDPR Article 32 |
+| An IT consultant or MSP | Self-hosted Pro | Manage multiple client machines from one dashboard |
+| Running air-gapped or classified networks | Desktop only | Zero network traffic, works fully offline |
+| A team without server ops capacity | Managed Pro | We run the server; you install the desktop app and connect |
 
 ## Not a Good Fit If
 
-- You only need cloud compliance — [Vanta](https://www.vanta.com/) or [Drata](https://drata.com/) cover that better
+- You only need cloud compliance; [Vanta](https://www.vanta.com/) or [Drata](https://drata.com/) cover that better
 - You want a fully managed SaaS with zero self-hosting involvement
 
 ## Choose Your Privacy Level
 
 Every organisation has different requirements. ComplianceGuard gives you full control over where your data lives.
 
-### Maximum Privacy — Self-Host
+### Maximum Privacy: Self-Host
 > *"My data never leaves my infrastructure."*
 
-Deploy the web dashboard on your own server (Railway, Render, DigitalOcean, or any VPS). Your compliance data stays entirely within your control. Nobody — not even ComplianceGuard — can access it. Perfect for regulated industries, government contractors, legal firms, healthcare, and air-gapped environments.
+Deploy the web dashboard on your own server (Railway, Render, DigitalOcean, or any VPS). Your compliance data stays entirely within your control. Nobody, not even ComplianceGuard, can access it. A good fit for regulated industries, government contractors, legal firms, healthcare, and air-gapped environments.
 
 **You manage the server. You own the data. You pay less.**
 
-### Maximum Convenience — Hosted by Us
+### Maximum Convenience: Hosted by Us
 > *"I just want it to work without managing servers."*
 
 Contact us to set up a hosted instance. Install the desktop app on your machines, enter your credentials, and you are running. We handle uptime, backups, updates, and infrastructure. Your endpoint evidence stays on your machines until you choose to sync.
 
 **We manage the server. You own the data. Zero setup required.**
 
-> Either way — the endpoint evidence collected from your machines never leaves your local machine until you explicitly choose to sync it to the dashboard.
+> Either way, the endpoint evidence collected from your machines never leaves them until you explicitly choose to sync it to the dashboard.
 
 ---
 
 ## Quick Start
 
-### Option A — Windows Installer (Recommended)
+### Option A: Windows Installer (Recommended)
 
 Download `ComplianceGuard-Setup.exe` from the [latest release](https://github.com/Egyan07/ComplianceGuard/releases/latest), run the installer, and launch from the Start Menu.
 
 > **Requirements:** Windows 10/11 (64-bit)
 >
-> **Auto-updates:** packaged builds check for updates shortly after launch and every 4 hours, download them automatically, and install on quit. Release integrity and signing details live in [`docs/release-and-signing.md`](docs/release-and-signing.md). Portable builds don't auto-update — use the Setup installer.
+> **Auto-updates:** packaged builds check for updates shortly after launch and every 4 hours, download them automatically, and install on quit. Release integrity and signing details live in [`docs/release-and-signing.md`](docs/release-and-signing.md). Portable builds don't auto-update; use the Setup installer.
 
 <details>
-<summary>Desktop — Linux (AppImage + .deb)</summary>
+<summary>Desktop: Linux (AppImage + .deb)</summary>
 
 1. Download `ComplianceGuard-{version}.AppImage` (portable, no install) or
    `ComplianceGuard_{version}_amd64.deb` (Debian/Ubuntu installer)
@@ -139,12 +150,12 @@ Download `ComplianceGuard-Setup.exe` from the [latest release](https://github.co
 </details>
 
 <details>
-<summary>Desktop — macOS (unsigned)</summary>
+<summary>Desktop: macOS (unsigned)</summary>
 
 1. Download `ComplianceGuard-{version}-arm64.dmg` (Apple Silicon) or `ComplianceGuard-{version}.dmg` (Intel)
    from the [latest release](https://github.com/Egyan07/ComplianceGuard/releases/latest)
 2. Open the DMG and drag ComplianceGuard to Applications
-3. **First launch — Gatekeeper bypass (one time only):**
+3. **First launch (one time only):**
    - Right-click the app in Applications → Open → Open Anyway, **or**
    - Run in Terminal: `xattr -cr /Applications/ComplianceGuard.app`
 4. Launch normally from Applications or Spotlight thereafter
@@ -155,18 +166,18 @@ Download `ComplianceGuard-Setup.exe` from the [latest release](https://github.co
 
 </details>
 
-### Option B — One-Click Setup (Development)
+### Option B: One-Click Setup (Development)
 
 ```bash
 git clone https://github.com/Egyan07/ComplianceGuard.git
 ```
 
-1. Double-click **`install.bat`** — installs all dependencies, sets up the database, and creates `start.bat`
-2. Double-click **`start.bat`** — choose Desktop or Web mode and you are running
+1. Double-click **`install.bat`**: it installs all dependencies, sets up the database, and creates `start.bat`
+2. Double-click **`start.bat`**: choose Desktop or Web mode and you are running
 
 > **Prerequisites:** Windows 10/11, [Node.js 18+](https://nodejs.org/), [Python 3.10+](https://www.python.org/downloads/)
 
-### Option C — Manual Setup
+### Option C: Manual Setup
 
 <details>
 <summary>Desktop (Electron)</summary>
@@ -181,7 +192,7 @@ npm run dev
 </details>
 
 <details>
-<summary>Web — Self-Hosted (Docker)</summary>
+<summary>Web: Self-Hosted (Docker)</summary>
 
 ```bash
 git clone https://github.com/Egyan07/ComplianceGuard.git
@@ -199,15 +210,15 @@ One-click Railway deploy:
 </details>
 
 <details>
-<summary>Web — Local Development (without Docker)</summary>
+<summary>Web: Local Development (without Docker)</summary>
 
 ```bash
-# Terminal 1 — Backend
+# Terminal 1: Backend
 cd backend
 pip install -r requirements.txt
 python -m uvicorn app.main:app --reload --port 8000
 
-# Terminal 2 — Frontend
+# Terminal 2: Frontend
 cd frontend
 npm install
 npm run dev
@@ -218,7 +229,7 @@ App at `http://localhost:5173`. Create an account on first run.
 </details>
 
 <details>
-<summary>Web — Hosted by Us</summary>
+<summary>Web: Hosted by Us</summary>
 
 Contact us at [alexisegyan1232@gmail.com](mailto:alexisegyan1232@gmail.com) to set up a managed hosted instance. We handle deployment, uptime, backups, and updates. You just install the desktop app and connect.
 
@@ -236,7 +247,6 @@ npm run package:linux   # Linux (AppImage + .deb) → dist/
 </details>
 
 ## What Makes This Different
-
 | | ComplianceGuard | Vanta / Drata / Sprinto |
 |---|---|---|
 | **Where it runs** | On your machine or self-hosted | In the cloud |
@@ -244,7 +254,7 @@ npm run package:linux   # Linux (AppImage + .deb) → dist/
 | **Data residency** | Never leaves your control | Stored on vendor servers |
 | **Self-hosted option** | ✅ Full control | ❌ Cloud only |
 | **Air-gapped networks** | Desktop works completely offline | Requires internet |
-| **Cost** | Free tier available, Pro from $149/mo | $8k–$10k/year |
+| **Cost** | Free tier available, Pro from $149/mo | $8k to $10k/year |
 | **Compliance frameworks** | SOC 2 (54 controls), ISO 27001 (47), HIPAA (47), GDPR (38) | SOC 2 only |
 | **Open source** | ✅ BSL 1.1 | ❌ Closed source |
 
@@ -280,11 +290,11 @@ each control scores as the share of its required evidence types that are present
 `not_assessed`. The overall 0–100 score is the mean over **all** controls;
 `not_assessed` controls count as 0, so a sparse evidence set honestly reflects
 evidence coverage rather than inflating readiness. The same model applies to ISO
-27001, HIPAA, and GDPR — framework differences are data, not separate scoring
+27001, HIPAA, and GDPR: framework differences are data, not separate scoring
 logic.
 
 <details>
-<summary><strong>Common Criteria (CC) — 19 controls</strong></summary>
+<summary><strong>Common Criteria (CC): 19 controls</strong></summary>
 
 | ID | Control |
 |----|---------|
@@ -311,7 +321,7 @@ logic.
 </details>
 
 <details>
-<summary><strong>Availability (A) — 9 controls</strong></summary>
+<summary><strong>Availability (A): 9 controls</strong></summary>
 
 | ID | Control |
 |----|---------|
@@ -328,7 +338,7 @@ logic.
 </details>
 
 <details>
-<summary><strong>Confidentiality (C) — 9 controls</strong></summary>
+<summary><strong>Confidentiality (C): 9 controls</strong></summary>
 
 | ID | Control |
 |----|---------|
@@ -345,7 +355,7 @@ logic.
 </details>
 
 <details>
-<summary><strong>Processing Integrity (PI) — 9 controls</strong></summary>
+<summary><strong>Processing Integrity (PI): 9 controls</strong></summary>
 
 | ID | Control |
 |----|---------|
@@ -362,7 +372,7 @@ logic.
 </details>
 
 <details>
-<summary><strong>Confidentiality & Availability (CA) — 8 controls</strong></summary>
+<summary><strong>Confidentiality & Availability (CA): 8 controls</strong></summary>
 
 | ID | Control |
 |----|---------|
@@ -387,7 +397,7 @@ logic.
 
 ### GDPR (EU) 2016/679
 
-38 obligations across the operational chapters — principles (Art. 5–9), data subject rights (Art. 12–22), controller and processor duties (Art. 24–37), and international transfers (Art. 44–47). Available via `GET /api/v1/gdpr/framework/controls`. Each obligation includes its source article, GDPR chapter, control objective, and implementation guidance. Browse by article (`/by-category/32`), search by keyword, or fetch by ID (`/framework/controls/Art.32.1`). Fully supported in the desktop app too — scoring, **Browse Frameworks**, and PDF reports.
+38 obligations across the operational chapters: principles (Art. 5–9), data subject rights (Art. 12–22), controller and processor duties (Art. 24–37), and international transfers (Art. 44–47). Available via `GET /api/v1/gdpr/framework/controls`. Each obligation includes its source article, GDPR chapter, control objective, and implementation guidance. Browse by article (`/by-category/32`), search by keyword, or fetch by ID (`/framework/controls/Art.32.1`). Fully supported in the desktop app too: scoring, **Browse Frameworks**, and PDF reports.
 
 ## Architecture
 
@@ -435,7 +445,7 @@ ComplianceGuard runs in two modes: Desktop (Electron + SQLite) for offline use, 
 │  │ Compliance API   │  │ Evidence · Frameworks             │  │
 │  └─────────────────┘  └───────────────────────────────────┘  │
 │                                                               │
-│  Your server OR our managed infrastructure —                  │
+│  Your server OR our managed infrastructure:                   │
 │  your choice, your data stays yours either way.               │
 └──────────────────────────────────────────────────────────────┘
 ```
@@ -453,7 +463,7 @@ ComplianceGuard/
 │   │   ├── services/                   # Audit log, evidence collector
 │   │   └── integrations/aws.py         # AWS evidence collection
 │   ├── migrations/                     # Alembic database migrations
-│   ├── tests/                          # Unit (332) + integration (35) + e2e (8)
+│   ├── tests/                          # Unit, integration, and e2e suites
 │   ├── requirements.txt
 │   └── Dockerfile
 ├── electron/
@@ -473,7 +483,7 @@ ComplianceGuard/
 ├── shared/frameworks/                  # Source of truth: canonical control definitions (4 YAMLs) + evidence vocabulary (JSON)
 ├── frontend/
 │   ├── src/
-│   │   ├── App.tsx                     # App entry point — providers, auth gate, error boundary
+│   │   ├── App.tsx                     # App entry point: providers, auth gate, error boundary
 │   │   ├── theme.ts                    # Light (Clean Enterprise) + dark (Dark Professional) MUI themes
 │   │   ├── components/                 # Dashboard, ScoreHero, Evidence, History, Settings, Login
 │   │   │   ├── layout/                 # AppShell, Topbar, ContextSidebar, PageTransition
@@ -483,7 +493,7 @@ ComplianceGuard/
 │   │   ├── contexts/AuthContext.tsx     # JWT auth state, login/register/logout
 │   │   ├── contexts/LicenseContext.tsx  # React context for tier state + feature checks
 │   │   ├── services/api.ts             # Unified API (IPC or HTTP)
-│   │   └── test/                       # Vitest test suite (239 tests)
+│   │   └── test/                       # Vitest unit test suite
 │   ├── e2e/                            # Playwright e2e tests (9 tests)
 │   ├── .eslintrc.cjs
 │   ├── .prettierrc
@@ -506,19 +516,19 @@ ComplianceGuard/
 
 ComplianceGuard supports Windows, macOS, and Linux endpoints. The following limitations apply in the current release:
 
-- **Automatic scheduling** — Daily or Weekly evidence collection runs automatically while the desktop app is open. Configure in Settings → Automatic Collection.
-- **Per-machine view in desktop mode** — the Electron app shows one machine at a time. Use web mode (self-hosted or managed) with the Cloud Dashboard to monitor multiple machines centrally.
-- **AWS only for cloud evidence** — the web backend collects S3 and IAM evidence from AWS. GCP and Azure are not yet implemented.
-- **PCI DSS not yet implemented** — SOC 2 Type II (54 controls), ISO 27001:2013 (47 controls), HIPAA Security Rule (47 safeguards), and GDPR (38 obligations) are all available. PCI DSS is planned.
-- **Single machine in free tier** — the free tier is limited to one machine. Pro supports up to 10, Enterprise is unlimited.
-- **No real-time monitoring** — ComplianceGuard takes point-in-time snapshots, not continuous streams.
-- **PDF reports require Pro** — the free tier shows your overall score but does not generate audit-ready PDF exports.
+- **Automatic scheduling:** Daily or Weekly evidence collection runs automatically while the desktop app is open. Configure in Settings → Automatic Collection.
+- **Per-machine view in desktop mode:** the Electron app shows one machine at a time. Use web mode (self-hosted or managed) with the Cloud Dashboard to monitor multiple machines centrally.
+- **AWS only for cloud evidence:** the web backend collects S3 and IAM evidence from AWS. GCP and Azure are not yet implemented.
+- **PCI DSS not yet implemented:** SOC 2 Type II (54 controls), ISO 27001:2013 (47 controls), HIPAA Security Rule (47 safeguards), and GDPR (38 obligations) are all available. PCI DSS is planned.
+- **Single machine in free tier:** the free tier is limited to one machine. Pro supports up to 10, Enterprise is unlimited.
+- **No real-time monitoring:** ComplianceGuard takes point-in-time snapshots, not continuous streams.
+- **PDF reports require Pro:** the free tier shows your overall score but does not generate audit-ready PDF exports.
 
 ## Pricing
 
-Free gets you hooked. Pro makes you audit-ready. Enterprise makes you untouchable.
+Free tier to get started. Pro makes you audit-ready. Enterprise is built for the strictest environments.
 
-> ComplianceGuard fills the endpoint evidence gap that Vanta, Drata, and Sprinto cannot — they scan your cloud, we scan your machines. Use both and your SOC 2 Type II is fully covered.
+> ComplianceGuard fills the endpoint evidence gap that Vanta, Drata, and Sprinto cannot: they scan your cloud, we scan your machines. Use both and your SOC 2 Type II is fully covered.
 
 ### Self-Hosted (You Manage the Server)
 
@@ -559,24 +569,11 @@ Free gets you hooked. Pro makes you audit-ready. Enterprise makes you untouchabl
 | Onboarding assistance | ✅ | ✅ |
 | Dedicated infrastructure | — | ✅ |
 
-**Self-hosted:** Your data stays entirely on your infrastructure. Lower price because you manage the server. Perfect for regulated industries, government contractors, legal firms, and air-gapped environments.
+**Self-hosted:** Your data stays entirely on your infrastructure, and the price is lower because you manage the server. A good fit for regulated industries, government contractors, legal firms, and air-gapped environments.
 
-**Managed:** We host the dashboard for you. Zero setup. Higher price because we do the work. Same data sovereignty principles — your endpoint evidence never leaves your machines until you sync.
+**Managed:** We host the dashboard for you, so there is zero setup. The price is higher because we do the work. The data sovereignty principles are the same: your endpoint evidence never leaves your machines until you sync.
 
-License keys use Ed25519 cryptographic signatures — verified offline, no license server required.
-
-## Target Industries
-
-| Organisation Type | Recommended Option | Why |
-|---|---|---|
-| Government contractors | Self-hosted Enterprise | Data sovereignty requirements |
-| NHS / Healthcare | Self-hosted Enterprise | NHS DSPT, patient data governance |
-| Legal firms | Self-hosted Pro/Enterprise | Client confidentiality, SRA |
-| Financial services | Self-hosted Enterprise | FCA data residency |
-| Accounting firms | Self-hosted or Managed Pro | HMRC data, GDPR Article 32 |
-| Air-gapped environments | Desktop only | Zero network traffic |
-| Startups / SMBs | Managed Pro | Zero setup, fast onboarding |
-| IT consultants | Self-hosted Pro | Manage multiple clients |
+License keys use Ed25519 cryptographic signatures, verified offline with no license server required.
 
 ## Security Model
 
@@ -589,12 +586,12 @@ All data stays under your control. Zero telemetry.
 | Database | Parameterized queries. Foreign key constraints. Alembic-managed migrations. |
 | Navigation | External URLs blocked. `window.open` denied. |
 | Licensing | Ed25519 signed keys. Only the public key ships with the app. |
-| Auth (Web) | JWT access tokens (30 min, held **in memory only** in the browser — never localStorage/sessionStorage) + DB-backed revocable refresh tokens (7 days) delivered as an **HttpOnly, SameSite=Strict cookie** (Secure in prod) so they aren't readable by JS/XSS. Page reloads silently re-authenticate via the refresh cookie. Desktop clients (X-Client-Type: desktop) still receive the refresh token in the response body. Refresh tokens rotate on every use with family reuse detection; the access-token path rejects refresh tokens. Password-reset and email-verification tokens are stored **hashed (SHA-256)**, never in plaintext. Bcrypt hashing (passwords capped at 72 bytes, bcrypt's real limit). Email verification enforced. A password reset revokes all of the user's refresh tokens. `POST /api/v1/auth/logout` revokes the refresh token JTI and clears the cookie. |
+| Auth (Web) | JWT access tokens (30 min, held **in memory only** in the browser, never localStorage/sessionStorage) + DB-backed revocable refresh tokens (7 days) delivered as an **HttpOnly, SameSite=Strict cookie** (Secure in prod) so they aren't readable by JS/XSS. Page reloads silently re-authenticate via the refresh cookie. Desktop clients (X-Client-Type: desktop) still receive the refresh token in the response body. Refresh tokens rotate on every use with family reuse detection; the access-token path rejects refresh tokens. Password-reset and email-verification tokens are stored **hashed (SHA-256)**, never in plaintext. Bcrypt hashing (passwords capped at 72 bytes, bcrypt's real limit). Email verification enforced. A password reset revokes all of the user's refresh tokens. `POST /api/v1/auth/logout` revokes the refresh token JTI and clears the cookie. |
 | License (Web) | Ed25519 signed keys verified in Python (`cryptography`). `require_pro` dependency returns HTTP 402. License email validated on activation. |
-| Rate Limiting | 5 req/min on login, 3/min on register. Redis shared backend via `RATELIMIT_STORAGE_URI` — **required** in production when scaled out (`WORKERS>1` or `REPLICAS>1`; startup fails otherwise so limits can't silently weaken). Nginx rate limiting at proxy layer. |
+| Rate Limiting | 5 req/min on login, 3/min on register. Redis shared backend via `RATELIMIT_STORAGE_URI`, **required** in production when scaled out (`WORKERS>1` or `REPLICAS>1`; startup fails otherwise so limits can't silently weaken). Nginx rate limiting at proxy layer. |
 | Metrics | `/metrics` is Prometheus-format but **not public**: loopback scrapes only unless `METRICS_ALLOWED_IPS` admits internal scraper subnets; nginx additionally returns 404 for public requests. |
 | Error Monitoring | Sentry integration on backend (FastAPI + SQLAlchemy) and frontend. `send_default_pii=False`. Silent no-op when DSN unset. Disabled entirely when `ENTERPRISE_MODE=true`. |
-| Enterprise Audit | Tamper-evident audit log with an **HMAC-SHA256 keyed** hash chain (`prev_hash` + `entry_hash`; key derived from the server secret, so a DB-write attacker can't forge it). Append-only at API layer; Postgres app user REVOKEd DELETE/UPDATE. Chain verifiable at `GET /api/v1/enterprise/audit-log/verify`. Enterprise endpoints (audit/RBAC/branding/export) require a dedicated deployment (`ENTERPRISE_MODE=true`) and the admin role — they are never served on the shared hosted backend. |
+| Enterprise Audit | Tamper-evident audit log with an **HMAC-SHA256 keyed** hash chain (`prev_hash` + `entry_hash`; key derived from the server secret, so a DB-write attacker can't forge it). Append-only at API layer; Postgres app user REVOKEd DELETE/UPDATE. Chain verifiable at `GET /api/v1/enterprise/audit-log/verify`. Enterprise endpoints (audit/RBAC/branding/export) require a dedicated deployment (`ENTERPRISE_MODE=true`) and the admin role, and are never served on the shared hosted backend. |
 | Proxy | Nginx reverse proxy with CSP, HSTS, Permissions-Policy, X-Frame-Options, X-Content-Type-Options. |
 
 For reporting security vulnerabilities, see [SECURITY.md](SECURITY.md).
@@ -663,7 +660,7 @@ evaluation history, evaluate) and exits non-zero if p95 exceeds
 `--max-p95-ms` (default 500 ms), so it can gate CI performance regressions.
 The bench user is auto-created and promoted to a verified Pro account.
 
-CI runs all tests on every push via GitHub Actions, and the desktop (Electron) test suite now gates releases. Backend: 357 unit + 42 integration + 8 e2e. Frontend: 239 Vitest unit. Electron: 504. Playwright e2e: 9.
+CI runs all tests on every push via GitHub Actions, and the desktop (Electron) test suite gates releases. Backend: 384 unit + 42 integration + 8 e2e. Frontend: 236 Vitest unit. Electron: 504. Playwright e2e: 9.
 
 ## Deployment
 
@@ -707,13 +704,13 @@ drills) live in [`docs/disaster-recovery.md`](docs/disaster-recovery.md):
 > No. All evidence collection, scoring, and storage happens locally on your machine or on your own hosted infrastructure. There is no telemetry and no data leaves your control.
 
 ### What is the difference between self-hosted and managed?
-> Self-hosted means you run the web dashboard on your own server — Railway, Render, DigitalOcean, or any VPS. Managed means we run it for you. Either way, the endpoint evidence collected from your machines stays local until you explicitly sync it. The difference is who manages the server infrastructure.
+> Self-hosted means you run the web dashboard on your own server: Railway, Render, DigitalOcean, or any VPS. Managed means we run it for you. Either way, the endpoint evidence collected from your machines stays local until you explicitly sync it. The difference is who manages the server infrastructure.
 
 ### Does ComplianceGuard replace a SOC 2 auditor?
 > No. It automates evidence collection and gives you a readiness score, but a formal SOC 2 audit still requires a licensed CPA firm. Think of ComplianceGuard as audit preparation, not audit replacement.
 
 ### Can I use the free tier for a real audit?
-> The free tier is useful for assessing your current posture. For an actual audit you will need Pro, which unlocks the full 54-control breakdown, gap details, remediation recommendations, and PDF exports that auditors expect.
+> The free tier is useful for assessing your current posture. For an actual audit you will need Pro, which includes the full 54-control breakdown, gap details, remediation recommendations, and PDF exports that auditors expect.
 
 ### What happens to my data if I stop using ComplianceGuard?
 > Your data is stored in a local SQLite file (Desktop mode) or your own PostgreSQL instance (Web mode). Uninstalling the app or deleting the database file removes all data permanently.
@@ -722,13 +719,13 @@ drills) live in [`docs/disaster-recovery.md`](docs/disaster-recovery.md):
 > Yes. The full source is available in this repository under the Business Source License. You can inspect every line of the evidence collection and scoring logic.
 
 ### How do I get a Pro or Enterprise license key?
-> Contact [alexisegyan1232@gmail.com](mailto:alexisegyan1232@gmail.com) for licensing. Managed hosted instances are also available — we handle deployment and infrastructure for you.
+> Contact [alexisegyan1232@gmail.com](mailto:alexisegyan1232@gmail.com) for licensing. Managed hosted instances are also available; we handle deployment and infrastructure for you.
 
 ### What is the Cloud Dashboard?
 > The Cloud Dashboard allows you to monitor multiple machines from one centralized web view. Each endpoint (Windows, macOS, or Linux) runs the Electron desktop app. Go to Settings > Cloud Sync, enter your web server URL and credentials, and click Sync to Cloud. The web dashboard then shows all machines' compliance scores, last sync time, and fleet-level stats. Available for Pro and Enterprise users.
 
 ### Can I use this in an air-gapped environment?
-> Yes. The Desktop (Electron) mode works completely offline with no network traffic. Evidence is collected locally, stored in SQLite, and never leaves the machine unless you configure cloud sync. Perfect for classified, government, or highly regulated environments.
+> Yes. The Desktop (Electron) mode works completely offline with no network traffic. Evidence is collected locally, stored in SQLite, and never leaves the machine unless you configure cloud sync. A good fit for classified, government, or highly regulated environments.
 
 
 ## Contributing
@@ -744,28 +741,32 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 
 ## Roadmap
 
-| Done | Up Next |
-|------|---------|
-| Evidence collection (8 categories — event logs, registry, services, firewall, users, network, software, file permissions) | |
-| **Linux support** — native evidence collection via systemd/journald, iproute2, ufw/iptables/nftables, dpkg/rpm/pacman; AppImage + .deb distribution | |
-| **macOS support** — native evidence collection on Intel + Apple Silicon; unsigned DMG distribution with Gatekeeper bypass | |
-| SOC 2 Type II (54 controls), ISO 27001:2013 (47 controls), HIPAA Security Rule (47 safeguards), GDPR (38 obligations) | GCP and Azure cloud evidence |
-| Scheduled automatic evidence collection (Daily/Weekly) | PCI DSS framework |
-| PDF audit-ready reports + evaluation history | Setup video walkthrough |
-| **Control Heatmap** — per-control score bars, status pills, gap details; all 54 SOC 2 controls at a glance | Evidence status workflow |
-| **Remediation Scripts** — one-click PowerShell download for 6 automatable SOC 2 controls; guidance steps for all others; inline re-scan flow | |
-| **Compliance Score Trend** — time-series chart on the History page; compliance zone bands (Good/On Track/Needs Attention); framework tabs | |
-| **Air-gapped Enterprise tier** — tamper-evident HMAC-SHA256 keyed hash-chain audit log, RBAC, custom PDF branding, NDJSON export, offline Docker bundle, hardened TLS | |
-| Premium UI — Linear/Stripe quality design system, global nav, animated score hero, micro-interactions | |
-| Free / Pro / Enterprise licensing — Ed25519 cryptographic signatures, verified fully offline | |
-| Cloud sync + multi-machine compliance dashboard | |
-| JWT auth, email verification, password reset, rate limiting | |
-| Self-hosted (Docker) + Managed hosting options | |
-| One-click Railway deploy | |
+**Shipped**
+
+- Evidence collection across 8 categories: event logs, registry, services, firewall, users, network, software, file permissions
+- Native Linux support: systemd/journald, iproute2, ufw/iptables/nftables, dpkg/rpm/pacman; AppImage + .deb distribution
+- Native macOS support on Intel and Apple Silicon (unsigned DMG with Gatekeeper bypass)
+- Four compliance frameworks: SOC 2 Type II (54 controls), ISO 27001:2013 (47), HIPAA Security Rule (47), GDPR (38)
+- Scheduled automatic evidence collection (Daily/Weekly)
+- Control Heatmap with per-control scores, gap details, and inline remediation scripts
+- Compliance score trend with per-framework history
+- Audit-ready PDF reports and evaluation history
+- Air-gapped Enterprise tier: tamper-evident HMAC-SHA256 audit log, RBAC, custom PDF branding, NDJSON export, offline Docker bundle
+- Free / Pro / Enterprise licensing with Ed25519 signatures, verified fully offline
+- Cloud sync and multi-machine compliance dashboard
+- Self-hosted (Docker), managed hosting, and one-click Railway deploy
+
+**Planned**
+
+- GCP and Azure cloud evidence (AWS today)
+- PCI DSS framework
+- Signed macOS builds and notarization (requires Apple Developer enrollment)
+- Evidence status workflow (pending review, approve, annotate)
+- Setup video walkthrough
 
 ## License
 
-Business Source License 1.1 — free to use, modify, and self-host. You may not offer ComplianceGuard as a competing hosted commercial service. See [LICENSE](LICENSE) for full terms.
+Business Source License 1.1: free to use, modify, and self-host. You may not offer ComplianceGuard as a competing hosted commercial service. See [LICENSE](LICENSE) for full terms.
 
 See [CHANGELOG.md](CHANGELOG.md) for full version history.
 

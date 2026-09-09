@@ -11,7 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Security
 
 - **Web session hardening (H-1):** the browser access token is now held in
-  memory only — it is never written to localStorage/sessionStorage/IndexedDB.
+  memory only; it is never written to localStorage/sessionStorage/IndexedDB.
   The persistent session is the HttpOnly, SameSite=Strict refresh cookie;
   page reloads silently re-authenticate through it. The refresh token is no
   longer returned in JSON responses to browser clients (desktop clients
