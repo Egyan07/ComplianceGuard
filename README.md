@@ -95,7 +95,7 @@ Browse the full control library offline: SOC 2 Type II (54 controls), ISO 27001 
 ## Not a Good Fit If
 
 - You only need cloud compliance; [Vanta](https://www.vanta.com/) or [Drata](https://drata.com/) cover that better
-- You want a fully managed SaaS with zero self-hosting involvement
+- You can't install software on the machines being audited. Evidence collection runs on the endpoints themselves, so the desktop app has to be installed there. Managed hosting removes the server work; it doesn't remove the endpoint app.
 
 ## Choose Your Privacy Level
 
