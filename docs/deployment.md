@@ -227,7 +227,7 @@ RUN_MIGRATIONS_ON_STARTUP=false uvicorn app.main:app ...
 {
   "status": "healthy",
   "service": "complianceguard-api",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "git_sha": "65c18db",
   "database": "ok",
   "started_at": "2026-08-20T08:00:00+00:00",
