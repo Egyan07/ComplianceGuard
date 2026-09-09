@@ -35,8 +35,10 @@ FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-# Install static server
-RUN npm install -g serve
+# L-2 remediation: pin the static server version (an unpinned `npm i -g serve`
+# floated with every image build) and run as a non-root user — a compromised
+# server process must not own the container.
+RUN npm install -g serve@14.2.4 && npm cache clean --force
 
 # Copy build output only
 COPY --from=builder /app/frontend/dist ./dist
@@ -44,6 +46,9 @@ COPY --from=builder /app/frontend/dist ./dist
 # Environment
 ENV NODE_ENV=production
 ENV PORT=3000
+
+# Drop privileges for the serving process
+USER node
 
 # Expose port
 EXPOSE 3000

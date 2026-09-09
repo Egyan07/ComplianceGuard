@@ -1,0 +1,111 @@
+# Prometheus alerting rules for ComplianceGuard.
+#
+# Scope: the metrics the application actually exports today
+# (backend/app/core/observability.py):
+#
+#   http_requests_total{method,path,status}
+#   http_request_duration_seconds (histogram)
+#   http_request_max_duration_seconds (gauge)
+#   complianceguard_app_info
+#
+# Load this file with Prometheus' rule_files; a minimal scrape+alert stack is
+# included in monitoring/prometheus.yml. Intervals deliberately assume a
+# small deployment (30s scrape) — tighten for larger fleets.
+#
+# NOTE (H-3): /metrics is access-controlled at the app layer and blocked at
+# nginx for public traffic, so these rules assume Prometheus scrapes over the
+# internal Docker network (or an IP permitted via METRICS_ALLOWED_IPS).
+groups:
+  - name: complianceguard-api
+    rules:
+      - alert: HighHTTP5xxRate
+        expr: |
+          sum(rate(http_requests_total{status=~"5.."}[5m]))
+            /
+          sum(rate(http_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "API 5xx rate above 5% for 5 minutes"
+          description: "Error rate {{ $value | humanizePercentage }} — investigate backend logs and recent deploys."
+
+      - alert: ElevatedAuthFailures
+        # Authentication failures (401/403) spiking on /auth endpoints is the
+        # primary early signal of credential stuffing or brute force. The
+        # backend additionally throttles per-account; this catches fleet-wide
+        # patterns and specific-target attacks across accounts.
+        expr: |
+          sum(rate(http_requests_total{path=~"/api/v1/auth/.*", status=~"401|403"}[5m])) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Auth failure rate elevated (>0.5/s for 5m)"
+          description: "Auth 401/403 rate {{ $value | humanize }} req/s — possible credential stuffing or throttling in effect."
+
+      - alert: APIHighLatencyP95
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket[10m])) by (le)
+          ) > 2
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API p95 latency above 2s for 10 minutes"
+          description: "p95 {{ $value | humanize }}s — check database load and external integrations."
+
+      - alert: APILatencyCritical
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket[5m])) by (le)
+          ) > 5
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "API p95 latency above 5s for 5 minutes"
+          description: "p95 {{ $value | humanize }}s — user-visible degradation; page on-call."
+
+      - alert: BackendDown
+        expr: up{job="complianceguard-backend"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "ComplianceGuard backend is down"
+          description: "Prometheus has been unable to scrape the backend for 2 minutes."
+
+      - alert: BackendScrapeStale
+        expr: time() - max(timestamp(http_requests_total)) > 120
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Backend metrics look stale"
+          description: "No fresh samples for 2m — the process may be hung (scrape itself still succeeding) or the exporter wedged."
+
+  - name: complianceguard-resources
+    rules:
+      - alert: BackendRestarted
+        # process restarts reset counters; a jump in app start time is noise
+        # in rate queries unless someone knows a crash-loop is forming.
+        expr: changes(complianceguard_app_info[30m]) > 2
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Backend restarted repeatedly in the last 30 minutes"
+          description: "Possible crash loop — check container logs and health probes."
+
+      - alert: NoTrafficAnomaly
+        # A healthy deployment always serves some requests; a drop to zero
+        # often means the proxy is down or traffic is blackholed.
+        expr: sum(rate(http_requests_total[10m])) < 0.01
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Near-zero request volume for 15 minutes"
+          description: "Either legitimate quiet period, or nginx/upstream is down — verify health endpoints."

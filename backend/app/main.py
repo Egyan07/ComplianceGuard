@@ -12,7 +12,7 @@ import os
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 import sentry_sdk
 import uvicorn
@@ -51,6 +51,7 @@ from app.core.observability import (
     now_ms,
     record_request,
 )
+from app.core.metrics_guard import get_allowed_networks, is_metrics_allowed
 from app.core.rate_limit import limiter
 
 import app.models  # noqa: F401
@@ -244,8 +245,17 @@ async def request_id_middleware(request: Request, call_next):
     Generates an ID when none is supplied, stores it on ``request.state`` for
     logging context, and echoes it back in the ``X-Request-ID`` response
     header so a client can reference a specific failure in support.
+
+    L-7 remediation: client-supplied IDs are normalized before use — trimmed,
+    length-capped, and restricted to URL-safe characters — so an attacker
+    cannot inject log noise, oversized header values, or control characters.
     """
     request_id: Optional[str] = request.headers.get("X-Request-ID")
+    if request_id:
+        # Keep only safe characters (alphanumerics, dash, underscore, dot) and
+        # cap the length; anything else is replaced with a server-generated ID.
+        cleaned = "".join(c for c in request_id.strip() if c.isalnum() or c in "-_.")
+        request_id = cleaned[:64] or None
     if not request_id:
         request_id = uuid.uuid4().hex[:12]
     request.state.request_id = request_id
@@ -260,13 +270,17 @@ _SERVICE_STARTED_AT = datetime.now(timezone.utc)
 _GIT_SHA = os.getenv("GIT_SHA", "dev")
 
 # Configure CORS for frontend communication
+# H-1: browser sessions now ride the HttpOnly refresh cookie, so credentialed
+# cross-origin requests are REQUIRED when the SPA origin differs from the API
+# origin (dev: :5173 -> :8000; some split deployments). The refresh cookie is
+# SameSite=Strict, path-pinned to /api/v1/auth, and only honored on /auth
+# endpoints, so exposure is limited to the explicit CORS_ORIGINS allowlist —
+# a page on any other origin gets no cookie and no response. Keep CORS_ORIGINS
+# as tight as the deployment allows.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
-    # Auth is via the Authorization header (bearer tokens), never cookies, so
-    # credentialed cross-origin requests are unnecessary. Keeping this False
-    # avoids credential leakage if CORS_ORIGINS is ever misconfigured.
-    allow_credentials=False,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -303,8 +317,19 @@ async def metrics_middleware(request: Request, call_next):
 
 
 @app.get("/metrics")
-async def metrics() -> PlainTextResponse:
-    """Prometheus scrape endpoint."""
+async def metrics(request: Request) -> PlainTextResponse:
+    """Prometheus scrape endpoint.
+
+    H-3 remediation: metrics are no longer anonymously reachable. Only
+    loopback clients (in-container sidecars, local dev) or clients matching
+    METRICS_ALLOWED_IPS (internal scraper subnets) may scrape; everyone else
+    gets 403. The nginx proxy additionally blocks /metrics from the public
+    internet — this guard protects direct-reach deployments.
+    """
+    client_ip = request.client.host if request.client else ""
+    if not is_metrics_allowed(client_ip, get_allowed_networks()):
+        logger.warning("Blocked metrics scrape from %s", client_ip or "unknown")
+        return PlainTextResponse("Forbidden", status_code=403)
     return PlainTextResponse(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 # All routers define only resource-level paths (e.g. /auth, /evidence).
@@ -324,9 +349,9 @@ app.include_router(enterprise_export_router, prefix="/api/v1")
 app.include_router(enterprise_rbac_router, prefix="/api/v1")
 
 @app.get("/health")
-async def health_check() -> Dict[str, Any]:
+async def health_check() -> JSONResponse:
     """
-    Health check for monitoring and deployment validation.
+    Readiness + liveness health check for monitoring and deployment validation.
 
     ``git_sha`` lets oncall map an incident to a specific deploy even when the
     version string hasn't been bumped; ``started_at`` exposes worker age so
@@ -335,6 +360,10 @@ async def health_check() -> Dict[str, Any]:
     Includes a live DB connectivity probe so load balancers / orchestrators can
     pull an instance that has lost its database before routing traffic to it.
     The probe is cheap (SELECT 1) and runs only on this endpoint.
+
+    L-4 remediation: a failed DB probe now returns HTTP 503 (previously the
+    body said "degraded" while the status stayed 200, which orchestrators
+    that key on the status code ignored). The JSON body is unchanged.
     """
     db_ok = True
     try:
@@ -347,7 +376,7 @@ async def health_check() -> Dict[str, Any]:
         logger.exception("health check DB probe failed")
         db_ok = False
 
-    return {
+    body = {
         "status": "healthy" if db_ok else "degraded",
         "service": "complianceguard-api",
         "version": VERSION,
@@ -356,6 +385,7 @@ async def health_check() -> Dict[str, Any]:
         "started_at": _SERVICE_STARTED_AT.isoformat(),
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
+    return JSONResponse(status_code=200 if db_ok else 503, content=body)
 
 @app.get("/")
 async def root():

@@ -46,7 +46,7 @@ def client():
 
 
 @pytest.fixture
-def auth_headers(client):
+def auth_headers(client, email_tokens):
     """Register a fully verified user (verification is orthogonal to CG-M1)."""
     res = client.post(
         "/api/v1/auth/register",
@@ -57,11 +57,10 @@ def auth_headers(client):
         },
     )
     assert res.status_code == 200
-    from app.models.user import User
-    db = TestSession()
-    user = db.query(User).filter(User.email == "evidence-status@test.com").first()
-    token = user.verification_token
-    db.close()
+    # M-2: the raw verification token is captured at the email layer; the DB
+    # row holds only its hash.
+    token = email_tokens.get("evidence-status@test.com")
+    assert token, "verification email must have been captured"
     assert client.post("/api/v1/auth/verify-email", json={"token": token}).status_code == 200
     return {"Authorization": f"Bearer {res.json()['access_token']}"}
 

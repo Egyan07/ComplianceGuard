@@ -46,31 +46,37 @@ def client():
     return TestClient(app)
 
 
-def _register_and_verify(client, email: str, password: str, **extra) -> str:
-    """Register a user, verify their email via DB, and return the access token."""
-    from app.models.user import User as UserModel
+def _register_and_verify(client, email: str, password: str, email_tokens=None, **extra) -> str:
+    """Register a user, verify their email via a captured token, and return the access token."""
     res = client.post("/api/v1/auth/register", json={
         "email": email, "password": password, **extra,
     })
     assert res.status_code == 200
     token = res.json()["access_token"]
 
-    # Directly mark the user verified in the test DB (no real email delivery).
-    db = TestSession()
-    user = db.query(UserModel).filter(UserModel.email == email).first()
-    v_token = user.verification_token
-    db.close()
+    # M-2: only a hash of the token is in the DB; the raw token was handed to
+    # the email layer. Verify with the captured raw token when available,
+    # else flip the flag directly (no real email delivery in tests).
+    from app.models.user import User as UserModel
+    v_token = (email_tokens or {}).get(email)
     if v_token:
         client.post("/api/v1/auth/verify-email", json={"token": v_token})
+    else:
+        db = TestSession()
+        user = db.query(UserModel).filter(UserModel.email == email).first()
+        user.is_verified = True
+        db.commit()
+        db.close()
 
     return token
 
 
 @pytest.fixture
-def auth_token(client):
+def auth_token(client, email_tokens):
     """Register+verify a user and return an auth token."""
     return _register_and_verify(
         client, "integration@test.com", "Test@pass1",
+        email_tokens=email_tokens,
         first_name="Integration", last_name="Test",
     )
 
@@ -114,7 +120,7 @@ class TestAuthFlow:
         assert res.status_code == 400
         assert "Password must contain" in res.json()["detail"]
 
-    def test_email_verification_flow(self, client):
+    def test_email_verification_flow(self, client, email_tokens):
         # Register
         res = client.post("/api/v1/auth/register", json={
             "email": "verify@test.com",
@@ -132,12 +138,9 @@ class TestAuthFlow:
         assert res.status_code == 200
         assert res.json()["is_verified"] is False
 
-        # Get verification token from test DB
-        from app.models.user import User
-        db = next(override_get_db())
-        user = db.query(User).filter(User.email == "verify@test.com").first()
-        v_token = user.verification_token
-        db.close()
+        # M-2: the DB row holds only a hash; the raw token went to the email layer.
+        v_token = email_tokens.get("verify@test.com")
+        assert v_token, "verification email must have been captured"
 
         # Verify
         res = client.post("/api/v1/auth/verify-email", json={"token": v_token})
@@ -154,7 +157,7 @@ class TestAuthFlow:
         res = client.post("/api/v1/auth/verify-email", json={"token": "bogus-token"})
         assert res.status_code == 400
 
-    def test_password_reset_flow(self, client):
+    def test_password_reset_flow(self, client, email_tokens):
         # Register a user first
         client.post("/api/v1/auth/register", json={
             "email": "reset@test.com",
@@ -167,12 +170,9 @@ class TestAuthFlow:
         res = client.post("/api/v1/auth/forgot-password", json={"email": "reset@test.com"})
         assert res.status_code == 200
 
-        # Get token from DB
-        from app.models.user import User
-        db = next(override_get_db())
-        user = db.query(User).filter(User.email == "reset@test.com").first()
-        reset_tok = user.reset_token
-        db.close()
+        # M-2: the DB row holds only a hash; the raw token went to the email layer.
+        reset_tok = email_tokens.get("reset@test.com")
+        assert reset_tok, "reset email must have been captured"
 
         # Reset password
         res = client.post("/api/v1/auth/reset-password", json={
@@ -308,10 +308,13 @@ class TestIDORProtection:
     404 — the server must not leak that the evaluation even exists.
     """
 
-    def _register_pro_user(self, client, email: str) -> str:
+    def _register_pro_user(self, client, email: str, email_tokens=None) -> str:
         """Register+verify a user, upgrade to Pro, and return their token."""
         from app.models.user import User
-        token = _register_and_verify(client, email, "ProUser@1pass", first_name="Pro", last_name="User")
+        token = _register_and_verify(
+            client, email, "ProUser@1pass", email_tokens=email_tokens,
+            first_name="Pro", last_name="User",
+        )
 
         # Promote to Pro directly in the test DB.
         db = TestSession()
@@ -342,10 +345,10 @@ class TestIDORProtection:
         assert res.status_code == 200
         return res.json()["framework_id"]  # we only need the eval id from DB
 
-    def test_user_b_cannot_read_user_a_control_assessments(self, client):
+    def test_user_b_cannot_read_user_a_control_assessments(self, client, email_tokens):
         """User B gets 404 when requesting User A's evaluation control assessments."""
-        token_a = self._register_pro_user(client, "user_a_idor@test.com")
-        token_b = self._register_pro_user(client, "user_b_idor@test.com")
+        token_a = self._register_pro_user(client, "user_a_idor@test.com", email_tokens=email_tokens)
+        token_b = self._register_pro_user(client, "user_b_idor@test.com", email_tokens=email_tokens)
 
         # User A submits an evaluation — retrieve the evaluation_id from the DB.
         client.post(
@@ -383,10 +386,10 @@ class TestIDORProtection:
         )
         assert res.status_code == 404
 
-    def test_user_b_cannot_read_user_a_report(self, client):
+    def test_user_b_cannot_read_user_a_report(self, client, email_tokens):
         """User B gets 404 when requesting User A's evaluation report."""
-        token_a = self._register_pro_user(client, "user_a_report@test.com")
-        token_b = self._register_pro_user(client, "user_b_report@test.com")
+        token_a = self._register_pro_user(client, "user_a_report@test.com", email_tokens=email_tokens)
+        token_b = self._register_pro_user(client, "user_b_report@test.com", email_tokens=email_tokens)
 
         client.post(
             "/api/v1/compliance/evaluate",

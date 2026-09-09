@@ -179,6 +179,43 @@ def test_settings():
     return get_settings()
 
 
+@pytest.fixture
+def email_tokens(monkeypatch):
+    """Capture raw one-time tokens passed to the email layer.
+
+    M-2: password-reset and email-verification tokens are stored HASHED in the
+    DB, so tests can no longer read the raw token from the user row. The raw
+    value is handed to app.core.email's send_* functions (EMAIL_ENABLED=false
+    only logs it), so tests capture it there.
+
+    Returns a dict keyed by email address -> last captured token, with a
+    parallel ``log`` list of (kind, email, token) tuples for ordering
+    sensitive assertions (e.g. resend rotates the token).
+    """
+    import app.api.auth.password as password_mod
+    import app.api.auth.session as session_mod
+    import app.api.auth.verification as verification_mod
+
+    captured: list[tuple[str, str, str]] = []
+    tokens: dict[str, str] = {}
+
+    async def fake_reset(email, token):
+        captured.append(("reset", email, token))
+        tokens[email] = token
+
+    async def fake_verify(email, token):
+        captured.append(("verify", email, token))
+        tokens[email] = token
+
+    monkeypatch.setattr(password_mod, "send_password_reset_email", fake_reset)
+    monkeypatch.setattr(session_mod, "send_verification_email", fake_verify)
+    # verification.py (resend-verification) has its own import of the sender.
+    monkeypatch.setattr(verification_mod, "send_verification_email", fake_verify)
+
+    tokens["log"] = captured  # type: ignore[assignment]
+    return tokens
+
+
 def pytest_collection_modifyitems(config, items):
     """Add markers based on test path and skip e2e/slow unless opted in."""
     skip_e2e = pytest.mark.skip(reason="need --run-e2e option to run")

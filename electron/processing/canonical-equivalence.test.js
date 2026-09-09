@@ -72,9 +72,38 @@ function buildFixtures() {
 let pythonResults = null;
 let pythonStderr = '';
 
+/**
+ * M-7 remediation: resolve the backend Python interpreter deterministically.
+ *
+ * The subprocess imports the backend app (sqlalchemy, pydantic, yaml...), so
+ * a bare `python` fails confusingly unless the right venv happens to be on
+ * PATH. Resolution order:
+ *   1. CG_CANONICAL_PYTHON env var (explicit override, used by CI)
+ *   2. backend/.venv-test/bin/python (the repo's test venv)
+ *   3. backend/.venv/bin/python
+ *   4. `python3` on PATH (works when backend deps are installed system-wide)
+ *
+ * This is a HARD failure, not a skip — the JS↔Python equivalence guard must
+ * actually run, so a missing environment fails the suite with instructions
+ * instead of silently passing 249 skipped tests.
+ */
+function resolvePythonBin() {
+  const fs = require('fs');
+  const repoRoot = path.join(__dirname, '..', '..');
+  const candidates = [
+    process.env.CG_CANONICAL_PYTHON,
+    path.join(repoRoot, 'backend', '.venv-test', 'bin', 'python'),
+    path.join(repoRoot, 'backend', '.venv', 'bin', 'python'),
+  ].filter(Boolean);
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  return 'python3';
+}
+
 beforeAll(async () => {
   // Run the Python canonical engine over the full fixture matrix in one subprocess.
-  const pythonBin = process.env.PYTHON || 'python';
+  const pythonBin = resolvePythonBin();
   const script = path.join(__dirname, '..', '..', 'backend', 'scripts', 'canonical_batch.py');
   const fixtures = buildFixtures();
   const fixtureMap = Object.fromEntries(fixtures.map((f) => [f.name, f.types]));
@@ -87,7 +116,12 @@ beforeAll(async () => {
     pythonResults = JSON.parse(stdout);
     pythonStderr = stderr || '';
   } catch (err) {
-    pythonStderr = String(err.stderr || err.message || err);
+    pythonStderr =
+      `Python canonical engine could not run (interpreter: ${pythonBin}).\n` +
+      `Set CG_CANONICAL_PYTHON to a Python with backend deps installed, or ` +
+      `create backend/.venv-test: python -m venv backend/.venv-test && ` +
+      `backend/.venv-test/bin/pip install -r backend/requirements-test.txt\n` +
+      `Underlying error: ${String(err.stderr || err.message || err)}`;
     throw new Error(`Python canonical engine subprocess failed: ${pythonStderr}`);
   }
 });

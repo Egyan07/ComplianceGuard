@@ -3,6 +3,23 @@
 from pydantic import BaseModel, ConfigDict, EmailStr
 
 
+# Client classes for token delivery. Browsers get the refresh token ONLY via
+# the HttpOnly cookie; the JSON body must not carry it (XSS exfiltration).
+# The Electron desktop client cannot receive Set-Cookie from its fetch calls
+# reliably across platforms, so it authenticates with body tokens stored in
+# the OS keychain — it identifies itself with X-Client-Type: desktop.
+CLIENT_TYPE_BROWSER = "browser"
+CLIENT_TYPE_DESKTOP = "desktop"
+
+
+def is_desktop_client(request) -> bool:
+    """True when the caller identified as the Electron desktop app.
+
+    Anything unrecognized defaults to browser — the stricter delivery mode.
+    """
+    return (request.headers.get("X-Client-Type") or "").strip().lower() == CLIENT_TYPE_DESKTOP
+
+
 class UserCreate(BaseModel):
     """Schema for user registration."""
     email: EmailStr
@@ -24,9 +41,14 @@ class UserResponse(BaseModel):
 
 
 class LoginResponse(BaseModel):
-    """Schema for login response."""
+    """Schema for login response.
+
+    ``refresh_token`` is present ONLY for desktop clients (stored in the OS
+    keychain). Browser clients receive it exclusively via the HttpOnly cookie
+    and the field is omitted from the JSON body entirely.
+    """
     access_token: str
-    refresh_token: str
+    refresh_token: str | None = None
     token_type: str
     user: UserResponse
 
@@ -56,13 +78,14 @@ class RefreshRequest(BaseModel):
 class RefreshResponse(BaseModel):
     """Schema for refresh token response.
 
-    ``refresh_token`` carries the ROTATED token (Phase 11): refresh rotates the
-    presented token, so body-based clients (the Electron desktop) must store
-    this new value or their next refresh will be treated as reuse.
+    ``refresh_token`` carries the ROTATED token (Phase 11) — but only for
+    desktop clients, which must persist it or their next refresh looks like
+    reuse. Browser clients rotate via the Set-Cookie header and the field is
+    omitted from the JSON body entirely.
     """
     access_token: str
     token_type: str
-    refresh_token: str
+    refresh_token: str | None = None
 
 
 class ActivateLicenseRequest(BaseModel):

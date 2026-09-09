@@ -69,15 +69,21 @@ services:
       # multiply the published limits. To scale out, set WORKERS>1 AND provide
       # RATELIMIT_STORAGE_URI (a shared backend).
       WORKERS: ${WORKERS:-1}
-    ports:
-      - "8000:8000"
+    # M-6 remediation: the backend is NOT published to the host. All traffic
+    # reaches it through the nginx proxy over the internal Docker network, so
+    # TLS, security headers, and the /docs + /metrics lockdown cannot be
+    # bypassed. For local debugging bind explicitly: 127.0.0.1:8000:8000
+    # (dev override docker-compose.dev.yml restores the mapping).
+    expose:
+      - "8000"
     depends_on:
       db:
         condition: service_healthy
     networks:
       - complianceguard-network
+    # L-3 remediation: production containers run the immutable code baked into
+    # the image. Source mounts live in docker-compose.dev.yml only.
     volumes:
-      - ./backend/app:/app/app:ro
       - evidence_storage:/app/storage
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -108,9 +114,8 @@ services:
         condition: service_healthy
     networks:
       - complianceguard-network
-    volumes:
-      - ./frontend/src:/app/src:ro
-      - ./frontend/public:/app/public:ro
+    # L-3 remediation: no source mounts in production — serve the build
+    # output baked into the image.
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
       interval: 30s
@@ -126,6 +131,13 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    # Resource ceilings so a runaway proxy process cannot starve the host.
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+    security_opt:
+      - no-new-privileges:true
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./ssl:/etc/nginx/ssl:ro

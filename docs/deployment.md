@@ -65,9 +65,16 @@ DATABASE_URL=postgresql://complianceguard:complianceguard@db:5432/complianceguar
 # CORS — set to your domain
 CORS_ORIGINS=["https://complianceguard.yourdomain.com"]
 
-# Optional: multi-worker (requires Redis)
+# Optional: multi-worker (requires Redis — REQUIRED in production when
+# WORKERS>1 or REPLICAS>1; startup fails without shared limiter storage)
 # WORKERS=4
 # RATELIMIT_STORAGE_URI=redis://redis:6379/0
+# REPLICAS=1  # set explicitly when each container runs one worker
+
+# Optional overrides (sane defaults derived from ENVIRONMENT otherwise):
+# COOKIE_SECURE=true          # force Secure refresh cookie (default: on in production)
+# METRICS_ALLOWED_IPS=["10.0.0.0/8"]  # admit an internal Prometheus scraper to /metrics
+#                             # (loopback is always allowed; nginx blocks public access)
 
 # Optional: Sentry error monitoring
 # SENTRY_DSN=your-sentry-dsn
@@ -79,7 +86,7 @@ CORS_ORIGINS=["https://complianceguard.yourdomain.com"]
 docker-compose up -d
 ```
 
-The app is at `http://localhost` (nginx proxy). API docs at `http://localhost:8000/docs`.
+The app is at `http://localhost` (nginx proxy). API docs at `http://localhost:8000/docs` (Swagger/redoc and `/metrics` are blocked from the public internet by nginx; port-forward to the backend container for internal access).
 
 ### 4. Production hardening
 
@@ -88,7 +95,7 @@ The app is at `http://localhost` (nginx proxy). API docs at `http://localhost:80
 | **HTTPS** | Place an SSL cert in `ssl/` and uncomment the HTTPS server block in `nginx.conf` |
 | **Firewall** | Block ports except 80/443. PostgreSQL (5432) is localhost-only by default |
 | **Backups** | Run `./scripts/db-backup.sh` nightly (cron or systemd timer) |
-| **Workers** | Set `WORKERS=4` and `RATELIMIT_STORAGE_URI=redis://redis:6379/0` for multi-worker |
+| **Workers** | Set `WORKERS=4` and `RATELIMIT_STORAGE_URI=redis://redis:6379/0` for multi-worker. Scaled-out production (WORKERS>1 or REPLICAS>1) **refuses to start** without shared limiter storage — this is intentional (M-3) |
 | **Secrets** | Use Docker secrets or a vault — never commit `.env` to version control |
 
 ---

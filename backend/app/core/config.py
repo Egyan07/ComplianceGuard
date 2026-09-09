@@ -87,6 +87,10 @@ class Settings(BaseSettings):
     algorithm: str = Field("HS256")
     access_token_expire_minutes: int = Field(30)
     refresh_token_expire_days: int = Field(7)
+    # Refresh-cookie Secure flag. When None (default), it is derived from the
+    # ENVIRONMENT (Secure in production, not over plain-HTTP dev). Setting it
+    # explicitly always wins — DEBUG has no influence on cookie security.
+    cookie_secure: Optional[bool] = Field(None)
 
     # Security settings
     password_min_length: int = Field(8)

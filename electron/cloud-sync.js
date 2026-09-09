@@ -59,7 +59,13 @@ async function cloudConnect(database, serverUrl, email, password) {
     form.set('password', password);
     const res = await fetch(`${url}/api/v1/auth/login`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        // Identify as the desktop client so the login response includes the
+        // refresh token in the body (we store it in the OS keychain via
+        // safeStorage). Browsers get cookie-only delivery instead.
+        'X-Client-Type': 'desktop',
+      },
       body: form.toString(),
     });
 
@@ -152,7 +158,10 @@ async function _refreshAccessToken(serverUrl, refreshToken) {
   try {
     const res = await fetch(`${serverUrl}/api/v1/auth/refresh`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Client-Type': 'desktop',
+      },
       body: JSON.stringify({ refresh_token: refreshToken }),
     });
     if (!res.ok) return null;

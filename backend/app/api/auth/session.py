@@ -24,6 +24,7 @@ from app.models.refresh_token import RefreshToken
 from app.core.database import get_db
 from app.api.deps import get_current_user
 from app.core.email import send_verification_email
+from app.core.token_hash import hash_token
 from sqlalchemy.orm import Session
 
 from app.api.auth.helpers import (
@@ -41,6 +42,7 @@ from app.api.auth.schemas import (
     RefreshResponse,
     UserCreate,
     UserResponse,
+    is_desktop_client,
 )
 
 router = APIRouter()
@@ -62,7 +64,9 @@ async def login(
         db: Database session
 
     Returns:
-        LoginResponse containing access token and user information
+        LoginResponse containing access token and user information. The
+        refresh token is included in the body only for desktop clients
+        (X-Client-Type: desktop); browsers receive it via the HttpOnly cookie.
 
     Raises:
         HTTPException: If authentication fails
@@ -101,9 +105,14 @@ async def login(
     db.commit()
 
     _set_refresh_cookie(response, refresh_token)
+    # H-1 remediation: browsers get the refresh token ONLY via the HttpOnly
+    # cookie — a body copy would be readable by any injected script. Desktop
+    # clients (X-Client-Type: desktop) still receive it in the body because
+    # they store it in the OS keychain and cannot rely on cookie jar semantics.
+    include_body_refresh = is_desktop_client(request)
     return LoginResponse(
         access_token=access_token,
-        refresh_token=refresh_token,
+        refresh_token=refresh_token if include_body_refresh else None,
         token_type="bearer",
         user=UserResponse(
             id=user.id,
@@ -132,10 +141,13 @@ async def register(
         db: Database session
 
     Returns:
-        LoginResponse containing access token and user information
+        LoginResponse containing access token and user information. The
+        refresh token rides the HttpOnly cookie; the body carries it only for
+        desktop clients.
 
     Raises:
-        HTTPException: If user with email already exists
+        HTTPException: If user with email already exists (generic message so
+        registration cannot be used to enumerate accounts — mirrors login).
     """
     errors = validate_password_strength(user_data.password)
     if errors:
@@ -144,15 +156,17 @@ async def register(
             detail=f"Password must contain {', '.join(errors)}",
         )
 
-    # Check if user already exists
+    # Check if user already exists. L-1: keep the wording generic so the
+    # response does not confirm whether an account exists.
     existing_user = db.query(User).filter(User.email == user_data.email).first()
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User with this email already exists"
+            detail="Unable to register with this email address",
         )
 
-    # Create new user with verification token
+    # Create new user with verification token. M-2: only the SHA-256 hash of
+    # the token is persisted; the raw value goes to the verification email.
     hashed_password = await asyncio.to_thread(get_password_hash, user_data.password)
     verification_token = secrets.token_urlsafe(32)
     new_user = User(
@@ -163,7 +177,7 @@ async def register(
         is_active=True,
         is_superuser=False,
         is_verified=False,
-        verification_token=verification_token,
+        verification_token=hash_token(verification_token),
     )
 
     db.add(new_user)
@@ -188,9 +202,10 @@ async def register(
     db.commit()
 
     _set_refresh_cookie(response, refresh_token)
+    include_body_refresh = is_desktop_client(request)
     return LoginResponse(
         access_token=access_token,
-        refresh_token=refresh_token,
+        refresh_token=refresh_token if include_body_refresh else None,
         token_type="bearer",
         user=UserResponse(
             id=new_user.id,
@@ -273,9 +288,12 @@ async def refresh_token(
         data={"sub": user.email},
         expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
     )
+    # Same client split as login: the rotated refresh token goes in the body
+    # only for desktop clients. For browsers it rides the Set-Cookie header
+    # above, and the JSON body carries only the short-lived access token.
     return RefreshResponse(
         access_token=access_token,
-        refresh_token=new_refresh_token,
+        refresh_token=new_refresh_token if is_desktop_client(request) else None,
         token_type="bearer",
     )
 

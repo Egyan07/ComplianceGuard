@@ -1,6 +1,11 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import axios from 'axios';
 import { registerAuthCallbacks } from '../services/api';
+import {
+  getAccessToken,
+  setAccessToken as setStoreToken,
+  clearAccessToken as clearStoreToken,
+} from '../services/tokenStore';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -27,39 +32,53 @@ export const AuthContext = createContext<AuthState | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem('auth_token'));
+  const [token, setToken] = useState<string | null>(() => getAccessToken());
   const [loading, setLoading] = useState(true);
 
-  // The refresh token is NOT stored in JS-readable storage — it lives in an
-  // HttpOnly cookie set by the server, so XSS can't exfiltrate it. Only the
-  // short-lived access token + user profile are kept in localStorage.
+  // H-1: tokens are never persisted to localStorage/sessionStorage. The
+  // access token lives in module memory only; the refresh token lives in the
+  // HttpOnly cookie managed by the backend and is never readable from JS.
   const storeTokens = (accessToken: string, userData: User) => {
+    setStoreToken(accessToken);
     setToken(accessToken);
     setUser(userData);
-    localStorage.setItem('auth_token', accessToken);
-    localStorage.setItem('auth_user', JSON.stringify(userData));
   };
 
   const clearAuth = () => {
+    clearStoreToken();
     setToken(null);
     setUser(null);
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('auth_user');
   };
 
-  // On mount, restore session from localStorage
+  // On mount, silently restore the session via the HttpOnly refresh cookie.
+  // No localStorage exists to restore from — the cookie is the session.
   useEffect(() => {
-    const storedToken = localStorage.getItem('auth_token');
-    const storedUser = localStorage.getItem('auth_user');
-    if (storedToken && storedUser) {
+    let cancelled = false;
+    const bootstrap = async () => {
       try {
-        setToken(storedToken);
-        setUser(JSON.parse(storedUser));
+        const res = await axios.post(
+          `${API_BASE}/api/v1/auth/refresh`,
+          {},
+          { withCredentials: true },
+        );
+        if (cancelled) return;
+        const { access_token, user: userData } = res.data;
+        if (access_token && userData) {
+          storeTokens(access_token, userData);
+        } else {
+          clearAuth();
+        }
       } catch {
-        clearAuth();
+        // No valid session (first visit or expired refresh) — stay logged out.
+        if (!cancelled) clearAuth();
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-    }
-    setLoading(false);
+    };
+    bootstrap();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -69,9 +88,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const res = await axios.post(`${API_BASE}/api/v1/auth/login`, form, {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      withCredentials: true,
     });
 
     const { access_token, user: userData } = res.data;
+    if (!access_token || !userData) throw new Error('Login failed');
     storeTokens(access_token, userData);
   };
 
@@ -81,34 +102,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     firstName: string,
     lastName: string,
   ) => {
-    const res = await axios.post(`${API_BASE}/api/v1/auth/register`, {
-      email,
-      password,
-      first_name: firstName,
-      last_name: lastName,
-    });
+    const res = await axios.post(
+      `${API_BASE}/api/v1/auth/register`,
+      {
+        email,
+        password,
+        first_name: firstName,
+        last_name: lastName,
+      },
+      { withCredentials: true },
+    );
 
     const { access_token, user: userData } = res.data;
+    if (!access_token || !userData) throw new Error('Registration failed');
     storeTokens(access_token, userData);
   };
 
-  const logout = () => clearAuth();
+  const logout = async () => {
+    try {
+      // Server-side revocation of the refresh token + cookie clear.
+      await axios.post(`${API_BASE}/api/v1/auth/logout`, {}, { withCredentials: true });
+    } catch {
+      // Network/server errors must not keep the client logged in.
+    }
+    clearAuth();
+  };
 
   const setAccessToken = (newToken: string) => {
+    setStoreToken(newToken);
     setToken(newToken);
-    localStorage.setItem('auth_token', newToken);
   };
 
   // Keep AuthContext in sync with api.ts token refresh lifecycle
   useEffect(() => {
     registerAuthCallbacks({
       onRefreshed: (newToken) => {
+        setStoreToken(newToken);
         setToken(newToken);
       },
       onFailed: () => {
-        setToken(null);
-        setUser(null);
-        // localStorage already cleared by api.ts
+        clearAuth();
       },
     });
   }, []);

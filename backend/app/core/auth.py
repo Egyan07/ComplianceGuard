@@ -52,7 +52,15 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 def get_password_hash(password: str) -> str:
-    """Generate a bcrypt hash from a plain password."""
+    """Generate a bcrypt hash from a plain password.
+
+    bcrypt silently truncates input to 72 BYTES, which would make two long
+    passwords with the same 72-byte prefix equivalent. Callers enforce the
+    limit at the validation layer (validate_password_strength); this guard is
+    defense in depth so a new call site can never silently weaken a password.
+    """
+    if len(password.encode("utf-8")) > 72:
+        raise ValueError("Password exceeds bcrypt's 72-byte input limit")
     return bcrypt.hashpw(
         password.encode("utf-8"),
         bcrypt.gensalt()

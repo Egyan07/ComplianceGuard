@@ -100,6 +100,19 @@ jobs:
           # Electron 43's toolchain (electron, @electron/rebuild, node-abi)
           # requires Node >= 22.12 — Node 20 fails the native-deps rebuild.
           node-version: 22
+      # M-7: the canonical-equivalence suite runs the Python scoring engine in
+      # a subprocess (backend/.venv-test/bin/python) and HARD-FAILS when the
+      # environment is missing — CI must genuinely exercise JS <-> Python
+      # parity, not silently skip it.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements-test.txt
+      - name: Create backend venv for canonical-equivalence suite
+        run: |
+          python -m venv backend/.venv-test
+          backend/.venv-test/bin/pip install -r backend/requirements-test.txt
       - name: Install dependencies
         run: npm ci
       # Supply-chain: fail on high/critical npm advisories in the desktop app.
@@ -114,9 +127,25 @@ jobs:
       # CG-C1 packaging guard (source inputs): fail fast if private signing
       # key material exists anywhere electron-builder would package
       # (electron/**, shared/**, frontend/dist). The release jobs re-run this
-      # against the ACTUAL dist/ artifacts after packaging.
-      - name: Packaging secret guard (source inputs)
+      # against the ACTUAL dist/ artifacts after packaging.      - name: Packaging secret guard (source inputs)
         run: npm run check:package-secrets
+
+  secret-scan:
+    name: Secret Scan (gitleaks)
+    runs-on: ubuntu-latest
+    # Defense-in-depth against committed credentials. The repo already guards
+    # its release artifacts (check:package-secrets) and env examples
+    # (check-env-example.py); this scans the whole git history for anything
+    # that looks like a key/token/password so it never reaches a release.
+    # Full history is scanned on pushes; PRs diff against the base branch.
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Scan for committed secrets (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   e2e-tests:
     name: Full-stack E2E
@@ -186,7 +215,7 @@ jobs:
     runs-on: windows-latest
     # All test suites + build must pass before we cut a release. electron-tests
     # gates here because the desktop app IS the shipped cross-platform artifact.
-    needs: [backend-tests, lint-and-test, electron-tests, e2e-tests, build]
+    needs: [backend-tests, lint-and-test, electron-tests, e2e-tests, build, secret-scan]
     if: startsWith(github.ref, 'refs/tags/v')
     # Needed to upload installers + latest.yml to the draft release.
     permissions:

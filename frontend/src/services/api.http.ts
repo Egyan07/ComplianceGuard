@@ -22,6 +22,11 @@ import type {
 // Axios config extended with our one-shot retry marker.
 type RetryableRequest = InternalAxiosRequestConfig & { _retried?: boolean };
 import { normaliseStatus } from './api';
+import {
+  getAccessToken,
+  setAccessToken as setStoreToken,
+  clearAccessToken as clearStoreToken,
+} from './tokenStore';
 
 // HTTP client for web/fallback mode
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
@@ -30,10 +35,14 @@ export const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
   headers: { 'Content-Type': 'application/json' },
+  // Send/accept cookies so the HttpOnly refresh cookie survives cross-port dev.
+  withCredentials: true,
 });
 
+// H-1: the access token is held in memory only (tokenStore) — it is never
+// read from or written to localStorage/sessionStorage.
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('auth_token');
+  const token = getAccessToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -98,7 +107,7 @@ apiClient.interceptors.response.use(
           { withCredentials: true },
         );
         const newAccessToken: string = refreshRes.data.access_token;
-        localStorage.setItem('auth_token', newAccessToken);
+        setStoreToken(newAccessToken); // memory only — no persistent storage
         onTokenRefreshed?.(newAccessToken);
 
         // Replay all queued requests with the new token
@@ -111,8 +120,7 @@ apiClient.interceptors.response.use(
         // Refresh failed — reject all queued requests and clear auth
         pendingRequests.forEach(({ onFailure }) => onFailure(error));
         pendingRequests = [];
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('auth_user');
+        clearStoreToken(); // memory only — nothing persisted to clear
         onRefreshFailed?.();
         return Promise.reject(error);
       } finally {
@@ -224,23 +232,29 @@ export async function httpCheckHealth(): Promise<Record<string, unknown>> {
 // ---- License HTTP (web mode) ----
 
 export async function getLicenseInfoHttp(): Promise<LicenseInfoPayload> {
-  const token = localStorage.getItem('auth_token');
+  const token = getAccessToken();
   if (!token) return { tier: 'free' };
   const base = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/api\/v1$/, '');
   const url = `${base}/api/v1/auth/license-info`;
-  const res = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
+  const res = await axios.get(url, {
+    headers: { Authorization: `Bearer ${token}` },
+    withCredentials: true,
+  });
   return res.data;
 }
 
 export async function activateLicenseHttp(licenseKey: string): Promise<LicenseInfoPayload> {
-  const token = localStorage.getItem('auth_token');
+  const token = getAccessToken();
   if (!token) throw new Error('Not authenticated');
   const base = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/api\/v1$/, '');
   const url = `${base}/api/v1/auth/activate-license`;
   const res = await axios.post(
     url,
     { license_key: licenseKey },
-    { headers: { Authorization: `Bearer ${token}` } }
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      withCredentials: true,
+    }
   );
   return res.data;
 }

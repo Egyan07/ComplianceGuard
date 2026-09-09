@@ -8,6 +8,69 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Security
+
+- **Web session hardening (H-1):** the browser access token is now held in
+  memory only — it is never written to localStorage/sessionStorage/IndexedDB.
+  The persistent session is the HttpOnly, SameSite=Strict refresh cookie;
+  page reloads silently re-authenticate through it. The refresh token is no
+  longer returned in JSON responses to browser clients (desktop clients
+  presenting `X-Client-Type: desktop` are unaffected). CORS now allows
+  credentialed requests for the explicit `CORS_ORIGINS` allowlist to support
+  the cookie flow.
+- **`/metrics` access control (H-3):** the Prometheus endpoint now serves only
+  loopback scrapes (or subnets listed in `METRICS_ALLOWED_IPS`); everyone else
+  gets 403. nginx additionally blocks `/metrics` (and the API schema docs)
+  from the public internet.
+- **One-time email tokens hashed at rest (M-2):** password-reset and
+  email-verification tokens are stored as SHA-256 hashes; a database read
+  leak no longer yields usable reset/verification links. Outstanding
+  pre-upgrade links continue to work.
+- **Refresh-cookie Secure flag (M-5):** derived from `ENVIRONMENT` (or an
+  explicit `COOKIE_SECURE` override) instead of `DEBUG`.
+- **Scale-safe rate limiting (M-3):** production deployments scaled out
+  (`WORKERS>1` or `REPLICAS>1`) refuse to start without shared limiter
+  storage (`RATELIMIT_STORAGE_URI`), so published limits can no longer be
+  silently multiplied per process.
+- **Machine-limit race (M-4):** duplicate `(user_id, hostname)` syncs are now
+  resolved by the database unique constraint with graceful recovery instead
+  of a count-then-insert race.
+- **Electron secure-storage fallback (M-1):** when no OS keychain is
+  available the desktop app no longer presents a machine-derived-key fallback
+  as secure storage; persistence is refused (with an explicit opt-in escape
+  hatch) so tokens can't be silently downgraded.
+- **nginx request limits (M-8):** `client_max_body_size` is set explicitly to
+  match the backend's evidence-upload contract.
+- **Production compose (M-6/L-2/L-3):** the backend's :8000 port is no longer
+  published to the host (nginx on the internal network is the only path), the
+  frontend image runs as non-root with a pinned `serve` version, and dev
+  source mounts were removed from the production configuration.
+
+### Fixed
+
+- `/health` returns HTTP 503 when the database probe fails (L-4) so
+  orchestrators can act on readiness, with the JSON body unchanged.
+- `/evidence/summary` computes totals via SQL aggregation instead of loading
+  every collection row into memory (L-5).
+- Passwords are validated against bcrypt's real 72-**byte** input limit (L-6);
+  multibyte passwords are measured in bytes.
+- Client-supplied `X-Request-ID` values are normalized and capped at 64 safe
+  characters before being echoed into logs/headers (L-7).
+- Registration no longer confirms whether an email already exists (L-1).
+- Dead code and hot-path f-string logging removed from the evidence mapping
+  (L-8).
+
+### Added
+
+- gitleaks secret scanning in CI (pushes scan full history; releases gate on
+  it), alongside the existing packaging/env-example secret guards.
+- Prometheus alerting rules (`monitoring/alerts.yml`) and a minimal scrape
+  config (`monitoring/prometheus.yml`) covering API error rate, auth-failure
+  spikes, latency, and availability.
+- Dependency security: `js-yaml` bumped to 4.3.2 (GHSA-2883-xcg3-v3hh).
+  The react-router 6.x moderate advisories remain accepted (v7 migration is
+  a separate effort; not exploitable in this SPA).
+
 ## [4.0.0] — 2026-09-05
 
 ### Security

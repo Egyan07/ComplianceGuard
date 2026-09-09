@@ -7,6 +7,7 @@ and for the web dashboard to view fleet status.
 
 from fastapi import APIRouter, HTTPException, Depends, Query, status, Request
 from sqlalchemy import case, func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from pydantic import BaseModel, Field
@@ -112,7 +113,36 @@ async def sync_machine(
     machine.last_sync_at = datetime.now(timezone.utc)
     machine.is_active = True
 
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        # M-4 remediation: the count-then-insert limit check races when two
+        # first-syncs for the same user land concurrently. The DB-level
+        # uq_machine_user_hostname constraint (present since the machines
+        # migration) is the real invariant; a concurrent duplicate insert or a
+        # limit-breaching race surfaces here. Re-run the sync as an update of
+        # the winning row so the response stays identical to a normal sync.
+        db.rollback()
+        machine = (
+            db.query(Machine)
+            .filter(Machine.user_id == current_user.id, Machine.hostname == body.hostname)
+            .first()
+        )
+        if machine is None:
+            # Constraint fired but the row isn't ours — do not leak internals.
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Machine registration conflict. Retry the sync.",
+            )
+        machine.os_version = body.os_version
+        machine.last_score = body.overall_score
+        machine.compliance_level = body.compliance_level
+        machine.evidence_count = body.evidence_count
+        machine.agent_version = body.agent_version
+        machine.last_sync_at = datetime.now(timezone.utc)
+        machine.is_active = True
+        db.commit()
+
     db.refresh(machine)
 
     return MachineSyncResponse(

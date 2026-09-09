@@ -14,8 +14,14 @@ def _client():
     return TestClient(app)
 
 
+def _loopback_client():
+    """TestClient presenting as 127.0.0.1 — metrics are loopback-allowed (H-3)."""
+    return TestClient(app, client=("127.0.0.1", 55555))
+
+
 def test_metrics_endpoint_returns_prometheus_format():
-    with _client() as client:
+    # H-3: metrics are guarded — scrape as loopback, which is always allowed.
+    with _loopback_client() as client:
         # Other tests (and the e2e suite) may already have hit "/", so read
         # the counter before and after and assert a monotonic increase.
         before = client.get("/metrics").text
@@ -36,8 +42,38 @@ def test_metrics_endpoint_returns_prometheus_format():
         assert after_count == before_count + 1
 
 
+def test_metrics_blocked_for_remote_client(monkeypatch):
+    """H-3 regression: a non-loopback client with no METRICS_ALLOWED_IPS gets 403."""
+    monkeypatch.delenv("METRICS_ALLOWED_IPS", raising=False)
+    with TestClient(app, client=("203.0.113.7", 55555)) as client:
+        resp = client.get("/metrics")
+        assert resp.status_code == 403
+        # The response must not leak the metrics payload.
+        assert "http_requests_total" not in resp.text
+
+
+def test_metrics_allows_configured_scraper_subnet(monkeypatch):
+    """H-3: METRICS_ALLOWED_IPS admits an internal Prometheus scraper."""
+    monkeypatch.setenv("METRICS_ALLOWED_IPS", '["10.42.0.0/16"]')
+    with TestClient(app, client=("10.42.3.9", 55555)) as client:
+        resp = client.get("/metrics")
+        assert resp.status_code == 200
+        assert "http_requests_total" in resp.text
+    # ...but a host outside the subnet is still denied.
+    with TestClient(app, client=("10.43.3.9", 55555)) as client:
+        assert client.get("/metrics").status_code == 403
+
+
+def test_metrics_rejects_invalid_allowed_ips_config(monkeypatch):
+    """A typo in METRICS_ALLOWED_IPS must fail loudly, not silently open the endpoint."""
+    import pytest
+    from app.core.metrics_guard import parse_allowed_metrics_ips
+    with pytest.raises(ValueError):
+        parse_allowed_metrics_ips("not-a-network")
+
+
 def test_metrics_middleware_excludes_self_scrape():
-    with _client() as client:
+    with _loopback_client() as client:
         client.get("/metrics")
         # A scrape of /metrics must not increment /metrics itself.
         body = client.get("/metrics").text

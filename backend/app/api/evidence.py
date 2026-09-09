@@ -15,6 +15,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict
+from sqlalchemy import func
 from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_current_user
@@ -306,16 +307,29 @@ async def get_evidence_summary(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Get summary of all evidence collections for the current user."""
-    collections = (
-        db.query(EvidenceCollection)
+    """Get summary of all evidence collections for the current user.
+
+    L-5 remediation: totals are computed with a single SQL aggregation and the
+    latest timestamp with a scalar subquery, so the endpoint no longer loads
+    every collection row into Python (unbounded growth on long-lived users).
+    """
+    totals = (
+        db.query(
+            func.count(EvidenceCollection.id).label("total_collections"),
+            func.coalesce(func.sum(EvidenceCollection.evidence_count), 0).label("total_items"),
+        )
         .filter(EvidenceCollection.user_id == current_user.id)
-        .order_by(EvidenceCollection.created_at.desc())
-        .all()
+        .one()
+    )
+    last_created = (
+        db.query(func.max(EvidenceCollection.created_at))
+        .filter(EvidenceCollection.user_id == current_user.id)
+        .scalar()
     )
 
-    total_items = sum(c.evidence_count for c in collections)
-    last_collection = collections[0].created_at.isoformat() if collections else None
+    total_collections = int(totals.total_collections or 0)
+    total_items = int(totals.total_items or 0)
+    last_collection = last_created.isoformat() if last_created else None
 
     # Aggregate compliance metrics from most recent collection
     metrics: Dict[str, Any] = {
@@ -323,20 +337,28 @@ async def get_evidence_summary(
         "iam_policy_compliance": 0,
         "overall_compliance_score": 0,
     }
-    if collections and collections[0].summary:
-        cm = collections[0].summary.get("compliance_metrics", {})
-        metrics["s3_encryption_compliance"] = cm.get("s3_encryption_compliance_rate", 0)
-        metrics["iam_policy_compliance"] = cm.get("iam_compliance_rate", 0)
-        # Simple average for overall
-        scores = [v for v in [metrics["s3_encryption_compliance"], metrics["iam_policy_compliance"]] if v > 0]
-        metrics["overall_compliance_score"] = round(sum(scores) / len(scores), 1) if scores else 0
+    if last_created is not None:
+        latest = (
+            db.query(EvidenceCollection)
+            .filter(EvidenceCollection.user_id == current_user.id)
+            .order_by(EvidenceCollection.created_at.desc())
+            .first()
+        )
+        if latest and latest.summary:
+            cm = latest.summary.get("compliance_metrics", {})
+            metrics["s3_encryption_compliance"] = cm.get("s3_encryption_compliance_rate", 0)
+            metrics["iam_policy_compliance"] = cm.get("iam_compliance_rate", 0)
+            # Simple average for overall
+            scores = [v for v in [metrics["s3_encryption_compliance"], metrics["iam_policy_compliance"]] if v > 0]
+            metrics["overall_compliance_score"] = round(sum(scores) / len(scores), 1) if scores else 0
 
     return EvidenceSummaryResponse(
-        total_collections=len(collections),
+        total_collections=total_collections,
         total_evidence_items=total_items,
         last_collection=last_collection,
         compliance_metrics=metrics,
     )
+
 
 
 @router.get("/items", response_model=List[EvidenceItemResponse])
@@ -597,10 +619,7 @@ def _evidence_to_controls_map() -> Dict[str, Dict[str, float]]:
                 result.setdefault(req, {})[control["id"]] = 1.0
         # Also expose legacy aliases (translated) so old evidence types resolve.
         vocab = get_vocabulary()
-        for alias in vocab.canonical_types:
-            pass
-        for alias in vocab._alias_to_canonical:
-            canonical = vocab._alias_to_canonical[alias]
+        for alias, canonical in vocab._alias_to_canonical.items():
             if canonical in result:
                 result.setdefault(alias, dict(result[canonical]))
         return result

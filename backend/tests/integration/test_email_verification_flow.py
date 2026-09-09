@@ -77,12 +77,11 @@ def _register(client, email: str) -> dict:
     return res.json()
 
 
-def _current_verification_token(email: str) -> str:
-    """Read the user's current verification token from the test DB.
+def _current_verification_token(email: str, email_tokens=None) -> str:
+    """Return the user's current raw verification token.
 
-    With EMAIL_ENABLED=false no email is sent; the same token is what the
-    backend logs as the verification link in non-production (the mechanism
-    covered in tests/unit/test_email_delivery.py).
+    M-2: the DB row holds only a SHA-256 hash of the token — the raw value is
+    handed to the email layer, where the ``email_tokens`` fixture captures it.
     """
     from app.models.user import User
     db = TestSession()
@@ -90,14 +89,17 @@ def _current_verification_token(email: str) -> str:
         user = db.query(User).filter(User.email == email).first()
         assert user is not None, f"user {email} not found"
         assert user.is_verified is False, "user should still be unverified"
-        assert user.verification_token, "expected a pending verification token"
-        return user.verification_token
+        assert user.verification_token, "expected a pending verification token (hash in DB)"
+        assert email_tokens is not None, "email_tokens fixture required to read the raw token"
+        token = email_tokens.get(email)
+        assert token, f"no verification token captured for {email}"
+        return token
     finally:
         db.close()
 
 
 class TestRegistrationWithEmailDisabled:
-    def test_full_flow_register_verify_protected_endpoint(self, client):
+    def test_full_flow_register_verify_protected_endpoint(self, client, email_tokens):
         # 1. Register (EMAIL_ENABLED=false — the shipped default).
         data = _register(client, "flow@test.com")
         token = data["access_token"]
@@ -108,8 +110,8 @@ class TestRegistrationWithEmailDisabled:
         assert me.status_code == 403
         assert "Email address not verified" in me.json()["detail"]
 
-        # 3. Complete verification with the surfaced token.
-        v_token = _current_verification_token("flow@test.com")
+        # 3. Complete verification with the captured token.
+        v_token = _current_verification_token("flow@test.com", email_tokens)
         res = client.post("/api/v1/auth/verify-email", json={"token": v_token})
         assert res.status_code == 200, res.text
 
@@ -118,10 +120,10 @@ class TestRegistrationWithEmailDisabled:
         assert me.status_code == 200
         assert me.json()["email"] == "flow@test.com"
 
-    def test_resend_verification_rotates_token_and_can_complete(self, client):
+    def test_resend_verification_rotates_token_and_can_complete(self, client, email_tokens):
         data = _register(client, "resend@test.com")
         token = data["access_token"]
-        first_token = _current_verification_token("resend@test.com")
+        first_token = _current_verification_token("resend@test.com", email_tokens)
 
         res = client.post(
             "/api/v1/auth/resend-verification",
@@ -131,7 +133,7 @@ class TestRegistrationWithEmailDisabled:
 
         # The resend rotates the token: the old one no longer verifies, the
         # new one does.
-        second_token = _current_verification_token("resend@test.com")
+        second_token = _current_verification_token("resend@test.com", email_tokens)
         assert second_token != first_token
 
         old = client.post("/api/v1/auth/verify-email", json={"token": first_token})

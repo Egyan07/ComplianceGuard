@@ -4,6 +4,7 @@ import { renderHook } from '@testing-library/react';
 import { ReactNode } from 'react';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { LicenseProvider, useLicense } from '../contexts/LicenseContext';
+import { clearAccessToken, getAccessToken } from '../services/tokenStore';
 
 // ─── Mock axios ──────────────────────────────────────────────────────────────
 
@@ -50,6 +51,29 @@ const mockUser = {
 const mockToken = 'mock.jwt.token';
 const mockRefreshToken = 'mock.refresh.token';
 
+const loginResponse = {
+  access_token: mockToken,
+  refresh_token: mockRefreshToken,
+  user: mockUser,
+};
+
+// Route POST mocks by URL substring. The AuthProvider bootstrap refresh fires
+// on mount before any test-driven login/register, so order-dependent
+// mockResolvedValueOnce queues are unreliable — route by endpoint instead.
+function routePost(axiosMock: { post: unknown }, routes: Record<string, unknown>): void {
+  (axiosMock.post as ReturnType<typeof vi.fn>).mockImplementation(
+    async (url: string) => {
+      for (const [needle, data] of Object.entries(routes)) {
+        if (url.includes(needle)) {
+          if (data instanceof Error) throw data;
+          return { data };
+        }
+      }
+      throw new Error(`unrouted POST ${url}`);
+    },
+  );
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const AuthWrapper = ({ children }: { children: ReactNode }) => (
@@ -66,38 +90,66 @@ describe('AuthContext', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     localStorage.clear();
+    sessionStorage.clear();
+    clearAccessToken();
     const axios = await import('axios');
-    // Default: no stored token → health check not called → loading false
+    // Default: every POST fails (no valid refresh cookie, no successful login)
+    // unless a test routes specific endpoints.
     (axios.default.get as any).mockRejectedValue(new Error('no server'));
+    (axios.default.post as any).mockRejectedValue(new Error('no session'));
   });
 
   afterEach(() => {
     localStorage.clear();
+    sessionStorage.clear();
+    clearAccessToken();
   });
 
-  // ─── initial state ──────────────────────────────────────────────────────
+  // ─── initial state / session bootstrap ──────────────────────────────────
 
-  describe('initial state', () => {
-    it('user is null with no stored token', async () => {
+  describe('initial state (session bootstrap)', () => {
+    it('user is null when the refresh-cookie bootstrap fails', async () => {
       const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
       await waitFor(() => expect(result.current.loading).toBe(false));
       expect(result.current.user).toBeNull();
     });
 
-    it('token is null with no stored token', async () => {
+    it('token is null when the refresh-cookie bootstrap fails', async () => {
       const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
       await waitFor(() => expect(result.current.loading).toBe(false));
       expect(result.current.token).toBeNull();
+      expect(getAccessToken()).toBeNull();
     });
 
-    it('loading resolves to false without stored token', async () => {
+    it('restores the session from the HttpOnly refresh cookie', async () => {
+      const axios = await import('axios');
+      routePost(axios.default, {
+        '/auth/refresh': { access_token: mockToken, user: mockUser },
+      });
+
       const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
       await waitFor(() => expect(result.current.loading).toBe(false));
+
+      expect(result.current.user).toEqual(mockUser);
+      expect(result.current.token).toBe(mockToken);
     });
 
-    it('loading becomes false when no token stored', async () => {
-      const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
-      await waitFor(() => expect(result.current.loading).toBe(false));
+    it('bootstrap refresh posts with credentials (cookie) to /auth/refresh', async () => {
+      const axios = await import('axios');
+      routePost(axios.default, {
+        '/auth/refresh': { access_token: mockToken, user: mockUser },
+      });
+
+      renderHook(() => useAuth(), { wrapper: AuthWrapper });
+      await waitFor(() => {
+        const calls = (axios.default.post as any).mock.calls;
+        expect(calls.some((c: unknown[]) => String(c[0]).includes('/auth/refresh'))).toBe(true);
+      });
+
+      const refreshCall = (axios.default.post as any).mock.calls.find((c: unknown[]) =>
+        String(c[0]).includes('/auth/refresh'),
+      );
+      expect(refreshCall[2]?.withCredentials).toBe(true);
     });
 
     it('throws if useAuth used outside provider', () => {
@@ -110,12 +162,9 @@ describe('AuthContext', () => {
   // ─── login ──────────────────────────────────────────────────────────────
 
   describe('login', () => {
-    it('sets user and token on success', async () => {
+    it('sets user and token in memory on success', async () => {
       const axios = await import('axios');
-      (axios.default.get as any).mockRejectedValue(new Error('no server'));
-      (axios.default.post as any).mockResolvedValueOnce({
-        data: { access_token: mockToken, refresh_token: mockRefreshToken, user: mockUser },
-      });
+      routePost(axios.default, { '/auth/login': loginResponse });
 
       const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
       await waitFor(() => expect(result.current.loading).toBe(false));
@@ -126,13 +175,12 @@ describe('AuthContext', () => {
 
       expect(result.current.user).toEqual(mockUser);
       expect(result.current.token).toBe(mockToken);
+      expect(getAccessToken()).toBe(mockToken);
     });
 
-    it('stores token in localStorage on success', async () => {
+    it('does NOT persist tokens or user to web storage (H-1 regression)', async () => {
       const axios = await import('axios');
-      (axios.default.post as any).mockResolvedValueOnce({
-        data: { access_token: mockToken, refresh_token: mockRefreshToken, user: mockUser },
-      });
+      routePost(axios.default, { '/auth/login': loginResponse });
 
       const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
       await waitFor(() => expect(result.current.loading).toBe(false));
@@ -141,16 +189,16 @@ describe('AuthContext', () => {
         await result.current.login('test@example.com', 'Valid@pass1');
       });
 
-      expect(localStorage.getItem('auth_token')).toBe(mockToken);
-      // Refresh token is delivered as an HttpOnly cookie now — never localStorage.
+      // Nothing auth-related may land in localStorage/sessionStorage.
+      expect(localStorage.getItem('auth_token')).toBeNull();
+      expect(localStorage.getItem('auth_user')).toBeNull();
       expect(localStorage.getItem('refresh_token')).toBeNull();
+      expect(sessionStorage.length).toBe(0);
     });
 
-    it('stores user in localStorage on success', async () => {
+    it('sends credentials with the login request (cookie establishment)', async () => {
       const axios = await import('axios');
-      (axios.default.post as any).mockResolvedValueOnce({
-        data: { access_token: mockToken, refresh_token: mockRefreshToken, user: mockUser },
-      });
+      routePost(axios.default, { '/auth/login': loginResponse });
 
       const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
       await waitFor(() => expect(result.current.loading).toBe(false));
@@ -159,12 +207,15 @@ describe('AuthContext', () => {
         await result.current.login('test@example.com', 'Valid@pass1');
       });
 
-      expect(JSON.parse(localStorage.getItem('auth_user')!)).toEqual(mockUser);
+      const loginCall = (axios.default.post as any).mock.calls.find((c: unknown[]) =>
+        String(c[0]).includes('/auth/login'),
+      );
+      expect(loginCall[2]?.withCredentials).toBe(true);
     });
 
     it('throws on failed login', async () => {
       const axios = await import('axios');
-      (axios.default.post as any).mockRejectedValueOnce(new Error('401'));
+      routePost(axios.default, { '/auth/login': new Error('401') });
 
       const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
       await waitFor(() => expect(result.current.loading).toBe(false));
@@ -178,7 +229,7 @@ describe('AuthContext', () => {
 
     it('user remains null on failed login', async () => {
       const axios = await import('axios');
-      (axios.default.post as any).mockRejectedValueOnce(new Error('401'));
+      routePost(axios.default, { '/auth/login': new Error('401') });
 
       const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
       await waitFor(() => expect(result.current.loading).toBe(false));
@@ -194,9 +245,7 @@ describe('AuthContext', () => {
 
     it('posts to correct login endpoint', async () => {
       const axios = await import('axios');
-      (axios.default.post as any).mockResolvedValueOnce({
-        data: { access_token: mockToken, refresh_token: mockRefreshToken, user: mockUser },
-      });
+      routePost(axios.default, { '/auth/login': loginResponse });
 
       const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
       await waitFor(() => expect(result.current.loading).toBe(false));
@@ -205,19 +254,19 @@ describe('AuthContext', () => {
         await result.current.login('test@example.com', 'Valid@pass1');
       });
 
-      const callUrl = (axios.default.post as any).mock.calls[0][0];
-      expect(callUrl).toContain('/api/v1/auth/login');
+      const loginCall = (axios.default.post as any).mock.calls.find((c: unknown[]) =>
+        String(c[0]).includes('/auth/login'),
+      );
+      expect(loginCall).toBeDefined();
     });
   });
 
   // ─── register ───────────────────────────────────────────────────────────
 
   describe('register', () => {
-    it('sets user and token on success', async () => {
+    it('sets user and token in memory on success', async () => {
       const axios = await import('axios');
-      (axios.default.post as any).mockResolvedValueOnce({
-        data: { access_token: mockToken, refresh_token: mockRefreshToken, user: mockUser },
-      });
+      routePost(axios.default, { '/auth/register': loginResponse });
 
       const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
       await waitFor(() => expect(result.current.loading).toBe(false));
@@ -230,11 +279,9 @@ describe('AuthContext', () => {
       expect(result.current.token).toBe(mockToken);
     });
 
-    it('stores token in localStorage on success', async () => {
+    it('does NOT persist tokens or user to web storage (H-1 regression)', async () => {
       const axios = await import('axios');
-      (axios.default.post as any).mockResolvedValueOnce({
-        data: { access_token: mockToken, refresh_token: mockRefreshToken, user: mockUser },
-      });
+      routePost(axios.default, { '/auth/register': loginResponse });
 
       const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
       await waitFor(() => expect(result.current.loading).toBe(false));
@@ -243,14 +290,15 @@ describe('AuthContext', () => {
         await result.current.register('test@example.com', 'Valid@pass1', 'Test', 'User');
       });
 
-      expect(localStorage.getItem('auth_token')).toBe(mockToken);
-      // Refresh token is delivered as an HttpOnly cookie now — never localStorage.
+      expect(localStorage.getItem('auth_token')).toBeNull();
+      expect(localStorage.getItem('auth_user')).toBeNull();
       expect(localStorage.getItem('refresh_token')).toBeNull();
+      expect(sessionStorage.length).toBe(0);
     });
 
     it('throws on failed register', async () => {
       const axios = await import('axios');
-      (axios.default.post as any).mockRejectedValueOnce(new Error('400'));
+      routePost(axios.default, { '/auth/register': new Error('400') });
 
       const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
       await waitFor(() => expect(result.current.loading).toBe(false));
@@ -264,9 +312,7 @@ describe('AuthContext', () => {
 
     it('posts to correct register endpoint', async () => {
       const axios = await import('axios');
-      (axios.default.post as any).mockResolvedValueOnce({
-        data: { access_token: mockToken, refresh_token: mockRefreshToken, user: mockUser },
-      });
+      routePost(axios.default, { '/auth/register': loginResponse });
 
       const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
       await waitFor(() => expect(result.current.loading).toBe(false));
@@ -275,15 +321,15 @@ describe('AuthContext', () => {
         await result.current.register('test@example.com', 'Valid@pass1', 'Test', 'User');
       });
 
-      const callUrl = (axios.default.post as any).mock.calls[0][0];
-      expect(callUrl).toContain('/api/v1/auth/register');
+      const registerCall = (axios.default.post as any).mock.calls.find((c: unknown[]) =>
+        String(c[0]).includes('/auth/register'),
+      );
+      expect(registerCall).toBeDefined();
     });
 
     it('sends first and last name in register payload', async () => {
       const axios = await import('axios');
-      (axios.default.post as any).mockResolvedValueOnce({
-        data: { access_token: mockToken, refresh_token: mockRefreshToken, user: mockUser },
-      });
+      routePost(axios.default, { '/auth/register': loginResponse });
 
       const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
       await waitFor(() => expect(result.current.loading).toBe(false));
@@ -292,9 +338,11 @@ describe('AuthContext', () => {
         await result.current.register('test@example.com', 'Valid@pass1', 'John', 'Doe');
       });
 
-      const payload = (axios.default.post as any).mock.calls[0][1];
-      expect(payload.first_name).toBe('John');
-      expect(payload.last_name).toBe('Doe');
+      const registerCall = (axios.default.post as any).mock.calls.find((c: unknown[]) =>
+        String(c[0]).includes('/auth/register'),
+      );
+      expect(registerCall[1].first_name).toBe('John');
+      expect(registerCall[1].last_name).toBe('Doe');
     });
   });
 
@@ -303,8 +351,9 @@ describe('AuthContext', () => {
   describe('logout', () => {
     it('clears user on logout', async () => {
       const axios = await import('axios');
-      (axios.default.post as any).mockResolvedValueOnce({
-        data: { access_token: mockToken, refresh_token: mockRefreshToken, user: mockUser },
+      routePost(axios.default, {
+        '/auth/login': loginResponse,
+        '/auth/logout': { message: 'Logged out successfully' },
       });
 
       const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
@@ -314,15 +363,18 @@ describe('AuthContext', () => {
         await result.current.login('test@example.com', 'Valid@pass1');
       });
 
-      act(() => result.current.logout());
+      await act(async () => {
+        await result.current.logout();
+      });
 
       expect(result.current.user).toBeNull();
     });
 
-    it('clears token on logout', async () => {
+    it('calls the revocation endpoint and clears the in-memory token', async () => {
       const axios = await import('axios');
-      (axios.default.post as any).mockResolvedValueOnce({
-        data: { access_token: mockToken, refresh_token: mockRefreshToken, user: mockUser },
+      routePost(axios.default, {
+        '/auth/login': loginResponse,
+        '/auth/logout': { message: 'Logged out successfully' },
       });
 
       const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
@@ -331,16 +383,26 @@ describe('AuthContext', () => {
       await act(async () => {
         await result.current.login('test@example.com', 'Valid@pass1');
       });
+      expect(getAccessToken()).toBe(mockToken);
 
-      act(() => result.current.logout());
+      await act(async () => {
+        await result.current.logout();
+      });
 
+      const logoutCall = (axios.default.post as any).mock.calls.find((c: unknown[]) =>
+        String(c[0]).includes('/auth/logout'),
+      );
+      expect(logoutCall).toBeDefined();
+      expect(logoutCall[2]?.withCredentials).toBe(true);
+      expect(getAccessToken()).toBeNull();
       expect(result.current.token).toBeNull();
     });
 
-    it('removes token from localStorage on logout', async () => {
+    it('clears local state even when the logout endpoint fails', async () => {
       const axios = await import('axios');
-      (axios.default.post as any).mockResolvedValueOnce({
-        data: { access_token: mockToken, refresh_token: mockRefreshToken, user: mockUser },
+      routePost(axios.default, {
+        '/auth/login': loginResponse,
+        '/auth/logout': new Error('network down'),
       });
 
       const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
@@ -350,44 +412,14 @@ describe('AuthContext', () => {
         await result.current.login('test@example.com', 'Valid@pass1');
       });
 
-      act(() => result.current.logout());
-
-      expect(localStorage.getItem('auth_token')).toBeNull();
-      expect(localStorage.getItem('refresh_token')).toBeNull();
-      expect(localStorage.getItem('auth_user')).toBeNull();
-    });
-  });
-
-  // ─── stored token rehydration ────────────────────────────────────────────
-
-  describe('stored token rehydration', () => {
-    it('restores user from localStorage on mount', async () => {
-      localStorage.setItem('auth_token', mockToken);
-      localStorage.setItem('auth_user', JSON.stringify(mockUser));
-
-      const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
-      await waitFor(() => expect(result.current.loading).toBe(false));
-
-      expect(result.current.user).toEqual(mockUser);
-      expect(result.current.token).toBe(mockToken);
-    });
-
-    it('clears state when stored user JSON is corrupt', async () => {
-      localStorage.setItem('auth_token', mockToken);
-      localStorage.setItem('auth_user', 'not-valid-json{{{');
-
-      const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
-      await waitFor(() => expect(result.current.loading).toBe(false));
+      // Network failure on logout must not keep the client logged in.
+      await act(async () => {
+        await result.current.logout();
+      });
 
       expect(result.current.user).toBeNull();
-      expect(localStorage.getItem('auth_token')).toBeNull();
-    });
-
-    it('loading becomes false when no stored token present', async () => {
-      const { result } = renderHook(() => useAuth(), { wrapper: AuthWrapper });
-      await waitFor(() => expect(result.current.loading).toBe(false));
-
-      expect(result.current.loading).toBe(false);
+      expect(result.current.token).toBeNull();
+      expect(getAccessToken()).toBeNull();
     });
   });
 });

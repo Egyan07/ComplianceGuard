@@ -16,6 +16,8 @@ from app.core.database import Base, get_db
 from app.core.auth import get_password_hash
 from app.models.user import User
 from app.api.auth import validate_password_strength
+from app.core import email as email_mod
+from app.core.token_hash import looks_hashed
 
 
 # ─── In-memory DB setup ──────────────────────────────────────────────────────
@@ -48,6 +50,46 @@ def setup_db():
 @pytest.fixture
 def client():
     return TestClient(app)
+
+
+@pytest.fixture
+def sent_emails(monkeypatch):
+    """Capture tokens passed to the email layer (EMAIL_ENABLED=false is a log
+    no-op, so tests grab the raw token where the email payload is built).
+
+    M-2: only a hash of the token is stored in the DB — the raw value is
+    handed to send_*_email, so that is the place to observe it.
+    """
+    import app.api.auth.password as password_mod
+    import app.api.auth.session as session_mod
+    import app.api.auth.verification as verification_mod
+    captured: list[tuple[str, str]] = []
+
+    async def fake_reset(email, token):
+        captured.append(("reset", token))
+
+    async def fake_verify(email, token):
+        captured.append(("verify", token))
+
+    monkeypatch.setattr(password_mod, "send_password_reset_email", fake_reset)
+    monkeypatch.setattr(session_mod, "send_verification_email", fake_verify)
+    monkeypatch.setattr(verification_mod, "send_verification_email", fake_verify)
+    return captured
+
+
+def _captured_token(sent_emails, kind, email_recipient=""):
+    matches = [t for k, t in sent_emails if k == kind]
+    assert matches, f"no {kind} email captured"
+    return matches[-1]
+
+
+def _token_row(email):
+    """Fetch the user row holding the hashed one-time token."""
+    db = TestSession()
+    try:
+        return db.query(User).filter(User.email == email).first()
+    finally:
+        db.close()
 
 
 @pytest.fixture
@@ -141,7 +183,9 @@ class TestRegisterEndpoint:
             "password": "Valid@pass1",
         })
         assert res.status_code == 400
-        assert "already exists" in res.json()["detail"]
+        # L-1: the message must not confirm the email exists (enumeration).
+        assert "Unable to register with this email address" in res.json()["detail"]
+        assert "already exists" not in res.json()["detail"]
 
     def test_successful_register_returns_token(self, client):
         res = client.post("/api/v1/auth/register", json={
@@ -182,30 +226,30 @@ class TestEmailVerification:
         res = client.post("/api/v1/auth/verify-email", json={"token": "badtoken"})
         assert res.status_code == 400
 
-    def test_valid_token_verifies_user(self, client):
-        # Register user and get verification token from DB
+    def test_valid_token_verifies_user(self, client, sent_emails):
+        # Register user; the raw verification token goes to the email layer.
         client.post("/api/v1/auth/register", json={
             "email": "verify@test.com",
             "password": "Valid@pass1",
         })
+        token = _captured_token(sent_emails, "verify")
         db = TestSession()
         user = db.query(User).filter(User.email == "verify@test.com").first()
-        token = user.verification_token
+        # M-2 regression: DB stores a hash, never the raw token.
+        assert user.verification_token != token
+        assert looks_hashed(user.verification_token)
         db.close()
 
         res = client.post("/api/v1/auth/verify-email", json={"token": token})
         assert res.status_code == 200
         assert res.json()["message"] == "Email verified successfully"
 
-    def test_token_nulled_after_verification(self, client):
+    def test_token_nulled_after_verification(self, client, sent_emails):
         client.post("/api/v1/auth/register", json={
             "email": "verify2@test.com",
             "password": "Valid@pass1",
         })
-        db = TestSession()
-        user = db.query(User).filter(User.email == "verify2@test.com").first()
-        token = user.verification_token
-        db.close()
+        token = _captured_token(sent_emails, "verify")
 
         client.post("/api/v1/auth/verify-email", json={"token": token})
 
@@ -215,15 +259,12 @@ class TestEmailVerification:
         assert user.is_verified is True
         db.close()
 
-    def test_reusing_token_fails(self, client):
+    def test_reusing_token_fails(self, client, sent_emails):
         client.post("/api/v1/auth/register", json={
             "email": "verify3@test.com",
             "password": "Valid@pass1",
         })
-        db = TestSession()
-        user = db.query(User).filter(User.email == "verify3@test.com").first()
-        token = user.verification_token
-        db.close()
+        token = _captured_token(sent_emails, "verify")
 
         client.post("/api/v1/auth/verify-email", json={"token": token})
         res = client.post("/api/v1/auth/verify-email", json={"token": token})
@@ -253,12 +294,13 @@ class TestPasswordReset:
         })
         assert res.status_code == 400
 
-    def test_reset_with_weak_password_400(self, client, registered_user):
+    def test_reset_with_weak_password_400(self, client, registered_user, sent_emails):
         client.post("/api/v1/auth/forgot-password", json={"email": "valid@test.com"})
-        db = TestSession()
-        user = db.query(User).filter(User.email == "valid@test.com").first()
-        token = user.reset_token
-        db.close()
+        token = _captured_token(sent_emails, "reset")
+        # M-2 regression: the stored value is the hash, not the raw token.
+        row = _token_row("valid@test.com")
+        assert row.reset_token != token
+        assert looks_hashed(row.reset_token)
 
         res = client.post("/api/v1/auth/reset-password", json={
             "token": token,
@@ -267,12 +309,9 @@ class TestPasswordReset:
         assert res.status_code == 400
         assert "Password must contain" in res.json()["detail"]
 
-    def test_valid_reset_succeeds(self, client, registered_user):
+    def test_valid_reset_succeeds(self, client, registered_user, sent_emails):
         client.post("/api/v1/auth/forgot-password", json={"email": "valid@test.com"})
-        db = TestSession()
-        user = db.query(User).filter(User.email == "valid@test.com").first()
-        token = user.reset_token
-        db.close()
+        token = _captured_token(sent_emails, "reset")
 
         res = client.post("/api/v1/auth/reset-password", json={
             "token": token,
@@ -281,12 +320,9 @@ class TestPasswordReset:
         assert res.status_code == 200
         assert res.json()["message"] == "Password reset successfully"
 
-    def test_can_login_with_new_password_after_reset(self, client, registered_user):
+    def test_can_login_with_new_password_after_reset(self, client, registered_user, sent_emails):
         client.post("/api/v1/auth/forgot-password", json={"email": "valid@test.com"})
-        db = TestSession()
-        user = db.query(User).filter(User.email == "valid@test.com").first()
-        token = user.reset_token
-        db.close()
+        token = _captured_token(sent_emails, "reset")
 
         client.post("/api/v1/auth/reset-password", json={
             "token": token,
@@ -299,12 +335,9 @@ class TestPasswordReset:
         })
         assert login.status_code == 200
 
-    def test_old_password_fails_after_reset(self, client, registered_user):
+    def test_old_password_fails_after_reset(self, client, registered_user, sent_emails):
         client.post("/api/v1/auth/forgot-password", json={"email": "valid@test.com"})
-        db = TestSession()
-        user = db.query(User).filter(User.email == "valid@test.com").first()
-        token = user.reset_token
-        db.close()
+        token = _captured_token(sent_emails, "reset")
 
         client.post("/api/v1/auth/reset-password", json={
             "token": token,
@@ -317,12 +350,9 @@ class TestPasswordReset:
         })
         assert login.status_code == 401
 
-    def test_token_cleared_after_reset(self, client, registered_user):
+    def test_token_cleared_after_reset(self, client, registered_user, sent_emails):
         client.post("/api/v1/auth/forgot-password", json={"email": "valid@test.com"})
-        db = TestSession()
-        user = db.query(User).filter(User.email == "valid@test.com").first()
-        token = user.reset_token
-        db.close()
+        token = _captured_token(sent_emails, "reset")
 
         client.post("/api/v1/auth/reset-password", json={
             "token": token,

@@ -60,14 +60,20 @@ def client_and_tokens():
     resp = client.post("/api/v1/auth/login", data={
         "username": "rotate@example.com",
         "password": "Rotate@1pass",
-    })
+    }, headers=DESKTOP_HEADERS)
     body = resp.json()
     yield client, body["refresh_token"]
     app.dependency_overrides.clear()
 
 
+# H-1: body-based refresh tokens are returned only to desktop clients.
+# These tests exercise the body-token (Electron) contract, so they must
+# present the desktop client-type header.
+DESKTOP_HEADERS = {"X-Client-Type": "desktop"}
+
+
 def _refresh(client, token):
-    return client.post("/api/v1/auth/refresh", json={"refresh_token": token})
+    return client.post("/api/v1/auth/refresh", json={"refresh_token": token}, headers=DESKTOP_HEADERS)
 
 
 def _db_row(jti_hint=None):
@@ -172,7 +178,7 @@ class TestRotation:
         resp = client.post("/api/v1/auth/login", data={
             "username": "rotate@example.com",
             "password": "Rotate@1pass",
-        })
+        }, headers=DESKTOP_HEADERS)
         token_c = resp.json()["refresh_token"]
         assert _find_row(token_b).family_id != _find_row(token_c).family_id
         # A was revoked by the rotation; B (the rotated token) and C are live.

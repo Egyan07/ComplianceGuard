@@ -24,12 +24,27 @@ REFRESH_COOKIE_NAME = "refresh_token"
 REFRESH_COOKIE_PATH = "/api/v1/auth"
 
 
+def _cookie_secure() -> bool:
+    """Whether the refresh cookie must carry the Secure flag.
+
+    Derived from the deployment ENVIRONMENT, never from DEBUG — transport
+    security and debug verbosity are unrelated concerns, and tying Secure to
+    DEBUG has no influence on cookie security. COOKIE_SECURE, when set explicitly,
+    always wins (e.g. force Secure on a staging deployment behind TLS).
+    """
+    if settings.cookie_secure is not None:
+        return settings.cookie_secure
+    from app.core.config import Environment
+
+    return settings.environment == Environment.PRODUCTION
+
+
 def _set_refresh_cookie(response: Response, token: str) -> None:
     response.set_cookie(
         key=REFRESH_COOKIE_NAME,
         value=token,
         httponly=True,
-        secure=not settings.debug,  # False over http in dev/test; True (https) in prod
+        secure=_cookie_secure(),
         samesite="strict",
         path=REFRESH_COOKIE_PATH,
         max_age=REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
@@ -63,6 +78,12 @@ def validate_password_strength(password: str) -> list[str]:
     errors = []
     if len(password) < settings.password_min_length:
         errors.append(f"at least {settings.password_min_length} characters")
+    # bcrypt hashes only the first 72 BYTES and silently ignores the rest —
+    # without this check two long passwords sharing a 72-byte prefix would be
+    # equivalent. Byte length, not character count: multibyte characters count
+    # for more than one byte.
+    if len(password.encode("utf-8")) > 72:
+        errors.append("at most 72 bytes")
     if settings.password_require_uppercase and not re.search(r"[A-Z]", password):
         errors.append("an uppercase letter")
     if settings.password_require_lowercase and not re.search(r"[a-z]", password):

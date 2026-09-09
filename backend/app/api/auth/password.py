@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 
 from app.api.auth.helpers import validate_password_strength
 from app.api.auth.schemas import ForgotPasswordRequest, ResetPasswordRequest
+from app.core.token_hash import hash_token, verify_stored_token
 
 router = APIRouter()
 
@@ -35,13 +36,16 @@ async def forgot_password(
     """
     user = db.query(User).filter(User.email == request_data.email).first()
     if user:
-        user.reset_token = secrets.token_urlsafe(32)
+        # M-2: store only a SHA-256 hash of the token — a DB read leak must
+        # not yield usable reset links. The raw token goes to the email only.
+        reset_token = secrets.token_urlsafe(32)
+        user.reset_token = hash_token(reset_token)
         user.reset_token_expires = datetime.now(timezone.utc) + timedelta(hours=1)
         db.commit()
         # Send reset email (no-op if EMAIL_ENABLED=false)
         # SMTP failures are logged but must not surface to the client
         try:
-            await send_password_reset_email(user.email, user.reset_token)
+            await send_password_reset_email(user.email, reset_token)
         except Exception:
             logging.getLogger(__name__).error(
                 "Failed to send reset email to %s", user.email, exc_info=True
@@ -58,7 +62,23 @@ async def reset_password(
     db: Session = Depends(get_db),
 ):
     """Reset password using a valid reset token."""
-    user = db.query(User).filter(User.reset_token == request_data.token).first()
+    # M-2: tokens are stored hashed, so lookup is by hash of the presented
+    # token. Legacy plaintext rows (pre-hashing) still verify via
+    # verify_stored_token's fallback, so outstanding pre-upgrade links work.
+    user = (
+        db.query(User)
+        .filter(User.reset_token == hash_token(request_data.token))
+        .first()
+    )
+    if user is None:
+        # Legacy plaintext fallback: scan rows whose stored value is not a
+        # 64-char hex hash and compare directly (bounded by legacy rows only).
+        for candidate in db.query(User).filter(User.reset_token.isnot(None)).all():
+            stored = candidate.reset_token or ""
+            if len(stored) != 64 or any(c not in "0123456789abcdef" for c in stored):
+                if verify_stored_token(request_data.token, stored):
+                    user = candidate
+                    break
 
     if not user or not user.reset_token_expires:
         raise HTTPException(
@@ -93,6 +113,7 @@ async def reset_password(
     user.hashed_password = await asyncio.to_thread(get_password_hash, request_data.new_password)
     user.reset_token = None
     user.reset_token_expires = None
+    # Single-use semantics: a consumed token can never be replayed.
     # Revoke all of the user's active refresh tokens — a password reset must
     # evict any attacker already holding a refresh token, otherwise the reset
     # does not contain the compromise.

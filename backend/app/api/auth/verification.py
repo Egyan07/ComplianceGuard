@@ -13,6 +13,7 @@ from app.core.email import send_verification_email
 from sqlalchemy.orm import Session
 
 from app.api.auth.schemas import VerifyEmailRequest
+from app.core.token_hash import hash_token, verify_stored_token
 
 router = APIRouter()
 
@@ -23,7 +24,20 @@ async def verify_email(
     db: Session = Depends(get_db),
 ):
     """Verify a user's email address using the verification token."""
-    user = db.query(User).filter(User.verification_token == request.token).first()
+    # M-2: tokens are stored hashed; legacy plaintext rows still verify via
+    # the bounded fallback scan in verify_stored_token usage below.
+    user = (
+        db.query(User)
+        .filter(User.verification_token == hash_token(request.token))
+        .first()
+    )
+    if user is None:
+        for candidate in db.query(User).filter(User.verification_token.isnot(None)).all():
+            stored = candidate.verification_token or ""
+            if len(stored) != 64 or any(c not in "0123456789abcdef" for c in stored):
+                if verify_stored_token(request.token, stored):
+                    user = candidate
+                    break
     if not user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -58,10 +72,12 @@ async def resend_verification(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already verified",
         )
-    current_user.verification_token = secrets.token_urlsafe(32)
+    # M-2: persist only the hash; the raw token goes to the email only.
+    verification_token = secrets.token_urlsafe(32)
+    current_user.verification_token = hash_token(verification_token)
     db.commit()
     try:
-        await send_verification_email(current_user.email, current_user.verification_token)
+        await send_verification_email(current_user.email, verification_token)
     except Exception:
         logging.getLogger(__name__).error(
             "Failed to resend verification email to %s", current_user.email, exc_info=True

@@ -12,11 +12,16 @@ const os = require('os');
  *
  * Stored formats:
  *   'enc:<base64>'  — real encryption via OS-level safeStorage
- *   'fb:<base64>'   — fallback AES-256-GCM using a machine-derived key.
- *                     NOT equivalent to OS encryption — an attacker with the
- *                     SQLite file AND the host still gets the plaintext —
- *                     but is meaningfully better than literal plaintext in
- *                     headless environments where safeStorage is unavailable.
+ *   'fb:<base64>'   — DEPRECATED opt-in fallback (see below).
+ *
+ * M-1 remediation: the old automatic fallback derived an AES key from
+ * username|hostname — public information, so the ciphertext protected
+ * nothing beyond casual file theft while looking like "secure storage".
+ * The fallback is now OPT-IN ONLY via CG_ALLOW_INSECURE_STORAGE=1, for
+ * operators who explicitly accept the risk on headless Linux hosts. Without
+ * that flag, encryptString refuses rather than silently downgrading a
+ * credential store — callers surface a clear "reconnect in Settings" error
+ * instead of pretending the value is protected.
  *
  * Legacy plaintext values (no prefix) are returned as-is on read, so we
  * migrate transparently the next time they're written.
@@ -34,12 +39,21 @@ function _warnFallbackOnce() {
   if (_fallbackWarned) return;
   _fallbackWarned = true;
   log.warn(
-    'SECURITY WARNING: Electron safeStorage is unavailable on this host. ' +
-    'Secure-storage values are being protected with a machine-derived key ' +
-    'fallback only — an attacker with local filesystem access can recover ' +
-    'them. Run this app on a platform with an OS keychain (macOS Keychain, ' +
-    'Windows DPAPI, or libsecret on Linux) to restore full protection.'
+    'SECURITY WARNING: Electron safeStorage is unavailable and ' +
+    'CG_ALLOW_INSECURE_STORAGE=1 is set — secrets are protected ONLY by a ' +
+    'machine-derived key (username|hostname, not secret material). Anyone ' +
+    'with the database file can recover them. Run on a platform with an OS ' +
+    'keychain to restore real protection.'
   );
+}
+
+/**
+ * True when the operator explicitly opted into the insecure fallback.
+ * Nothing else enables it — silently downgrading a credential store is
+ * exactly the failure mode this module exists to prevent.
+ */
+function _fallbackAllowed() {
+  return process.env.CG_ALLOW_INSECURE_STORAGE === '1';
 }
 
 function _fallbackKey() {
@@ -64,6 +78,17 @@ function encryptString(plaintext) {
   if (isAvailable()) {
     const { safeStorage } = require('electron');
     return SAFE_PREFIX + safeStorage.encryptString(plaintext).toString('base64');
+  }
+
+  // M-1: refuse to pretend username|hostname is a secret. The insecure
+  // fallback exists only behind an explicit operator opt-in.
+  if (!_fallbackAllowed()) {
+    throw new Error(
+      'OS secure storage (keychain/DPAPI) is unavailable on this host, so ' +
+      'credentials cannot be stored safely. To store them anyway with only ' +
+      'obfuscation-level protection, set CG_ALLOW_INSECURE_STORAGE=1. ' +
+      'Otherwise reconnect cloud sync on a host with a keychain.'
+    );
   }
 
   _warnFallbackOnce();
@@ -102,7 +127,9 @@ function decryptString(stored) {
     }
   }
 
-  // Fallback path (fb:) — AES-256-GCM with machine-derived key.
+  // Fallback path (fb:) — AES-256-GCM with machine-derived key. Decryption
+  // of previously-written fb: values stays possible regardless of the opt-in
+  // flag so an operator who flips the flag off can still read/disconnect.
   _warnFallbackOnce();
   try {
     const blob = Buffer.from(stored.slice(FALLBACK_PREFIX.length), 'base64');
