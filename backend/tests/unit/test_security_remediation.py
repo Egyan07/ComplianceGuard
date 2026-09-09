@@ -381,3 +381,47 @@ class TestMachineSyncRace:
         finally:
             db.rollback()
             db.close()
+
+
+class TestApiDocsGating:
+    """API docs (/docs, /redoc, /openapi.json) are production-gated.
+
+    The OpenAPI schema enumerates every route and schema, so public
+    deployments (e.g. Railway, where no nginx 404s these paths) must not
+    serve them by default. Settings.serve_api_docs decides.
+    """
+
+    def test_disabled_in_production_by_default(self, monkeypatch):
+        from app.core.config import Environment, Settings
+
+        monkeypatch.setenv("SECRET_KEY", "x" * 32)
+        settings = Settings(environment=Environment.PRODUCTION, _env_file=None)
+        assert settings.serve_api_docs is False
+
+    def test_enabled_in_development_by_default(self, monkeypatch):
+        from app.core.config import Environment, Settings
+
+        settings = Settings(environment=Environment.DEVELOPMENT, _env_file=None)
+        assert settings.serve_api_docs is True
+
+    def test_explicit_override_wins_in_production(self, monkeypatch):
+        from app.core.config import Environment, Settings
+
+        monkeypatch.setenv("SECRET_KEY", "x" * 32)
+        settings = Settings(
+            environment=Environment.PRODUCTION, api_docs_enabled=True, _env_file=None
+        )
+        assert settings.serve_api_docs is True
+
+    def test_explicit_override_wins_in_development(self, monkeypatch):
+        from app.core.config import Environment, Settings
+
+        settings = Settings(
+            environment=Environment.DEVELOPMENT, api_docs_enabled=False, _env_file=None
+        )
+        assert settings.serve_api_docs is False
+
+    def test_app_serves_openapi_outside_production(self):
+        # The module-level test app runs outside production, so the schema
+        # is mounted; in production FastAPI gets openapi_url=None.
+        assert app.openapi_url == "/openapi.json"

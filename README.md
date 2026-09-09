@@ -201,7 +201,7 @@ cp .env.example .env          # configure your settings
 docker-compose up -d
 ```
 
-App at `http://localhost` (nginx proxy), API docs at `http://localhost:8000/docs`. Requires [Docker](https://docs.docker.com/get-docker/).
+App at `http://localhost` (nginx proxy). Requires [Docker](https://docs.docker.com/get-docker/). In development (`docker-compose -f docker-compose.yml -f docker-compose.dev.yml up`), the backend is also reachable directly at `http://localhost:8000` with interactive API docs at `http://localhost:8000/docs`. Production deployments serve the API only through nginx and disable the public API docs and OpenAPI schema.
 
 One-click Railway deploy:
 

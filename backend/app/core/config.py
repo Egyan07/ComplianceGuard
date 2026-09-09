@@ -92,6 +92,19 @@ class Settings(BaseSettings):
     # explicitly always wins — DEBUG has no influence on cookie security.
     cookie_secure: Optional[bool] = Field(None)
 
+    # Interactive API docs (/docs, /redoc, /openapi.json). When None (default),
+    # they are served outside production and disabled in production — the
+    # public schema enumerates every endpoint, which is attacker recon. Set
+    # API_DOCS_ENABLED=true to force them on behind an authenticated proxy.
+    api_docs_enabled: Optional[bool] = Field(None)
+
+    @property
+    def serve_api_docs(self) -> bool:
+        """Whether /docs, /redoc, and /openapi.json should be served."""
+        if self.api_docs_enabled is not None:
+            return self.api_docs_enabled
+        return self.environment != Environment.PRODUCTION
+
     # Security settings
     password_min_length: int = Field(8)
     password_require_uppercase: bool = Field(True)

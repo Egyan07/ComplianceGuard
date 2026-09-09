@@ -190,11 +190,20 @@ async def lifespan(app: FastAPI):
         pass
 
 
+# Interactive API docs (/docs, /redoc, /openapi.json) are served outside
+# production and disabled in production unless API_DOCS_ENABLED=true (see
+# Settings.serve_api_docs). The OpenAPI schema enumerates every route,
+# parameter, and schema in the API — useful recon for an attacker — so public
+# deployments (e.g. Railway, where there is no nginx 404-ing these paths)
+# must not serve them by default.
 app = FastAPI(
     title="ComplianceGuard SOC 2 API",
     description="Backend API for SOC 2 compliance automation platform",
     version=VERSION,
     lifespan=lifespan,
+    docs_url="/docs" if settings.serve_api_docs else None,
+    redoc_url="/redoc" if settings.serve_api_docs else None,
+    openapi_url="/openapi.json" if settings.serve_api_docs else None,
 )
 
 app.state.limiter = limiter

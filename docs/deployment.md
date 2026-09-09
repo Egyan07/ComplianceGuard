@@ -86,7 +86,7 @@ CORS_ORIGINS=["https://complianceguard.yourdomain.com"]
 docker-compose up -d
 ```
 
-The app is at `http://localhost` (nginx proxy). API docs at `http://localhost:8000/docs` (Swagger/redoc and `/metrics` are blocked from the public internet by nginx; port-forward to the backend container for internal access).
+The app is at `http://localhost` (nginx proxy). The health probe is proxied at `http://localhost/health`. Interactive API docs (`/docs`, `/redoc`, `/openapi.json`) and `/metrics` are not publicly served: nginx returns 404 for them, and the backend additionally disables the docs in production unless `API_DOCS_ENABLED=true` (port-forward to the backend container for internal access).
 
 ### 4. Production hardening
 

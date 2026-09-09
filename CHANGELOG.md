@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [Unreleased]
+
+### Security
+
+- **API docs gated by environment:** `/docs`, `/redoc`, and `/openapi.json` are
+  served outside production and disabled in production unless
+  `API_DOCS_ENABLED=true`. The OpenAPI schema enumerates every route and
+  schema, and public platforms without an nginx layer (e.g. Railway) were
+  serving it by default.
+
+### Fixed
+
+- `electron/scheduler.test.js` no longer flakes under load: the two
+  end-to-end assertions get a 30s budget, and module state (the 60s interval
+  and the in-flight guard) is reset after every test instead of leaking.
+
 ## [4.1.0] — 2026-09-09
 
 ### Security

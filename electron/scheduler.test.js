@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // electron is stubbed via preload (vitest.electron.preload.cjs) and resolve.alias,
 // both pointing to __mocks__/electron.js — same CJS cache entry as scheduler.js uses.
@@ -18,7 +18,7 @@ vi.mock('./system/collector', () => ({
   collectEvidence: vi.fn().mockResolvedValue({}),
 }));
 
-import { calcNextRunAt, checkAndRun, start } from './scheduler.js';
+import { calcNextRunAt, checkAndRun, start, stop } from './scheduler.js';
 
 const makeDb = (overrides = {}) => ({
   ensureScheduleTask: vi.fn().mockResolvedValue(undefined),
@@ -33,6 +33,12 @@ const makeDb = (overrides = {}) => ({
   updateScheduleResult: vi.fn().mockResolvedValue(undefined),
   ...overrides,
 });
+
+// Hygiene: every start() registers a real 60s interval on module state, and
+// runCollection() flips a module-level _isRunning guard. Clear both after each
+// test — a timed-out run must not poison later tests with 'already in
+// progress' or leaked timers.
+afterEach(() => stop());
 
 describe('collector wiring (platform routing)', () => {
   it('uses the platform-aware collector, not the Windows-only collector', () => {
@@ -112,7 +118,10 @@ describe('checkAndRun', () => {
       expect.any(String),
       expect.objectContaining({ success: true }),
     );
-  });
+    // End-to-end through several await hops; under a loaded CI runner the
+    // default 5s timeout is too tight (the flake fired three times in one
+    // day). The assertions are unchanged, only the budget grows.
+  }, 30_000);
 
   it('calls updateScheduleResult with success:false when collection throws', async () => {
     const processor = {
@@ -126,7 +135,7 @@ describe('checkAndRun', () => {
       expect.any(String),
       expect.objectContaining({ success: false, error: 'WMI timeout' }),
     );
-  });
+  }, 30_000);
 });
 
 describe('start', () => {
