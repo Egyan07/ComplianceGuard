@@ -30,7 +30,6 @@ The fastest path to a running instance:
 | `DATABASE_URL` | Auto-set | Railway fills this from the Postgres service |
 | `CORS_ORIGINS` | ✅ | `["https://your-app.up.railway.app"]` |
 | `ENVIRONMENT` | ✅ | `production` |
-| `DEBUG` | ✅ | `false` |
 
 4. The app is live at `https://your-app.up.railway.app`
 
@@ -57,7 +56,6 @@ cp .env.example .env
 # Required
 SECRET_KEY=$(openssl rand -hex 32)
 ENVIRONMENT=production
-DEBUG=false
 
 # Database — docker-compose fills DB_USER/DB_PASSWORD/DB_NAME automatically
 DATABASE_URL=postgresql://complianceguard:complianceguard@db:5432/complianceguard
@@ -93,9 +91,9 @@ The app is at `http://localhost` (nginx proxy). The health probe is proxied at `
 | Task | How |
 |------|-----|
 | **HTTPS** | Place an SSL cert in `ssl/` and uncomment the HTTPS server block in `nginx.conf` |
-| **Firewall** | Block ports except 80/443. PostgreSQL (5432) is localhost-only by default |
+| **Firewall** | Block everything except 80/443. Compose also publishes 3000 (frontend) and 127.0.0.1:5432 (PostgreSQL, host-local only); restrict 3000 to trusted networks or remove the publish if clients only need the nginx entry point |
 | **Backups** | Run `./scripts/db-backup.sh` nightly (cron or systemd timer) |
-| **Workers** | Set `WORKERS=4` and `RATELIMIT_STORAGE_URI=redis://redis:6379/0` for multi-worker. Scaled-out production (WORKERS>1 or REPLICAS>1) **refuses to start** without shared limiter storage — this is intentional (M-3) |
+| **Workers** | Set the `WORKERS` **environment variable** (not just uvicorn's `--workers` flag — the scale-out guard reads the env var) and `RATELIMIT_STORAGE_URI=redis://redis:6379/0` for multi-worker. Scaled-out production (WORKERS>1 or REPLICAS>1) **refuses to start** without shared limiter storage — this is intentional |
 | **Secrets** | Use Docker secrets or a vault — never commit `.env` to version control |
 
 ---
@@ -115,16 +113,22 @@ Render → New → PostgreSQL → note the Internal Database URL.
   ```
 - **Start Command:**
   ```bash
-  cd backend && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
+  cd backend && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers "$WORKERS"
   ```
 - **Environment Variables:**
   ```
   DATABASE_URL=<internal-db-url>
   SECRET_KEY=<openssl rand -hex 32>
   ENVIRONMENT=production
-  DEBUG=false
+  WORKERS=2
+  # Required whenever WORKERS>1 — the app refuses to start without it:
+  RATELIMIT_STORAGE_URI=redis://<your-redis>:6379/0
   CORS_ORIGINS=["https://your-app.onrender.com"]
   ```
+
+> Keep the `WORKERS` env var in sync with the actual worker count. The
+> startup guard that protects rate-limit correctness reads the env var, not
+> uvicorn's `--workers` flag.
 
 ### 3. Create a Static Site (frontend)
 
@@ -149,7 +153,7 @@ pip install -r requirements.txt
 alembic upgrade head
 
 # Run with systemd (see below)
-uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 2
+uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers "$WORKERS"
 ```
 
 ### Frontend
@@ -175,7 +179,10 @@ WorkingDirectory=/opt/ComplianceGuard/backend
 Environment=DATABASE_URL=postgresql://user:pass@localhost:5432/complianceguard
 Environment=SECRET_KEY=<your-key>
 Environment=ENVIRONMENT=production
-ExecStart=/opt/ComplianceGuard/backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 2
+# WORKERS>1 also requires RATELIMIT_STORAGE_URI (shared Redis), or startup fails:
+Environment=WORKERS=2
+Environment=RATELIMIT_STORAGE_URI=redis://localhost:6379/0
+ExecStart=/opt/ComplianceGuard/backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers ${WORKERS}
 Restart=always
 
 [Install]
@@ -190,8 +197,8 @@ PostgreSQL is the recommended production database. Key settings:
 
 | Setting | Default | Notes |
 |---------|---------|-------|
-| `DB_POOL_SIZE` | 20 | Connections per worker |
-| `DB_MAX_OVERFLOW` | 10 | Extra connections under load |
+| `DB_POOL_SIZE` | 5 | Connections per worker |
+| `DB_MAX_OVERFLOW` | 5 | Extra connections under load |
 | `DB_POOL_TIMEOUT` | 30 | Seconds to wait for a connection |
 | `DB_POOL_RECYCLE` | 1800 | Recycle connections every 30 min |
 
@@ -200,9 +207,9 @@ below your PostgreSQL `max_connections` (default 100).
 
 ### Migrations
 
-Alembic runs automatically on startup (`RUN_MIGRATIONS_ON_STARTUP=true`).
-For multi-worker deployments, disable auto-migration and run it once in a
-pre-start step:
+Alembic runs automatically on startup (`RUN_MIGRATIONS_ON_STARTUP` defaults
+to `true`). For multi-worker deployments, disable auto-migration and run it
+once in a pre-start step so workers don't race on `alembic upgrade head`:
 
 ```bash
 # In your Dockerfile or entrypoint:
@@ -212,14 +219,18 @@ alembic upgrade head
 RUN_MIGRATIONS_ON_STARTUP=false uvicorn app.main:app ...
 ```
 
+The backend Docker image already does this: `RUN_MIGRATIONS_ON_STARTUP=false`
+is baked in and `docker-entrypoint.sh` applies migrations once before the
+server starts.
+
 ---
 
 ## Monitoring
 
 | Endpoint | Purpose |
 |----------|---------|
-| `GET /health` | Liveness probe — returns `{"status": "healthy"}`, database connectivity check, git SHA, uptime |
-| `GET /metrics` | Prometheus scrape endpoint (request counts, latencies, build info) |
+| `GET /health` | Readiness + liveness probe. Returns 200 `{"status": "healthy", ...}` with a database connectivity check, git SHA, and start time. Returns **503** with `"status": "degraded"` when the database probe fails, so orchestrators can stop routing |
+| `GET /metrics` | Prometheus scrape endpoint (request counts, latencies, build info). **Not public:** loopback and `METRICS_ALLOWED_IPS` only; nginx additionally 404s public requests |
 
 ### Health check response
 
