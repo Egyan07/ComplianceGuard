@@ -127,7 +127,8 @@ jobs:
       # CG-C1 packaging guard (source inputs): fail fast if private signing
       # key material exists anywhere electron-builder would package
       # (electron/**, shared/**, frontend/dist). The release jobs re-run this
-      # against the ACTUAL dist/ artifacts after packaging.      - name: Packaging secret guard (source inputs)
+      # against the ACTUAL dist/ artifacts after packaging.
+      - name: Packaging secret guard (source inputs)
         run: npm run check:package-secrets
 
   secret-scan:
