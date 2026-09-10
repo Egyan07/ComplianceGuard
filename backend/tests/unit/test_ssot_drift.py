@@ -84,3 +84,30 @@ def test_ts_mirror_imports_shared_json():
         "frontend/src/constants.ts must import values from shared/constants.json "
         "instead of hardcoding them"
     )
+
+
+def test_readme_banner_and_badge_show_current_version():
+    """The README's version surfaces must match shared/constants.json.
+
+    These are text baked into the README banner SVG and the shields.io
+    badge. They have rotted before (the banner shipped v3.9.2 through the
+    4.0.0, 4.1.0, and 4.1.1 releases), so assert them here.
+    """
+    import re
+
+    shared = _shared_json()
+    banner = (_repo_root() / "assets" / "banner.svg").read_text()
+    match = re.search(r"font-weight=\"600\">(v[\d.]+)<", banner)
+    assert match, "banner.svg must contain the version badge text"
+    assert match.group(1) == f"v{shared['VERSION']}", (
+        f"banner.svg shows {match.group(1)} but the release is "
+        f"{shared['VERSION']} — update assets/banner.svg"
+    )
+
+    readme = (_repo_root() / "README.md").read_text()
+    match = re.search(r"badge/version-([\d.]+)-", readme)
+    assert match, "README must contain the shields.io version badge"
+    assert match.group(1) == shared["VERSION"], (
+        f"README badge shows {match.group(1)} but the release is "
+        f"{shared['VERSION']} — update the shields.io badge in README.md"
+    )

@@ -9,6 +9,8 @@ Electron (CJS), and React (ESM) mirrors can never drift.
 If VERSION changes, also bump:
   - package.json (repo root)
   - frontend/package.json
+  - assets/banner.svg (the version badge in the README banner)
+  - README.md (the shields.io version badge)
 """
 
 import json
