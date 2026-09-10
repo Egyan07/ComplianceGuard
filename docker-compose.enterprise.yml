@@ -29,6 +29,9 @@ services:
       ENVIRONMENT: production
       ENTERPRISE_MODE: "true"
       CORS_ORIGINS: ${CORS_ORIGINS:-https://localhost}
+      # Single uvicorn worker; declared so the rate-limit scale-out guard passes.
+      # Scaling out additionally requires a shared RATELIMIT_STORAGE_URI (Redis).
+      WORKERS: "1"
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:8000/health || exit 1"]
       interval: 15s

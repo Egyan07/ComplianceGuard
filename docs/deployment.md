@@ -93,7 +93,7 @@ The app is at `http://localhost` (nginx proxy). The health probe is proxied at `
 | **HTTPS** | Place an SSL cert in `ssl/` and uncomment the HTTPS server block in `nginx.conf` |
 | **Firewall** | Block everything except 80/443. Compose also publishes 3000 (frontend) and 127.0.0.1:5432 (PostgreSQL, host-local only); restrict 3000 to trusted networks or remove the publish if clients only need the nginx entry point |
 | **Backups** | Run `./scripts/db-backup.sh` nightly (cron or systemd timer) |
-| **Workers** | Set the `WORKERS` **environment variable** (not just uvicorn's `--workers` flag — the scale-out guard reads the env var) and `RATELIMIT_STORAGE_URI=redis://redis:6379/0` for multi-worker. Scaled-out production (WORKERS>1 or REPLICAS>1) **refuses to start** without shared limiter storage — this is intentional |
+| **Workers** | Always set the `WORKERS` **environment variable** — production startup **refuses to start** while it is unset (an undeclared count cannot be assumed to be 1, because the guard cannot see uvicorn's `--workers` flag). For multi-worker also set `RATELIMIT_STORAGE_URI=redis://redis:6379/0`; scaled-out production (WORKERS>1 or REPLICAS>1) refuses to start without shared limiter storage — this is intentional |
 | **Secrets** | Use Docker secrets or a vault — never commit `.env` to version control |
 
 ---
@@ -238,7 +238,7 @@ server starts.
 {
   "status": "healthy",
   "service": "complianceguard-api",
-  "version": "4.1.1",
+  "version": "4.2.0",
   "git_sha": "65c18db",
   "database": "ok",
   "started_at": "2026-08-20T08:00:00+00:00",

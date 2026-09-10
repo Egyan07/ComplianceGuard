@@ -13,8 +13,10 @@ typically Redis:
     RATELIMIT_STORAGE_URI=redis://redis.internal:6379/0
 
 With that env var set, slowapi stores counters in Redis and the limits hold
-across every worker and every replica. Without it, this module logs a single
-WARNING on startup when ``WORKERS > 1`` so the drift is not silent.
+across every worker and every replica. Without it, this module refuses to
+start in production unless the deployment provably runs a single worker
+(WORKERS declared as 1, REPLICAS declared as 1); non-production deployments
+get a loud WARNING instead so the drift is never silent.
 """
 
 import logging
@@ -23,9 +25,11 @@ import os
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
+
 logger = logging.getLogger(__name__)
 
 _STORAGE_URI = os.environ.get("RATELIMIT_STORAGE_URI")
+_WORKERS_DECLARED = "WORKERS" in os.environ
 _WORKERS = int(os.environ.get("WORKERS", "1") or "1")
 
 
@@ -38,7 +42,13 @@ def validate_rate_limit_configuration() -> None:
     enough for production, so:
 
       - production + (WORKERS > 1 or REPLICAS > 1) and no RATELIMIT_STORAGE_URI
-        → refuse to start (ConfigurationError at import time).
+        → refuse to start (RuntimeError at import time).
+      - production + WORKERS **unset** and no RATELIMIT_STORAGE_URI → also
+        refuse. A worker process cannot observe how many siblings uvicorn's
+        ``--workers`` flag spawned, so an undeclared count is not provably 1;
+        ``uvicorn --workers 4`` without the WORKERS env var previously bypassed
+        this guard entirely. Declare ``WORKERS=1`` to affirm a single worker,
+        or provide shared storage (which makes the count irrelevant).
       - non-production keeps the loud warning (dev convenience preserved — no
         Redis required to run tests or a laptop stack).
 
@@ -49,27 +59,32 @@ def validate_rate_limit_configuration() -> None:
     if _STORAGE_URI:
         return
     replicas = int(os.environ.get("REPLICAS", "1") or "1")
-    scaled_out = _WORKERS > 1 or replicas > 1
-    if not scaled_out:
+    if _WORKERS > 1 or replicas > 1:
+        raise_or_warn(
+            "Rate limiting is process-local but the deployment is scaled out "
+            "(WORKERS=%d, REPLICAS=%d). Published limits would be multiplied and "
+            "login throttling would not be shared. Set RATELIMIT_STORAGE_URI "
+            "(e.g. redis://host:6379/0) or pin WORKERS=1/REPLICAS=1." % (_WORKERS, replicas)
+        )
         return
-    message = (
-        "Rate limiting is process-local but the deployment is scaled out "
-        "(WORKERS=%d, REPLICAS=%d). Published limits would be multiplied and "
-        "login throttling would not be shared. Set RATELIMIT_STORAGE_URI "
-        "(e.g. redis://host:6379/0) or pin WORKERS=1/REPLICAS=1." % (_WORKERS, replicas)
-    )
+    if not _WORKERS_DECLARED:
+        # Declaring REPLICAS says nothing about how many uvicorn workers run
+        # *inside* this process, so it cannot vouch for the worker count.
+        raise_or_warn(
+            "Rate limiting is process-local and the worker count is undeclared. "
+            "uvicorn's --workers flag is invisible to this process, so an "
+            "undeclared count cannot be assumed to be 1: 'uvicorn --workers 4' "
+            "would silently multiply every published limit. Set WORKERS=1 to "
+            "affirm a single worker, or set RATELIMIT_STORAGE_URI "
+            "(e.g. redis://host:6379/0) to share counters across any count."
+        )
+
+
+def raise_or_warn(message: str) -> None:
+    """Raise in production (fail-fast) or log a warning elsewhere."""
     if os.environ.get("ENVIRONMENT") == "production":
         raise RuntimeError(message)
     logger.warning(message)
-
-
-if _WORKERS > 1 and not _STORAGE_URI:
-    logger.warning(
-        "Rate limiter is using in-memory storage but WORKERS=%d. "
-        "Counters will drift across workers — set RATELIMIT_STORAGE_URI "
-        "(e.g. redis://host:6379/0) for a shared backend.",
-        _WORKERS,
-    )
 
 validate_rate_limit_configuration()
 

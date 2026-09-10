@@ -16,3 +16,7 @@ name = "complianceguard-api"
 PORT = "8000"
 ENVIRONMENT = "production"
 RUN_MIGRATIONS_ON_STARTUP = "true"
+# The startCommand runs a single uvicorn worker; declare it so the scale-out
+# guard can verify rate-limit correctness (undeclared WORKERS refuses to start
+# in production).
+WORKERS = "1"

@@ -160,15 +160,21 @@ class TestRequestIdHardening:
 
 
 class TestRateLimitScaleOutConfig:
-    def _run_validator(self, monkeypatch, environment, workers, replicas=None, storage_uri=None):
+    def _run_validator(
+        self, monkeypatch, environment, workers, replicas=None, storage_uri=None,
+        workers_declared=True,
+    ):
         """Run the module's scale-out validator under a controlled environment.
 
-        The validator reads module-level _WORKERS plus ENVIRONMENT/REPLICAS/
-        RATELIMIT_STORAGE_URI from os.environ, so patch those directly.
+        The validator reads module-level _WORKERS/_WORKERS_DECLARED plus
+        ENVIRONMENT/REPLICAS/RATELIMIT_STORAGE_URI from os.environ, so patch
+        those directly. workers_declared=False simulates a process started
+        without the WORKERS env var (e.g. bare `uvicorn --workers 4`).
         """
         import app.core.rate_limit as rl
 
         monkeypatch.setattr(rl, "_WORKERS", workers)
+        monkeypatch.setattr(rl, "_WORKERS_DECLARED", workers_declared)
         # The module also snapshots the storage URI at import time.
         monkeypatch.setattr(rl, "_STORAGE_URI", storage_uri)
         monkeypatch.setenv("ENVIRONMENT", environment)
@@ -219,6 +225,103 @@ class TestRateLimitScaleOutConfig:
         self._run_validator(
             monkeypatch, environment="production", workers=1, replicas=1
         )  # must not raise
+
+    # ── undeclared worker count (the uvicorn --workers blind spot) ──────────
+
+    def test_production_undeclared_workers_without_storage_raises(self, monkeypatch):
+        """An undeclared count cannot be assumed to be 1: refuse in production."""
+        with pytest.raises(RuntimeError) as exc_info:
+            self._run_validator(
+                monkeypatch,
+                environment="production",
+                workers=1,
+                workers_declared=False,
+            )
+        message = str(exc_info.value)
+        assert "WORKERS=1" in message
+        assert "RATELIMIT_STORAGE_URI" in message
+
+    def test_production_undeclared_workers_with_replicas_declared_still_raises(
+        self, monkeypatch
+    ):
+        """REPLICAS says nothing about uvicorn workers inside the process."""
+        with pytest.raises(RuntimeError):
+            self._run_validator(
+                monkeypatch,
+                environment="production",
+                workers=1,
+                replicas=1,
+                workers_declared=False,
+            )
+
+    def test_production_undeclared_workers_with_shared_storage_is_accepted(
+        self, monkeypatch
+    ):
+        """Shared storage makes the worker count irrelevant."""
+        self._run_validator(
+            monkeypatch,
+            environment="production",
+            workers=1,
+            workers_declared=False,
+            storage_uri="redis://shared:6379/0",
+        )  # must not raise
+
+    def test_dev_undeclared_workers_warns_only(self, monkeypatch):
+        # Dev convenience: a laptop stack without the env var still boots.
+        self._run_validator(
+            monkeypatch,
+            environment="development",
+            workers=1,
+            workers_declared=False,
+        )  # must not raise
+
+
+class TestWorkerGuardFirstPartyConfigs:
+    """First-party deployment configs must satisfy the worker guard.
+
+    The guard refuses production startup when the worker count is undeclared
+    (no WORKERS env var) and no shared limiter storage is configured. Every
+    production-mode config we ship must therefore declare WORKERS, or a
+    follow-the-docs deployment breaks on boot.
+    """
+
+    @staticmethod
+    def _repo_root():
+        from pathlib import Path
+
+        p = Path(__file__).resolve()
+        for parent in p.parents:
+            if (parent / "package.json").exists():
+                return parent
+        raise RuntimeError("Could not locate repo root")
+
+    def test_railway_template_declares_single_worker(self):
+        import tomllib
+
+        data = tomllib.loads((self._repo_root() / "railway.toml").read_text())
+        variables = data["services"][0]["variables"]
+        assert variables.get("WORKERS") == "1"
+        assert variables.get("ENVIRONMENT") == "production"
+
+    def test_production_compose_backends_declare_workers(self):
+        import re
+
+        for compose in ("docker-compose.yml", "docker-compose.enterprise.yml"):
+            text = (self._repo_root() / compose).read_text()
+            # WORKERS must be set in the backend environment (env passthrough
+            # with a default counts as declared).
+            assert re.search(r"^\s*WORKERS:", text, re.MULTILINE), (
+                f"{compose} must declare WORKERS for the rate-limit guard"
+            )
+
+    def test_backend_dockerfile_defaults_to_declared_worker(self):
+        import re
+
+        dockerfile = (self._repo_root() / "backend" / "Dockerfile").read_text()
+        assert re.search(r"WORKERS=1", dockerfile), (
+            "backend/Dockerfile must default WORKERS=1 so bare `docker run` "
+            "deployments satisfy the rate-limit guard"
+        )
 
 
 # ─── M-5: cookie Secure flag from environment, not DEBUG ────────────────────

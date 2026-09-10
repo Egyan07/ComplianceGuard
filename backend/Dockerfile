@@ -11,7 +11,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     # Migrations are applied once by docker-entrypoint.sh before the workers
     # start, so the in-app per-worker startup migration must stay off (else the
     # 4 uvicorn workers race on `alembic upgrade head`).
-    RUN_MIGRATIONS_ON_STARTUP=false
+    RUN_MIGRATIONS_ON_STARTUP=false \
+    # The default CMD runs one uvicorn worker; declare it so the rate-limit
+    # scale-out guard passes for bare `docker run` deployments. Override the
+    # env var (with shared RATELIMIT_STORAGE_URI) if you scale out — compose
+    # and Railway set/override this per environment.
+    WORKERS=1
 
 WORKDIR /app
 

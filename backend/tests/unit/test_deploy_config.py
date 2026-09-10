@@ -42,22 +42,64 @@ class TestWorkerRateLimitConsistency:
         )
         assert result.stdout.strip() == "7"
 
-    def test_workers_gt_one_without_shared_storage_warns(self):
+    def test_scaled_out_without_shared_storage_warns_in_dev(self):
         """Scaling out without a shared backend must be loud, not silent."""
         result = subprocess.run(
             [sys.executable, "-c", (
-                "import logging, os; "
+                "import logging, os, sys; "
                 "os.environ['WORKERS']='4'; os.environ.pop('RATELIMIT_STORAGE_URI', None); "
-                "logging.basicConfig(level=logging.WARNING, format='%(message)s'); "
+                "logging.basicConfig(level=logging.WARNING, format='%(message)s', "
+                "stream=sys.stderr); "
                 "import app.core.rate_limit"  # noqa
             )],
             cwd=BACKEND_DIR, capture_output=True, text=True, check=True,
         )
         combined = result.stdout + result.stderr
-        assert "Rate limiter is using in-memory storage but WORKERS=4" in combined
+        assert "Rate limiting is process-local but the deployment is scaled out" in combined
+        assert "WORKERS=4" in combined
+
+    def test_scaled_out_production_without_shared_storage_refuses_to_start(self):
+        """M-3: production must fail fast, not just warn."""
+        result = subprocess.run(
+            [sys.executable, "-c", (
+                "import os; "
+                "os.environ['WORKERS']='4'; os.environ['ENVIRONMENT']='production'; "
+                "os.environ.pop('RATELIMIT_STORAGE_URI', None); "
+                "import app.core.rate_limit"  # noqa
+            )],
+            cwd=BACKEND_DIR, capture_output=True, text=True,
+        )
+        assert result.returncode != 0
+        assert "Rate limiting is process-local but the deployment is scaled out" in (
+            result.stdout + result.stderr
+        )
+
+    def test_undeclared_workers_production_without_shared_storage_refuses_to_start(
+        self,
+    ):
+        """4.2.0 hardening: an undeclared count is not provably 1.
+
+        uvicorn's --workers flag is invisible to the process, so
+        `uvicorn --workers 4` without the WORKERS env var previously
+        bypassed the guard entirely.
+        """
+        result = subprocess.run(
+            [sys.executable, "-c", (
+                "import os; "
+                "os.environ['ENVIRONMENT']='production'; "
+                "os.environ.pop('WORKERS', None); "
+                "os.environ.pop('RATELIMIT_STORAGE_URI', None); "
+                "import app.core.rate_limit"  # noqa
+            )],
+            cwd=BACKEND_DIR, capture_output=True, text=True,
+        )
+        assert result.returncode != 0
+        combined = result.stdout + result.stderr
+        assert "worker count is undeclared" in combined
+        assert "WORKERS=1" in combined
 
     def test_warning_is_conditional_on_missing_shared_storage(self):
-        """The in-memory warning must only fire when no shared backend is set;
+        """The guard must only fire when no shared backend is set;
         with RATELIMIT_STORAGE_URI configured the limit holds across workers.
 
         (A behavioral test can't construct the redis-backed limiter — the redis
@@ -65,8 +107,12 @@ class TestWorkerRateLimitConsistency:
         warns when the URI is set without the package installed.)
         """
         src = (BACKEND_DIR / "app" / "core" / "rate_limit.py").read_text(encoding="utf-8")
-        assert "if _WORKERS > 1 and not _STORAGE_URI:" in src
+        # Shared storage short-circuits the guard entirely...
+        assert "if _STORAGE_URI:" in src
+        # ...and the limiter is constructed with it.
         assert "_limiter_kwargs[\"storage_uri\"] = _STORAGE_URI" in src
+        # The undeclared-worker refusal exists (4.2.0 hardening).
+        assert "if not _WORKERS_DECLARED:" in src
 
 
 class TestPostgresBinding:

@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [4.2.0] — 2026-09-10
+
+### Changed
+
+- **Breaking:** the rate-limit scale-out guard now refuses production startup
+  while the `WORKERS` environment variable is **unset** and no
+  `RATELIMIT_STORAGE_URI` is configured. uvicorn's `--workers` flag is
+  invisible to the running process, so an undeclared count cannot be assumed
+  to be 1 — `uvicorn app.main:app --workers 4` previously bypassed the guard
+  entirely and silently multiplied every published limit. Set `WORKERS=1` to
+  affirm a single worker, or configure shared limiter storage (Redis), which
+  makes the count irrelevant.
+- All first-party production configs declare the worker count explicitly:
+  `railway.toml` (`WORKERS = "1"`), the backend image (`ENV WORKERS=1` so
+  bare `docker run` satisfies the guard), and the enterprise compose stack.
+- Declaring `REPLICAS` no longer vouches for the worker count: it says
+  nothing about how many uvicorn workers run inside the process.
+
+### Fixed
+
+- CHANGELOG: removed a duplicate `[4.1.0]` section that mistakenly repeated
+  the 4.1.1 API-docs-gating entry.
+
+---
+
 ## [4.1.1] — 2026-09-09
 
 ### Security
@@ -35,22 +60,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - SECURITY.md: supported-versions table refreshed for 4.x; security-model
   bullets aligned with the current session, token-hashing, rate-limit, and
   metrics controls.
-
-## [4.1.0] — 2026-09-09
-
-### Security
-
-- **API docs gated by environment:** `/docs`, `/redoc`, and `/openapi.json` are
-  served outside production and disabled in production unless
-  `API_DOCS_ENABLED=true`. The OpenAPI schema enumerates every route and
-  schema, and public platforms without an nginx layer (e.g. Railway) were
-  serving it by default.
-
-### Fixed
-
-- `electron/scheduler.test.js` no longer flakes under load: the two
-  end-to-end assertions get a 30s budget, and module state (the 60s interval
-  and the in-flight guard) is reset after every test instead of leaking.
 
 ## [4.1.0] — 2026-09-09
 
