@@ -6,6 +6,62 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [4.2.1] — 2026-09-12
+
+### Fixed
+
+- **SOC 2 taxonomy corrected to the real 2017 Trust Services Criteria** — the
+  previous definition contained fabricated control IDs (`A2.x`/`A3.x`,
+  `C2.x`/`C3.x`, `PI2.x`/`PI3.x` and an entire "Confidentiality & Availability
+  (CA)" category) and was missing legitimate criteria (CC1.4–CC1.5, CC3.4,
+  CC4.2, CC5.2–CC5.3, CC6.4–CC6.8, CC7.2–CC7.5, CC9.2). The active framework is
+  now the exact 43-criterion set (33 CC + A1.1–A1.3 + C1.1–C1.2 + PI1.1–PI1.5)
+  with authoritative descriptions; a golden taxonomy test locks the ID set in
+  CI. Remediation scripts were remapped to the real criteria they support
+  (firewall → CC6.6, Defender → CC6.8, audit policy → CC7.2); CC6.3 is
+  guidance-only.
+- **Evidence coverage is no longer presented as compliance** — scoring now
+  carries `assessment_mode` (automatable / hybrid / manual_upload) per
+  criterion in both engines (Python and Electron, parity-tested). A
+  `manual_upload` criterion cannot become compliant from collector evidence
+  alone; UI and reports say "evidence coverage"/"readiness" with a disclaimer
+  that this is not a legal or audit determination of compliance. Control
+  heatmaps show "Not assessed" instead of the misleading "N/A". "Not assessed"
+  criteria keep the established denominator behavior and the all-not-assessed
+  overall status (CG-M2) is unchanged.
+- **ISO/IEC 27001 updated to the 2022 edition** — the active framework is now
+  the full 93-control Annex A (`iso27001_v2022`; A.5 ×37, A.6 ×8, A.7 ×14,
+  A.8 ×34) with authoritative titles. The withdrawn 2013 definition is kept
+  as an archived taxonomy so historical evaluations render unchanged and are
+  never re-scored.
+- **GDPR assessment model made honest** — all 38 obligations reclassified by
+  what endpoint evidence can actually establish (1 automatable / 3 hybrid /
+  34 manual_upload). Organizational and legal obligations (DPO designation,
+  data-subject rights, consent, international transfers) are no longer scored
+  as satisfied merely because endpoint evidence exists.
+- **Framework definitions consolidated to one source of truth** —
+  `shared/frameworks/` is the only editable framework home; the backend browse
+  loaders and the scoring engine read the same canonical YAMLs the desktop app
+  and the generated evidence catalog use (duplicated backend copies removed).
+  The shared directory is located by upward search, so the containerized
+  backend resolves `/app/shared` and host checkouts resolve `<repo>/shared`
+  with the same code.
+- **Taxonomy versioning** — evaluations persist `taxonomy_version` and
+  `score_semantics` (additive migration; historical rows keep null and are
+  serialized as null, never re-scored). The score trend marks the taxonomy
+  transition. New evaluations record `"2017 Trust Services Criteria (with 2022
+  revised points of focus)"` for SOC 2 and the 2022 Annex A for ISO 27001.
+- **README accuracy** — removed the fabricated control tables and the "SOC 2
+  Type II fully covered" claim; control tables now reflect the real 43-
+  criterion taxonomy; licensing wording corrected to "Source-available
+  (BSL 1.1)"; scheduling described as running while the desktop app is open;
+  removed a stale `react-transition-group` troubleshooting instruction.
+- Backend: `taxonomy_version` and `score_semantics` are now exposed on all
+  four framework evaluate/history responses (previously stripped by the
+  response model).
+
+---
+
 ## [4.2.0] — 2026-09-10
 
 ### Changed

@@ -1,6 +1,6 @@
 {
   "name": "complianceguard-desktop",
-  "version": "4.2.0",
+  "version": "4.2.1",
   "description": "ComplianceGuard - SOC 2 Automation Desktop Application",
   "main": "electron/main.js",
   "author": "Egyan07",
