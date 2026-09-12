@@ -49,6 +49,18 @@ const TSC_NAMES = {
   P: 'Privacy',
   CA: 'Confidentiality & Availability',
 };
+// Canonical per-control status labels — sentence case, matching the web UI's
+// ControlHeatmap map ("Not assessed", never "N/A", never raw snake_case).
+function statusLabel(status) {
+  switch (status) {
+    case 'compliant': return 'Compliant';
+    case 'partial': return 'Partial';
+    case 'non_compliant': return 'Non-compliant';
+    case 'not_assessed': return 'Not assessed';
+    default: return status || 'Not assessed';
+  }
+}
+
 function criterionName(code) {
   return TSC_NAMES[code] || String(code == null ? '' : code);
 }
@@ -407,7 +419,7 @@ ${systemDescription ? `
         <td>${escapeHtml((r.rec && r.rec.priority) || '—')}</td>
         <td>${escapeHtml(r.plan.owner || '—')}</td>
         <td>${escapeHtml(r.plan.target_date || '—')}</td>
-        <td><span class="status ${escapeHtml(r.status)}">${escapeHtml((r.status || '').replace(/_/g, ' '))}</span></td>
+        <td><span class="status ${escapeHtml(r.status)}">${escapeHtml(statusLabel(r.status))}</span></td>
       </tr>`).join('')}
     </tbody>
   </table>`;
@@ -433,7 +445,7 @@ ${systemDescription ? `
           ${ctrl.control_category ? `<div class="ccat">${escapeHtml(criterionName(ctrl.control_category))} · ${escapeHtml(ctrl.control_category)}</div>` : ''}
         </div>
         <div class="cright">
-          <span class="status ${escapeHtml(ctrl.status)}">${escapeHtml(ctrl.status || '').replace(/_/g, ' ')}</span>
+          <span class="status ${escapeHtml(ctrl.status)}">${escapeHtml(statusLabel(ctrl.status))}</span>
           <span class="cscore">${numOr0(ctrl.score)}%</span>
         </div>
       </div>

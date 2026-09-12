@@ -218,6 +218,35 @@ describe('ReportGenerator', () => {
     expect(html).toContain('status non_compliant');
   });
 
+  it('renders canonical sentence-case status labels, never raw snake_case', async () => {
+    const html = await gen.generateHTMLReport(1);
+    expect(html).toContain('>Compliant</span>');
+    expect(html).toContain('>Non-compliant</span>');
+    expect(html).not.toMatch(/>non compliant<\/span>/i);
+  });
+
+  it('labels unassessed controls "Not assessed" (never "N/A" or snake_case)', async () => {
+    const baseDb = makeMockDb();
+    const evaluation = await baseDb.getLatestEvaluation(1);
+    evaluation.findings.control_results['CC3.1'] = {
+      control_id: 'CC3.1',
+      control_title: 'Risk Assessment Process',
+      control_category: 'CC',
+      status: 'not_assessed',
+      score: 0,
+      evidence_count: 0,
+      evidence_details: [],
+      gaps: ['system_configs'],
+      required_evidence: ['system_configs'],
+      available_evidence: [],
+    };
+    gen = new ReportGenerator(makeMockDb({ evaluation }));
+    const html = await gen.generateHTMLReport(1);
+    expect(html).toContain('>Not assessed</span>');
+    expect(html).not.toMatch(/>\s*N\/A\s*</);
+    expect(html).not.toContain('>not assessed</span>');
+  });
+
   it('handles missing evaluation gracefully (empty findings)', async () => {
     const db = makeMockDb({ evaluation: null });
     gen = new ReportGenerator(db);
