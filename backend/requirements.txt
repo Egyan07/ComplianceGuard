@@ -32,7 +32,7 @@ slowapi==0.1.9
 sentry-sdk[fastapi]>=2.0.0
 
 # Observability: Prometheus /metrics endpoint
-prometheus-client>=0.20,<1
+prometheus-client>=0.26.0,<1
 
 # Utilities
 PyYAML>=6.0,<7
