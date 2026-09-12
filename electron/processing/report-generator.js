@@ -40,14 +40,23 @@ function numOr0(v) {
   return Number.isFinite(n) ? n : 0;
 }
 
-// SOC 2 Trust Services Criteria code → friendly name. Unknown codes fall back to the raw code.
+// Category code → friendly name across all canonical frameworks. Unknown
+// codes fall back to the raw code. (The old fabricated "CA" mapping is gone.)
 const TSC_NAMES = {
   CC: 'Security (Common Criteria)',
   A: 'Availability',
   C: 'Confidentiality',
   PI: 'Processing Integrity',
   P: 'Privacy',
-  CA: 'Confidentiality & Availability',
+  'A.5': 'Organizational Controls',
+  'A.6': 'People Controls',
+  'A.7': 'Physical Controls',
+  'A.8': 'Technological Controls',
+  '164.308': 'Administrative Safeguards',
+  '164.310': 'Physical Safeguards',
+  '164.312': 'Technical Safeguards',
+  '164.314': 'Organizational Requirements',
+  '164.316': 'Documentation Safeguards',
 };
 // Canonical per-control status labels — sentence case, matching the web UI's
 // ControlHeatmap map ("Not assessed", never "N/A", never raw snake_case).
@@ -62,6 +71,7 @@ function statusLabel(status) {
 }
 
 function criterionName(code) {
+  if (/^\d+$/.test(String(code))) return 'Article ' + code; // GDPR article numbers
   return TSC_NAMES[code] || String(code == null ? '' : code);
 }
 
@@ -386,7 +396,7 @@ ${systemDescription ? `
         const score = Math.round(data.score || 0);
         const color = scoreColor(score);
         return `<tr>
-          <td><strong>${escapeHtml(criterionName(cat))}</strong> <span style="color:var(--faint)">${escapeHtml(cat)}</span></td>
+          <td><strong>${escapeHtml(criterionName(cat))}</strong>${String(criterionName(cat)) !== String(cat) ? ` <span style="color:var(--faint)">${escapeHtml(cat)}</span>` : ''}</td>
           <td>${score}%</td>
           <td>${numOr0(data.control_count)}</td>
           <td><div class="score-bar"><div class="score-bar-bg"><div class="score-bar-fill" style="width:${score}%;background:${color}"></div></div></div></td>
@@ -442,7 +452,7 @@ ${systemDescription ? `
         <div>
           <span class="cid">${escapeHtml(id)}</span>
           <div class="ctitle">${escapeHtml(ctrl.control_title || '')}</div>
-          ${ctrl.control_category ? `<div class="ccat">${escapeHtml(criterionName(ctrl.control_category))} · ${escapeHtml(ctrl.control_category)}</div>` : ''}
+          ${ctrl.control_category ? `<div class="ccat">${escapeHtml(criterionName(ctrl.control_category))}${criterionName(ctrl.control_category) !== String(ctrl.control_category) ? ' · ' + escapeHtml(ctrl.control_category) : ''}</div>` : ''}
         </div>
         <div class="cright">
           <span class="status ${escapeHtml(ctrl.status)}">${escapeHtml(statusLabel(ctrl.status))}</span>

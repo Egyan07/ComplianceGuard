@@ -7,30 +7,42 @@ import EmptyState from './ui/EmptyState';
 import Segmented from './ui/Segmented';
 import { RADIUS, Tone, toneColors } from '../theme';
 
-// Real 2017 Trust Services Criteria labels — kept in sync with
-// shared/frameworks/soc2_controls.yaml (43 criteria: 33 CC + A1.1-A1.3 +
-// C1.1-C1.2 + PI1.1-PI1.5). There is no "CA" category in the TSC.
-const CONTROL_NAMES: Record<string, string> = {
-  'CC1.1':'Integrity and Ethical Values','CC1.2':'Board Oversight and Independence','CC1.3':'Organizational Structure and Reporting Lines','CC1.4':'Commitment to Competence','CC1.5':'Individual Accountability',
-  'CC2.1':'Quality of Information','CC2.2':'Internal Communication','CC2.3':'External Communication',
-  'CC3.1':'Objectives Specification','CC3.2':'Risk Identification and Analysis','CC3.3':'Fraud Consideration','CC3.4':'Change Risk Assessment',
-  'CC4.1':'Ongoing and Separate Evaluations','CC4.2':'Evaluation and Communication of Deficiencies',
-  'CC5.1':'Selection of Control Activities','CC5.2':'General Controls over Technology','CC5.3':'Deployment Through Policies and Procedures',
-  'CC6.1':'Logical Access Security','CC6.2':'User Registration and Credential Management','CC6.3':'Access Authorization and Modification','CC6.4':'Physical Access Restrictions','CC6.5':'Disposal of Physical Assets','CC6.6':'Protection Against External Threats','CC6.7':'Restriction of Information Transmission','CC6.8':'Unauthorized and Malicious Software Controls',
-  'CC7.1':'Configuration and Vulnerability Detection','CC7.2':'Anomaly Monitoring','CC7.3':'Security Event Evaluation','CC7.4':'Incident Response','CC7.5':'Recovery from Security Incidents',
-  'CC8.1':'Change Management',
-  'CC9.1':'Business Disruption Risk Mitigation','CC9.2':'Vendor and Business Partner Risk',
-  'A1.1':'Processing Capacity Management','A1.2':'Environmental Protections, Backup, and Recovery Infrastructure','A1.3':'Recovery Plan Testing',
-  'C1.1':'Identification and Maintenance of Confidential Information','C1.2':'Disposal of Confidential Information',
-  'PI1.1':'Processing Information Quality','PI1.2':'Input Completeness and Accuracy','PI1.3':'System Processing Controls','PI1.4':'Output Delivery','PI1.5':'Storage of Inputs and Outputs',
+// ── Presentational helpers ──────────────────────────────────────────────────
+// The Controls section is fully data-driven: rows, titles, and groupings come
+// from the evaluation's control_results (control_title / control_category are
+// emitted by both canonical engines from shared/frameworks/ — the single
+// source of truth). Only display wording lives here.
+
+// Per-framework header wording for the pre-evaluation state. Counts are NOT
+// hardcoded here — the rendered count comes from the evaluation data.
+const FRAMEWORK_META: Record<number, { name: string; unit: string }> = {
+  1: { name: 'SOC 2 Type II', unit: 'criteria' },
+  2: { name: 'ISO/IEC 27001:2022', unit: 'controls' },
+  3: { name: 'HIPAA Security Rule', unit: 'safeguards' },
+  4: { name: 'GDPR', unit: 'obligations' },
 };
 
-const CATEGORIES: { label: string; ids: string[] }[] = [
-  { label: 'Common Criteria (CC)', ids: ['CC1.1','CC1.2','CC1.3','CC1.4','CC1.5','CC2.1','CC2.2','CC2.3','CC3.1','CC3.2','CC3.3','CC3.4','CC4.1','CC4.2','CC5.1','CC5.2','CC5.3','CC6.1','CC6.2','CC6.3','CC6.4','CC6.5','CC6.6','CC6.7','CC6.8','CC7.1','CC7.2','CC7.3','CC7.4','CC7.5','CC8.1','CC9.1','CC9.2'] },
-  { label: 'Availability (A)',     ids: ['A1.1','A1.2','A1.3'] },
-  { label: 'Confidentiality (C)', ids: ['C1.1','C1.2'] },
-  { label: 'Processing Integrity (PI)', ids: ['PI1.1','PI1.2','PI1.3','PI1.4','PI1.5'] },
-];
+// Human-readable group headers for the category codes used by the canonical
+// frameworks. GDPR uses bare article numbers ("5" → "Article 5"); anything
+// unknown falls back to the raw code.
+const CATEGORY_LABELS: Record<string, string> = {
+  CC: 'Common Criteria (CC)',
+  A: 'Availability (A)',
+  C: 'Confidentiality (C)',
+  PI: 'Processing Integrity (PI)',
+  'A.5': 'Organizational Controls (A.5)',
+  'A.6': 'People Controls (A.6)',
+  'A.7': 'Physical Controls (A.7)',
+  'A.8': 'Technological Controls (A.8)',
+  '164.308': 'Administrative Safeguards (164.308)',
+  '164.310': 'Physical Safeguards (164.310)',
+  '164.312': 'Technical Safeguards (164.312)',
+  '164.314': 'Organizational Requirements (164.314)',
+  '164.316': 'Documentation Safeguards (164.316)',
+};
+
+const categoryLabel = (cat: string): string =>
+  /^\d+$/.test(cat) ? `Article ${cat}` : CATEGORY_LABELS[cat] ?? cat;
 
 type Filter = 'all' | 'failing' | 'partial';
 type StatusKey = 'compliant' | 'non_compliant' | 'partial' | 'not_assessed';
@@ -50,7 +62,10 @@ const STATUS_LABEL: Record<StatusKey, string> = {
 };
 
 // Controls with an automatable PowerShell remediation script — must match the
-// 'script' entries in electron/processing/remediation-scripts.js.
+// 'script' entries in electron/processing/remediation-scripts.js. The scripts
+// themselves are SOC 2-mapped (each was remapped to the TSC criterion it
+// substantively supports), so the one-click fix is offered for SOC 2 only;
+// other frameworks get guidance.
 const AUTOMATABLE_CONTROLS = new Set(['CC6.1','CC6.2','CC6.6','CC6.8','CC7.1','CC7.2']);
 
 const SCRIPT_ACTIONS: Record<string, string> = {
@@ -66,6 +81,7 @@ export interface ControlHeatmapProps {
   controlResults: Record<string, ControlResult> | null;
   isElectron: boolean;
   isProTier: boolean;
+  selectedFramework?: number;
   onDownloadScript?: (controlId: string) => Promise<{ success?: boolean; file_name?: string; canceled?: boolean; error?: string }>;
   onRescan?: () => Promise<void>;
 }
@@ -76,6 +92,7 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
   controlResults,
   isElectron,
   isProTier,
+  selectedFramework = 1,
   onDownloadScript,
   onRescan,
 }) => {
@@ -89,6 +106,24 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
     if (filter === 'partial') return status === 'partial';
     return true;
   };
+
+  // ── Data-driven structure (Phase B) ─────────────────────────────────────
+  // Groups and titles come from the evaluation itself: both canonical engines
+  // stamp control_category / control_title onto every result from the
+  // canonical YAML, and preserve the framework's own ordering. No per-
+  // framework control lists are maintained in the UI anymore.
+  const groups = (() => {
+    if (!controlResults) return [] as { label: string; ids: string[] }[];
+    const byCat: Record<string, string[]> = {};
+    for (const [id, r] of Object.entries(controlResults)) {
+      const cat = r.control_category || '—';
+      (byCat[cat] ??= []).push(id);
+    }
+    return Object.entries(byCat).map(([cat, ids]) => ({ label: categoryLabel(cat), ids }));
+  })();
+  const titleFor = (id: string): string => controlResults?.[id]?.control_title || id;
+  const meta = FRAMEWORK_META[selectedFramework] ?? FRAMEWORK_META[1];
+  const assessedCount = controlResults ? Object.keys(controlResults).length : null;
 
   const c = (tone: Tone) => toneColors(theme, tone);
 
@@ -113,7 +148,7 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
             Controls
           </Typography>
           <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', fontWeight: 500 }}>
-            SOC 2 Type II · 43 criteria
+            {meta.name}{assessedCount != null ? ` · ${assessedCount} ${meta.unit}` : ''}
           </Typography>
         </Box>
         <Segmented
@@ -144,7 +179,7 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
             sx={{ py: 5 }}
           />
         ) : (
-          CATEGORIES.map(cat => {
+          groups.map(cat => {
             const visibleIds = cat.ids.filter(id => {
               const status: StatusKey = controlResults[id]?.status ?? 'not_assessed';
               return filterRow(status);
@@ -268,7 +303,7 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
                             lineHeight: 1.4,
                           }}
                         >
-                          {CONTROL_NAMES[id] ?? id}
+                          {titleFor(id)}
                         </Typography>
                         <Box sx={{ width: { xs: '100%', md: 90 }, flexShrink: 0, order: { xs: 4, md: 0 } }}>
                           <LinearProgress
@@ -372,7 +407,7 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
                           >
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               <Typography sx={{ fontSize: '0.8rem', fontWeight: 700 }}>
-                                {id} — {CONTROL_NAMES[id] ?? id}
+                                {id} — {titleFor(id)}
                               </Typography>
                               {isAutomatable ? (
                                 <StatusChip tone="info" label="PowerShell · Run as Admin" size="sm" />

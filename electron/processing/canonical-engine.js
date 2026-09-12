@@ -168,6 +168,8 @@ class CanonicalEngine {
 
       controlResults[control.id] = {
         control_id: control.id,
+        control_title: control.title || '',
+        control_category: control.category || '',
         score,
         status,
         required_evidence: required,

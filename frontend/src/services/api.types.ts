@@ -46,6 +46,9 @@ export interface ControlResult {
   gaps: string[];          // missing evidence type IDs
   available_evidence: string[];
   recommendation?: string;
+  control_id?: string;
+  control_title?: string;   // canonical title from shared/frameworks (both engines)
+  control_category?: string; // category code (CC / A.5 / 164.308 / article no.)
 }
 
 export interface ComplianceEvaluation {

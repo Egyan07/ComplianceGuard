@@ -115,6 +115,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           controlResults={state.evaluation?.control_results ?? null}
           isElectron={isElectron}
           isProTier={isFeatureAllowed('per_control_scoring')}
+          selectedFramework={selectedFramework}
           onDownloadScript={isElectron ? async (controlId: string) => {
             const api = getElectronAPI();
             return api.downloadRemediationScript(controlId);

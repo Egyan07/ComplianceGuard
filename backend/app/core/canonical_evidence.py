@@ -89,11 +89,13 @@ class CanonicalControl:
 @dataclass
 class ControlResult:
     control_id: str
-    score: float  # 0-100 (int-valued, float for safety)
-    status: str
-    required_evidence: List[str]
-    available_evidence: List[str]
-    gaps: List[str]
+    control_title: str = ""
+    control_category: str = ""
+    score: float = 0.0  # 0-100 (int-valued, float for safety)
+    status: str = STATUS_NOT_ASSESSED
+    required_evidence: List[str] = field(default_factory=list)
+    available_evidence: List[str] = field(default_factory=list)
+    gaps: List[str] = field(default_factory=list)
     assessment_mode: str = "hybrid"
 
 
@@ -280,6 +282,8 @@ class CanonicalEngine:
 
             control_results[control_id] = ControlResult(
                 control_id=control_id,
+                control_title=control.title,
+                control_category=control.category,
                 score=score,
                 status=status,
                 required_evidence=sorted(control.required_evidence),
