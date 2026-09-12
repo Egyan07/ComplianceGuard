@@ -12,9 +12,9 @@
 </p>
 
 
-Compliance tools like Vanta, Drata, and Sprinto scan your cloud infrastructure. That is useful, but it misses what happens **on the machines themselves**. Password policies, firewall rules, event logs, running services, and local user accounts live on the endpoint, not in AWS.
+Cloud-first compliance platforms like Vanta, Drata, and Sprinto automate evidence through SaaS, cloud, identity, and MDM/EDR integrations (Intune, Jamf, Okta, CrowdStrike, and similar). That is useful, but it misses what happens **on the machines themselves**. Password policies, firewall rules, event logs, running services, and local user accounts live on the endpoint, not in AWS, and most MDM integrations only scratch that surface.
 
-ComplianceGuard lives on the endpoint too. It collects evidence directly from Windows, macOS, and Linux, scores it against SOC 2 Type II, ISO/IEC 27001:2022, HIPAA Security Rule, and GDPR controls, and tells you exactly where the gaps are, across all four frameworks in a single collection pass. Run it as a desktop app or deploy the web version with Docker; everything stays under your control.
+ComplianceGuard lives on the endpoint too. It collects evidence directly from Windows, macOS, and Linux, scores it against SOC 2 Type II, ISO/IEC 27001:2022, HIPAA Security Rule, and GDPR controls, and tells you exactly where the gaps are, across all four frameworks in a single collection pass. Run it as a desktop app or deploy the web version with Docker: self-hosted, your organization controls the infrastructure and data access; managed, your evidence stays on the endpoints until you choose to sync.
 
 How it works: the desktop app collects OS-level evidence → maps it to compliance controls → scores your readiness → optionally syncs to a multi-machine cloud dashboard.
 
@@ -40,7 +40,7 @@ How it works: the desktop app collects OS-level evidence → maps it to complian
 
 <video src="https://github.com/user-attachments/assets/361db401-fa40-4217-8259-681a21d914dc" controls width="100%"></video>
 
-_Continuous endpoint evidence, real-time evidence coverage tracking, and PDF evidence reports on demand. Self-hosted and privacy-first._
+_Scheduled endpoint evidence collection, evidence coverage tracking, and PDF evidence reports on demand. Self-hosted and privacy-first._
 
 ## Screenshots
 
@@ -250,15 +250,15 @@ npm run package:linux   # Linux (AppImage + .deb) → dist/
 | | ComplianceGuard | Vanta / Drata / Sprinto |
 |---|---|---|
 | **Where it runs** | On your machine or self-hosted | In the cloud |
-| **What it scans** | OS-level: event logs, registry, services, firewall, users | Cloud infra: AWS, GCP, Azure |
-| **Data residency** | Never leaves your control | Stored on vendor servers |
-| **Self-hosted option** | ✅ Full control | ❌ Cloud only |
-| **Air-gapped networks** | Desktop works completely offline | Requires internet |
+| **What it scans** | OS-level: event logs, registry, services, firewall, users | Cloud infra plus SaaS/identity/MDM integrations (Intune, Jamf, Okta, CrowdStrike, etc.) |
+| **Data residency** | Self-hosted: your organization controls the infrastructure and data access | Stored on vendor servers |
+| **Self-hosted option** | ✅ Full control | Vendor-hosted; some offer self-hosted for select plans |
+| **Air-gapped networks** | Desktop works completely offline | Requires internet connectivity |
 | **Cost** | Free tier available, Pro from $149/mo | $8k to $10k/year |
-| **Compliance frameworks** | SOC 2 (43 criteria), ISO/IEC 27001:2022 (93), HIPAA (47), GDPR (38) | SOC 2 only |
+| **Compliance frameworks** | SOC 2 (43 criteria), ISO/IEC 27001:2022 (93), HIPAA (47), GDPR (38) | Broad multi-framework coverage (SOC 2, ISO 27001, HIPAA, PCI DSS, GDPR and more; varies by plan) |
 | **Source-available** | ✅ BSL 1.1 (not OSI open source) | ❌ Closed source |
 
-They scan the cloud. We scan the machine. Use both and you have covered the full stack.
+Cloud-first platforms automate evidence through SaaS, cloud, identity, and MDM integrations. ComplianceGuard collects evidence directly from endpoints and can run fully offline or self-hosted. Use both and you have covered the full stack.
 
 ## What It Collects
 
@@ -380,9 +380,13 @@ The complete Annex A: 93 controls across the four 2022 themes — A.5 Organizati
 
 47 safeguards across all five 45 CFR Part 164 sections (§164.308–§164.316). Available via `GET /api/v1/hipaa/framework/controls`. Each safeguard includes its specification type (Required or Addressable) and implementation guidance aligned with HHS guidance. Also browseable offline in the desktop app's **Browse Frameworks** tab.
 
+> **What HIPAA coverage means:** evidence coverage supports Security Rule readiness but does not determine HIPAA compliance. Required and Addressable implementation specifications must be evaluated in the context of the organization's own risk analysis, and the Privacy Rule and Breach Notification Rule are outside the scope of endpoint evidence.
+
 ### GDPR (EU) 2016/679
 
 38 obligations across the operational chapters: principles (Art. 5–9), data subject rights (Art. 12–22), controller and processor duties (Art. 24–37), and international transfers (Art. 44–47). Available via `GET /api/v1/gdpr/framework/controls`. Each obligation includes its source article, GDPR chapter, control objective, and implementation guidance. Browse by article (`/by-category/32`), search by keyword, or fetch by ID (`/framework/controls/Art.32.1`). Fully supported in the desktop app too: scoring, **Browse Frameworks**, and PDF reports.
+
+> **What GDPR coverage means:** it is an evidence-readiness mapping, not a determination of GDPR compliance. Technical collection can support some obligations — such as security of processing under Article 32 — but obligations involving lawful basis, data-subject rights, transparency, contracts, DPO appointment, and records of processing generally require manual organizational evidence and legal review.
 
 ## Architecture
 
@@ -514,7 +518,7 @@ ComplianceGuard supports Windows, macOS, and Linux endpoints. The following limi
 
 Free tier to get started. Pro adds PDF evidence reports, trend history, and remediation scripts. Enterprise is built for the strictest environments.
 
-> ComplianceGuard fills the endpoint evidence gap that Vanta, Drata, and Sprinto cannot: they scan your cloud, we scan your machines. Use both to cover the full stack — cloud infrastructure and endpoint evidence. No tool combination by itself establishes SOC 2 Type II compliance: a Type II opinion requires an independent auditor assessing operating effectiveness over a review period.
+> ComplianceGuard fills the endpoint evidence gap that cloud-first platforms leave open: they automate evidence through SaaS, cloud, identity, and MDM integrations, while ComplianceGuard collects it directly from the machines themselves. Use both to cover the full stack — cloud infrastructure and endpoint evidence. No tool combination by itself establishes SOC 2 Type II compliance: a Type II opinion requires an independent auditor assessing operating effectiveness over a review period.
 
 ### Self-Hosted (You Manage the Server)
 
