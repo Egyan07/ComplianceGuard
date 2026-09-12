@@ -152,7 +152,7 @@ export default function LoginPage() {
           <Typography
             sx={{ display: 'block', textAlign: 'center', mt: 3, fontSize: '0.75rem', color: 'text.secondary' }}
           >
-            SOC 2 Type II Compliance Automation
+            SOC 2 · ISO 27001 · HIPAA · GDPR — Endpoint Evidence Readiness
           </Typography>
         </CardContent>
       </Card>

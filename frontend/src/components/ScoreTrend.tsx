@@ -139,7 +139,7 @@ const ScoreHero: React.FC<{ pts: TrendDisplayPoint[]; pal: ChartPalette }> = ({ 
     <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', mb: '28px', flexWrap: 'wrap', gap: 2 }}>
       <Box>
         <Typography sx={{ fontSize: '0.8125rem', fontWeight: 500, color: 'text.secondary', mb: '4px' }}>
-          Current compliance score
+          Current evidence coverage
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
           <Typography
@@ -211,7 +211,7 @@ const TrendChart: React.FC<{ pts: TrendDisplayPoint[]; geo: ChartGeometry; pal: 
   <Box>
     <svg
       role="img"
-      aria-label="Compliance score trend over time"
+      aria-label="Evidence coverage trend over time"
       viewBox={`0 0 ${W} ${H}`}
       preserveAspectRatio="none"
       style={{ width: '100%', height: '140px', display: 'block', overflow: 'visible' }}
@@ -244,6 +244,32 @@ const TrendChart: React.FC<{ pts: TrendDisplayPoint[]; geo: ChartGeometry; pal: 
         ) : (
           <circle key={i} cx={pt.x} cy={pt.y} r="3.5" fill="#ffffff" stroke={pal.ink} strokeWidth="1.5"
             aria-label={`${pts[i].formattedDate} score ${pts[i].score} percent`} />
+        );
+      })}
+      {/* Taxonomy-transition markers: scores produced under materially
+          different framework definitions must not be read as one continuous
+          series. A dashed divider is drawn wherever the recorded taxonomy
+          changes between consecutive evaluations (null = legacy taxonomy). */}
+      {geo.svgPoints.slice(1).map((pt, i) => {
+        const prev = pts[i];
+        const curr = pts[i + 1];
+        if ((prev.taxonomyVersion ?? null) === (curr.taxonomyVersion ?? null)) return null;
+        return (
+          <g key={`taxonomy-break-${i}`} role="img"
+            aria-label={`Framework definition changed between ${prev.formattedDate} and ${curr.formattedDate}; scores are not directly comparable`}
+          >
+            <line
+              x1={(pt.x + geo.svgPoints[i].x) / 2} y1={0}
+              x2={(pt.x + geo.svgPoints[i].x) / 2} y2={H}
+              stroke={pal.grid} strokeWidth="1.2" strokeDasharray="2 5"
+            />
+            <text
+              x={(pt.x + geo.svgPoints[i].x) / 2} y={12}
+              fontSize="9" fill={pal.warn} textAnchor="middle" fontFamily="Inter" fontWeight="600"
+            >
+              taxonomy change
+            </text>
+          </g>
         );
       })}
       {geo.svgPoints.length > 0 && (() => {

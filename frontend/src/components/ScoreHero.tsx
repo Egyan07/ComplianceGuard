@@ -100,7 +100,7 @@ const ScoreHero: React.FC<ScoreHeroProps> = ({
               }}
             >
               <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem', textAlign: 'center' }}>
-                No evaluation yet.<br />Run an evaluation to see your compliance score.
+                No evaluation yet.<br />Run an evaluation to see your evidence coverage.
               </Typography>
             </Box>
           )}
@@ -171,14 +171,14 @@ const ScoreHero: React.FC<ScoreHeroProps> = ({
         {evaluation && (
           <Box sx={{ mt: 2, pt: 1.5, borderTop: '1px solid', borderColor: 'divider' }}>
             <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', lineHeight: 1.6 }}>
-              {evaluation.compliant_controls}/{evaluation.total_controls} controls compliant
+              {evaluation.compliant_controls}/{evaluation.total_controls} criteria with full evidence coverage
               {typeof evaluation.not_assessed_controls === 'number' && evaluation.not_assessed_controls > 0 && (
                 <> · {evaluation.not_assessed_controls} not yet assessed</>
               )}{' '}
               · Last evaluated {new Date(evaluation.evaluation_date).toLocaleDateString()}
             </Typography>
             <Typography sx={{ display: 'block', fontSize: '0.75rem', color: 'text.secondary', mt: 0.5, opacity: 0.85 }}>
-              Score = share of required control evidence demonstrated; unassessed controls lower it until evidence is collected.
+              Evidence coverage = share of required control evidence demonstrated; unassessed criteria lower it until evidence is collected. This measures evidence coverage and is not a legal or audit determination of compliance.
             </Typography>
           </Box>
         )}

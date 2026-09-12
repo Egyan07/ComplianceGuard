@@ -59,8 +59,8 @@ describe('evaluate-compliance (canonical path)', () => {
     expect(result.overall_score).toBeGreaterThan(0);
     expect(result.overall_score).toBeLessThanOrEqual(100);
     expect(result.status).toMatch(/^(compliant|partial|non_compliant)$/);
-    expect(result.total_controls).toBe(54);
-    expect(result.not_assessed_controls).toBeLessThan(54);
+    expect(result.total_controls).toBe(43);
+    expect(result.not_assessed_controls).toBeLessThan(43);
     expect(ctx.showNotification).toHaveBeenCalled();
     // The notification text carries the 0-100 score, not a 0-1 fraction.
     const [title, body] = ctx.showNotification.mock.calls[0];
@@ -77,7 +77,7 @@ describe('evaluate-compliance (canonical path)', () => {
     expect(result.overall_score).toBe(0);
     // CG-M2: nothing assessed is not a failed assessment.
     expect(result.status).toBe('not_assessed');
-    expect(result.not_assessed_controls).toBe(54);
+    expect(result.not_assessed_controls).toBe(43);
     expect(ctx.showNotification).toHaveBeenCalled();
   });
 
@@ -144,7 +144,7 @@ describe('download-remediation-script', () => {
     // The electron mock's showSaveDialog resolves { canceled: true }.
     const { ctx } = register();
 
-    const result = await ipcMain.registeredHandlers['download-remediation-script'](null, 'CC6.3');
+    const result = await ipcMain.registeredHandlers['download-remediation-script'](null, 'CC6.6');
 
     expect(result.canceled).toBe(true);
     // No audit event is written for a canceled download (would need a db).

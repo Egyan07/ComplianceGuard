@@ -154,9 +154,14 @@ class AWSEvidenceCollector:
                 'bucket_encryption_status': bucket_encryption_status,
                 'encryption_compliance_rate': round(compliance_rate, 2),
                 'aws_region': self.region_name,
+                # Real 2017 TSC criteria this evidence contributes to:
+                # CC6.1/CC6.7 (protection/transmission of confidential data),
+                # C1.1 (identification of confidential information),
+                # CC9.2 (vendor/Business Partner risk).
                 'soc2_criteria': [
-                    'C1.3 - Encryption Controls',
-                    'C1.2 - Data Classification'
+                    'CC6.1 - Logical Access Security',
+                    'CC6.7 - Restriction of Information Transmission',
+                    'C1.1 - Identification and Maintenance of Confidential Information'
                 ]
             }
 

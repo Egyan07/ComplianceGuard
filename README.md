@@ -14,7 +14,7 @@
 
 Compliance tools like Vanta, Drata, and Sprinto scan your cloud infrastructure. That is useful, but it misses what happens **on the machines themselves**. Password policies, firewall rules, event logs, running services, and local user accounts live on the endpoint, not in AWS.
 
-ComplianceGuard lives on the endpoint too. It collects evidence directly from Windows, macOS, and Linux, scores it against SOC 2 Type II, ISO 27001:2013, HIPAA Security Rule, and GDPR controls, and tells you exactly where the gaps are, across all four frameworks in a single collection pass. Run it as a desktop app or deploy the web version with Docker; everything stays under your control.
+ComplianceGuard lives on the endpoint too. It collects evidence directly from Windows, macOS, and Linux, scores it against SOC 2 Type II, ISO/IEC 27001:2022, HIPAA Security Rule, and GDPR controls, and tells you exactly where the gaps are, across all four frameworks in a single collection pass. Run it as a desktop app or deploy the web version with Docker; everything stays under your control.
 
 How it works: the desktop app collects OS-level evidence → maps it to compliance controls → scores your readiness → optionally syncs to a multi-machine cloud dashboard.
 
@@ -40,7 +40,7 @@ How it works: the desktop app collects OS-level evidence → maps it to complian
 
 <video src="https://github.com/user-attachments/assets/361db401-fa40-4217-8259-681a21d914dc" controls width="100%"></video>
 
-_Continuous endpoint evidence, real-time compliance tracking, and audit-ready reports on demand. Self-hosted and privacy-first._
+_Continuous endpoint evidence, real-time evidence coverage tracking, and PDF evidence reports on demand. Self-hosted and privacy-first._
 
 ## Screenshots
 
@@ -48,7 +48,7 @@ _Continuous endpoint evidence, real-time compliance tracking, and audit-ready re
 
 ![ComplianceGuard Dashboard](assets/screenshots/Dashboard.png)
 
-Your real-time compliance score after a full evaluation, with one-click access to collect evidence, run an evaluation, upload manual evidence, and export an audit-ready PDF report.
+Your real-time evidence coverage score after a full evaluation, with one-click access to collect evidence, run an evaluation, upload manual evidence, and export a PDF report.
 
 ### Control Heatmap
 
@@ -66,13 +66,13 @@ Track your readiness over time on the History screen, with compliance zone bands
 
 ![Cloud Dashboard](assets/screenshots/CloudDashboard.png)
 
-Monitor every machine from one centralized web dashboard: compliance scores, fleet-level stats, and last-sync status for all your endpoints.
+Monitor every machine from one centralized web dashboard: evidence coverage scores, fleet-level stats, and last-sync status for all your endpoints.
 
 ### Framework Browser
 
 ![Framework Browser](assets/screenshots/FrameworkBrowser.png)
 
-Browse the full control library offline: SOC 2 Type II (54 controls), ISO 27001 (47), HIPAA (47), and GDPR (38), with control objectives and implementation guidance.
+Browse the full control library offline: SOC 2 Type II (43 criteria), ISO/IEC 27001:2022 (93 controls), HIPAA (47), and GDPR (38), with control objectives and implementation guidance.
 
 ## Who Is This For?
 
@@ -82,7 +82,7 @@ Browse the full control library offline: SOC 2 Type II (54 controls), ISO 27001 
 
 | If you are... | Start with | Because |
 |---|---|---|
-| A startup getting audit-ready | Free, then Pro | Collect and score everything at no cost; upgrade when you need gap details and PDF reports |
+| A startup preparing for an audit | Free, then Pro | Collect and score everything at no cost; upgrade when you need gap details and PDF reports |
 | A government contractor | Self-hosted Enterprise | Data sovereignty requirements |
 | NHS / healthcare | Self-hosted Enterprise | NHS DSPT, patient data governance |
 | A legal firm | Self-hosted Pro/Enterprise | Client confidentiality, SRA |
@@ -255,8 +255,8 @@ npm run package:linux   # Linux (AppImage + .deb) → dist/
 | **Self-hosted option** | ✅ Full control | ❌ Cloud only |
 | **Air-gapped networks** | Desktop works completely offline | Requires internet |
 | **Cost** | Free tier available, Pro from $149/mo | $8k to $10k/year |
-| **Compliance frameworks** | SOC 2 (54 controls), ISO 27001 (47), HIPAA (47), GDPR (38) | SOC 2 only |
-| **Open source** | ✅ BSL 1.1 | ❌ Closed source |
+| **Compliance frameworks** | SOC 2 (43 criteria), ISO/IEC 27001:2022 (93), HIPAA (47), GDPR (38) | SOC 2 only |
+| **Source-available** | ✅ BSL 1.1 (not OSI open source) | ❌ Closed source |
 
 They scan the cloud. We scan the machine. Use both and you have covered the full stack.
 
@@ -269,9 +269,9 @@ ComplianceGuard pulls 8 categories of evidence from Windows, macOS, and Linux:
 | Event Logs | Security, System, Application logs | CC7.1, CC4.1 |
 | Security Settings | Password policies, audit policies, registry options | CC6.1, CC6.2, CC6.3 |
 | Services | Defender, Windows Update, Firewall, Event Log status | A1.1, CC7.1 |
-| Firewall | Domain, Private, Public profile configuration | A3.2, A3.1 |
+| Firewall | Domain, Private, Public profile configuration | CC6.6, CC6.1 |
 | User Accounts | Local accounts, admin group membership | CC6.2, CC6.3 |
-| Network | Interfaces, open ports, routing tables | A3.1, A1.1 |
+| Network | Interfaces, open ports, routing tables | CC6.6, CC6.7 |
 | Software | Registry-based inventory of installed programs | CC8.1, CC7.1 |
 | File Permissions | ACLs on critical system paths | CC6.1, CC6.3 |
 
@@ -281,7 +281,9 @@ Each evidence item is SHA-256 hashed for integrity and stored with full audit lo
 
 ### SOC 2 Controls
 
-54 controls across 5 categories, scored by evidence coverage with equal weighting.
+43 criteria from the 2017 Trust Services Criteria (33 Common Criteria plus the category-specific supplements: Availability A1.1–A1.3, Confidentiality C1.1–C1.2, Processing Integrity PI1.1–PI1.5), scored by evidence coverage with equal weighting.
+
+> **What the score means:** it measures whether the required *evidence types* for each criterion were collected — it is not a legal or audit determination of compliance. Criteria classified `manual_upload` (e.g. board oversight, policy attestations) stay `not_assessed` until you upload the corresponding manual evidence; endpoint scans alone cannot satisfy them.
 
 Scoring uses the **canonical coverage model** (one engine, shared by the web API
 and the desktop app, driven by the framework definitions in `shared/frameworks/`):
@@ -294,102 +296,85 @@ evidence coverage rather than inflating readiness. The same model applies to ISO
 logic.
 
 <details>
-<summary><strong>Common Criteria (CC): 19 controls</strong></summary>
+<summary><strong>Common Criteria (CC): 33 criteria</strong></summary>
 
-| ID | Control |
-|----|---------|
-| CC1.1 | Control Environment |
-| CC1.2 | Board Independence |
-| CC1.3 | Management Philosophy |
-| CC2.1 | Communication and Information |
-| CC2.2 | Information Quality |
+| ID | Criterion |
+|----|-----------|
+| CC1.1 | Integrity and Ethical Values |
+| CC1.2 | Board Oversight and Independence |
+| CC1.3 | Organizational Structure and Reporting Lines |
+| CC1.4 | Commitment to Competence |
+| CC1.5 | Individual Accountability |
+| CC2.1 | Quality of Information |
+| CC2.2 | Internal Communication |
 | CC2.3 | External Communication |
-| CC3.1 | Risk Assessment Process |
-| CC3.2 | Risk Identification |
-| CC3.3 | Risk Analysis |
-| CC4.1 | Monitoring Activities |
-| CC4.2 | Separate Evaluations |
-| CC5.1 | Control Activities |
-| CC5.2 | Control Activities Development |
-| CC6.1 | Logical Access Controls |
-| CC6.2 | Authentication |
-| CC6.3 | Authorization |
-| CC7.1 | System Operations |
+| CC3.1 | Objectives Specification |
+| CC3.2 | Risk Identification and Analysis |
+| CC3.3 | Fraud Consideration |
+| CC3.4 | Change Risk Assessment |
+| CC4.1 | Ongoing and Separate Evaluations |
+| CC4.2 | Evaluation and Communication of Deficiencies |
+| CC5.1 | Selection of Control Activities |
+| CC5.2 | General Controls over Technology |
+| CC5.3 | Deployment Through Policies and Procedures |
+| CC6.1 | Logical Access Security |
+| CC6.2 | User Registration and Credential Management |
+| CC6.3 | Access Authorization and Modification |
+| CC6.4 | Physical Access Restrictions |
+| CC6.5 | Disposal of Physical Assets |
+| CC6.6 | Protection Against External Threats |
+| CC6.7 | Restriction of Information Transmission |
+| CC6.8 | Unauthorized and Malicious Software Controls |
+| CC7.1 | Configuration and Vulnerability Detection |
+| CC7.2 | Anomaly Monitoring |
+| CC7.3 | Security Event Evaluation |
+| CC7.4 | Incident Response |
+| CC7.5 | Recovery from Security Incidents |
 | CC8.1 | Change Management |
-| CC9.1 | Risk Mitigation |
+| CC9.1 | Business Disruption Risk Mitigation |
+| CC9.2 | Vendor and Business Partner Risk |
 
 </details>
 
 <details>
-<summary><strong>Availability (A): 9 controls</strong></summary>
+<summary><strong>Availability (A): 3 criteria</strong></summary>
 
-| ID | Control |
-|----|---------|
-| A1.1 | Availability Policies and Procedures |
-| A1.2 | Capacity Management |
-| A1.3 | Backup and Recovery |
-| A1.4 | Incident Response |
-| A1.5 | System Performance Monitoring |
-| A2.1 | Environmental Controls |
-| A2.2 | Facility Access |
-| A3.1 | Network Security |
-| A3.2 | Firewall Management |
+| ID | Criterion |
+|----|-----------|
+| A1.1 | Processing Capacity Management |
+| A1.2 | Environmental Protections, Backup, and Recovery Infrastructure |
+| A1.3 | Recovery Plan Testing |
 
 </details>
 
 <details>
-<summary><strong>Confidentiality (C): 9 controls</strong></summary>
+<summary><strong>Confidentiality (C): 2 criteria</strong></summary>
 
-| ID | Control |
-|----|---------|
-| C1.1 | Confidentiality Policies |
-| C1.2 | Data Classification |
-| C1.3 | Encryption Controls |
-| C1.4 | Data Masking |
-| C2.1 | Confidentiality Agreements |
-| C2.2 | Data Retention |
-| C2.3 | Data Disposal |
-| C3.1 | Third Party Confidentiality |
-| C3.2 | Confidentiality Monitoring |
+| ID | Criterion |
+|----|-----------|
+| C1.1 | Identification and Maintenance of Confidential Information |
+| C1.2 | Disposal of Confidential Information |
 
 </details>
 
 <details>
-<summary><strong>Processing Integrity (PI): 9 controls</strong></summary>
+<summary><strong>Processing Integrity (PI): 5 criteria</strong></summary>
 
-| ID | Control |
-|----|---------|
-| PI1.1 | Processing Integrity Controls |
-| PI1.2 | Quality Assurance |
-| PI1.3 | Input Validation |
-| PI1.4 | Processing Controls |
-| PI1.5 | Output Validation |
-| PI2.1 | Error Handling |
-| PI2.2 | Transaction Integrity |
-| PI3.1 | Processing Monitoring |
-| PI3.2 | Exception Reporting |
+| ID | Criterion |
+|----|-----------|
+| PI1.1 | Processing Information Quality |
+| PI1.2 | Input Completeness and Accuracy |
+| PI1.3 | System Processing Controls |
+| PI1.4 | Output Delivery |
+| PI1.5 | Storage of Inputs and Outputs |
 
 </details>
 
-<details>
-<summary><strong>Confidentiality & Availability (CA): 8 controls</strong></summary>
+### ISO/IEC 27001:2022
 
-| ID | Control |
-|----|---------|
-| CA1.1 | Confidentiality and Availability Management |
-| CA1.2 | Incident Response |
-| CA1.3 | Security Awareness Training |
-| CA1.4 | Physical Security |
-| CA1.5 | Vendor Management |
-| CA1.6 | Change Management |
-| CA1.7 | Business Continuity |
-| CA1.8 | Security Monitoring |
+The complete Annex A: 93 controls across the four 2022 themes — A.5 Organizational (37), A.6 People (8), A.7 Physical (14), A.8 Technological (34). Available via the web API at `GET /api/v1/iso27001/framework/controls`. Includes control objectives, implementation guidance, and risk levels. Browse by theme (`/by-category/A.8`), search by keyword, or fetch by ID. The desktop app includes a read-only **Browse Frameworks** tab for offline reference.
 
-</details>
-
-### ISO 27001:2013
-
-47 controls across all 14 Annex A domains (A.5–A.18). Available via the web API at `GET /api/v1/iso27001/framework/controls`. Includes control objectives, implementation guidance, and risk levels. Browse by domain (`/by-category/A.9`), search by keyword, or fetch by ID. The desktop app includes a read-only **Browse Frameworks** tab for offline reference.
+> Evaluations produced against the withdrawn ISO/IEC 27001:2013 remain viewable and render from the archived 2013 definition (`shared/frameworks/iso27001_2013_archived.yaml`); new evaluations use 2022.
 
 ### HIPAA Security Rule
 
@@ -519,16 +504,17 @@ ComplianceGuard supports Windows, macOS, and Linux endpoints. The following limi
 - **Automatic scheduling:** Daily or Weekly evidence collection runs automatically while the desktop app is open. Configure in Settings → Automatic Collection.
 - **Per-machine view in desktop mode:** the Electron app shows one machine at a time. Use web mode (self-hosted or managed) with the Cloud Dashboard to monitor multiple machines centrally.
 - **AWS only for cloud evidence:** the web backend collects S3 and IAM evidence from AWS. GCP and Azure are not yet implemented.
-- **PCI DSS not yet implemented:** SOC 2 Type II (54 controls), ISO 27001:2013 (47 controls), HIPAA Security Rule (47 safeguards), and GDPR (38 obligations) are all available. PCI DSS is planned.
+- **PCI DSS not yet implemented:** SOC 2 Type II (43 criteria), ISO/IEC 27001:2022 (93 controls), HIPAA Security Rule (47 safeguards), and GDPR (38 obligations) are all available. PCI DSS is planned.
+- **Evidence coverage is not a compliance determination:** scores measure whether required evidence types were collected. Many SOC 2, ISO, and GDPR criteria require organizational or manual evidence that endpoint scans cannot establish, and a certification or audit opinion always requires an independent assessor.
 - **Single machine in free tier:** the free tier is limited to one machine. Pro supports up to 10, Enterprise is unlimited.
 - **No real-time monitoring:** ComplianceGuard takes point-in-time snapshots, not continuous streams.
-- **PDF reports require Pro:** the free tier shows your overall score but does not generate audit-ready PDF exports.
+- **PDF reports require Pro:** the free tier shows your overall coverage score but does not generate PDF report exports.
 
 ## Pricing
 
-Free tier to get started. Pro makes you audit-ready. Enterprise is built for the strictest environments.
+Free tier to get started. Pro adds PDF evidence reports, trend history, and remediation scripts. Enterprise is built for the strictest environments.
 
-> ComplianceGuard fills the endpoint evidence gap that Vanta, Drata, and Sprinto cannot: they scan your cloud, we scan your machines. Use both and your SOC 2 Type II is fully covered.
+> ComplianceGuard fills the endpoint evidence gap that Vanta, Drata, and Sprinto cannot: they scan your cloud, we scan your machines. Use both to cover the full stack — cloud infrastructure and endpoint evidence. No tool combination by itself establishes SOC 2 Type II compliance: a Type II opinion requires an independent auditor assessing operating effectiveness over a review period.
 
 ### Self-Hosted (You Manage the Server)
 
@@ -538,14 +524,14 @@ Free tier to get started. Pro makes you audit-ready. Enterprise is built for the
 | **Billed annually** | — | $1,788/yr | $7,188/yr |
 | Evidence collection (all 8 categories) | ✅ | ✅ | ✅ |
 | SOC 2 controls scored | All 54 (overall score only) | All 54 + per-control breakdown | All 54 + per-control breakdown |
-| Overall compliance score | ✅ | ✅ | ✅ |
+| Overall evidence coverage score | ✅ | ✅ | ✅ |
 | Per-control scoring + gap details | — | ✅ | ✅ |
 | Control heatmap + remediation scripts | — | ✅ | ✅ |
-| Compliance score trend (Type II timeline) | — | ✅ | ✅ |
+| Evidence coverage trend (per framework) | — | ✅ | ✅ |
 | Remediation recommendations | — | ✅ | ✅ |
 | Upload manual evidence (policies, docs) | — | ✅ | ✅ |
 | Evaluation history + trends | — | ✅ | ✅ |
-| PDF audit-ready reports | — | ✅ | ✅ |
+| PDF evidence reports | — | ✅ | ✅ |
 | Cloud dashboard (multi-machine) | — | ✅ | ✅ |
 | Tamper-evident audit log (HMAC-SHA256 hash chain) | — | — | ✅ |
 | RBAC (admin + auditor roles) | — | — | ✅ |
@@ -694,7 +680,6 @@ drills) live in [`docs/disaster-recovery.md`](docs/disaster-recovery.md):
 | **Evidence collection returns empty results** | Run the app as Administrator. Some Windows registry and event log queries require elevated privileges. |
 | **`alembic upgrade head` fails** | Ensure `DATABASE_URL` in your `.env` is set correctly. For local SQLite, use `sqlite:///./complianceguard.db`. |
 | **License key not activating** | License keys are tied to the Ed25519 public key bundled with the app. Ensure you are using a key generated for this build. |
-| **CI fails with `ERR_MODULE_NOT_FOUND`** | Run `cd frontend && npm install react-transition-group` to install the missing peer dependency. |
 | **Electron tests fail with "Could not locate the bindings file"** | `better-sqlite3` 13 ships N-API prebuilds in the npm tarball, so the same binary works under Node (tests) and Electron (packaged app) with no rebuild. If you see a bindings error, run `npm ci` to restore the prebuilds; only the legacy `npm run test:scheduler` `pretest` hook rebuilds for a specific ABI. |
 
 
@@ -722,7 +707,7 @@ drills) live in [`docs/disaster-recovery.md`](docs/disaster-recovery.md):
 > Contact [alexisegyan1232@gmail.com](mailto:alexisegyan1232@gmail.com) for licensing. Managed hosted instances are also available; we handle deployment and infrastructure for you.
 
 ### What is the Cloud Dashboard?
-> The Cloud Dashboard allows you to monitor multiple machines from one centralized web view. Each endpoint (Windows, macOS, or Linux) runs the Electron desktop app. Go to Settings > Cloud Sync, enter your web server URL and credentials, and click Sync to Cloud. The web dashboard then shows all machines' compliance scores, last sync time, and fleet-level stats. Available for Pro and Enterprise users.
+> The Cloud Dashboard allows you to monitor multiple machines from one centralized web view. Each endpoint (Windows, macOS, or Linux) runs the Electron desktop app. Go to Settings > Cloud Sync, enter your web server URL and credentials, and click Sync to Cloud. The web dashboard then shows all machines' evidence coverage scores, last sync time, and fleet-level stats. Available for Pro and Enterprise users.
 
 ### Can I use this in an air-gapped environment?
 > Yes. The Desktop (Electron) mode works completely offline with no network traffic. Evidence is collected locally, stored in SQLite, and never leaves the machine unless you configure cloud sync. A good fit for classified, government, or highly regulated environments.
@@ -746,11 +731,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 - Evidence collection across 8 categories: event logs, registry, services, firewall, users, network, software, file permissions
 - Native Linux support: systemd/journald, iproute2, ufw/iptables/nftables, dpkg/rpm/pacman; AppImage + .deb distribution
 - Native macOS support on Intel and Apple Silicon (unsigned DMG with Gatekeeper bypass)
-- Four compliance frameworks: SOC 2 Type II (54 controls), ISO 27001:2013 (47), HIPAA Security Rule (47), GDPR (38)
-- Scheduled automatic evidence collection (Daily/Weekly)
+- Four compliance frameworks: SOC 2 Type II (43 criteria), ISO/IEC 27001:2022 (93), HIPAA Security Rule (47), GDPR (38)
+- Scheduled evidence collection (Daily/Weekly while the desktop app is running)
 - Control Heatmap with per-control scores, gap details, and inline remediation scripts
-- Compliance score trend with per-framework history
-- Audit-ready PDF reports and evaluation history
+- Evidence coverage trend with per-framework history
+- PDF evidence reports and evaluation history
 - Air-gapped Enterprise tier: tamper-evident HMAC-SHA256 audit log, RBAC, custom PDF branding, NDJSON export, offline Docker bundle
 - Free / Pro / Enterprise licensing with Ed25519 signatures, verified fully offline
 - Cloud sync and multi-machine compliance dashboard

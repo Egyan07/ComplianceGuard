@@ -151,13 +151,18 @@ class TestUploadToScore:
         assert data["overall_score"] == expected["overall_score"] == single["overall_score"]
 
     def test_evidence_that_should_not_affect_a_control_leaves_it_unassessed(self, client_and_token):
-        """policy_document is not required by CC6.1 -> CC6.1 stays not_assessed."""
+        """policy_document is not required by CC7.1 -> CC7.1 stays not_assessed.
+
+        (Real CC6.1 legitimately requires a policy document as partial
+        evidence for logical access security, so CC7.1 — configuration and
+        vulnerability detection — is the correct exemplar for 'unrelated
+        evidence must not assess a control'.)"""
         client, token = client_and_token
         assert _upload(client, token, "policy_document").status_code == 201
         eval_resp = _evaluate(client, token)
         assert eval_resp.status_code == 200
-        # policy_document is not in CC6.1's required list -> stays not_assessed.
-        assert _engine_control_status(["policy_document"], "CC6.1")["status"] == "not_assessed"
+        # policy_document is not in CC7.1's required list -> stays not_assessed.
+        assert _engine_control_status(["policy_document"], "CC7.1")["status"] == "not_assessed"
 
     def test_full_control_satisfaction(self, client_and_token):
         """Uploading every required type for a control makes it compliant,

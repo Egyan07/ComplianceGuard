@@ -11,6 +11,8 @@ from typing import Dict, List, Optional, Any
 
 import yaml
 
+from app.core.shared_frameworks import SHARED_FRAMEWORKS_DIR
+
 
 @dataclass
 class HIPAAControl:
@@ -26,7 +28,10 @@ class HIPAAControl:
     risk_level: str = "high"
 
 
-_YAML_PATH = os.path.join(os.path.dirname(__file__), "hipaa_controls.yaml")
+# Canonical definition (single source of truth shared with the scoring
+# engines, the desktop app, and the generated catalog). Located by upward
+# search (see shared_frameworks.py) so both host and Docker layouts resolve.
+_YAML_PATH = os.path.join(SHARED_FRAMEWORKS_DIR, "hipaa_controls.yaml")
 
 
 class HIPAAFramework:

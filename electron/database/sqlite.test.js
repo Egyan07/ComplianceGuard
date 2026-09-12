@@ -19,12 +19,24 @@ describe('ComplianceGuardDatabase', () => {
   });
 
   describe('seedInitialData', () => {
-    it('seeds ISO 27001 framework row with id=2', async () => {
+    it('seeds ISO 27001 framework row with id=2 as 2022', async () => {
       const row = await db.get(
         'SELECT * FROM compliance_frameworks WHERE id = 2'
       );
       expect(row).toBeDefined();
-      expect(row.name).toBe('ISO 27001:2013');
+      expect(row.name).toBe('ISO/IEC 27001:2022');
+      expect(row.version).toBe('2022');
+    });
+
+    it('relabels a pre-existing 2013 seed row to 2022 idempotently', async () => {
+      // Simulate a database seeded by an older app version (2013 row present).
+      await db.run(
+        "UPDATE compliance_frameworks SET name = 'ISO 27001:2013', version = '2013' WHERE id = 2"
+      );
+      await db.seedInitialData();
+      const row = await db.get('SELECT * FROM compliance_frameworks WHERE id = 2');
+      expect(row.name).toBe('ISO/IEC 27001:2022');
+      expect(row.version).toBe('2022');
     });
 
     it('seeds HIPAA framework row with id=3', async () => {

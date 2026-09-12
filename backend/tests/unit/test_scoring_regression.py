@@ -5,8 +5,8 @@ Pin the canonical scoring contract so the pre-canonical divergent behaviors
 cannot silently return:
 
 1. Legacy engines omitted controls with no matching evidence from the result
-   (SOC 2 baseline showed 17 of 54 controls). Canonical: EVERY control is
-   present, with status ``not_assessed`` when it has no evidence.
+   (SOC 2 baseline showed 17 of the then-listed 54 controls). Canonical: EVERY
+   control is present, with status ``not_assessed`` when it has no evidence.
 2. Legacy overall score was the mean over matched controls only. Canonical:
    the overall score is the mean over ALL controls — ``not_assessed`` controls
    count as 0 in the denominator.
@@ -24,8 +24,8 @@ ENGINE = get_canonical_engine()
 
 # Every control is present in a canonical evaluation, regardless of evidence.
 FRAMEWORK_CONTROL_COUNTS = {
-    "soc2": 54,
-    "iso27001": 47,
+    "soc2": 43,  # real 2017 TSC: 33 CC + A1.1-A1.3 + C1.1-C1.2 + PI1.1-PI1.5
+    "iso27001": 93,  # ISO/IEC 27001:2022 complete Annex A (A.5-A.8)
     "hipaa": 47,
     "gdpr": 38,
 }
@@ -45,9 +45,9 @@ def test_not_assessed_controls_in_denominator():
     """Overall score = mean over ALL controls, not just the assessed ones.
 
     The legacy engine averaged only controls that received evidence; a sparse
-    run showed 17 of 54 controls with a score inflated by the omission. Here
-    every control (including not_assessed ones, which score 0) is in the
-    denominator.
+    run showed 17 of the then-listed controls with a score inflated by the
+    omission. Here every control (including not_assessed ones, which score 0)
+    is in the denominator.
     """
     result = ENGINE.evaluate("soc2", ["system_configs"])
     assert result.counts["not_assessed"] > 0

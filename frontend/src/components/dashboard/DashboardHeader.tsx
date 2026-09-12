@@ -37,7 +37,7 @@ const DashboardHeader: React.FC<Props> = ({
     <Box sx={{ mb: 4 }}>
       <PageHeader
         title="Dashboard"
-        subtitle="Monitor your compliance status across SOC 2, ISO 27001, HIPAA and GDPR"
+        subtitle="Evidence readiness across SOC 2, ISO 27001, HIPAA and GDPR"
         actions={
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
           <Button
@@ -78,7 +78,7 @@ const DashboardHeader: React.FC<Props> = ({
                   onClick={() =>
                     isFeatureAllowed('pdf_reports')
                       ? onExportPDF()
-                      : onUpgradePrompt('PDF Reports', 'Generate audit-ready PDF compliance reports with scores, gaps, and recommendations.')
+                      : onUpgradePrompt('PDF Reports', 'Generate PDF readiness reports with evidence coverage, gaps, and recommendations.')
                   }
                   disabled={exportingPDF || (!evaluation && isFeatureAllowed('pdf_reports'))}
                   sx={{ minWidth: 110, color: 'text.primary' }}

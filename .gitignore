@@ -85,6 +85,9 @@ logs/
 .worktrees/
 
 # Internal planning docs — never push to public repo
+# Investor documents (local only, never push to public repo)
+investor-doc/
+
 docs/superpowers/
 docs/internal/
 docs/private/

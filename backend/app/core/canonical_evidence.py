@@ -30,11 +30,12 @@ from typing import Any, Dict, Iterable, List, Optional, Set
 
 import yaml
 
-# Resolve the shared framework data. In the packaged/web deployment the repo
-# layout is preserved; fall back to the legacy backend YAMLs if the shared
-# directory is missing so the module never hard-fails at import time.
-_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-_SHARED_DIR = os.path.join(_REPO_ROOT, "shared", "frameworks")
+# Resolve the shared framework data by upward search (see shared_frameworks.py)
+# so the repository checkout, the Docker image layout (/app/app/core ->
+# /app/shared), and bind-mounted dev containers all resolve the same canonical
+# directory. Raises FileNotFoundError at import time if it genuinely cannot be
+# found — a clear, actionable failure beats a crash later on a missing YAML.
+from app.core.shared_frameworks import SHARED_FRAMEWORKS_DIR as _SHARED_DIR
 
 CANONICAL_TYPES_FILE = os.path.join(_SHARED_DIR, "evidence-vocabulary.json")
 
@@ -47,9 +48,13 @@ _FRAMEWORK_FILES = {
 
 # Framework key -> canonical framework id (matches legacy ids for the response
 # contract, e.g. "soc2_v2017").
+# Framework key -> canonical framework id (matches the response contract).
+# iso27001 targets 2022: ISO/IEC 27001:2013 is withdrawn (transition ended
+# 2025-10-31). Historical evaluations recorded under "iso27001_v2013" are
+# rendered via the archived definition (iso27001_2013_archived.yaml).
 FRAMEWORK_IDS = {
     "soc2": "soc2_v2017",
-    "iso27001": "iso27001_v2013",
+    "iso27001": "iso27001_v2022",
     "hipaa": "hipaa_security_rule",
     "gdpr": "gdpr_2016_679",
 }
@@ -72,6 +77,13 @@ class CanonicalControl:
     category: str
     required_evidence: List[str] = field(default_factory=list)
     weight: float = 1.0
+    # Product classification of how the criterion can be assessed:
+    #   automatable   - fully satisfiable by endpoint-collected evidence
+    #   hybrid        - endpoint evidence contributes; manual evidence needed for full coverage
+    #   manual_upload - only manual evidence can satisfy it
+    # Frameworks that predate the field (no YAML entry) default to "hybrid",
+    # which preserves the pre-assessment_mode scoring behavior exactly.
+    assessment_mode: str = "hybrid"
 
 
 @dataclass
@@ -82,6 +94,7 @@ class ControlResult:
     required_evidence: List[str]
     available_evidence: List[str]
     gaps: List[str]
+    assessment_mode: str = "hybrid"
 
 
 @dataclass
@@ -94,6 +107,18 @@ class CanonicalEvaluation:
     control_results: Dict[str, ControlResult]
     counts: Dict[str, int]
     category_scores: Dict[str, Dict[str, Any]]
+    # What the number MEANS: the engine measures the share of required
+    # evidence types that are present. It is evidence coverage / readiness,
+    # not a legal or audit determination of compliance.
+    score_semantics: str = "evidence_coverage"
+    # Identity of the framework data used (e.g. "2017 Trust Services Criteria
+    # (with 2022 revised points of focus)"). Persisted so historical
+    # evaluations can be attributed to the taxonomy that produced them.
+    taxonomy_version: str = ""
+
+
+# Exposed so clients can interpret the score without guessing.
+SCORE_SEMANTICS = "evidence_coverage"
 
 
 def _load_json(path: str) -> Dict[str, Any]:
@@ -142,6 +167,22 @@ class EvidenceVocabulary:
             return evidence_type
         return self._alias_to_canonical.get(evidence_type)
 
+    def is_collector_produced(self, evidence_type: str) -> bool:
+        """True if any endpoint collector can produce this evidence type.
+
+        Types whose producers list no ``*_collector`` entry are manual-only:
+        they can only exist because a user uploaded them.
+        """
+        resolved = self.to_canonical(evidence_type)
+        if resolved is None:
+            return False
+        for entry in self._data.get("canonical_types", []):
+            if entry["type"] == resolved:
+                return any(
+                    str(p).endswith("_collector") for p in entry.get("producers", [])
+                )
+        return False
+
 
 class CanonicalEngine:
     """Coverage-based scoring engine over the canonical framework definitions."""
@@ -176,6 +217,7 @@ class CanonicalEngine:
                 category=entry.get("category", ""),
                 required_evidence=list(entry.get("required_evidence", [])),
                 weight=float(entry.get("weight", 1.0) or 1.0),
+                assessment_mode=entry.get("assessment_mode", "hybrid"),
             )
 
         self._frameworks[framework_key] = data
@@ -219,6 +261,21 @@ class CanonicalEngine:
             else:
                 status = STATUS_NON_COMPLIANT
 
+            # Manual-assessment gate: a manual_upload criterion must never be
+            # represented as assessed purely because unrelated endpoint
+            # telemetry exists. Without at least one manual (non-
+            # collector-produced) evidence type among the present set, the
+            # control stays not_assessed regardless of coverage. (Label-only:
+            # the numeric coverage score is unchanged, mirroring CG-M2.)
+            if (
+                control.assessment_mode == "manual_upload"
+                and status != STATUS_NOT_ASSESSED
+                and not any(
+                    not self.vocabulary.is_collector_produced(t) for t in available
+                )
+            ):
+                status = STATUS_NOT_ASSESSED
+
             score = round(coverage * 100)
 
             control_results[control_id] = ControlResult(
@@ -228,6 +285,7 @@ class CanonicalEngine:
                 required_evidence=sorted(control.required_evidence),
                 available_evidence=available,
                 gaps=gaps,
+                assessment_mode=control.assessment_mode,
             )
 
             category_totals.setdefault(control.category, []).append(score)
@@ -275,6 +333,10 @@ class CanonicalEngine:
             control_results=control_results,
             counts=counts,
             category_scores=category_scores,
+            score_semantics=SCORE_SEMANTICS,
+            taxonomy_version=str(
+                framework_meta.get("taxonomy") or framework_meta.get("version") or ""
+            ),
         )
 
 

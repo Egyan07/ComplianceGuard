@@ -102,11 +102,16 @@ def test_controls_for_known_type(auth_client):
     assert resp.status_code == 200
     data = resp.json()
     assert data["evidence_type"] == "firewall"
-    assert "A3.2" in data["controls"]
-    # Phase 5 canonical contract: the endpoint reports coverage presence (1.0
-    # when the evidence type satisfies a control's required evidence), replacing
-    # the legacy hand-authored base-score map (which returned 0.9 for A3.2).
-    assert data["controls"]["A3.2"] == 1.0
+    # 'firewall' is a legacy alias for the canonical type firewall_configs,
+    # which the real TSC criterion CC6.6 (protection against threats from
+    # outside system boundaries) requires. Phase 5 canonical contract: the
+    # endpoint reports coverage presence (1.0 when the evidence type
+    # satisfies a control's required evidence).
+    assert "CC6.6" in data["controls"]
+    assert data["controls"]["CC6.6"] == 1.0
+    # Fabricated IDs (e.g. the old "A3.2 Firewall Management") must never
+    # reappear: they do not exist in the 2017 Trust Services Criteria.
+    assert "A3.2" not in data["controls"]
 
 
 def test_controls_for_unmapped_type(auth_client):

@@ -66,6 +66,8 @@ export function evaluationHistoryToTrend(history: EvaluationHistoryEntry[]): Tre
       date: r.evaluation_date,
       score: Math.round(Number(r.overall_score ?? r.findings?.overall_score) || 0),
       status: normaliseStatus(r.status ?? String(r.findings?.status ?? '')),
+      taxonomyVersion:
+        (r.findings?.taxonomy_version as string | undefined) ?? null,
     }))
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 }

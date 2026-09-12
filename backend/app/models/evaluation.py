@@ -30,6 +30,15 @@ class ComplianceEvaluationRecord(Base):
     recommendations = Column(JSON, nullable=True)
     control_count = Column(Integer, default=0)
     compliant_controls = Column(Integer, default=0)
+    # Taxonomy identity of the framework data used for this evaluation.
+    # NULL means the record predates taxonomy versioning (legacy taxonomy).
+    # Historical rows are never re-scored: the column only records what the
+    # system assessed at the time so trends can mark the transition.
+    taxonomy_version = Column(String, nullable=True)
+    # What the score measures for this evaluation ("evidence_coverage").
+    # NULL means the record predates the semantics field (legacy rows are
+    # still evidence-coverage numbers, but were not labelled as such).
+    score_semantics = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     user = relationship("User")

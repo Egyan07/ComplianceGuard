@@ -113,10 +113,10 @@ def test_evaluate_returns_200_with_score(auth_client_with_evidence):
     data = resp.json()
     # Canonical contract: 0-100 scale + canonical status vocabulary.
     assert 0.0 < data["overall_score"] <= 100.0
-    assert data["framework_id"] == "iso27001_v2013"
-    assert data["control_count"] == 47
+    assert data["framework_id"] == "iso27001_v2022"
+    assert data["control_count"] == 93
     assert data["compliance_status"] in {"compliant", "partial", "non_compliant", "not_assessed"}
-    assert data["not_assessed_controls"] < 47  # evidence was translated and scored
+    assert data["not_assessed_controls"] < 93  # evidence was translated and scored
 
 
 def test_evaluate_no_evidence_returns_zero(auth_client_no_evidence):
@@ -130,7 +130,7 @@ def test_evaluate_no_evidence_returns_zero(auth_client_no_evidence):
     assert data["overall_score"] == 0.0
     # CG-M2: no evidence assessed -> not_assessed, never non_compliant.
     assert data["compliance_status"] == "not_assessed"
-    assert data["not_assessed_controls"] == 47
+    assert data["not_assessed_controls"] == 93
 
 
 def test_evaluate_unauthorized():

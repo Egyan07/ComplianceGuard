@@ -15,15 +15,27 @@ describe('REMEDIATION_SCRIPTS', () => {
     expect(controlIds.length).toBeGreaterThan(0);
   });
 
-  it('covers all 54 SOC 2 controls', () => {
-    expect(controlIds.length).toBe(54);
+  it('covers all 43 real SOC 2 TSC criteria', () => {
+    expect(controlIds.length).toBe(43);
+  });
+
+  it('keys match the canonical shared/frameworks/soc2_controls.yaml exactly', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const yamlPath = path.join(__dirname, '..', '..', 'shared', 'frameworks', 'soc2_controls.yaml');
+    const text = fs.readFileSync(yamlPath, 'utf8');
+    // Top-level control entries are exactly two-space-indented "- id: X" lines
+    // (deeper evidence_mapping ids use more indentation and are ignored).
+    const yamlIds = [...text.matchAll(/^ {2}- id: (\S+)/gm)].map(m => m[1]);
+    expect(yamlIds.length).toBe(controlIds.length);
+    expect(new Set(yamlIds)).toEqual(new Set(controlIds));
   });
 
   it('every entry has a valid type (script or guide)', () => {
     for (const [id, entry] of Object.entries(REMEDIATION_SCRIPTS)) {
       expect(['script', 'guide']).toContain(entry.type);
-      // Control ID as the key should match CC/A/C/PI/CA patterns
-      expect(id).toMatch(/^(CC|A|C|PI|CA)\d+\.\d+$/);
+      // Control ID as the key should match the real TSC patterns
+      expect(id).toMatch(/^(CC|A|C|PI)\d+\.\d+$/);
     }
   });
 
@@ -89,12 +101,9 @@ describe('REMEDIATION_SCRIPTS', () => {
     }
   });
 
-  it('contains the 6 automatable controls', () => {
-    const automatable = ['CC6.1', 'CC6.2', 'CC6.3', 'CC7.1', 'A3.2', 'A1.5'];
-    for (const id of automatable) {
-      expect(REMEDIATION_SCRIPTS[id]).toBeDefined();
-      expect(REMEDIATION_SCRIPTS[id].type).toBe('script');
-    }
+  it('contains exactly the 6 automatable controls', () => {
+    const automatable = ['CC6.1', 'CC6.2', 'CC6.6', 'CC6.8', 'CC7.1', 'CC7.2'];
+    expect(controlIds.filter(id => REMEDIATION_SCRIPTS[id].type === 'script')).toEqual(automatable);
   });
 
   it('scripts contain PowerShell remediation commands', () => {
@@ -114,5 +123,12 @@ describe('REMEDIATION_SCRIPTS', () => {
   it('no duplicate control IDs', () => {
     const unique = new Set(controlIds);
     expect(unique.size).toBe(controlIds.length);
+  });
+
+  it('contains no fabricated control IDs', () => {
+    // A3.2, C3.2, PI3.2 and the whole CA* series never existed in the TSC.
+    for (const fabricated of ['A3.1', 'A3.2', 'C2.1', 'C3.2', 'PI2.2', 'PI3.2', 'CA1.1', 'CA1.8']) {
+      expect(REMEDIATION_SCRIPTS[fabricated]).toBeUndefined();
+    }
   });
 });

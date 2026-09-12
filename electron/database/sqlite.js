@@ -314,9 +314,17 @@ class ComplianceGuardDatabase {
       log.info('Default SOC 2 framework seeded');
     }
 
+    // ISO/IEC 27001:2022 — the 2013 standard is withdrawn (transition ended
+    // 2025-10-31). INSERT OR IGNORE covers fresh databases; the UPDATE below
+    // idempotently relabels existing rows seeded under the old 2013 name.
+    // Historical evaluations keep their stored framework_id and are rendered
+    // via the archived 2013 definition, so only the framework row is relabelled.
     this.db.prepare(
       `INSERT OR IGNORE INTO compliance_frameworks (id, name, version, description)
-       VALUES (2, 'ISO 27001:2013', '2013', 'ISO/IEC 27001 Information Security Management')`
+       VALUES (2, 'ISO/IEC 27001:2022', '2022', 'ISO/IEC 27001:2022 Annex A Information Security Management')`
+    ).run();
+    this.db.prepare(
+      `UPDATE compliance_frameworks SET name = 'ISO/IEC 27001:2022', version = '2022', description = 'ISO/IEC 27001:2022 Annex A Information Security Management' WHERE id = 2 AND version = '2013'`
     ).run();
 
     this.db.prepare(

@@ -1,5 +1,5 @@
 """
-ISO 27001:2013 Control Framework
+ISO/IEC 27001:2022 Control Framework
 
 Controls loaded from iso27001_controls.yaml at runtime — edit the YAML to
 add, remove, or adjust controls with no Python changes required.
@@ -11,10 +11,12 @@ from typing import Dict, List, Optional, Any
 
 import yaml
 
+from app.core.shared_frameworks import SHARED_FRAMEWORKS_DIR
+
 
 @dataclass
 class ISO27001Control:
-    """An ISO 27001:2013 Annex A control definition."""
+    """An ISO/IEC 27001:2022 Annex A control definition."""
     id: str
     title: str
     description: str
@@ -25,11 +27,17 @@ class ISO27001Control:
     risk_level: str = "medium"
 
 
-_YAML_PATH = os.path.join(os.path.dirname(__file__), "iso27001_controls.yaml")
+# Canonical definition (single source of truth shared with the scoring
+# engines, the desktop app, and the generated catalog). Located by upward
+# search (see shared_frameworks.py) so both host and Docker layouts resolve.
+_YAML_PATH = os.path.join(SHARED_FRAMEWORKS_DIR, "iso27001_controls.yaml")
 
 
 class ISO27001Framework:
-    """ISO 27001:2013 framework — controls loaded from iso27001_controls.yaml."""
+    """ISO/IEC 27001:2022 framework — controls loaded from the canonical
+    shared/frameworks/iso27001_controls.yaml (2022 Annex A). The withdrawn
+    2013 definition survives as iso27001_2013_archived.yaml for rendering
+    historical evaluations."""
 
     def __init__(self):
         self.controls: Dict[str, ISO27001Control] = {}

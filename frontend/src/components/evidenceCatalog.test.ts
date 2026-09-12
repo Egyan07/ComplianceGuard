@@ -6,8 +6,8 @@ import {
 } from './evidenceCatalog.generated';
 
 describe('evidence catalog (generated from canonical shared data)', () => {
-  it('covers all 54 SOC 2 controls with non-empty type lists', () => {
-    expect(SOC2_CONTROLS.length).toBe(54);
+  it('covers all 43 SOC 2 criteria (2017 TSC) with non-empty type lists', () => {
+    expect(SOC2_CONTROLS.length).toBe(43);
     for (const control of SOC2_CONTROLS) {
       expect(control.types.length).toBeGreaterThan(0);
     }

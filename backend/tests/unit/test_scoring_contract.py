@@ -20,11 +20,11 @@ import itertools
 
 import pytest
 
-from app.core.canonical_evidence import get_canonical_engine
+from app.core.canonical_evidence import EvidenceVocabulary, get_canonical_engine
 
 ENGINE = get_canonical_engine()
 FRAMEWORK_CONTROL_COUNTS = {
-    "soc2": 54,
+    "soc2": 43,
     "iso27001": 47,
     "hipaa": 47,
     "gdpr": 38,
@@ -50,15 +50,15 @@ def test_exactly_half_coverage_is_partial():
 def test_less_than_half_coverage_is_non_compliant():
     # CC7.1 requires two types; a *different* single type than the control
     # needs cannot be confused with half coverage — 0/2 is not_assessed.
-    r = ENGINE.evaluate("soc2", ["policy_document"])
+    r = ENGINE.evaluate("soc2", ["backup_logs", "policy_document"])
     c = r.control_results["CC7.1"]
     assert c.status == "not_assessed"
-    # CC1.3 requires [policy_document, training_records]; policy_document alone
-    # is exactly half -> partial.
-    c13 = r.control_results["CC1.3"]
-    assert c13.required_evidence == ["policy_document", "training_records"]
-    assert c13.score == 50
-    assert c13.status == "partial"
+    # CC1.4 (Commitment to Competence) requires [policy_document,
+    # training_records]; policy_document alone is exactly half -> partial.
+    c14 = r.control_results["CC1.4"]
+    assert c14.required_evidence == ["policy_document", "training_records"]
+    assert c14.score == 50
+    assert c14.status == "partial"
 
 
 # ── overall score thresholds — exhaustive property sweep ────────────────────
@@ -198,3 +198,70 @@ def test_same_evidence_scores_differ_per_framework():
     soc2 = ENGINE.evaluate("soc2", ["backup_logs"])
     gdpr = ENGINE.evaluate("gdpr", ["backup_logs"])
     assert soc2.overall_score != gdpr.overall_score
+
+
+# ── assessment_mode semantics (Phase 2) ─────────────────────────────────────
+#
+# The scoring engine must never represent an organizational criterion as
+# assessed just because endpoint telemetry exists. manual_upload criteria
+# stay not_assessed until actual manual evidence is present; hybrid criteria
+# cap below compliant while a manual-only requirement is unmet.
+
+def _all_collector_types():
+    vocab = EvidenceVocabulary()
+    return sorted(
+        t for t in vocab.canonical_types if vocab.is_collector_produced(t)
+    )
+
+
+def _all_types():
+    return sorted(EvidenceVocabulary().canonical_types)
+
+
+def test_manual_upload_never_assessed_from_collector_evidence():
+    """THE honesty invariant: every manual_upload criterion stays not_assessed
+    when only collector-produced evidence exists."""
+    result = ENGINE.evaluate("soc2", _all_collector_types())
+    offenders = [
+        (cid, c.status)
+        for cid, c in result.control_results.items()
+        if c.assessment_mode == "manual_upload" and c.status != "not_assessed"
+    ]
+    assert offenders == [], (
+        f"manual_upload controls assessed without manual evidence: {offenders}"
+    )
+
+
+def test_manual_upload_assessed_once_manual_evidence_uploaded():
+    """With the full vocabulary (collector + manual types) every criterion is
+    fully covered and compliant — manual evidence unlocks the assessment."""
+    result = ENGINE.evaluate("soc2", _all_types())
+    offenders = [
+        (cid, c.status)
+        for cid, c in result.control_results.items()
+        if c.assessment_mode == "manual_upload" and c.status != "compliant"
+    ]
+    assert offenders == [], offenders
+
+
+def test_hybrid_caps_at_partial_without_manual_evidence():
+    # CC6.1 requires [system_configs, security_policies] (collector-produced)
+    # + policy_document (manual-only). All collector types -> 2/3 coverage,
+    # which is partial — never compliant without the manual upload.
+    result = ENGINE.evaluate("soc2", _all_collector_types())
+    c = result.control_results["CC6.1"]
+    assert c.assessment_mode == "hybrid"
+    assert c.status == "partial"
+    assert "policy_document" in c.gaps
+
+
+def test_assessment_mode_metadata_on_every_result():
+    result = ENGINE.evaluate("soc2", ["event_logs"])
+    assert result.control_results, "no control results"
+    for c in result.control_results.values():
+        assert c.assessment_mode in {"automatable", "hybrid", "manual_upload"}
+
+
+def test_score_semantics_field_exposed():
+    result = ENGINE.evaluate("soc2", [])
+    assert result.score_semantics == "evidence_coverage"

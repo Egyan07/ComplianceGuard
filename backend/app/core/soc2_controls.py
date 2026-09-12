@@ -1,9 +1,11 @@
 """
 SOC 2 Control Framework Implementation
 
-Controls are loaded from soc2_controls.yaml at runtime so that adding,
-removing, or adjusting a control requires only a YAML edit — no Python change.
-The public API (SOC2Framework, SOC2Control, etc.) is unchanged.
+Controls are loaded from the CANONICAL shared/frameworks/soc2_controls.yaml at
+runtime (the same file the scoring engines and the generated evidence catalog
+read) so there is exactly one editable SOC 2 definition in the repository.
+Adding, removing, or adjusting a control requires only a YAML edit — no Python
+change. The public API (SOC2Framework, SOC2Control, etc.) is unchanged.
 """
 
 import os
@@ -13,14 +15,20 @@ from enum import Enum
 
 import yaml
 
+from app.core.shared_frameworks import SHARED_FRAMEWORKS_DIR
+
 
 class ControlCategory(str, Enum):
-    """SOC 2 Trust Service Criteria categories."""
+    """SOC 2 Trust Services Criteria categories (real TSC structure).
+
+    Security (CC) is the mandatory core; A/C/PI are category-specific
+    supplemental criteria. There is no "CA" category in the TSC — a former
+    "Confidentiality & Availability" member here was fabricated and removed.
+    """
     COMMON_CRITERIA = "CC"
     AVAILABILITY = "A"
     CONFIDENTIALITY = "C"
     PROCESSING_INTEGRITY = "PI"
-    CONFIDENTIALITY_AVAILABILITY = "CA"
 
 
 class ControlStatus(str, Enum):
@@ -52,18 +60,25 @@ class SOC2Control:
     control_objective: str
     implementation_guidance: str
     evidence_mapping: List[EvidenceRequirement] = field(default_factory=list)
+    # Canonical evidence-type requirement list (from shared/frameworks/ YAML).
+    # These are the types the scoring engine checks presence of.
+    required_evidence: List[str] = field(default_factory=list)
     related_controls: List[str] = field(default_factory=list)
     risk_level: str = "medium"  # low, medium, high
+    assessment_mode: str = "manual_upload"  # automatable | hybrid | manual_upload
 
 
-_YAML_PATH = os.path.join(os.path.dirname(__file__), "soc2_controls.yaml")
+# The canonical definition lives in shared/frameworks/ (single source of truth
+# shared with the scoring engine, the desktop app, and the generated catalog).
+# The directory is located by upward search (see shared_frameworks.py) so the
+# loader works in both the repository checkout and the Docker image layout.
+_YAML_PATH = os.path.join(SHARED_FRAMEWORKS_DIR, "soc2_controls.yaml")
 
 _CATEGORY_MAP = {
     "CC": ControlCategory.COMMON_CRITERIA,
     "A": ControlCategory.AVAILABILITY,
     "C": ControlCategory.CONFIDENTIALITY,
     "PI": ControlCategory.PROCESSING_INTEGRITY,
-    "CA": ControlCategory.CONFIDENTIALITY_AVAILABILITY,
 }
 
 
@@ -98,8 +113,10 @@ class SOC2Framework:
                 control_objective=entry["control_objective"],
                 implementation_guidance=entry["implementation_guidance"],
                 evidence_mapping=evidence_mapping,
+                required_evidence=list(entry.get("required_evidence", [])),
                 related_controls=entry.get("related_controls", []),
                 risk_level=entry.get("risk_level", "medium"),
+                assessment_mode=entry.get("assessment_mode", "manual_upload"),
             )
             self.controls[control.id] = control
 
@@ -183,6 +200,6 @@ def get_available_categories() -> List[str]:
 
 
 def validate_control_id(control_id: str) -> bool:
-    """Validate if a control ID follows SOC 2 format."""
-    valid_prefixes = ["CC", "A", "C", "PI", "CA"]
+    """Validate if a control ID follows the real SOC 2 TSC format."""
+    valid_prefixes = ["CC", "A", "C", "PI"]
     return any(control_id.startswith(prefix) for prefix in valid_prefixes)

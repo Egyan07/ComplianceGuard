@@ -49,24 +49,26 @@ describe('CanonicalEngine (Electron)', () => {
   });
 
   it('one compliant control among not_assessed stays non_compliant overall (mixed case unchanged)', () => {
-    // A1.3 (SOC 2) is fully covered by system_configs. The overall average is
-    // tiny, so the overall status stays NON_COMPLIANT (a real assessment gap)
-    // — only the all-not-assessed case is relabelled (CG-M2). Some controls
-    // share the type requirement and are partially covered; the key point is
-    // that not everything is not_assessed and the overall is a real low score.
-    const ev = engine.evaluate('soc2', ['system_configs']);
-    expect(ev.control_results['A1.3'].status).toBe(STATUS.COMPLIANT);
+    // CC6.8 (SOC 2, automatable) is fully covered by system_configs +
+    // event_logs. The overall average is tiny, so the overall status stays
+    // NON_COMPLIANT (a real assessment gap) — only the all-not-assessed case
+    // is relabelled (CG-M2). Some controls share the type requirement and
+    // are partially covered; the key point is that not everything is
+    // not_assessed and the overall is a real low score.
+    const ev = engine.evaluate('soc2', ['system_configs', 'event_logs']);
+    expect(ev.control_results['CC6.8'].status).toBe(STATUS.COMPLIANT);
     const total = Object.keys(ev.control_results).length;
-    expect(ev.counts[STATUS.COMPLIANT]).toBe(1);
+    expect(ev.counts[STATUS.COMPLIANT]).toBeGreaterThanOrEqual(1);
     expect(ev.counts[STATUS.NOT_ASSESSED]).toBeLessThan(total);
     expect(ev.status).toBe(STATUS.NON_COMPLIANT);
   });
 
-  it('single required type fully covered is compliant', () => {
-    // A1.3 (SOC 2) requires exactly system_configs.
-    const ev = engine.evaluate('soc2', ['system_configs']);
-    expect(ev.control_results['A1.3'].status).toBe(STATUS.COMPLIANT);
-    expect(ev.control_results['A1.3'].score).toBe(100);
+  it('all required types covered is compliant, manual_upload stays not_assessed', () => {
+    // CC6.8 (SOC 2, automatable) requires system_configs + event_logs.
+    const ev = engine.evaluate('soc2', ['system_configs', 'event_logs']);
+    expect(ev.control_results['CC6.8'].status).toBe(STATUS.COMPLIANT);
+    expect(ev.control_results['CC6.8'].score).toBe(100);
+    // CC1.1 (manual_upload) must NOT flip compliant from collector evidence.
     expect(ev.control_results['CC1.1'].status).toBe(STATUS.NOT_ASSESSED);
   });
 

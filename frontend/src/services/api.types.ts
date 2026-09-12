@@ -72,6 +72,10 @@ export interface TrendPoint {
   score: number;         // 0–100
   // CG-M2: not_assessed (nothing assessed) is distinct from non_compliant.
   status: 'compliant' | 'partial' | 'non_compliant' | 'not_assessed';
+  // Identity of the framework definition that produced the evaluation
+  // (e.g. "2017 Trust Services Criteria (with 2022 revised points of focus)").
+  // null = recorded before taxonomy versioning (legacy rows).
+  taxonomyVersion?: string | null;
 }
 
 export interface TrendDisplayPoint extends TrendPoint {
@@ -111,6 +115,7 @@ export interface HttpEvaluationRecord {
   compliance_status?: string;
   status?: string;
   evaluation_date?: string;
+  taxonomy_version?: string | null;
 }
 
 /** Web /evidence/items row. */

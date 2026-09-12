@@ -72,9 +72,22 @@ def evaluate_from_evidence_canonical(
                 "required_evidence": c.required_evidence,
                 "available_evidence": c.available_evidence,
                 "gaps": c.gaps,
+                # How this criterion can be assessed and whether manual
+                # evidence is still missing — additive Phase 2 metadata so
+                # clients can present "manual assessment required" honestly.
+                "assessment_mode": c.assessment_mode,
+                "manual_required": (
+                    c.assessment_mode in ("manual_upload", "hybrid")
+                    and any(not engine.vocabulary.is_collector_produced(t) for t in c.gaps)
+                ),
             }
             for cid, c in result.control_results.items()
         },
+        # What the overall number means: evidence coverage / readiness, not a
+        # legal or audit determination of compliance.
+        "score_semantics": result.score_semantics,
+        # Identity of the framework taxonomy that produced this evaluation.
+        "taxonomy_version": result.taxonomy_version,
     }
 
 

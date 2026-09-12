@@ -7,33 +7,29 @@ import EmptyState from './ui/EmptyState';
 import Segmented from './ui/Segmented';
 import { RADIUS, Tone, toneColors } from '../theme';
 
+// Real 2017 Trust Services Criteria labels — kept in sync with
+// shared/frameworks/soc2_controls.yaml (43 criteria: 33 CC + A1.1-A1.3 +
+// C1.1-C1.2 + PI1.1-PI1.5). There is no "CA" category in the TSC.
 const CONTROL_NAMES: Record<string, string> = {
-  'CC1.1':'Control Environment','CC1.2':'Board Independence','CC1.3':'Management Philosophy',
-  'CC2.1':'Communication & Information','CC2.2':'Information Quality','CC2.3':'External Communication',
-  'CC3.1':'Risk Assessment Process','CC3.2':'Risk Identification','CC3.3':'Risk Analysis',
-  'CC4.1':'Monitoring Activities','CC4.2':'Separate Evaluations',
-  'CC5.1':'Control Activities','CC5.2':'Control Activities Development',
-  'CC6.1':'Logical Access Controls','CC6.2':'Authentication','CC6.3':'Authorization',
-  'CC7.1':'System Operations','CC8.1':'Change Management','CC9.1':'Risk Mitigation',
-  'A1.1':'Availability Policies','A1.2':'Capacity Management','A1.3':'Backup & Recovery','A1.4':'Incident Response','A1.5':'System Performance Monitoring',
-  'A2.1':'Environmental Controls','A2.2':'Facility Access',
-  'A3.1':'Network Security','A3.2':'Firewall Management',
-  'C1.1':'Confidentiality Policies','C1.2':'Data Classification','C1.3':'Encryption Controls','C1.4':'Data Masking',
-  'C2.1':'Confidentiality Agreements','C2.2':'Data Retention','C2.3':'Data Disposal',
-  'C3.1':'Third Party Confidentiality','C3.2':'Confidentiality Monitoring',
-  'PI1.1':'Processing Integrity Controls','PI1.2':'Quality Assurance','PI1.3':'Input Validation','PI1.4':'Processing Controls','PI1.5':'Output Validation',
-  'PI2.1':'Error Handling','PI2.2':'Transaction Integrity',
-  'PI3.1':'Processing Monitoring','PI3.2':'Exception Reporting',
-  'CA1.1':'Confidentiality & Availability Mgmt','CA1.2':'Incident Response','CA1.3':'Security Awareness Training','CA1.4':'Physical Security',
-  'CA1.5':'Vendor Management','CA1.6':'Change Management','CA1.7':'Business Continuity','CA1.8':'Security Monitoring',
+  'CC1.1':'Integrity and Ethical Values','CC1.2':'Board Oversight and Independence','CC1.3':'Organizational Structure and Reporting Lines','CC1.4':'Commitment to Competence','CC1.5':'Individual Accountability',
+  'CC2.1':'Quality of Information','CC2.2':'Internal Communication','CC2.3':'External Communication',
+  'CC3.1':'Objectives Specification','CC3.2':'Risk Identification and Analysis','CC3.3':'Fraud Consideration','CC3.4':'Change Risk Assessment',
+  'CC4.1':'Ongoing and Separate Evaluations','CC4.2':'Evaluation and Communication of Deficiencies',
+  'CC5.1':'Selection of Control Activities','CC5.2':'General Controls over Technology','CC5.3':'Deployment Through Policies and Procedures',
+  'CC6.1':'Logical Access Security','CC6.2':'User Registration and Credential Management','CC6.3':'Access Authorization and Modification','CC6.4':'Physical Access Restrictions','CC6.5':'Disposal of Physical Assets','CC6.6':'Protection Against External Threats','CC6.7':'Restriction of Information Transmission','CC6.8':'Unauthorized and Malicious Software Controls',
+  'CC7.1':'Configuration and Vulnerability Detection','CC7.2':'Anomaly Monitoring','CC7.3':'Security Event Evaluation','CC7.4':'Incident Response','CC7.5':'Recovery from Security Incidents',
+  'CC8.1':'Change Management',
+  'CC9.1':'Business Disruption Risk Mitigation','CC9.2':'Vendor and Business Partner Risk',
+  'A1.1':'Processing Capacity Management','A1.2':'Environmental Protections, Backup, and Recovery Infrastructure','A1.3':'Recovery Plan Testing',
+  'C1.1':'Identification and Maintenance of Confidential Information','C1.2':'Disposal of Confidential Information',
+  'PI1.1':'Processing Information Quality','PI1.2':'Input Completeness and Accuracy','PI1.3':'System Processing Controls','PI1.4':'Output Delivery','PI1.5':'Storage of Inputs and Outputs',
 };
 
 const CATEGORIES: { label: string; ids: string[] }[] = [
-  { label: 'Common Criteria (CC)', ids: ['CC1.1','CC1.2','CC1.3','CC2.1','CC2.2','CC2.3','CC3.1','CC3.2','CC3.3','CC4.1','CC4.2','CC5.1','CC5.2','CC6.1','CC6.2','CC6.3','CC7.1','CC8.1','CC9.1'] },
-  { label: 'Availability (A)',     ids: ['A1.1','A1.2','A1.3','A1.4','A1.5','A2.1','A2.2','A3.1','A3.2'] },
-  { label: 'Confidentiality (C)', ids: ['C1.1','C1.2','C1.3','C1.4','C2.1','C2.2','C2.3','C3.1','C3.2'] },
-  { label: 'Processing Integrity (PI)', ids: ['PI1.1','PI1.2','PI1.3','PI1.4','PI1.5','PI2.1','PI2.2','PI3.1','PI3.2'] },
-  { label: 'Confidentiality & Availability (CA)', ids: ['CA1.1','CA1.2','CA1.3','CA1.4','CA1.5','CA1.6','CA1.7','CA1.8'] },
+  { label: 'Common Criteria (CC)', ids: ['CC1.1','CC1.2','CC1.3','CC1.4','CC1.5','CC2.1','CC2.2','CC2.3','CC3.1','CC3.2','CC3.3','CC3.4','CC4.1','CC4.2','CC5.1','CC5.2','CC5.3','CC6.1','CC6.2','CC6.3','CC6.4','CC6.5','CC6.6','CC6.7','CC6.8','CC7.1','CC7.2','CC7.3','CC7.4','CC7.5','CC8.1','CC9.1','CC9.2'] },
+  { label: 'Availability (A)',     ids: ['A1.1','A1.2','A1.3'] },
+  { label: 'Confidentiality (C)', ids: ['C1.1','C1.2'] },
+  { label: 'Processing Integrity (PI)', ids: ['PI1.1','PI1.2','PI1.3','PI1.4','PI1.5'] },
 ];
 
 type Filter = 'all' | 'failing' | 'partial';
@@ -50,18 +46,20 @@ const STATUS_LABEL: Record<StatusKey, string> = {
   compliant: 'Pass',
   non_compliant: 'Fail',
   partial: 'Partial',
-  not_assessed: 'N/A',
+  not_assessed: 'Not assessed',
 };
 
-const AUTOMATABLE_CONTROLS = new Set(['CC6.1','CC6.2','CC6.3','CC7.1','A3.2','A1.5']);
+// Controls with an automatable PowerShell remediation script — must match the
+// 'script' entries in electron/processing/remediation-scripts.js.
+const AUTOMATABLE_CONTROLS = new Set(['CC6.1','CC6.2','CC6.6','CC6.8','CC7.1','CC7.2']);
 
 const SCRIPT_ACTIONS: Record<string, string> = {
   'CC6.1': 'netsh advfirewall set allprofiles state on',
   'CC6.2': 'secedit /configure — sets password policy (min 12 chars, 90-day expiry)',
-  'CC6.3': 'auditpol /set — enables logon + account management audit events',
+  'CC6.6': 'netsh advfirewall firewall add rule — blocks Telnet/FTP/RDP-public',
+  'CC6.8': 'Set-MpPreference — enables Defender RTP + Windows Update service',
   'CC7.1': 'wevtutil sl Security — sets 100MB log, enables process audit',
-  'A3.2': 'netsh advfirewall firewall add rule — blocks Telnet/FTP/RDP-public',
-  'A1.5': 'Set-MpPreference — enables Defender RTP + Windows Update service',
+  'CC7.2': 'auditpol /set — enables logon + account management audit events',
 };
 
 export interface ControlHeatmapProps {
@@ -115,7 +113,7 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
             Controls
           </Typography>
           <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', fontWeight: 500 }}>
-            SOC 2 Type II · 54 controls
+            SOC 2 Type II · 43 criteria
           </Typography>
         </Box>
         <Segmented
@@ -154,13 +152,13 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
             if (visibleIds.length === 0) return null;
             // Live per-category posture summary — the group header carries the
             // state of its controls so rows stay quiet until they need you.
-            const catCounts = { pass: 0, fail: 0, partial: 0, na: 0 };
+            const catCounts = { pass: 0, fail: 0, partial: 0, unassessed: 0 };
             cat.ids.forEach((id) => {
               const s = (controlResults[id]?.status ?? 'not_assessed') as StatusKey;
               if (s === 'compliant') catCounts.pass++;
               else if (s === 'non_compliant') catCounts.fail++;
               else if (s === 'partial') catCounts.partial++;
-              else catCounts.na++;
+              else catCounts.unassessed++;
             });
             const needsAttention = catCounts.fail + catCounts.partial;
             return (
@@ -276,7 +274,7 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
                           <LinearProgress
                             variant="determinate"
                             value={score}
-                            aria-label={`${id} compliance score: ${Math.round(score)} percent`}
+                            aria-label={`${id} evidence coverage: ${Math.round(score)} percent`}
                             sx={{ height: 5, '& .MuiLinearProgress-bar': { bgcolor: toneC.main } }}
                           />
                         </Box>

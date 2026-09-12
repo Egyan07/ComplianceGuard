@@ -61,12 +61,12 @@ class TestCanonicalEngine:
         # A single fully-covered control leaves the overall average near zero,
         # so the overall status stays NON_COMPLIANT — only the degenerate
         # all-not-assessed case is relabelled (CG-M2).
-        ev = engine.evaluate("soc2", ["system_configs"])  # A1.3 fully covered
-        assert ev.control_results["A1.3"].status == STATUS_COMPLIANT
-        # Some controls share the type requirement and are partially covered;
-        # the point is: not everything is not_assessed, and overall is a real
-        # (low) score -> NON_COMPLIANT.
-        assert ev.counts[STATUS_COMPLIANT] == 1
+        ev = engine.evaluate("soc2", ["policy_document"])  # CC1.3 fully covered
+        assert ev.control_results["CC1.3"].status == STATUS_COMPLIANT
+        # Several real criteria require exactly [policy_document]; the point
+        # is: not everything is not_assessed, and overall is a real (low)
+        # score -> NON_COMPLIANT.
+        assert ev.counts[STATUS_COMPLIANT] >= 1
         assert ev.counts[STATUS_NOT_ASSESSED] < len(ev.control_results)
         assert ev.status == STATUS_NON_COMPLIANT
 
@@ -90,12 +90,13 @@ class TestCanonicalEngine:
         assert a.counts == b.counts
 
     def test_single_evidence_matches_expected_control(self, engine):
-        # A1.3 (SOC 2) requires exactly one type: system_configs — full coverage.
-        ev = engine.evaluate("soc2", ["system_configs"])
-        assert ev.control_results["A1.3"].status == STATUS_COMPLIANT
-        assert ev.control_results["A1.3"].score == 100
-        assert ev.control_results["CC1.1"].status == STATUS_NOT_ASSESSED
-        assert ev.control_results["A1.3"].available_evidence == ["system_configs"]
+        # CC1.3 (SOC 2) requires exactly one type: policy_document — full coverage.
+        ev = engine.evaluate("soc2", ["policy_document"])
+        assert ev.control_results["CC1.3"].status == STATUS_COMPLIANT
+        assert ev.control_results["CC1.3"].score == 100
+        # CC6.1 needs three types; one of three is <0.5 -> non_compliant.
+        assert ev.control_results["CC6.1"].status == STATUS_NON_COMPLIANT
+        assert ev.control_results["CC1.3"].available_evidence == ["policy_document"]
 
     def test_partial_coverage_when_evidence_incomplete(self, engine):
         # CC7.1 requires [event_logs, system_configs]; only one present → 50%.
@@ -134,10 +135,12 @@ class TestCanonicalRouterAdapter:
         assert 0.0 <= result["overall_score"] <= 100.0
         assert result["compliance_status"] in {"compliant", "partial", "non_compliant", "not_assessed"}
         assert result["compliance_level"] in {"excellent", "good", "adequate", "partial", "inadequate"}
-        assert result["control_count"] == 54
+        # 43 = the real 2017 TSC count (33 CC + A1.1-A1.3 + C1.1-C1.2 + PI1.1-PI1.5).
+        assert result["control_count"] == 43
         assert result["compliant_controls"] >= 0
-        assert "A1.3" in result["control_results"]
-        assert result["control_results"]["A1.3"]["score"] == 100
+        # CC7.1 requires exactly [event_logs, system_configs] — full coverage.
+        assert "CC7.1" in result["control_results"]
+        assert result["control_results"]["CC7.1"]["score"] == 100
 
     def test_iso_hipaa_gdpr_shapes(self):
         for fw in ["iso27001", "hipaa", "gdpr"]:

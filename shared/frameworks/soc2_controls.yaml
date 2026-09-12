@@ -1,7 +1,41 @@
+# SOC 2 — 2017 Trust Services Criteria (with revised points of focus, 2022)
+#
+# THE canonical SOC 2 definition. Both scoring engines (backend
+# canonical_evidence.py and electron/processing/canonical-engine.js), the
+# desktop framework browser, and the generated frontend evidence catalog all
+# read THIS file. Do not maintain a second copy.
+#
+# Structure (per AICPA TSP Section 100):
+#   - Security (Common Criteria CC1-CC9): 33 criteria, applicable to every
+#     SOC 2 engagement.
+#   - Availability (A1.1-A1.3), Confidentiality (C1.1-C1.2) and Processing
+#     Integrity (PI1.1-PI1.5): category-specific supplemental criteria,
+#     included when the corresponding category is in the audit scope.
+#   - Privacy (P-series) is intentionally NOT included: it is a separate
+#     category with its own criteria and is out of scope for this product.
+#   - There is NO "Confidentiality & Availability (CA)" category in the TSC;
+#     such a category in any older data was fabricated.
+#
+# Descriptions are the verbatim criterion statements from the 2017 TSC
+# (with 2022 revised points of focus). Titles are short descriptive labels.
+#
+# assessment_mode (product classification, not part of the AICPA criteria):
+#   automatable   - required evidence can be produced by the endpoint
+#                   collectors; the coverage engine may fully score it.
+#   hybrid        - endpoint evidence contributes partial coverage; full
+#                   coverage requires uploaded manual evidence.
+#   manual_upload - only uploaded manual evidence can satisfy the criterion;
+#                   endpoint telemetry alone must never mark it compliant.
+#
 framework:
   id: soc2_v2017
   name: SOC 2 Type II
   version: '2017'
+  taxonomy: '2017 Trust Services Criteria (with 2022 revised points of focus)'
+  scope_note: >-
+    Security (CC) criteria are always applicable; Availability, Confidentiality,
+    and Processing Integrity supplemental criteria are included here for
+    category-scoped engagements. Privacy (P-series) is out of scope.
   status_vocabulary:
     - compliant
     - partial
@@ -21,960 +55,482 @@ framework:
     - update_status
     - users
 controls:
+  # ── CC1 Control Environment ────────────────────────────────────────────────
   - id: CC1.1
-    title: Control Environment
+    title: Integrity and Ethical Values
     description: The entity demonstrates a commitment to integrity and ethical values.
     category: CC
-    control_objective: Establish and maintain a control environment that sets the tone at the top.
-    implementation_guidance: Implement policies, organizational structure, and governance processes.
+    control_objective: Demonstrate a commitment to integrity and ethical values across the organization.
+    implementation_guidance: Maintain a code of conduct, communicate it to all personnel, and enforce it consistently.
     risk_level: medium
-    related_controls:
-      - CC1.2
-      - CC1.3
-    evidence_mapping:
-      - id: CC1.1-E1
-        name: Code of Conduct
-        description: Documented code of conduct and ethics policy
-        type: document
-        frequency: annual
-        retention_period: 7_years
-      - id: CC1.1-E2
-        name: Board Oversight
-        description: Board meeting minutes showing oversight activities
-        type: document
-        frequency: periodic
-        retention_period: 7_years
+    assessment_mode: manual_upload
     required_evidence:
       - policy_document
-      - security_policies
       - training_records
   - id: CC1.2
-    title: Board Independence
-    description: The board of directors demonstrates independence from management.
+    title: Board Oversight and Independence
+    description: The board of directors demonstrates independence from management and exercises oversight of the development and performance of internal control.
     category: CC
-    control_objective: Ensure board independence in oversight activities.
-    implementation_guidance: Establish independent board structure and procedures.
+    control_objective: Ensure board independence and oversight of internal control.
+    implementation_guidance: Document board structure and independence criteria; retain minutes evidencing oversight of the control environment.
     risk_level: medium
-    evidence_mapping:
-      - id: CC1.2-E1
-        name: Board Charter
-        description: Board charter and independence criteria
-        type: document
-        frequency: annual
-        retention_period: 7_years
+    assessment_mode: manual_upload
     required_evidence:
-      - audit_reports
       - policy_document
+      - audit_reports
   - id: CC1.3
-    title: Management Philosophy
-    description: Management demonstrates commitment to competence.
+    title: Organizational Structure and Reporting Lines
+    description: Management establishes, with board oversight, structures, reporting lines, and appropriate authorities and responsibilities in the pursuit of objectives.
     category: CC
-    control_objective: Ensure management demonstrates commitment to technical and professional competence.
-    implementation_guidance: Establish competency requirements and training programs.
+    control_objective: Establish structures, reporting lines, and authorities in pursuit of objectives.
+    implementation_guidance: Maintain an org chart and role/responsibility definitions with assigned security responsibilities.
     risk_level: medium
-    evidence_mapping:
-      - id: CC1.3-E1
-        name: Competency Framework
-        description: Documented competency requirements
-        type: document
-        frequency: annual
-        retention_period: 3_years
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: CC1.4
+    title: Commitment to Competence
+    description: The organization demonstrates a commitment to attract, develop, and retain competent individuals in alignment with objectives.
+    category: CC
+    control_objective: Attract, develop, and retain competent individuals aligned with objectives.
+    implementation_guidance: Define competency requirements, run onboarding/training, and retain completion records.
+    risk_level: medium
+    assessment_mode: manual_upload
     required_evidence:
       - policy_document
       - training_records
+  - id: CC1.5
+    title: Individual Accountability
+    description: The organization holds individuals accountable for their internal control responsibilities in the pursuit of objectives.
+    category: CC
+    control_objective: Hold individuals accountable for internal control responsibilities.
+    implementation_guidance: Embed control responsibilities in role descriptions and enforce accountability through reviews and discipline processes.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  # ── CC2 Communication and Information ─────────────────────────────────────
   - id: CC2.1
-    title: Communication and Information
-    description: The entity obtains or generates and uses relevant, quality information.
+    title: Quality of Information
+    description: The entity obtains or generates and uses relevant, quality information to support the functioning of internal control.
     category: CC
-    control_objective: Ensure information is identified, captured, and distributed to support control operations.
-    implementation_guidance: Implement information systems and communication processes.
+    control_objective: Obtain and use relevant, quality information to support internal control.
+    implementation_guidance: Identify the information internal control needs, define its quality requirements, and maintain the systems that produce it.
     risk_level: medium
-    related_controls:
-      - CC2.2
-      - CC2.3
-    evidence_mapping:
-      - id: CC2.1-E1
-        name: Information Systems Documentation
-        description: Documentation of information systems and data flows
-        type: document
-        frequency: annual
-        retention_period: 3_years
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: CC2.2
+    title: Internal Communication
+    description: The entity internally communicates information, including objectives and responsibilities for internal control, necessary to support the functioning of internal control.
+    category: CC
+    control_objective: Communicate internal control objectives and responsibilities internally.
+    implementation_guidance: Communicate policies and responsibilities to personnel and record the communication channels used.
+    risk_level: medium
+    assessment_mode: manual_upload
     required_evidence:
       - policy_document
       - training_records
-  - id: CC2.2
-    title: Information Quality
-    description: The entity internally communicates information.
-    category: CC
-    control_objective: Ensure internal communication supports the functioning of controls.
-    implementation_guidance: Establish internal communication processes.
-    risk_level: medium
-    evidence_mapping:
-      - id: CC2.2-E1
-        name: Communication Procedures
-        description: Internal communication procedures
-        type: document
-        frequency: annual
-        retention_period: 3_years
-    required_evidence:
-      - audit_reports
-      - policy_document
   - id: CC2.3
     title: External Communication
-    description: The entity communicates with external parties.
+    description: The entity communicates with external parties regarding matters affecting the functioning of internal control.
     category: CC
-    control_objective: Ensure external communication supports accountability.
-    implementation_guidance: Establish external communication protocols.
+    control_objective: Communicate with external parties on matters affecting internal control.
+    implementation_guidance: Establish communication channels for customers, vendors, and regulators affecting the control environment.
     risk_level: medium
-    evidence_mapping:
-      - id: CC2.3-E1
-        name: External Communication Policy
-        description: External communication policy
-        type: document
-        frequency: annual
-        retention_period: 3_years
+    assessment_mode: manual_upload
     required_evidence:
-      - audit_reports
       - policy_document
+  # ── CC3 Risk Assessment ───────────────────────────────────────────────────
   - id: CC3.1
-    title: Risk Assessment Process
-    description: The entity specifies objectives with sufficient clarity.
+    title: Objectives Specification
+    description: The entity specifies objectives with sufficient clarity to enable the identification and assessment of risks relating to objectives.
     category: CC
-    control_objective: Establish clear objectives to enable risk identification and assessment.
-    implementation_guidance: Define objectives at various levels and ensure they are understood throughout the organization.
+    control_objective: Specify objectives clearly enough to identify and assess related risks.
+    implementation_guidance: Document business and reporting objectives with sufficient clarity for risk identification.
     risk_level: medium
-    evidence_mapping:
-      - id: CC3.1-E1
-        name: Risk Assessment Documentation
-        description: Documented risk assessment methodology and results
-        type: document
-        frequency: annual
-        retention_period: 3_years
+    assessment_mode: manual_upload
     required_evidence:
-      - audit_reports
       - policy_document
+      - audit_reports
   - id: CC3.2
-    title: Risk Identification
-    description: The entity identifies risks to the achievement of objectives.
+    title: Risk Identification and Analysis
+    description: The entity identifies risks to the achievement of its objectives across the entity and analyzes risks as a basis for determining how the risks should be managed.
     category: CC
-    control_objective: Identify and analyze risks to achievement of objectives.
-    implementation_guidance: Implement risk identification and analysis processes.
+    control_objective: Identify and analyze risks across the entity to determine how they should be managed.
+    implementation_guidance: Run periodic risk assessments covering the entity and its systems; retain results and treatment decisions.
     risk_level: medium
-    evidence_mapping:
-      - id: CC3.2-E1
-        name: Risk Register
-        description: Comprehensive risk register
-        type: document
-        frequency: quarterly
-        retention_period: 3_years
+    assessment_mode: manual_upload
     required_evidence:
       - audit_reports
       - policy_document
   - id: CC3.3
-    title: Risk Analysis
-    description: The entity analyzes risks.
+    title: Fraud Consideration
+    description: The entity considers the potential for fraud in assessing risks to the achievement of objectives.
     category: CC
-    control_objective: Analyze identified risks to determine their potential impact.
-    implementation_guidance: Implement risk analysis methodology.
+    control_objective: Consider fraud potential when assessing risks.
+    implementation_guidance: Include fraud scenarios in the risk assessment process and document the analysis.
     risk_level: medium
-    evidence_mapping:
-      - id: CC3.3-E1
-        name: Risk Analysis Reports
-        description: Risk analysis and impact assessment reports
-        type: document
-        frequency: annual
-        retention_period: 3_years
+    assessment_mode: manual_upload
     required_evidence:
       - audit_reports
       - policy_document
+  - id: CC3.4
+    title: Change Risk Assessment
+    description: The entity identifies and assesses changes that could significantly affect the system of internal control.
+    category: CC
+    control_objective: Identify and assess changes that could significantly affect internal control.
+    implementation_guidance: Monitor internal and external change drivers and reassess risk when significant change occurs.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - audit_reports
+      - policy_document
+  # ── CC4 Monitoring Activities ─────────────────────────────────────────────
   - id: CC4.1
-    title: Monitoring Activities
-    description: The entity selects, develops, and performs ongoing and/or separate evaluations.
+    title: Ongoing and Separate Evaluations
+    description: The entity selects, develops, and performs ongoing and/or separate evaluations to ascertain whether the components of internal control are present and functioning.
     category: CC
-    control_objective: Implement ongoing and separate evaluations to ascertain whether controls are present and functioning.
-    implementation_guidance: Establish monitoring processes and procedures.
+    control_objective: Perform ongoing and/or separate evaluations of internal control components.
+    implementation_guidance: Combine continuous endpoint monitoring with periodic separate evaluations such as internal audits.
     risk_level: medium
-    evidence_mapping:
-      - id: CC4.1-E1
-        name: Monitoring Procedures
-        description: Documented monitoring procedures and schedules
-        type: document
-        frequency: continuous
-        retention_period: 3_years
+    assessment_mode: hybrid
     required_evidence:
-      - audit_reports
       - event_logs
+      - audit_reports
   - id: CC4.2
-    title: Separate Evaluations
-    description: The entity conducts separate evaluations of controls.
+    title: Evaluation and Communication of Deficiencies
+    description: The entity evaluates and communicates internal control deficiencies in a timely manner to those parties responsible for taking corrective action, including senior management and the board of directors, as appropriate.
     category: CC
-    control_objective: Conduct separate evaluations to assess control effectiveness.
-    implementation_guidance: Implement separate evaluation procedures.
+    control_objective: Evaluate and communicate internal control deficiencies to responsible parties in a timely manner.
+    implementation_guidance: Track identified deficiencies, assign owners, and report them to management and the board as appropriate.
     risk_level: medium
-    evidence_mapping:
-      - id: CC4.2-E1
-        name: Audit Reports
-        description: Internal audit and assessment reports
-        type: document
-        frequency: annual
-        retention_period: 5_years
+    assessment_mode: manual_upload
     required_evidence:
       - audit_reports
-      - policy_document
+      - incident_reports
+  # ── CC5 Control Activities ────────────────────────────────────────────────
   - id: CC5.1
-    title: Control Activities
-    description: The entity selects and develops control activities.
+    title: Selection of Control Activities
+    description: The entity selects and develops control activities that contribute to the mitigation of risks to the achievement of objectives to acceptable levels.
     category: CC
-    control_objective: Select and develop control activities that contribute to achievement of objectives.
-    implementation_guidance: Implement control activities that mitigate risks.
+    control_objective: Select and develop control activities that mitigate risks to acceptable levels.
+    implementation_guidance: Map control activities to assessed risks and document the selection rationale.
     risk_level: medium
-    evidence_mapping:
-      - id: CC5.1-E1
-        name: Control Activity Documentation
-        description: Documentation of control activities and procedures
-        type: document
-        frequency: annual
-        retention_period: 3_years
+    assessment_mode: manual_upload
     required_evidence:
-      - audit_reports
       - policy_document
+      - audit_reports
   - id: CC5.2
-    title: Control Activities Development
-    description: The entity develops control activities that mitigate risk.
+    title: General Controls over Technology
+    description: The entity selects and develops general control activities over technology to support the achievement of objectives.
     category: CC
-    control_objective: Develop control activities to address identified risks.
-    implementation_guidance: Design controls to address specific risks.
+    control_objective: Select and develop general control activities over technology.
+    implementation_guidance: Define general technology controls (access management, operations, change) and evidence their operation.
     risk_level: medium
-    evidence_mapping:
-      - id: CC5.2-E1
-        name: Risk Control Matrix
-        description: Risk control matrix mapping
-        type: document
-        frequency: annual
-        retention_period: 3_years
+    assessment_mode: manual_upload
     required_evidence:
-      - audit_reports
       - policy_document
-  - id: CC6.1
-    title: Logical Access Controls
-    description: The entity restricts logical access to systems.
+      - audit_reports
+  - id: CC5.3
+    title: Deployment Through Policies and Procedures
+    description: The entity deploys control activities through policies that establish what is expected and procedures that put policies into action.
     category: CC
-    control_objective: Restrict logical access to data and systems to authorized users.
-    implementation_guidance: Implement logical access controls and procedures.
-    risk_level: high
-    evidence_mapping:
-      - id: CC6.1-E1
-        name: Access Control Policy
-        description: Logical access control policy
-        type: document
-        frequency: annual
-        retention_period: 3_years
-      - id: CC6.1-E2
-        name: Access Logs
-        description: System access logs
-        type: system
-        frequency: continuous
-        retention_period: 1_year
+    control_objective: Deploy control activities through policies and implementing procedures.
+    implementation_guidance: Pair each security policy with operating procedures and train personnel on both.
+    risk_level: medium
+    assessment_mode: manual_upload
     required_evidence:
-      - access_logs
+      - policy_document
+  # ── CC6 Logical and Physical Access Security ──────────────────────────────
+  - id: CC6.1
+    title: Logical Access Security
+    description: The entity implements logical access security software, infrastructure, and architectures over protected information assets to protect them from security events to meet the entity's objectives.
+    category: CC
+    control_objective: Implement logical access security software, infrastructure, and architectures over protected assets.
+    implementation_guidance: Enforce authentication and endpoint protection (e.g., password policy, AV/EDR) and document the access architecture.
+    risk_level: high
+    assessment_mode: hybrid
+    required_evidence:
+      - system_configs
+      - security_policies
+      - policy_document
+  - id: CC6.2
+    title: User Registration and Credential Management
+    description: Prior to issuing system credentials and granting system access, the entity registers and authorizes new internal and external users whose access is administered by the entity. For those users whose access is administered by the entity, user system credentials are removed when user access is no longer authorized.
+    category: CC
+    control_objective: Register and authorize users before issuing credentials; remove credentials when access is no longer authorized.
+    implementation_guidance: Maintain a provisioning/deprovisioning workflow; review local accounts and administrative group membership regularly.
+    risk_level: high
+    assessment_mode: hybrid
+    required_evidence:
+      - user_provisioning
+      - policy_document
+  - id: CC6.3
+    title: Access Authorization and Modification
+    description: The entity authorizes, modifies, or removes access to data, software, functions, and other protected information assets based on roles, responsibilities, or the system design and changes, giving consideration to the concepts of least privilege and segregation of duties, to meet the entity's objectives.
+    category: CC
+    control_objective: Authorize, modify, or remove access based on roles, with least privilege and segregation of duties.
+    implementation_guidance: Review role assignments and privilege levels; evidence least-privilege configuration on endpoints.
+    risk_level: high
+    assessment_mode: hybrid
+    required_evidence:
+      - user_provisioning
+      - policy_document
+  - id: CC6.4
+    title: Physical Access Restrictions
+    description: The entity restricts physical access to facilities and protected information assets (for example, data center facilities, back-up media storage, and other sensitive locations) to authorized personnel to meet the entity's objectives.
+    category: CC
+    control_objective: Restrict physical access to facilities and protected information assets to authorized personnel.
+    implementation_guidance: Maintain physical access policies and badge/key controls; endpoint collectors cannot observe facilities, so upload physical-security evidence.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: CC6.5
+    title: Disposal of Physical Assets
+    description: The entity discontinues logical and physical protections over physical assets only after the ability to read or recover data and software from those assets has been diminished and is no longer required to meet the entity's objectives.
+    category: CC
+    control_objective: Discontinue protections over physical assets only after data recovery ability has been diminished and is no longer required.
+    implementation_guidance: Follow a media sanitization/disposal policy and retain disposal certificates.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: CC6.6
+    title: Protection Against External Threats
+    description: The entity implements logical access security measures to protect against threats from sources outside its system boundaries.
+    category: CC
+    control_objective: Implement logical access security measures against threats from outside the system boundary.
+    implementation_guidance: Enable and configure host firewall profiles, restrict exposed network services, and review boundary rules.
+    risk_level: high
+    assessment_mode: automatable
+    required_evidence:
+      - firewall_configs
       - network_configs
       - system_configs
-      - user_provisioning
-  - id: CC6.2
-    title: Authentication
-    description: The entity implements authentication mechanisms.
+  - id: CC6.7
+    title: Restriction of Information Transmission
+    description: The entity restricts the transmission, movement, and removal of information to authorized internal and external users and processes, and protects it during transmission, movement, or removal to meet the entity's objectives.
     category: CC
-    control_objective: Authenticate users accessing systems.
-    implementation_guidance: Implement authentication mechanisms.
+    control_objective: Restrict transmission, movement, and removal of information to authorized parties and protect it in transit.
+    implementation_guidance: Enforce encryption in transit and review network services and open ports that move data off the endpoint.
+    risk_level: medium
+    assessment_mode: hybrid
+    required_evidence:
+      - network_configs
+      - encryption_policies
+  - id: CC6.8
+    title: Unauthorized and Malicious Software Controls
+    description: The entity implements controls to prevent or detect and act upon the introduction of unauthorized or malicious software to meet the entity's objectives.
+    category: CC
+    control_objective: Prevent, or detect and act upon, unauthorized or malicious software introduction.
+    implementation_guidance: Run anti-malware protection with real-time detection enabled and definition updates configured.
     risk_level: high
-    evidence_mapping:
-      - id: CC6.2-E1
-        name: Authentication Policy
-        description: Authentication policy and procedures
-        type: document
-        frequency: annual
-        retention_period: 3_years
+    assessment_mode: automatable
     required_evidence:
       - system_configs
-      - user_provisioning
-  - id: CC6.3
-    title: Authorization
-    description: The entity implements authorization controls.
-    category: CC
-    control_objective: Authorize access to systems and data.
-    implementation_guidance: Implement authorization controls.
-    risk_level: high
-    evidence_mapping:
-      - id: CC6.3-E1
-        name: Authorization Matrix
-        description: Access authorization matrix
-        type: document
-        frequency: annual
-        retention_period: 3_years
-    required_evidence:
-      - policy_document
-      - user_provisioning
+      - event_logs
+  # ── CC7 System Operations ─────────────────────────────────────────────────
   - id: CC7.1
-    title: System Operations
-    description: The entity manages system operations.
+    title: Configuration and Vulnerability Detection
+    description: To meet its objectives, the entity uses detection and monitoring procedures to identify (1) changes to configurations that result in the introduction of new vulnerabilities, and (2) susceptibilities to newly discovered vulnerabilities.
     category: CC
-    control_objective: Manage system operations effectively.
-    implementation_guidance: Implement system operations procedures.
+    control_objective: Detect configuration changes that introduce vulnerabilities and susceptibility to newly discovered vulnerabilities.
+    implementation_guidance: Keep update services enabled and audit configurations; collect event logs as the baseline for change detection.
     risk_level: medium
-    evidence_mapping:
-      - id: CC7.1-E1
-        name: Operations Procedures
-        description: System operations procedures
-        type: document
-        frequency: annual
-        retention_period: 3_years
+    assessment_mode: automatable
     required_evidence:
       - event_logs
       - system_configs
+  - id: CC7.2
+    title: Anomaly Monitoring
+    description: The entity monitors system components and the operation of those components for anomalies that are indicative of malicious acts, natural disasters, and errors affecting the entity's ability to meet its objectives; anomalies are analyzed to determine whether they represent security events.
+    category: CC
+    control_objective: Monitor system components for anomalies and analyze them for security events.
+    implementation_guidance: Enable audit policy and retain security event logs; upload analysis outputs from your monitoring tooling.
+    risk_level: high
+    assessment_mode: hybrid
+    required_evidence:
+      - event_logs
+      - audit_reports
+  - id: CC7.3
+    title: Security Event Evaluation
+    description: The entity evaluates security events to determine whether they could or have resulted in a failure of the entity to meet its objectives (security incidents) and, if so, takes actions to prevent or address such failures.
+    category: CC
+    control_objective: Evaluate security events to determine whether they constitute security incidents and act accordingly.
+    implementation_guidance: Define evaluation criteria for security events and record triage outcomes; endpoint telemetry alone cannot prove this.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - incident_reports
+      - audit_reports
+  - id: CC7.4
+    title: Incident Response
+    description: The entity responds to identified security incidents by executing a defined incident-response program to understand, contain, remediate, and communicate security incidents, as appropriate.
+    category: CC
+    control_objective: Respond to security incidents by executing a defined incident-response program.
+    implementation_guidance: Maintain an incident-response plan and retain incident records showing containment, remediation, and communication.
+    risk_level: high
+    assessment_mode: manual_upload
+    required_evidence:
+      - incident_reports
+      - policy_document
+  - id: CC7.5
+    title: Recovery from Security Incidents
+    description: The entity identifies, develops, and implements activities to recover from identified security incidents.
+    category: CC
+    control_objective: Identify, develop, and implement recovery activities following security incidents.
+    implementation_guidance: Maintain restore/backup evidence and post-incident recovery records.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - backup_logs
+      - incident_reports
+  # ── CC8 Change Management ─────────────────────────────────────────────────
   - id: CC8.1
     title: Change Management
-    description: The entity manages changes to systems.
+    description: The entity authorizes, designs, develops or acquires, configures, documents, tests, approves, and implements changes to infrastructure, data, software, and procedures to meet its objectives.
     category: CC
-    control_objective: Manage changes to systems and applications.
-    implementation_guidance: Implement change management processes.
+    control_objective: Authorize, test, approve, and implement changes to infrastructure, data, software, and procedures.
+    implementation_guidance: Maintain a change-management policy with authorization and testing records; software inventory supports the asset baseline.
     risk_level: medium
-    evidence_mapping:
-      - id: CC8.1-E1
-        name: Change Management Policy
-        description: Change management policy
-        type: document
-        frequency: annual
-        retention_period: 3_years
+    assessment_mode: manual_upload
     required_evidence:
-      - audit_reports
       - policy_document
+      - audit_reports
+  # ── CC9 Risk Mitigation ───────────────────────────────────────────────────
   - id: CC9.1
-    title: Risk Mitigation
-    description: The entity mitigates risk.
+    title: Business Disruption Risk Mitigation
+    description: The entity identifies, selects, and develops risk mitigation activities for risks arising from potential business disruptions.
     category: CC
-    control_objective: Mitigate risks to objectives.
-    implementation_guidance: Implement risk mitigation strategies.
+    control_objective: Identify and develop risk mitigation activities for potential business disruptions.
+    implementation_guidance: Maintain continuity plans and backup/restore evidence for disruption scenarios.
     risk_level: medium
-    evidence_mapping:
-      - id: CC9.1-E1
-        name: Risk Mitigation Plan
-        description: Risk mitigation plan
-        type: document
-        frequency: annual
-        retention_period: 3_years
+    assessment_mode: manual_upload
     required_evidence:
-      - audit_reports
+      - backup_logs
       - policy_document
+  - id: CC9.2
+    title: Vendor and Business Partner Risk
+    description: The entity assesses and manages risks associated with (vulnerabilities arising from) vendors and business partners.
+    category: CC
+    control_objective: Assess and manage risks associated with vendors and business partners.
+    implementation_guidance: Maintain vendor risk assessments and contracts with security commitments.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+      - audit_reports
+  # ── A1 Availability (supplemental) ────────────────────────────────────────
   - id: A1.1
-    title: Availability Policies and Procedures
-    description: The entity maintains availability policies and procedures.
+    title: Processing Capacity Management
+    description: The entity maintains, monitors, and evaluates current processing capacity and use of system components (infrastructure, data, and software) to manage capacity demand and to enable the implementation of additional capacity to help meet its objectives.
     category: A
-    control_objective: Ensure systems remain available for operation and are protected against unauthorized access.
-    implementation_guidance: Develop and maintain availability policies.
+    control_objective: Maintain, monitor, and evaluate processing capacity and component use to meet demand.
+    implementation_guidance: Track system configuration and resource data; upload capacity monitoring reports for full coverage.
     risk_level: medium
-    evidence_mapping:
-      - id: A1.1-E1
-        name: Availability Policy
-        description: Documented availability policy and procedures
-        type: document
-        frequency: annual
-        retention_period: 3_years
-      - id: A1.1-E2
-        name: System Monitoring Logs
-        description: System availability monitoring logs
-        type: system
-        frequency: continuous
-        retention_period: 1_year
+    assessment_mode: hybrid
     required_evidence:
-      - backup_logs
-      - incident_reports
       - system_configs
+      - audit_reports
   - id: A1.2
-    title: Capacity Management
-    description: The entity manages capacity to support availability requirements.
+    title: Environmental Protections, Backup, and Recovery Infrastructure
+    description: The entity authorizes, designs, develops or acquires, implements, operates, approves, maintains, and monitors environmental protections, software, data back-up processes, and recovery infrastructure to meet its objectives.
     category: A
-    control_objective: Monitor and manage system capacity to meet availability requirements.
-    implementation_guidance: Implement capacity planning and monitoring processes.
+    control_objective: Implement and monitor environmental protections, backup processes, and recovery infrastructure.
+    implementation_guidance: Retain backup success/failure logs and evidence of monitored recovery infrastructure.
     risk_level: medium
-    evidence_mapping:
-      - id: A1.2-E1
-        name: Capacity Planning Reports
-        description: Capacity planning and monitoring reports
-        type: document
-        frequency: quarterly
-        retention_period: 3_years
+    assessment_mode: hybrid
     required_evidence:
       - backup_logs
-      - policy_document
+      - system_configs
   - id: A1.3
-    title: Backup and Recovery
-    description: The entity implements backup and recovery procedures.
+    title: Recovery Plan Testing
+    description: The entity tests recovery plan procedures supporting system recovery to meet its objectives.
     category: A
-    control_objective: Ensure systems can be recovered in the event of disruption.
-    implementation_guidance: Implement backup and disaster recovery procedures.
-    risk_level: high
-    evidence_mapping:
-      - id: A1.3-E1
-        name: Backup Verification Logs
-        description: Backup verification and test results
-        type: system
-        frequency: monthly
-        retention_period: 1_year
-    required_evidence:
-      - system_configs
-  - id: A1.4
-    title: Incident Response
-    description: The entity responds to availability incidents.
-    category: A
-    control_objective: Detect and respond to availability incidents.
-    implementation_guidance: Implement incident response procedures.
+    control_objective: Test recovery plan procedures supporting system recovery.
+    implementation_guidance: Schedule and document recovery tests; retain test results and gaps found.
     risk_level: medium
-    evidence_mapping:
-      - id: A1.4-E1
-        name: Incident Response Plan
-        description: Availability incident response plan
-        type: document
-        frequency: annual
-        retention_period: 3_years
+    assessment_mode: manual_upload
     required_evidence:
       - backup_logs
-      - policy_document
-  - id: A1.5
-    title: System Performance Monitoring
-    description: The entity monitors system performance.
-    category: A
-    control_objective: Monitor system performance to ensure availability.
-    implementation_guidance: Implement performance monitoring tools and procedures.
-    risk_level: medium
-    evidence_mapping:
-      - id: A1.5-E1
-        name: Performance Reports
-        description: System performance monitoring reports
-        type: system
-        frequency: daily
-        retention_period: 1_year
-    required_evidence:
-      - event_logs
-      - system_configs
-  - id: A2.1
-    title: Environmental Controls
-    description: The entity implements environmental controls.
-    category: A
-    control_objective: Protect systems from environmental threats.
-    implementation_guidance: Implement environmental protection measures.
-    risk_level: medium
-    evidence_mapping:
-      - id: A2.1-E1
-        name: Environmental Controls Documentation
-        description: Environmental controls documentation
-        type: document
-        frequency: annual
-        retention_period: 3_years
-    required_evidence:
       - audit_reports
-      - policy_document
-  - id: A2.2
-    title: Facility Access
-    description: The entity controls facility access.
-    category: A
-    control_objective: Control physical access to facilities.
-    implementation_guidance: Implement facility access controls.
-    risk_level: medium
-    evidence_mapping:
-      - id: A2.2-E1
-        name: Facility Access Logs
-        description: Facility access logs
-        type: system
-        frequency: continuous
-        retention_period: 1_year
-    required_evidence:
-      - access_logs
-      - audit_reports
-  - id: A3.1
-    title: Network Security
-    description: The entity implements network security controls.
-    category: A
-    control_objective: Protect network infrastructure.
-    implementation_guidance: Implement network security measures.
-    risk_level: high
-    evidence_mapping:
-      - id: A3.1-E1
-        name: Network Security Policy
-        description: Network security policy
-        type: document
-        frequency: annual
-        retention_period: 3_years
-    required_evidence:
-      - firewall_configs
-      - network_configs
-  - id: A3.2
-    title: Firewall Management
-    description: The entity manages firewall configurations.
-    category: A
-    control_objective: Manage firewall configurations.
-    implementation_guidance: Implement firewall management procedures.
-    risk_level: medium
-    evidence_mapping:
-      - id: A3.2-E1
-        name: Firewall Configuration
-        description: Firewall configuration documentation
-        type: document
-        frequency: quarterly
-        retention_period: 3_years
-    required_evidence:
-      - firewall_configs
-      - network_configs
+  # ── C1 Confidentiality (supplemental) ─────────────────────────────────────
   - id: C1.1
-    title: Confidentiality Policies
-    description: The entity maintains confidentiality policies and procedures.
+    title: Identification and Maintenance of Confidential Information
+    description: The entity identifies and maintains confidential information to meet the entity's objectives related to confidentiality.
     category: C
-    control_objective: Ensure confidential information is protected from unauthorized access.
-    implementation_guidance: Develop and maintain confidentiality policies.
+    control_objective: Identify and maintain confidential information in line with confidentiality objectives.
+    implementation_guidance: Maintain a data classification scheme and handling policies; upload classification documentation.
     risk_level: medium
-    evidence_mapping:
-      - id: C1.1-E1
-        name: Confidentiality Policy
-        description: Documented confidentiality policy and procedures
-        type: document
-        frequency: annual
-        retention_period: 3_years
-      - id: C1.1-E2
-        name: Access Control Logs
-        description: Access control and authorization logs
-        type: system
-        frequency: continuous
-        retention_period: 1_year
+    assessment_mode: manual_upload
     required_evidence:
       - policy_document
-      - system_configs
   - id: C1.2
-    title: Data Classification
-    description: The entity classifies information according to sensitivity.
+    title: Disposal of Confidential Information
+    description: The entity disposes of confidential information to meet the entity's objectives related to confidentiality.
     category: C
-    control_objective: Classify information based on sensitivity and criticality.
-    implementation_guidance: Implement data classification schema and procedures.
+    control_objective: Dispose of confidential information securely.
+    implementation_guidance: Follow a retention/disposal policy and retain disposal records.
     risk_level: medium
-    evidence_mapping:
-      - id: C1.2-E1
-        name: Data Classification Policy
-        description: Documented data classification policy
-        type: document
-        frequency: annual
-        retention_period: 3_years
+    assessment_mode: manual_upload
     required_evidence:
-      - encryption_policies
-      - system_configs
-  - id: C1.3
-    title: Encryption Controls
-    description: The entity implements encryption for confidential data.
-    category: C
-    control_objective: Protect confidential data through encryption.
-    implementation_guidance: Implement encryption technologies and procedures.
-    risk_level: high
-    evidence_mapping:
-      - id: C1.3-E1
-        name: Encryption Standards
-        description: Encryption standards and procedures
-        type: document
-        frequency: annual
-        retention_period: 3_years
-    required_evidence:
-      - audit_reports
       - policy_document
-  - id: C1.4
-    title: Data Masking
-    description: The entity implements data masking for sensitive information.
-    category: C
-    control_objective: Protect sensitive data through masking techniques.
-    implementation_guidance: Implement data masking procedures.
-    risk_level: medium
-    evidence_mapping:
-      - id: C1.4-E1
-        name: Data Masking Procedures
-        description: Data masking procedures and controls
-        type: document
-        frequency: annual
-        retention_period: 3_years
-    required_evidence:
       - audit_reports
-      - policy_document
-  - id: C2.1
-    title: Confidentiality Agreements
-    description: The entity obtains confidentiality agreements.
-    category: C
-    control_objective: Obtain confidentiality agreements from personnel and third parties.
-    implementation_guidance: Implement confidentiality agreement processes.
-    risk_level: medium
-    evidence_mapping:
-      - id: C2.1-E1
-        name: Confidentiality Agreements
-        description: Signed confidentiality agreements
-        type: document
-        frequency: annual
-        retention_period: 7_years
-    required_evidence:
-      - audit_reports
-      - policy_document
-  - id: C2.2
-    title: Data Retention
-    description: The entity implements data retention policies.
-    category: C
-    control_objective: Retain data according to policy requirements.
-    implementation_guidance: Implement data retention procedures.
-    risk_level: medium
-    evidence_mapping:
-      - id: C2.2-E1
-        name: Data Retention Policy
-        description: Data retention policy
-        type: document
-        frequency: annual
-        retention_period: 3_years
-    required_evidence:
-      - audit_reports
-      - policy_document
-  - id: C2.3
-    title: Data Disposal
-    description: The entity securely disposes of confidential data.
-    category: C
-    control_objective: Dispose of confidential data securely.
-    implementation_guidance: Implement secure data disposal procedures.
-    risk_level: medium
-    evidence_mapping:
-      - id: C2.3-E1
-        name: Disposal Procedures
-        description: Data disposal procedures
-        type: document
-        frequency: annual
-        retention_period: 3_years
-    required_evidence:
-      - audit_reports
-      - policy_document
-  - id: C3.1
-    title: Third Party Confidentiality
-    description: The entity ensures third parties maintain confidentiality.
-    category: C
-    control_objective: Ensure third parties protect confidential information.
-    implementation_guidance: Implement third party confidentiality requirements.
-    risk_level: medium
-    evidence_mapping:
-      - id: C3.1-E1
-        name: Third Party Agreements
-        description: Third party confidentiality agreements
-        type: document
-        frequency: annual
-        retention_period: 7_years
-    required_evidence:
-      - audit_reports
-      - policy_document
-  - id: C3.2
-    title: Confidentiality Monitoring
-    description: The entity monitors confidentiality compliance.
-    category: C
-    control_objective: Monitor compliance with confidentiality requirements.
-    implementation_guidance: Implement confidentiality monitoring procedures.
-    risk_level: medium
-    evidence_mapping:
-      - id: C3.2-E1
-        name: Monitoring Reports
-        description: Confidentiality compliance monitoring reports
-        type: document
-        frequency: quarterly
-        retention_period: 3_years
-    required_evidence:
-      - audit_reports
-      - event_logs
+  # ── PI1 Processing Integrity (supplemental) ───────────────────────────────
   - id: PI1.1
-    title: Processing Integrity Controls
-    description: The entity implements controls to ensure processing integrity.
+    title: Processing Information Quality
+    description: The entity obtains or generates, uses, and communicates relevant, quality information regarding the objectives related to processing, including definitions of data processed and product and service specifications, to support the use of products and services.
     category: PI
-    control_objective: Ensure system processing is complete, valid, accurate, and authorized.
-    implementation_guidance: Implement processing validation and error detection controls.
+    control_objective: Obtain, use, and communicate quality information about processing objectives and specifications.
+    implementation_guidance: Document data definitions and processing specifications; upload supporting documentation.
     risk_level: medium
-    evidence_mapping:
-      - id: PI1.1-E1
-        name: Processing Validation Logs
-        description: System processing validation logs
-        type: system
-        frequency: continuous
-        retention_period: 1_year
+    assessment_mode: manual_upload
     required_evidence:
-      - audit_reports
       - policy_document
+      - audit_reports
   - id: PI1.2
-    title: Quality Assurance
-    description: The entity maintains quality assurance procedures.
+    title: Input Completeness and Accuracy
+    description: The entity implements policies and procedures over system inputs, including controls over completeness and accuracy, to result in products, services, and reporting to meet the entity's objectives.
     category: PI
-    control_objective: Ensure processing quality through validation and testing.
-    implementation_guidance: Implement quality assurance and testing procedures.
+    control_objective: Implement policies and procedures controlling the completeness and accuracy of system inputs.
+    implementation_guidance: Document input controls and validation procedures; upload evidence of their operation.
     risk_level: medium
-    evidence_mapping:
-      - id: PI1.2-E1
-        name: QA Test Results
-        description: Quality assurance test results and reports
-        type: document
-        frequency: periodic
-        retention_period: 3_years
+    assessment_mode: manual_upload
     required_evidence:
+      - policy_document
       - audit_reports
-      - system_configs
   - id: PI1.3
-    title: Input Validation
-    description: The entity validates input data.
+    title: System Processing Controls
+    description: The entity implements policies and procedures over system processing to result in products, services, and reporting to meet the entity's objectives.
     category: PI
-    control_objective: Ensure input data is valid and accurate.
-    implementation_guidance: Implement input validation controls.
+    control_objective: Implement policies and procedures over system processing.
+    implementation_guidance: Document processing controls; endpoint event logs evidence processing activity but not control design.
     risk_level: medium
-    evidence_mapping:
-      - id: PI1.3-E1
-        name: Input Validation Rules
-        description: Input validation rules and procedures
-        type: document
-        frequency: annual
-        retention_period: 3_years
+    assessment_mode: hybrid
     required_evidence:
-      - audit_reports
       - event_logs
+      - policy_document
   - id: PI1.4
-    title: Processing Controls
-    description: The entity implements processing controls.
+    title: Output Delivery
+    description: The entity implements policies and procedures to make available or deliver output completely, accurately, and timely in accordance with specifications to meet the entity's objectives.
     category: PI
-    control_objective: Ensure processing operations are accurate and complete.
-    implementation_guidance: Implement processing controls and validation.
+    control_objective: Deliver output completely, accurately, and timely in accordance with specifications.
+    implementation_guidance: Document output validation and delivery procedures; upload evidence of their operation.
     risk_level: medium
-    evidence_mapping:
-      - id: PI1.4-E1
-        name: Processing Procedures
-        description: Data processing procedures
-        type: document
-        frequency: annual
-        retention_period: 3_years
+    assessment_mode: manual_upload
     required_evidence:
-      - audit_reports
       - policy_document
+      - audit_reports
   - id: PI1.5
-    title: Output Validation
-    description: The entity validates output data.
+    title: Storage of Inputs and Outputs
+    description: The entity implements policies and procedures to store inputs, items in processing, and outputs completely, accurately, and timely in accordance with system specifications to meet the entity's objectives.
     category: PI
-    control_objective: Ensure output data is accurate and complete.
-    implementation_guidance: Implement output validation controls.
+    control_objective: Store inputs, in-process items, and outputs completely, accurately, and timely per specifications.
+    implementation_guidance: Document storage procedures and retention controls; upload evidence of their operation.
     risk_level: medium
-    evidence_mapping:
-      - id: PI1.5-E1
-        name: Output Validation Reports
-        description: Output validation reports
-        type: document
-        frequency: periodic
-        retention_period: 3_years
+    assessment_mode: manual_upload
     required_evidence:
-      - audit_reports
-      - event_logs
-  - id: PI2.1
-    title: Error Handling
-    description: The entity implements error handling procedures.
-    category: PI
-    control_objective: Handle processing errors appropriately.
-    implementation_guidance: Implement error detection and handling procedures.
-    risk_level: medium
-    evidence_mapping:
-      - id: PI2.1-E1
-        name: Error Handling Procedures
-        description: Error handling procedures
-        type: document
-        frequency: annual
-        retention_period: 3_years
-    required_evidence:
-      - audit_reports
-      - event_logs
-  - id: PI2.2
-    title: Transaction Integrity
-    description: The entity ensures transaction integrity.
-    category: PI
-    control_objective: Ensure transaction completeness and accuracy.
-    implementation_guidance: Implement transaction validation controls.
-    risk_level: medium
-    evidence_mapping:
-      - id: PI2.2-E1
-        name: Transaction Logs
-        description: Transaction processing logs
-        type: system
-        frequency: continuous
-        retention_period: 1_year
-    required_evidence:
-      - event_logs
-      - system_configs
-  - id: PI3.1
-    title: Processing Monitoring
-    description: The entity monitors processing activities.
-    category: PI
-    control_objective: Monitor processing activities for integrity.
-    implementation_guidance: Implement processing monitoring controls.
-    risk_level: medium
-    evidence_mapping:
-      - id: PI3.1-E1
-        name: Processing Monitoring Reports
-        description: Processing monitoring reports
-        type: document
-        frequency: daily
-        retention_period: 1_year
-    required_evidence:
-      - audit_reports
-      - event_logs
-  - id: PI3.2
-    title: Exception Reporting
-    description: The entity reports processing exceptions.
-    category: PI
-    control_objective: Report processing exceptions.
-    implementation_guidance: Implement exception reporting procedures.
-    risk_level: medium
-    evidence_mapping:
-      - id: PI3.2-E1
-        name: Exception Reports
-        description: Processing exception reports
-        type: document
-        frequency: event_driven
-        retention_period: 3_years
-    required_evidence:
-      - audit_reports
-      - event_logs
-  - id: CA1.1
-    title: Confidentiality and Availability Management
-    description: The entity manages confidentiality and availability requirements.
-    category: CA
-    control_objective: Ensure both confidentiality and availability requirements are met.
-    implementation_guidance: Implement integrated confidentiality and availability controls.
-    risk_level: medium
-    evidence_mapping:
-      - id: CA1.1-E1
-        name: Integrated Security Plan
-        description: Security plan addressing both confidentiality and availability
-        type: document
-        frequency: annual
-        retention_period: 3_years
-    required_evidence:
-      - audit_reports
       - policy_document
-  - id: CA1.2
-    title: Incident Response
-    description: The entity implements incident response procedures.
-    category: CA
-    control_objective: Detect, respond to, and recover from security incidents.
-    implementation_guidance: Implement incident response plan and procedures.
-    risk_level: high
-    evidence_mapping:
-      - id: CA1.2-E1
-        name: Incident Response Plan
-        description: Documented incident response plan
-        type: document
-        frequency: annual
-        retention_period: 3_years
-      - id: CA1.2-E2
-        name: Incident Logs
-        description: Security incident response logs
-        type: system
-        frequency: event_driven
-        retention_period: 3_years
-    required_evidence:
-      - incident_reports
-      - policy_document
-  - id: CA1.3
-    title: Security Awareness Training
-    description: The entity provides security awareness training.
-    category: CA
-    control_objective: Ensure personnel understand security responsibilities.
-    implementation_guidance: Provide regular security awareness training to all personnel.
-    risk_level: medium
-    evidence_mapping:
-      - id: CA1.3-E1
-        name: Training Records
-        description: Security awareness training completion records
-        type: document
-        frequency: annual
-        retention_period: 3_years
-    required_evidence:
-      - security_policies
-      - training_records
-  - id: CA1.4
-    title: Physical Security
-    description: The entity implements physical security controls.
-    category: CA
-    control_objective: Protect facilities and equipment from unauthorized access.
-    implementation_guidance: Implement physical security measures.
-    risk_level: medium
-    evidence_mapping:
-      - id: CA1.4-E1
-        name: Physical Security Policy
-        description: Physical security policy and procedures
-        type: document
-        frequency: annual
-        retention_period: 3_years
-    required_evidence:
       - audit_reports
-      - policy_document
-  - id: CA1.5
-    title: Vendor Management
-    description: The entity manages third-party vendors.
-    category: CA
-    control_objective: Ensure vendors meet security requirements.
-    implementation_guidance: Implement vendor management processes.
-    risk_level: medium
-    evidence_mapping:
-      - id: CA1.5-E1
-        name: Vendor Assessment Reports
-        description: Vendor security assessment reports
-        type: document
-        frequency: annual
-        retention_period: 3_years
-    required_evidence:
-      - audit_reports
-      - policy_document
-  - id: CA1.6
-    title: Change Management
-    description: The entity implements change management procedures.
-    category: CA
-    control_objective: Manage changes to systems and processes.
-    implementation_guidance: Implement change management controls.
-    risk_level: medium
-    evidence_mapping:
-      - id: CA1.6-E1
-        name: Change Management Procedures
-        description: Change management procedures
-        type: document
-        frequency: annual
-        retention_period: 3_years
-    required_evidence:
-      - audit_reports
-      - policy_document
-  - id: CA1.7
-    title: Business Continuity
-    description: The entity maintains business continuity plans.
-    category: CA
-    control_objective: Ensure continuity of operations during disruptions.
-    implementation_guidance: Develop and maintain business continuity plans.
-    risk_level: high
-    evidence_mapping:
-      - id: CA1.7-E1
-        name: Business Continuity Plan
-        description: Business continuity and disaster recovery plan
-        type: document
-        frequency: annual
-        retention_period: 3_years
-    required_evidence:
-      - backup_logs
-      - policy_document
-  - id: CA1.8
-    title: Security Monitoring
-    description: The entity monitors security events.
-    category: CA
-    control_objective: Monitor security events and activities.
-    implementation_guidance: Implement security monitoring tools and procedures.
-    risk_level: medium
-    evidence_mapping:
-      - id: CA1.8-E1
-        name: Security Monitoring Logs
-        description: Security monitoring and alert logs
-        type: system
-        frequency: continuous
-        retention_period: 1_year
-    required_evidence:
-      - event_logs
-      - system_configs

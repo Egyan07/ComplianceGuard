@@ -106,13 +106,13 @@ def test_soc2_evaluate_uses_canonical_engine(canonical_client):
     assert "compliance_level" in data
     assert 0.0 <= data["overall_score"] <= 100.0
     assert data["compliance_status"] in {"compliant", "partial", "non_compliant", "not_assessed"}
-    # Canonical engine computed the result over all 54 controls.
-    assert data["control_count"] == 54
+    # Canonical engine computed the result over all 43 (2017 TSC) criteria.
+    assert data["control_count"] == 43
     # Evidence was translated: users->user_provisioning, s3_encryption->encryption_policies.
     assert data["evidence_summary"]["canonical_types_present"]
     # Phase 6: the real control-status counts are in the response (the web UI
     # previously fabricated these as zeros).
-    assert data["partial_controls"] + data["non_compliant_controls"] + data["not_assessed_controls"] + data["compliant_controls"] == 54
+    assert data["partial_controls"] + data["non_compliant_controls"] + data["not_assessed_controls"] + data["compliant_controls"] == 43
     assert data["not_assessed_controls"] > 0  # sparse evidence -> honest counts
 
     # History re-reads the persisted record and surfaces the same counts.
@@ -126,6 +126,57 @@ def test_soc2_evaluate_uses_canonical_engine(canonical_client):
     latest = history[0]
     assert latest["not_assessed_controls"] == data["not_assessed_controls"]
     assert latest["partial_controls"] == data["partial_controls"]
+
+    # Phase 4 taxonomy metadata must survive serialization on BOTH the
+    # evaluate response and the history rows. FastAPI strips fields absent
+    # from the response model — if ComplianceEvaluationResponse or
+    # _response_from_record ever drops them again, these asserts fail.
+    expected_taxonomy = "2017 Trust Services Criteria (with 2022 revised points of focus)"
+    assert data["taxonomy_version"] == expected_taxonomy
+    assert data["score_semantics"] == "evidence_coverage"
+    assert latest["taxonomy_version"] == expected_taxonomy
+    assert latest["score_semantics"] == "evidence_coverage"
+
+
+def test_legacy_record_with_null_taxonomy_metadata_serializes_as_null(canonical_client):
+    """Historical rows (NULL taxonomy_version/score_semantics) must serialize
+    successfully with null metadata — never invented values, never re-scored,
+    and their stored score/status must pass through unchanged."""
+    import uuid
+
+    from app.models.evaluation import ComplianceEvaluationRecord
+
+    client, token = canonical_client
+    db = TestSession()
+    try:
+        user = db.query(User).filter(User.email == "canon@example.com").one()
+        db.add(ComplianceEvaluationRecord(
+            evaluation_id=f"legacy-{uuid.uuid4().hex[:12]}",
+            framework_id="iso27001_v2013",  # historical framework id preserved
+            user_id=user.id,
+            overall_score=41.5,
+            compliance_status="non_compliant",
+            compliance_level="partial",
+            evaluated_by="system",
+            # taxonomy_version / score_semantics left NULL: pre-versioning row.
+        ))
+        db.commit()
+    finally:
+        db.close()
+
+    resp = client.get(
+        "/api/v1/compliance/evaluations/history",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 200
+    rows = resp.json()
+    legacy = next(r for r in rows if r["framework_id"] == "iso27001_v2013")
+    # Absent legacy metadata serializes as null (additive contract).
+    assert legacy["taxonomy_version"] is None
+    assert legacy["score_semantics"] is None
+    # Historical values pass through untouched — no re-scoring.
+    assert legacy["overall_score"] == 41.5
+    assert legacy["compliance_status"] == "non_compliant"
 
 
 def test_gdpr_evaluate_uses_canonical_engine(canonical_client):

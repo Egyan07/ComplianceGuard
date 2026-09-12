@@ -157,6 +157,8 @@ async def evaluate_from_evidence(
             recommendations=totals["recommendations"],
             control_count=totals["control_count"],
             compliant_controls=totals["compliant_controls"],
+            taxonomy_version=totals.get("taxonomy_version"),
+            score_semantics=totals.get("score_semantics"),
         )
         db.add(record)
         db.commit()

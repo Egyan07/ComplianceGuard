@@ -8,10 +8,13 @@ const theme = createTheme();
 const wrap = (ui: React.ReactElement) =>
   render(<ThemeProvider theme={theme}>{ui}</ThemeProvider>);
 
+// Real 2017 TSC criteria. CC6.6 (external-threat protection) is automatable
+// and failing -> "Fix script"; CC6.3 (access authorization) is guidance-only
+// and failing -> "How to fix".
 const mockControlResults: Record<string, ControlResult> = {
   'CC6.1': { status: 'compliant',     score: 90, gaps: [],                 available_evidence: ['firewall_configs'] },
-  'CC6.3': { status: 'non_compliant', score: 18, gaps: ['event_logs'],     available_evidence: [] },
-  'A3.1': { status: 'non_compliant', score: 25, gaps: ['network_configs'],available_evidence: [] },
+  'CC6.3': { status: 'non_compliant', score: 18, gaps: ['policy_document'],available_evidence: [] },
+  'CC6.6': { status: 'non_compliant', score: 25, gaps: ['network_configs'],available_evidence: [] },
   'CC3.1': { status: 'partial',       score: 55, gaps: ['policy_document'],available_evidence: ['audit_reports'] },
   'A1.1':  { status: 'compliant',     score: 95, gaps: [],                 available_evidence: ['system_configs'] },
 };
@@ -74,13 +77,13 @@ describe('ControlHeatmap', () => {
 
   it('shows Fix script button for automatable non-compliant control in Electron mode', () => {
     wrap(<ControlHeatmap controlResults={mockControlResults} isElectron={true} isProTier />);
-    // CC6.3 is non_compliant and automatable
+    // CC6.6 is non_compliant and automatable
     expect(screen.getAllByText('Fix script').length).toBeGreaterThan(0);
   });
 
   it('shows How to fix button for non-automatable non-compliant control', () => {
     wrap(<ControlHeatmap controlResults={mockControlResults} isElectron={true} isProTier />);
-    // A3.1 is non_compliant but guidance-only
+    // CC6.3 is non_compliant but guidance-only under the real TSC
     expect(screen.getAllByText('How to fix').length).toBeGreaterThan(0);
   });
 

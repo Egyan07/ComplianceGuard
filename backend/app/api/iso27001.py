@@ -137,7 +137,9 @@ async def evaluate_from_evidence(
         evidence_summary["control_counts"] = _counts_from_totals(totals)
         record = ComplianceEvaluationRecord(
             evaluation_id=f"eval-{uuid.uuid4().hex[:12]}",
-            framework_id="iso27001_v2013",
+            # Resolved from the canonical YAML (iso27001_v2022). Historical
+            # rows recorded under iso27001_v2013 are preserved untouched.
+            framework_id=totals["framework_id"],
             user_id=current_user.id,
             overall_score=totals["overall_score"],
             compliance_status=totals["compliance_status"],
@@ -149,6 +151,8 @@ async def evaluate_from_evidence(
             recommendations=[],
             control_count=totals["control_count"],
             compliant_controls=totals["compliant_controls"],
+            taxonomy_version=totals.get("taxonomy_version"),
+            score_semantics=totals.get("score_semantics"),
         )
         db.add(record)
         db.commit()

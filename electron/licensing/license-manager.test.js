@@ -20,10 +20,10 @@ function withTier(tier) {
 describe('LicenseManager evaluation coverage is tier-independent (CG-M6)', () => {
   const engine = new CanonicalEngine();
 
-  it('every tier is scored against ALL SOC 2 controls (54), never a free subset', () => {
+  it('every tier is scored against ALL SOC 2 criteria (43), never a free subset', () => {
     for (const tier of ['free', 'pro', 'enterprise']) {
       const ev = engine.evaluate('soc2', []);
-      expect(Object.keys(ev.control_results).length).toBe(54);
+      expect(Object.keys(ev.control_results).length).toBe(43);
       expect(withTier(tier).tier).toBe(tier); // manager exists but cannot shrink coverage
     }
   });

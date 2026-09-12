@@ -23,7 +23,7 @@ const yaml = require('js-yaml');
 
 const FRAMEWORK_IDS = {
   soc2: 'soc2_v2017',
-  iso27001: 'iso27001_v2013',
+  iso27001: 'iso27001_v2022',
   hipaa: 'hipaa_security_rule',
   gdpr: 'gdpr_2016_679',
 };
@@ -38,7 +38,7 @@ const FRAMEWORK_KEYS = {
 
 const FRAMEWORK_NAMES = {
   soc2: 'SOC 2 Type II',
-  iso27001: 'ISO 27001:2013',
+  iso27001: 'ISO/IEC 27001:2022',
   hipaa: 'HIPAA Security Rule',
   gdpr: 'GDPR',
 };
@@ -84,6 +84,19 @@ class EvidenceVocabulary {
       else if (t in this.aliasToCanonical) canonical.add(this.aliasToCanonical[t]);
     }
     return canonical;
+  }
+
+  /** True if any endpoint collector can produce this evidence type. Types
+   *  whose producers list no `*_collector` entry are manual-only. Mirrors
+   *  EvidenceVocabulary.is_collector_produced in canonical_evidence.py. */
+  isCollectorProduced(evidenceType) {
+    const resolved = this.canonicalTypes.has(evidenceType)
+      ? evidenceType
+      : this.aliasToCanonical[evidenceType];
+    if (!resolved) return false;
+    const entry = this.data.canonical_types.find((t) => t.type === resolved);
+    if (!entry) return false;
+    return (entry.producers || []).some((p) => String(p).endsWith('_collector'));
   }
 
   static load() {
@@ -135,6 +148,22 @@ class CanonicalEngine {
       else if (coverage >= 0.5) status = STATUS.PARTIAL;
       else status = STATUS.NON_COMPLIANT;
 
+      // Manual-assessment gate: a manual_upload criterion must never be
+      // represented as assessed purely because unrelated endpoint telemetry
+      // exists. Without at least one manual (non-collector-produced) evidence
+      // type among the present set, the control stays not_assessed regardless
+      // of coverage. Label-only: the numeric score is unchanged (mirrors
+      // CG-M2). Frameworks without the field default to 'hybrid', preserving
+      // pre-assessment_mode behavior. Mirrors canonical_evidence.py.
+      const assessmentMode = control.assessment_mode || 'hybrid';
+      if (
+        assessmentMode === 'manual_upload' &&
+        status !== STATUS.NOT_ASSESSED &&
+        !available.some((t) => !this.vocabulary.isCollectorProduced(t))
+      ) {
+        status = STATUS.NOT_ASSESSED;
+      }
+
       const score = Math.round(coverage * 100);
 
       controlResults[control.id] = {
@@ -144,6 +173,7 @@ class CanonicalEngine {
         required_evidence: required,
         available_evidence: available,
         gaps,
+        assessment_mode: assessmentMode,
       };
 
       if (!categoryTotals[control.category]) categoryTotals[control.category] = [];
@@ -194,6 +224,13 @@ class CanonicalEngine {
       control_results: controlResults,
       counts,
       category_scores: categoryScores,
+      // What the number MEANS: evidence coverage / readiness, not a legal or
+      // audit determination of compliance. Mirrors canonical_evidence.py.
+      score_semantics: 'evidence_coverage',
+      // Identity of the framework data used, for evaluation provenance.
+      taxonomy_version: String(
+        (data.framework && (data.framework.taxonomy || data.framework.version)) || '',
+      ),
     };
   }
 
@@ -225,6 +262,8 @@ class CanonicalEngine {
       control_results: ev.control_results,
       evidence_count: evidenceTypes.length,
       recommendations: this._recommendations(ev),
+      score_semantics: ev.score_semantics,
+      taxonomy_version: ev.taxonomy_version,
     };
 
     const id = await db.createEvaluation(frameworkId, findings);

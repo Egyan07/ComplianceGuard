@@ -70,6 +70,8 @@ describe('LoginPage', () => {
 
   it('shows tagline text', () => {
     renderLogin();
-    expect(screen.getByText('SOC 2 Type II Compliance Automation')).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) => element?.textContent === 'SOC 2 · ISO 27001 · HIPAA · GDPR — Endpoint Evidence Readiness')
+    ).toBeInTheDocument();
   });
 });

@@ -11,6 +11,8 @@ from typing import Any, Dict, List, Optional
 
 import yaml
 
+from app.core.shared_frameworks import SHARED_FRAMEWORKS_DIR
+
 
 @dataclass
 class GDPRControl:
@@ -26,7 +28,10 @@ class GDPRControl:
     risk_level: str = "medium"
 
 
-_YAML_PATH = os.path.join(os.path.dirname(__file__), "gdpr_controls.yaml")
+# Canonical definition (single source of truth shared with the scoring
+# engines, the desktop app, and the generated catalog). Located by upward
+# search (see shared_frameworks.py) so both host and Docker layouts resolve.
+_YAML_PATH = os.path.join(SHARED_FRAMEWORKS_DIR, "gdpr_controls.yaml")
 
 
 class GDPRFramework:

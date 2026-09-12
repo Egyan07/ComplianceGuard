@@ -104,10 +104,84 @@ def test_readme_banner_and_badge_show_current_version():
         f"{shared['VERSION']} — update assets/banner.svg"
     )
 
-    readme = (_repo_root() / "README.md").read_text()
+    readme = (_repo_root() / "README.md").read_text(encoding="utf-8")
     match = re.search(r"badge/version-([\d.]+)-", readme)
     assert match, "README must contain the shields.io version badge"
     assert match.group(1) == shared["VERSION"], (
         f"README badge shows {match.group(1)} but the release is "
         f"{shared['VERSION']} — update the shields.io badge in README.md"
     )
+
+
+# ── Framework-definition SSOT (taxonomy remediation) ────────────────────────
+#
+# shared/frameworks/ is the ONLY canonical home for framework control
+# definitions. The backend browse loaders (soc2_controls.py etc.) read the
+# same files as the scoring engines; no second copy may exist under
+# backend/app/core/, and loaders must resolve the shared path.
+
+FRAMEWORK_YAMLS = ["soc2_controls.yaml", "iso27001_controls.yaml",
+                   "hipaa_controls.yaml", "gdpr_controls.yaml"]
+
+
+def test_no_duplicate_framework_yamls_under_backend_core():
+    """A framework YAML under backend/app/core/ means the split-brain has
+    regrown — the canonical copy lives only in shared/frameworks/."""
+    core_dir = _repo_root() / "backend" / "app" / "core"
+    for name in FRAMEWORK_YAMLS:
+        assert not (core_dir / name).exists(), (
+            f"Duplicate framework definition backend/app/core/{name} detected — "
+            f"shared/frameworks/{name} is the only canonical copy"
+        )
+
+
+@pytest.mark.parametrize("name", FRAMEWORK_YAMLS)
+def test_backend_loaders_resolve_shared_canonical_yaml(name):
+    """Each browse loader must point at shared/frameworks/, not a local copy."""
+    loader_name = {
+        "soc2_controls.yaml": "soc2_controls.py",
+        "iso27001_controls.yaml": "iso27001_controls.py",
+        "hipaa_controls.yaml": "hipaa_controls.py",
+        "gdpr_controls.yaml": "gdpr_controls.py",
+    }[name]
+    src = (_repo_root() / "backend" / "app" / "core" / loader_name).read_text(encoding="utf-8")
+    assert "SHARED_FRAMEWORKS_DIR" in src, (
+        f"{loader_name} must resolve its YAML through the shared_frameworks resolver"
+    )
+    assert '"shared", "frameworks"' not in src, (
+        f"{loader_name} must not hard-code a shared/frameworks path walk — "
+        f"resolve via shared_frameworks.SHARED_FRAMEWORKS_DIR (layout-independent)"
+    )
+
+
+@pytest.mark.parametrize("name", FRAMEWORK_YAMLS)
+def test_loaders_can_parse_canonical_yaml(name):
+    """Smoke: every loader's YAML path exists and parses with PyYAML."""
+    import yaml
+    path = _repo_root() / "shared" / "frameworks" / name
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    assert data.get("controls"), f"{name} has no controls"
+    assert data.get("framework", {}).get("id"), f"{name} missing framework.id"
+
+
+def test_archived_iso_2013_not_wired_into_engines():
+    """The archived 2013 definition must exist for historical rendering but
+    must never be referenced by the scoring engines or loaders.
+
+    Probes target the actual data-loading code (framework file maps and the
+    loader's YAML path), not comments/docstrings, which legitimately mention
+    the archive for documentation purposes."""
+    assert (_repo_root() / "shared" / "frameworks" / "iso27001_2013_archived.yaml").exists()
+
+    ce = (_repo_root() / "backend" / "app" / "core" / "canonical_evidence.py").read_text(encoding="utf-8")
+    map_body = ce.split("_FRAMEWORK_FILES = {")[1].split("}")[0]
+    assert "iso27001_2013_archived" not in map_body
+
+    js = (_repo_root() / "electron" / "processing" / "canonical-engine.js").read_text(encoding="utf-8")
+    js_map_body = js.split("FRAMEWORK_FILES = {")[1].split("};")[0]
+    assert "iso27001_2013_archived" not in js_map_body
+
+    loader = (_repo_root() / "backend" / "app" / "core" / "iso27001_controls.py").read_text(encoding="utf-8")
+    path_line = [l for l in loader.splitlines() if l.startswith("_YAML_PATH")]
+    assert path_line, "iso27001_controls.py must define _YAML_PATH"
+    assert "iso27001_2013_archived" not in path_line[0]

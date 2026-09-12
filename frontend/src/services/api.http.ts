@@ -183,6 +183,7 @@ export async function httpGetScoreTrend(frameworkId: 1 | 2 | 3 | 4): Promise<Arr
       // Canonical contract: overall_score is 0-100 on both web and desktop.
       score: Math.round(r.overall_score ?? 0),
       status: normaliseStatus(r.compliance_status ?? r.status),
+      taxonomyVersion: r.taxonomy_version ?? null,
     }))
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 }
@@ -197,7 +198,7 @@ export async function evaluateComplianceWeb(frameworkId = 1): Promise<Compliance
   };
   const frameworkNames: Record<number, string> = {
     1: 'SOC 2 Type II',
-    2: 'ISO 27001:2013',
+    2: 'ISO/IEC 27001:2022',
     3: 'HIPAA Security Rule',
     4: 'GDPR',
   };

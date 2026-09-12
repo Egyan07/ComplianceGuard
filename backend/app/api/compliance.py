@@ -145,6 +145,12 @@ class ComplianceEvaluationResponse(BaseModel):
     partial_controls: int = 0
     non_compliant_controls: int = 0
     not_assessed_controls: int = 0
+    # Taxonomy identity of the framework data that produced this evaluation
+    # (Phase 4 versioning). Null for legacy rows predating versioning — they
+    # are serialized as null, never invented, and are never re-scored.
+    taxonomy_version: Optional[str] = None
+    # What the score measures ("evidence_coverage"). Null on legacy rows.
+    score_semantics: Optional[str] = None
 
 
 def _counts_from_totals(totals: Dict[str, Any]) -> Dict[str, int]:
@@ -179,6 +185,11 @@ def _response_from_record(record: ComplianceEvaluationRecord) -> ComplianceEvalu
         partial_controls=counts.get("partial_controls", 0),
         non_compliant_controls=counts.get("non_compliant_controls", 0),
         not_assessed_controls=counts.get("not_assessed_controls", 0),
+        # Stored passthrough: null for legacy rows, live taxonomy identity for
+        # new ones. Without emitting these here, FastAPI's response-model
+        # filtering strips them from every web history/trend response.
+        taxonomy_version=record.taxonomy_version,
+        score_semantics=record.score_semantics,
     )
 
 
@@ -325,6 +336,8 @@ async def evaluate_compliance(
             recommendations=totals["recommendations"],
             control_count=totals["control_count"],
             compliant_controls=totals["compliant_controls"],
+            taxonomy_version=totals.get("taxonomy_version"),
+            score_semantics=totals.get("score_semantics"),
         )
         db.add(record)
         db.flush()
@@ -590,6 +603,8 @@ async def evaluate_from_evidence(
             recommendations=totals["recommendations"],
             control_count=totals["control_count"],
             compliant_controls=totals["compliant_controls"],
+            taxonomy_version=totals.get("taxonomy_version"),
+            score_semantics=totals.get("score_semantics"),
         )
         db.add(record)
         db.commit()

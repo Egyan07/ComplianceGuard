@@ -38,10 +38,10 @@ controls:
       Document a privacy-by-design process that maps each processing activity to the six principles. Maintain an
       inventory of personal data, its purpose, retention periods, and accuracy review cycles.
     risk_level: high
+    assessment_mode: manual_upload
     chapter: Principles
     required_evidence:
       - policy_document
-      - security_policies
   - id: Art.5.2
     title: Accountability
     description: >-
@@ -53,6 +53,7 @@ controls:
       Maintain a compliance evidence pack — policies, training records, processing records, DPIA records, and audit
       reports — and review it at least annually.
     risk_level: high
+    assessment_mode: manual_upload
     chapter: Principles
     required_evidence:
       - audit_reports
@@ -68,10 +69,10 @@ controls:
       For each processing activity in the record of processing, identify and document the legal basis. Re-verify bases
       when purposes change or after regulatory updates.
     risk_level: high
+    assessment_mode: manual_upload
     chapter: Principles
     required_evidence:
       - policy_document
-      - security_policies
   - id: Art.6.4
     title: Compatibility of Further Processing
     description: >-
@@ -83,6 +84,7 @@ controls:
       Run a documented compatibility assessment whenever data collected for one purpose is proposed for another. Record
       the outcome and any safeguards applied.
     risk_level: medium
+    assessment_mode: manual_upload
     chapter: Principles
     required_evidence:
       - policy_document
@@ -97,10 +99,10 @@ controls:
       Capture consent with unambiguous, affirmative action (no pre-ticked boxes). Timestamp and store consent records
       with the version of the privacy notice shown at the time.
     risk_level: high
+    assessment_mode: manual_upload
     chapter: Principles
     required_evidence:
       - policy_document
-      - security_policies
   - id: Art.7.2
     title: Clear Withdrawal of Consent
     description: >-
@@ -112,6 +114,7 @@ controls:
       Separate consent checkboxes from terms-of-service. Provide a one-click withdrawal mechanism in the account or
       preference centre and honour it promptly.
     risk_level: medium
+    assessment_mode: manual_upload
     chapter: Principles
     required_evidence:
       - policy_document
@@ -127,6 +130,7 @@ controls:
       Implement age gates for services offered to children. Where required, verify parental responsibility with
       reasonable efforts and document the verification method.
     risk_level: high
+    assessment_mode: manual_upload
     chapter: Principles
     required_evidence:
       - policy_document
@@ -141,10 +145,10 @@ controls:
       Scan data flows for special category fields. Block collection unless a valid Art.9(2) exception applies, and
       record the exception relied upon.
     risk_level: high
+    assessment_mode: manual_upload
     chapter: Principles
     required_evidence:
       - policy_document
-      - security_policies
   - id: Art.9.2
     title: Exceptions to the Special Category Prohibition
     description: >-
@@ -156,6 +160,7 @@ controls:
       Document the Art.9(2) exception for each special category processing activity, including explicit consent records
       or the legal obligation relied upon.
     risk_level: high
+    assessment_mode: manual_upload
     chapter: Principles
     required_evidence:
       - policy_document
@@ -170,10 +175,10 @@ controls:
       Maintain a plain-language privacy notice and layered notices at every collection point. Keep them current with
       actual processing.
     risk_level: medium
+    assessment_mode: manual_upload
     chapter: Data Subject Rights
     required_evidence:
       - policy_document
-      - security_policies
   - id: Art.12.2
     title: Facilitating the Exercise of Data Subject Rights
     description: >-
@@ -185,6 +190,7 @@ controls:
       Provide a dedicated rights-request channel (form, email or portal). Log requests, track response SLAs, and verify
       identity before actioning requests.
     risk_level: medium
+    assessment_mode: manual_upload
     chapter: Data Subject Rights
     required_evidence:
       - audit_reports
@@ -200,10 +206,11 @@ controls:
       Track request intake dates and response deadlines. Escalate requests that risk breaching the one-month limit and
       document any extension granted.
     risk_level: medium
+    assessment_mode: manual_upload
     chapter: Data Subject Rights
     required_evidence:
       - audit_reports
-      - event_logs
+      - policy_document
   - id: Art.13
     title: Information to be Provided at Collection
     description: >-
@@ -215,10 +222,10 @@ controls:
       Embed mandatory notice fields in every collection form: controller identity, purpose, legal basis, retention,
       recipients, and rights references.
     risk_level: high
+    assessment_mode: manual_upload
     chapter: Data Subject Rights
     required_evidence:
       - policy_document
-      - security_policies
   - id: Art.14
     title: Information Where Data is Not Obtained from the Data Subject
     description: >-
@@ -230,6 +237,7 @@ controls:
       Track third-party data sources in the processing register. Notify data subjects within one month of acquisition
       (or at first communication with them).
     risk_level: medium
+    assessment_mode: manual_upload
     chapter: Data Subject Rights
     required_evidence:
       - policy_document
@@ -244,9 +252,10 @@ controls:
       Implement a self-service export or a verified request workflow that returns all personal data held on the
       individual in a structured, readable form.
     risk_level: high
+    assessment_mode: manual_upload
     chapter: Data Subject Rights
     required_evidence:
-      - access_logs
+      - policy_document
       - audit_reports
   - id: Art.15.3
     title: Provision of a Copy of Personal Data
@@ -259,10 +268,11 @@ controls:
       Standardise the access-response artefact (machine-readable export plus human-readable summary). Apply fees only
       for manifestly unfounded or excessive repeat requests.
     risk_level: low
+    assessment_mode: manual_upload
     chapter: Data Subject Rights
     required_evidence:
       - audit_reports
-      - system_configs
+      - policy_document
   - id: Art.16
     title: Right to Rectification
     description: >-
@@ -274,10 +284,11 @@ controls:
       Provide a self-service profile editor and a documented rectification workflow. Propagate corrections to all
       downstream systems and processors.
     risk_level: medium
+    assessment_mode: manual_upload
     chapter: Data Subject Rights
     required_evidence:
       - audit_reports
-      - user_provisioning
+      - policy_document
   - id: Art.17.1
     title: Right to Erasure (Right to be Forgotten)
     description: >-
@@ -289,11 +300,11 @@ controls:
       Maintain a data map to locate every copy of an individual's data. Execute erasure across production, backups
       (within retention), and processors; log completion.
     risk_level: high
+    assessment_mode: manual_upload
     chapter: Data Subject Rights
     required_evidence:
       - audit_reports
-      - system_configs
-      - user_provisioning
+      - policy_document
   - id: Art.18.1
     title: Right to Restriction of Processing
     description: >-
@@ -305,10 +316,11 @@ controls:
       Implement a flag that freezes an individual's records from further processing while preserving the data itself.
       Document the restriction and its lifting.
     risk_level: medium
+    assessment_mode: manual_upload
     chapter: Data Subject Rights
     required_evidence:
       - audit_reports
-      - system_configs
+      - policy_document
   - id: Art.20.1
     title: Right to Data Portability
     description: >-
@@ -320,10 +332,11 @@ controls:
       Support standard export formats (JSON, CSV) for data provided by the data subject and generated from their
       activity, and offer direct transfer where feasible.
     risk_level: medium
+    assessment_mode: manual_upload
     chapter: Data Subject Rights
     required_evidence:
       - audit_reports
-      - system_configs
+      - policy_document
   - id: Art.21.1
     title: Right to Object
     description: >-
@@ -335,10 +348,10 @@ controls:
       Maintain an objection register and a suppression list for marketing. Assess and document overriding legitimate
       grounds where processing continues.
     risk_level: medium
+    assessment_mode: manual_upload
     chapter: Data Subject Rights
     required_evidence:
       - policy_document
-      - user_provisioning
   - id: Art.22.1
     title: Automated Individual Decision-Making
     description: >-
@@ -350,10 +363,10 @@ controls:
       Audit ML and rule-based decisioning for solely-automated significant decisions. Provide human review, meaningful
       information about the logic, and the right to contest decisions.
     risk_level: high
+    assessment_mode: manual_upload
     chapter: Data Subject Rights
     required_evidence:
       - policy_document
-      - system_configs
   - id: Art.24.1
     title: Responsibility of the Controller
     description: >-
@@ -365,11 +378,11 @@ controls:
       Adopt a data protection policy, assign ownership, run an internal compliance programme, and retain evidence of
       measures implemented.
     risk_level: high
+    assessment_mode: manual_upload
     chapter: Controller and Processor
     required_evidence:
       - audit_reports
       - policy_document
-      - security_policies
   - id: Art.25.1
     title: Data Protection by Design
     description: >-
@@ -381,6 +394,7 @@ controls:
       Apply a privacy-by-design checklist at architecture and feature design reviews: minimisation, pseudonymisation,
       access control, and default settings.
     risk_level: high
+    assessment_mode: hybrid
     chapter: Controller and Processor
     required_evidence:
       - encryption_policies
@@ -397,6 +411,7 @@ controls:
       Ship products with the least-privilege defaults: minimal collection fields, private-by-default visibility, and
       limited retention windows.
     risk_level: medium
+    assessment_mode: automatable
     chapter: Controller and Processor
     required_evidence:
       - security_policies
@@ -412,10 +427,10 @@ controls:
       Run a vendor due-diligence process covering security posture, sub-processors, and breach-response capability
       before engaging any processor.
     risk_level: high
+    assessment_mode: manual_upload
     chapter: Controller and Processor
     required_evidence:
       - policy_document
-      - security_policies
   - id: Art.28.3
     title: Processor Contract Requirements
     description: >-
@@ -427,10 +442,10 @@ controls:
       Maintain DPAs with every processor covering the mandatory Art.28(3) clauses: instructions, confidentiality,
       security, sub-processor authorisation, and deletion/return on termination.
     risk_level: high
+    assessment_mode: manual_upload
     chapter: Controller and Processor
     required_evidence:
       - policy_document
-      - security_policies
   - id: Art.30.1
     title: Records of Processing Activities
     description: >-
@@ -442,11 +457,11 @@ controls:
       Operate a living register of processing activities (ROPA) with owners per activity, refreshed whenever a new
       system or purpose is introduced.
     risk_level: high
+    assessment_mode: manual_upload
     chapter: Controller and Processor
     required_evidence:
       - audit_reports
-      - event_logs
-      - system_configs
+      - policy_document
   - id: Art.31
     title: Cooperation with Supervisory Authority
     description: >-
@@ -458,6 +473,7 @@ controls:
       Nominate a point of contact for regulator enquiries and maintain a response playbook with defined SLAs and
       escalation paths.
     risk_level: medium
+    assessment_mode: manual_upload
     chapter: Controller and Processor
     required_evidence:
       - audit_reports
@@ -476,6 +492,7 @@ controls:
       Apply encryption at rest and in transit, access controls, patching, logging and monitoring, backup and restore
       testing, and incident-response capability scaled to risk.
     risk_level: high
+    assessment_mode: hybrid
     chapter: Controller and Processor
     required_evidence:
       - access_logs
@@ -496,6 +513,7 @@ controls:
       Maintain a breach-response playbook with a 72-hour clock, a triage template (nature, categories, likely
       consequences, measures taken), and legal review of notifiability.
     risk_level: high
+    assessment_mode: hybrid
     chapter: Controller and Processor
     required_evidence:
       - event_logs
@@ -511,6 +529,7 @@ controls:
       Include data-subject notification steps in the breach playbook, with templates covering the nature of the breach
       and recommended mitigation.
     risk_level: high
+    assessment_mode: manual_upload
     chapter: Controller and Processor
     required_evidence:
       - incident_reports
@@ -526,6 +545,7 @@ controls:
       Maintain a screening questionnaire to trigger DPIAs; run DPIAs before launch of high-risk processing and consult
       the DPO on the assessment.
     risk_level: high
+    assessment_mode: manual_upload
     chapter: Controller and Processor
     required_evidence:
       - audit_reports
@@ -541,6 +561,7 @@ controls:
       Track DPIA outcomes; where residual high risk remains, prepare a consultation package (responsibilities, measures,
       mitigation) and submit before processing starts.
     risk_level: medium
+    assessment_mode: manual_upload
     chapter: Controller and Processor
     required_evidence:
       - audit_reports
@@ -556,10 +577,10 @@ controls:
       Formally designate a DPO (or contracted DPO service), publish contact details, notify the supervisory authority,
       and give the DPO the resources and independence required by Art.38.
     risk_level: high
+    assessment_mode: manual_upload
     chapter: Controller and Processor
     required_evidence:
       - policy_document
-      - security_policies
   - id: Art.44
     title: General Principle for Transfers
     description: >-
@@ -571,6 +592,7 @@ controls:
       Map all cross-border data flows, identify the transfer mechanism for each (adequacy, SCCs, BCRs), and record the
       basis in the ROPA.
     risk_level: high
+    assessment_mode: manual_upload
     chapter: International Transfers
     required_evidence:
       - policy_document
@@ -585,10 +607,10 @@ controls:
       Execute standard contractual clauses for transfers outside the EEA/UK, complete the clause annexes (parties,
       purposes, categories, security), and conduct a transfer risk assessment.
     risk_level: high
+    assessment_mode: manual_upload
     chapter: International Transfers
     required_evidence:
       - policy_document
-      - security_policies
   - id: Art.47.1
     title: Binding Corporate Rules
     description: >-
@@ -600,6 +622,7 @@ controls:
       Where the group transfers data between entities in non-adequate countries, prepare BCR documentation (principles,
       rights, complaint handling) and seek supervisory authority approval.
     risk_level: low
+    assessment_mode: manual_upload
     chapter: International Transfers
     required_evidence:
       - policy_document
