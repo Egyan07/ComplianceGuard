@@ -32,7 +32,7 @@ test.describe('Full-stack auth flow', () => {
 
     // Registration hits the real backend; success navigates into the app shell.
     await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText(/Monitor your compliance status/)).toBeVisible();
+    await expect(page.getByText(/Evidence readiness across SOC 2/)).toBeVisible();
   });
 
   test('logs in an existing account and sees dashboard data from the API', async ({ page }) => {

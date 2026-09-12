@@ -46,7 +46,7 @@ test.describe('Authentication', () => {
 
   test('shows tagline text', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByText('SOC 2 Type II Compliance Automation')).toBeVisible();
+    await expect(page.getByText('SOC 2 · ISO 27001 · HIPAA · GDPR — Endpoint Evidence Readiness')).toBeVisible();
   });
 });
 

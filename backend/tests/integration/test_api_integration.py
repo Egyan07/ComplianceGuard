@@ -251,13 +251,15 @@ class TestComplianceEndpoints:
         res = client.get("/api/v1/compliance/framework/summary")
         assert res.status_code == 200
         data = res.json()
-        assert data["total_controls"] >= 50
+        # The canonical 2017 TSC taxonomy: 33 CC + 3 A + 2 C + 5 PI = 43.
+        # (>= 50 encoded the pre-remediation fabricated framework.)
+        assert data["total_controls"] == 43
 
     def test_get_all_controls(self, client):
         res = client.get("/api/v1/compliance/framework/controls")
         assert res.status_code == 200
         controls = res.json()
-        assert len(controls) >= 50
+        assert len(controls) == 43
 
     def test_get_controls_by_category(self, client):
         res = client.get("/api/v1/compliance/framework/controls/by-category/CC")
