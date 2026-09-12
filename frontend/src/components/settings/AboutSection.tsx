@@ -1,6 +1,6 @@
 import React from 'react';
-import { Box, Paper, List, ListItem, ListItemIcon, ListItemText, Divider, Chip } from '@mui/material';
-import { Info, Computer, CheckCircle, Shield } from '@mui/icons-material';
+import { Box, Paper, List, ListItem, ListItemIcon, ListItemText, Divider, Chip, Typography } from '@mui/material';
+import { Info, Computer, CheckCircle } from '@mui/icons-material';
 import type { SystemInfo } from '../../types/electron';
 import SectionHeader from './SectionHeader';
 
@@ -10,11 +10,32 @@ interface AboutSectionProps {
   isElectron: boolean;
 }
 
+// The app's brand mark: the "CG" monogram in a blue rounded square, identical
+// to the Topbar logo (not a generic stock shield icon).
+const cgMark = (
+  <Box
+    sx={{
+      width: 28,
+      height: 28,
+      borderRadius: '7px',
+      backgroundColor: 'primary.main',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+    }}
+  >
+    <Typography sx={{ color: '#fff', fontWeight: 700, fontSize: '0.7rem', letterSpacing: '-0.5px' }}>
+      CG
+    </Typography>
+  </Box>
+);
+
 /** About section: version, platform, desktop/web mode. */
 const AboutSection: React.FC<AboutSectionProps> = ({ appVersion, systemInfo, isElectron }) => (
   <Paper sx={{ mb: 3 }}>
     <Box sx={{ p: 3 }}>
-      <SectionHeader icon={<Shield color="primary" />} title="About ComplianceGuard" />
+      <SectionHeader icon={cgMark} title="About ComplianceGuard" />
 
       <List disablePadding>
         <ListItem>
@@ -23,7 +44,6 @@ const AboutSection: React.FC<AboutSectionProps> = ({ appVersion, systemInfo, isE
             primary="Version"
             secondary={appVersion}
           />
-          <Chip label="Beta" size="small" color="primary" variant="outlined" />
         </ListItem>
         <Divider component="li" />
         <ListItem>
