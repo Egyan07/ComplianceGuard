@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
   <rect width="32" height="32" rx="7" fill="#2563EB"/>
-  <text x="16" y="17" font-family="Arial, Helvetica, sans-serif"
-        font-size="18" font-weight="700" fill="#FFFFFF"
-        text-anchor="middle">C</text>
+  <text x="16" y="16.5" font-family="Arial, Helvetica, sans-serif"
+        font-size="12" font-weight="700" fill="#FFFFFF"
+        text-anchor="middle" dominant-baseline="central" letter-spacing="-0.5">CG</text>
 </svg>

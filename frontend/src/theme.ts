@@ -139,6 +139,40 @@ function makeComponents(mode: 'light' | 'dark') {
     MuiCssBaseline: {
       styleOverrides: {
         body: { backgroundColor: canvas },
+        // ── Branded text selection ────────────────────────────────────────
+        // Replaces the OS default highlight with the active primary at a low
+        // alpha so selected text stays legible in both modes.
+        '::selection': {
+          backgroundColor: light ? alpha('#2563EB', 0.18) : alpha('#60A5FA', 0.35),
+        },
+        // ── Consistent keyboard-focus rings ───────────────────────────────
+        // Interactive elements get one visible ring (2px primary @ 45%);
+        // text fields are excluded — their focused border treatment already
+        // signals focus and a second ring would be noise.
+        'a:focus-visible, button:focus-visible, [role="button"]:focus-visible, [tabindex]:focus-visible': {
+          outline: `2px solid ${alpha(light ? '#2563EB' : '#60A5FA', 0.45)}`,
+          outlineOffset: '2px',
+          borderRadius: RADIUS.sm,
+        },
+        // ── Slim branded scrollbars ───────────────────────────────────────
+        // The stock Windows/Electron scrollbars are chunky and grey; an 8px
+        // pill thumb in the divider tone reads as part of the product. The
+        // scrollbar-* properties cover Firefox in web mode; the ::-webkit-
+        // rules cover Chromium (web + Electron).
+        '*': {
+          scrollbarWidth: 'thin',
+          scrollbarColor: `${light ? '#CBD5E1' : 'rgba(255,255,255,0.16)'} transparent`,
+        },
+        '::-webkit-scrollbar': { width: '8px', height: '8px' },
+        '::-webkit-scrollbar-track': { background: 'transparent' },
+        '::-webkit-scrollbar-thumb': {
+          background: light ? '#CBD5E1' : 'rgba(255,255,255,0.16)',
+          borderRadius: RADIUS.pill,
+        },
+        '::-webkit-scrollbar-thumb:hover': {
+          background: light ? '#94A3B8' : 'rgba(255,255,255,0.28)',
+        },
+        '::-webkit-scrollbar-corner': { background: 'transparent' },
       },
     },
     MuiPaper: {

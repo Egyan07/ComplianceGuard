@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Tray, Menu, Notification } = require('electron');
+const { app, BrowserWindow, Tray, Menu, Notification, nativeTheme } = require('electron');
 const log = require('./logger');
 const path = require('path');
 const fs = require('fs');
@@ -56,7 +56,11 @@ function createWindow() {
     height: 800,
     minWidth: 800,
     minHeight: 600,
-    backgroundColor: '#ffffff',
+    // Match the renderer's theme at first paint: a hardcoded white flashes
+    // against dark mode every launch (the web bg comes from theme.ts's
+    // #0F1117 dark canvas). nativeTheme reflects the OS setting, which is the
+    // same signal the app's 'system' color-mode default follows.
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#0F1117' : '#ffffff',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

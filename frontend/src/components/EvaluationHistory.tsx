@@ -245,20 +245,32 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
                             />
                           </Box>
 
-                          {/* Control breakdown */}
+                          {/* Control breakdown — dot + count for at-a-glance
+                              scanning; dots reuse the semantic tone tokens so a
+                              green dot means the same thing here as everywhere
+                              else in the app. */}
                           <Box sx={{ display: 'flex', gap: 3, mt: 1, flexWrap: 'wrap' }}>
                             <Typography variant="body2" color="text.secondary">
                               Controls: <strong>{findings.total_controls || 0}</strong>
                             </Typography>
-                            <Typography variant="body2" sx={{ color: toneColors(theme, 'success').onSurface }}>
-                              Compliant: <strong>{findings.compliant_controls || 0}</strong>
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: toneColors(theme, 'warning').onSurface }}>
-                              Partial: <strong>{findings.partial_controls || 0}</strong>
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: toneColors(theme, 'error').onSurface }}>
-                              Non-compliant: <strong>{findings.non_compliant_controls || 0}</strong>
-                            </Typography>
+                            {([
+                              { label: 'Compliant', count: findings.compliant_controls, tone: 'success' as const },
+                              { label: 'Partial', count: findings.partial_controls, tone: 'warning' as const },
+                              { label: 'Non-compliant', count: findings.non_compliant_controls, tone: 'error' as const },
+                            ]).map(({ label, count, tone }) => (
+                              <Box key={label} sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                                <Box sx={{
+                                  width: 7,
+                                  height: 7,
+                                  borderRadius: '50%',
+                                  bgcolor: toneColors(theme, tone).main,
+                                  flexShrink: 0,
+                                }} />
+                                <Typography variant="body2" color="text.secondary">
+                                  {label}: <strong color="text.primary">{count || 0}</strong>
+                                </Typography>
+                              </Box>
+                            ))}
                           </Box>
 
                           {/* Score bar */}

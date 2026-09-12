@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
+import { alpha, useTheme } from '@mui/material/styles';
 
 interface EmptyStateProps {
   icon?: React.ReactNode;
@@ -23,7 +24,9 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   action,
   dashed = false,
   sx,
-}) => (
+}) => {
+  const theme = useTheme();
+  return (
   <Box
     sx={{
       py: 6,
@@ -42,7 +45,25 @@ const EmptyState: React.FC<EmptyStateProps> = ({
       ...sx,
     }}
   >
-    {icon && <Box sx={{ color: 'text.disabled', mb: 0.5 }}>{icon}</Box>}
+    {icon && (
+      // Soft tinted disc behind the icon so empty states read as designed
+      // surfaces rather than missing content.
+      <Box
+        sx={{
+          width: 56,
+          height: 56,
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          mb: 1,
+          bgcolor: alpha(theme.palette.primary.main, theme.palette.mode === 'light' ? 0.08 : 0.14),
+          color: 'primary.main',
+        }}
+      >
+        {icon}
+      </Box>
+    )}
     {title && (
       <Typography sx={{ fontSize: '0.9rem', fontWeight: 600, color: 'text.primary' }}>
         {title}
@@ -55,6 +76,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
     )}
     {action && <Box sx={{ mt: 1.5 }}>{action}</Box>}
   </Box>
-);
+  );
+};
 
 export default EmptyState;
