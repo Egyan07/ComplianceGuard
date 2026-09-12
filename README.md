@@ -231,7 +231,7 @@ App at `http://localhost:5173`. Create an account on first run.
 <details>
 <summary>Web: Hosted by Us</summary>
 
-Contact us at [alexisegyan1232@gmail.com](mailto:alexisegyan1232@gmail.com) to set up a managed hosted instance. We handle deployment, uptime, backups, and updates. You just install the desktop app and connect.
+Contact us at [getcomplianceguard@gmail.com](mailto:getcomplianceguard@gmail.com) to set up a managed hosted instance. We handle deployment, uptime, backups, and updates. You just install the desktop app and connect.
 
 </details>
 
@@ -501,7 +501,7 @@ ComplianceGuard/
 
 ComplianceGuard supports Windows, macOS, and Linux endpoints. The following limitations apply in the current release:
 
-- **Automatic scheduling:** Daily or Weekly evidence collection runs automatically while the desktop app is open. Configure in Settings → Automatic Collection.
+- **Scheduled collection requires the desktop app running:** Daily or Weekly schedules fire only while the desktop app is open — there is no OS-level/background scheduler yet. Configure in Settings → Automatic Collection.
 - **Per-machine view in desktop mode:** the Electron app shows one machine at a time. Use web mode (self-hosted or managed) with the Cloud Dashboard to monitor multiple machines centrally.
 - **AWS only for cloud evidence:** the web backend collects S3 and IAM evidence from AWS. GCP and Azure are not yet implemented.
 - **PCI DSS not yet implemented:** SOC 2 Type II (43 criteria), ISO/IEC 27001:2022 (93 controls), HIPAA Security Rule (47 safeguards), and GDPR (38 obligations) are all available. PCI DSS is planned.
@@ -695,7 +695,7 @@ drills) live in [`docs/disaster-recovery.md`](docs/disaster-recovery.md):
 > No. It automates evidence collection and gives you a readiness score, but a formal SOC 2 audit still requires a licensed CPA firm. Think of ComplianceGuard as audit preparation, not audit replacement.
 
 ### Can I use the free tier for a real audit?
-> The free tier is useful for assessing your current posture. For an actual audit you will need Pro, which includes the full 43-criteria breakdown, gap details, remediation recommendations, and PDF exports that auditors expect.
+> The free tier is useful for assessing your current posture. For an actual audit you will need Pro, which includes the full 43-criteria breakdown, gap details, remediation recommendations, and PDF exports that auditors expect. Note that no tool — ComplianceGuard included — issues or replaces the audit opinion itself: only an independent auditor can do that.
 
 ### What happens to my data if I stop using ComplianceGuard?
 > Your data is stored in a local SQLite file (Desktop mode) or your own PostgreSQL instance (Web mode). Uninstalling the app or deleting the database file removes all data permanently.
@@ -704,7 +704,7 @@ drills) live in [`docs/disaster-recovery.md`](docs/disaster-recovery.md):
 > Yes. The full source is available in this repository under the Business Source License. You can inspect every line of the evidence collection and scoring logic.
 
 ### How do I get a Pro or Enterprise license key?
-> Contact [alexisegyan1232@gmail.com](mailto:alexisegyan1232@gmail.com) for licensing. Managed hosted instances are also available; we handle deployment and infrastructure for you.
+> Contact [getcomplianceguard@gmail.com](mailto:getcomplianceguard@gmail.com) for licensing. Managed hosted instances are also available; we handle deployment and infrastructure for you.
 
 ### What is the Cloud Dashboard?
 > The Cloud Dashboard allows you to monitor multiple machines from one centralized web view. Each endpoint (Windows, macOS, or Linux) runs the Electron desktop app. Go to Settings > Cloud Sync, enter your web server URL and credentials, and click Sync to Cloud. The web dashboard then shows all machines' evidence coverage scores, last sync time, and fleet-level stats. Available for Pro and Enterprise users.
@@ -762,7 +762,7 @@ See [CHANGELOG.md](CHANGELOG.md) for full version history.
   <br><br>
   Built by <a href="https://github.com/Egyan07">Egyan07</a>
   <br><br>
-  <a href="mailto:alexisegyan1232@gmail.com"><img src="https://img.shields.io/badge/Email-Contact_for_Licensing-0d1117?style=for-the-badge&logo=gmail&logoColor=white" alt="Email"></a>
+  <a href="mailto:getcomplianceguard@gmail.com"><img src="https://img.shields.io/badge/Email-Contact_for_Licensing-0d1117?style=for-the-badge&logo=gmail&logoColor=white" alt="Email"></a>
   &nbsp;
   <a href="https://github.com/Egyan07/ComplianceGuard/issues">Report a bug</a> · <a href="https://github.com/Egyan07/ComplianceGuard/issues/new">Request a feature</a>
 </p>
