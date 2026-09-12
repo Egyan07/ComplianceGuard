@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { ReactElement } from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material';
+import { ColorModeProvider } from '../contexts/ColorModeContext';
 import Settings from './Settings';
 import { useLicense } from '../contexts/LicenseContext';
 import { VERSION } from '../constants';
@@ -24,7 +25,11 @@ vi.mock('../contexts/LicenseContext', async (importOriginal) => {
 const theme = createTheme();
 
 const renderWithTheme = (ui: ReactElement) =>
-  render(<ThemeProvider theme={theme}>{ui}</ThemeProvider>);
+  render(
+    <ColorModeProvider>
+      <ThemeProvider theme={theme}>{ui}</ThemeProvider>
+    </ColorModeProvider>
+  );
 
 describe('Settings', () => {
   it('renders the settings page title', () => {
@@ -168,7 +173,7 @@ describe('Settings', () => {
       activateLicense: vi.fn(),
       deactivateLicense: vi.fn(),
     } as any);
-    render(<Settings />);
+    renderWithTheme(<Settings />);
     expect(screen.getAllByText('ENTERPRISE')[0]).toBeInTheDocument();
   });
 
@@ -179,7 +184,7 @@ describe('Settings', () => {
       activateLicense: vi.fn(),
       deactivateLicense: vi.fn(),
     } as any);
-    render(<Settings />);
+    renderWithTheme(<Settings />);
     expect(screen.getByText(/Deactivate License/i)).toBeInTheDocument();
     expect(screen.queryByPlaceholderText(/Paste your license key/i)).not.toBeInTheDocument();
   });

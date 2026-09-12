@@ -8,8 +8,8 @@ import LoginPage from './components/LoginPage';
 import AppShell from './components/layout/AppShell';
 import { LicenseProvider } from './contexts/LicenseContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ColorModeProvider, useColorMode } from './contexts/ColorModeContext';
 import { isElectronMode } from './services/electron';
-import { useColorMode } from './hooks/useColorMode';
 import { getTheme } from './theme';
 
 // Route-level code splitting: each page is loaded on first navigation instead
@@ -89,6 +89,16 @@ function AppContent({ mode, onToggleMode }: AppContentProps) {
 function ThemedApp() {
   // One theme for the whole app — including the pre-auth screens (login,
   // verify-email, reset-password) that previously rendered with default MUI.
+  // ColorModeProvider is the single owner of the mode, so the Topbar moon
+  // button and the Settings toggle flip the SAME state.
+  return (
+    <ColorModeProvider>
+      <ThemedShell />
+    </ColorModeProvider>
+  );
+}
+
+function ThemedShell() {
   const { mode, toggle } = useColorMode();
   return (
     <ThemeProvider theme={getTheme(mode)}>
