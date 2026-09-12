@@ -4,15 +4,15 @@
 
 | Version | Supported |
 |---------|-----------|
-| 4.1.x   | ✅ |
-| 4.0.x   | ✅ (security fixes only) |
-| < 4.0   | ❌ |
+| 4.2.x   | ✅ |
+| 4.1.x   | ✅ (security fixes only) |
+| < 4.1   | ❌ |
 
 ## Reporting a Vulnerability
 
 If you discover a security vulnerability in ComplianceGuard, please do **not** open a public GitHub issue.
 
-Instead, report it privately by opening a [GitHub Security Advisory](https://github.com/Egyan07/ComplianceGuard/security/advisories/new) or by contacting [Egyan07](https://github.com/Egyan07) directly.
+Instead, report it privately by opening a [GitHub Security Advisory](https://github.com/Egyan07/ComplianceGuard/security/advisories/new) or by contacting [getcomplianceguard@gmail.com](mailto:getcomplianceguard@gmail.com).
 
 Please include:
 - A description of the vulnerability

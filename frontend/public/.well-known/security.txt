@@ -1,0 +1,5 @@
+Contact: mailto:getcomplianceguard@gmail.com
+Expires: 2027-09-12T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://complianceguard.cguard.workers.dev/.well-known/security.txt
+Policy: https://github.com/Egyan07/ComplianceGuard/blob/master/SECURITY.md

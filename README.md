@@ -580,7 +580,9 @@ All data stays under your control. Zero telemetry.
 | Enterprise Audit | Tamper-evident audit log with an **HMAC-SHA256 keyed** hash chain (`prev_hash` + `entry_hash`; key derived from the server secret, so a DB-write attacker can't forge it). Append-only at API layer; Postgres app user REVOKEd DELETE/UPDATE. Chain verifiable at `GET /api/v1/enterprise/audit-log/verify`. Enterprise endpoints (audit/RBAC/branding/export) require a dedicated deployment (`ENTERPRISE_MODE=true`) and the admin role, and are never served on the shared hosted backend. |
 | Proxy | Nginx reverse proxy with CSP, HSTS, Permissions-Policy, X-Frame-Options, X-Content-Type-Options. |
 
-For reporting security vulnerabilities, see [SECURITY.md](SECURITY.md).
+For reporting security vulnerabilities, see [SECURITY.md](SECURITY.md) or contact us via [`/.well-known/security.txt`](frontend/public/.well-known/security.txt) (RFC 9116).
+
+> **ComplianceGuard's own compliance posture:** we practice what the tool preaches at the scale we're at — zero telemetry, signed release integrity manifests (SHA256SUMS + SBOMs on every release), and supply-chain checks in CI. We do not yet hold a SOC 2 attestation or a published third-party pentest report for ComplianceGuard itself; when we do, they will be listed here. We'd rather show an honest "not yet" than a borrowed claim.
 
 ## Development
 
