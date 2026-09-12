@@ -45,4 +45,4 @@ boto3==1.43.72
 botocore==1.43.72
 
 # License key verification
-cryptography>=42.0.0
+cryptography>=50.0.1
