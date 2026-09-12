@@ -260,6 +260,8 @@ npm run package:linux   # Linux (AppImage + .deb) → dist/
 
 Cloud-first platforms automate evidence through SaaS, cloud, identity, and MDM integrations. ComplianceGuard collects evidence directly from endpoints and can run fully offline or self-hosted. Use both and you have covered the full stack.
 
+**They collect through their cloud. We collect on your machine — and it can stay there.**
+
 ## What It Collects
 
 ComplianceGuard pulls 8 categories of evidence from Windows, macOS, and Linux:
