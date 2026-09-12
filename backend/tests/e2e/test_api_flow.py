@@ -254,12 +254,14 @@ def test_compliance_framework_completeness(test_client: TestClient, auth_token: 
 
     summary = response.json()
 
-    expected_categories = ["CC", "A", "C", "PI", "CA"]
+    # Real 2017 TSC categories: CC (33) + A (3) + C (2) + PI (5) = 43.
+    # "CA" was a fabricated pre-remediation category and no longer exists.
+    expected_categories = ["CC", "A", "C", "PI"]
     for category in expected_categories:
         assert category in summary["categories"]
         assert summary["categories"][category] > 0
 
-    assert summary["total_controls"] >= 50
+    assert summary["total_controls"] == 43
 
     for category in expected_categories:
         cat_response = test_client.get(
