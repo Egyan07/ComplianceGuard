@@ -35,7 +35,17 @@ export interface DashboardState {
   });
   const [collectingEvidence, setCollectingEvidence] = useState(false);
   const [evaluating, setEvaluating] = useState(false);
-  const [selectedFramework, setSelectedFramework] = useState<1 | 2 | 3 | 4>(1);
+  const [selectedFramework, setSelectedFrameworkState] = useState<1 | 2 | 3 | 4>(1);
+
+  // Switching frameworks must drop the previous framework's evaluation — a
+  // SOC 2 score/control list rendered under a GDPR selection is exactly the
+  // mismatch class the Controls-section bug came from.
+  const setSelectedFramework = useCallback((fw: 1 | 2 | 3 | 4) => {
+    setSelectedFrameworkState(prev => {
+      if (prev !== fw) setState(prevState => ({ ...prevState, evaluation: null }));
+      return fw;
+    });
+  }, []);
 
   // ── server state via react-query ──────────────────────────────────────────
   const {
@@ -184,7 +194,9 @@ export interface DashboardState {
     setState(prev => ({ ...prev, error: null }));
     try {
       const api = getElectronAPI();
-      const result = await api.exportPDFReport(1);
+      // Export the SELECTED framework's report — the IPC default (SOC 2) is
+      // only a fallback for callers that do not know the selection.
+      const result = await api.exportPDFReport(selectedFramework);
       if (result.error) {
         setState(prev => ({ ...prev, error: result.error ?? 'Failed to export PDF.' }));
       } else if (!result.cancelled) {
@@ -195,7 +207,7 @@ export interface DashboardState {
     } finally {
       setExportingPDF(false);
     }
-  }, []);
+  }, [selectedFramework]);
 
   const handleSyncToCloud = useCallback(async () => {
     if (!isElectron) return;

@@ -269,6 +269,56 @@ describe('useDashboard (electron mode)', () => {
     expect(result.current.state.successMessage).toBeNull();
   });
 
+  it('handleExportPDF exports the SELECTED framework, not hardcoded SOC 2', async () => {
+    // Regression: the hook used to call exportPDFReport(1) unconditionally —
+    // exporting a GDPR selection produced a SOC 2 report.
+    electronState.api = {
+      exportPDFReport: vi.fn().mockResolvedValue({ error: null, cancelled: false }),
+      cloudGetConfig: vi.fn().mockResolvedValue({ connected: false }),
+    };
+    const { useDashboard } = await loadElectron();
+    const { result } = renderHook(() => useDashboard(), { wrapper: makeWrapper() });
+
+    act(() => {
+      result.current.setSelectedFramework(4);
+    });
+    await act(async () => {
+      await result.current.handleExportPDF();
+    });
+    expect(electronState.api.exportPDFReport).toHaveBeenCalledWith(4);
+  });
+
+  it('switching frameworks clears the previous framework evaluation', async () => {
+    // Regression: state.evaluation used to survive a framework switch, so a
+    // SOC 2 score/control list stayed on screen under a GDPR selection.
+    electronState.api = {
+      evaluateCompliance: vi.fn().mockResolvedValue(mockEvaluation),
+      cloudGetConfig: vi.fn().mockResolvedValue({ connected: false }),
+    };
+    const { useDashboard, apiMod } = await loadElectron();
+    await stubApi(apiMod);
+    const { result } = renderHook(() => useDashboard(), { wrapper: makeWrapper() });
+
+    await act(async () => {
+      await result.current.handleEvaluateCompliance();
+    });
+    expect(result.current.state.evaluation).not.toBeNull();
+
+    act(() => {
+      result.current.setSelectedFramework(2);
+    });
+    expect(result.current.state.evaluation).toBeNull();
+
+    // Selecting the SAME framework again must not clear anything new.
+    await act(async () => {
+      await result.current.handleEvaluateCompliance();
+    });
+    act(() => {
+      result.current.setSelectedFramework(2);
+    });
+    expect(result.current.state.evaluation).not.toBeNull();
+  });
+
   it('handleSyncToCloud maps the compliance level and reports success', async () => {
     electronState.api = {
       cloudSync: vi.fn().mockResolvedValue({ error: null }),
