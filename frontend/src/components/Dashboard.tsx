@@ -129,6 +129,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           open={uploadDialogOpen}
           onClose={() => setUploadDialogOpen(false)}
           onSuccess={() => { clearMessage(); fetchDashboardData(); }}
+          frameworkId={selectedFramework}
         />
       )}
 

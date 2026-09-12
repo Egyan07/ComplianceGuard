@@ -2,10 +2,13 @@
 Evidence Upload Component
 
 Dialog form for manually uploading compliance evidence (documents, text)
-and mapping it to a specific SOC 2 control.
+and mapping it to a control of the SELECTED framework. The dialog is
+framework-aware: it lists the controls (and their canonical evidence types)
+of the framework the user is evaluating, and files the evidence under that
+framework id so it counts toward that framework's evaluation.
 */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -34,9 +37,11 @@ import {
 import { getElectronAPI, isElectronMode } from '../services/electron';
 import { getErrorMessage } from '../lib/errors';
 import {
+  CONTROLS_BY_FRAMEWORK,
+  FRAMEWORK_LABELS,
   getCategoryForType,
+  FrameworkId,
   ManualEvidencePayload,
-  SOC2_CONTROLS,
 } from './EvidenceUpload.data';
 
 const isElectron = isElectronMode();
@@ -45,6 +50,8 @@ interface EvidenceUploadProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  /** Framework whose controls the evidence is mapped to (default SOC 2). */
+  frameworkId?: FrameworkId;
 }
 
 interface SelectedFile {
@@ -53,7 +60,7 @@ interface SelectedFile {
   fileData: string; // base64
 }
 
-const EvidenceUpload: React.FC<EvidenceUploadProps> = ({ open, onClose, onSuccess }) => {
+const EvidenceUpload: React.FC<EvidenceUploadProps> = ({ open, onClose, onSuccess, frameworkId = 1 }) => {
   const [controlId, setControlId] = useState('');
   const [evidenceType, setEvidenceType] = useState('');
   const [title, setTitle] = useState('');
@@ -64,8 +71,16 @@ const EvidenceUpload: React.FC<EvidenceUploadProps> = ({ open, onClose, onSucces
   const [error, setError] = useState<string | null>(null);
   const [uploadMode, setUploadMode] = useState<'file' | 'text'>('file');
 
-  const selectedControl = SOC2_CONTROLS.find(c => c.id === controlId);
+  const frameworkControls = CONTROLS_BY_FRAMEWORK[frameworkId] ?? CONTROLS_BY_FRAMEWORK[1];
+  const selectedControl = frameworkControls.find(c => c.id === controlId);
   const availableTypes = selectedControl?.types || [];
+
+  // A control id from one framework is meaningless in another — drop the
+  // selection if the framework changes while the dialog is open.
+  useEffect(() => {
+    setControlId('');
+    setEvidenceType('');
+  }, [frameworkId]);
 
   const resetForm = () => {
     setControlId('');
@@ -146,7 +161,7 @@ const EvidenceUpload: React.FC<EvidenceUploadProps> = ({ open, onClose, onSucces
         };
       }
 
-      const result = await api.processManualEvidence(evidenceData, 1);
+      const result = await api.processManualEvidence(evidenceData, frameworkId);
 
       if (result.error) {
         setError(result.error);
@@ -186,18 +201,18 @@ const EvidenceUpload: React.FC<EvidenceUploadProps> = ({ open, onClose, onSucces
           </Alert>
         )}
 
-        {/* SOC 2 Control Selection */}
+        {/* Control Selection (framework-aware) */}
         <FormControl fullWidth sx={{ mb: 2 }}>
-          <InputLabel>SOC 2 Control *</InputLabel>
+          <InputLabel>{`${FRAMEWORK_LABELS[frameworkId] ?? 'SOC 2'} Control *`}</InputLabel>
           <Select
             value={controlId}
             onChange={(e: SelectChangeEvent) => {
               setControlId(e.target.value);
               setEvidenceType('');
             }}
-            label="SOC 2 Control *"
+            label={`${FRAMEWORK_LABELS[frameworkId] ?? 'SOC 2'} Control *`}
           >
-            {SOC2_CONTROLS.map(control => (
+            {frameworkControls.map(control => (
               <MenuItem key={control.id} value={control.id}>
                 {control.title}
               </MenuItem>

@@ -86,7 +86,7 @@ const LicenseSection: React.FC<LicenseSectionProps> = ({
         ) : (
           <Box>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Enter a Pro license key to unlock all 54 controls, PDF reports, evaluation history, and more.
+              Enter a Pro license key to unlock the full framework catalog, PDF reports, evaluation history, and more.
             </Typography>
             <Box sx={{ display: 'flex', gap: 1 }}>
               <Box sx={{ flex: 1 }}>

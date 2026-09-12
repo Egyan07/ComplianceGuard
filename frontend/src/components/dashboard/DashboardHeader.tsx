@@ -59,7 +59,7 @@ const DashboardHeader: React.FC<Props> = ({
                   onClick={() =>
                     isFeatureAllowed('evidence_upload')
                       ? onUploadClick()
-                      : onUpgradePrompt('Upload Evidence', 'Manually upload policy documents, screenshots, and compliance evidence mapped to SOC 2 controls.')
+                      : onUpgradePrompt('Upload Evidence', 'Manually upload policy documents, screenshots, and compliance evidence mapped to your selected framework\u2019s controls.')
                   }
                   sx={{ minWidth: 130, color: 'text.primary' }}
                 >

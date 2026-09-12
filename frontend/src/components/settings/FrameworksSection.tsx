@@ -13,7 +13,7 @@ const FrameworksSection: React.FC = () => (
         <ListItem>
           <ListItemText
             primary="SOC 2 Type II"
-            secondary="AICPA Trust Services Criteria — 54 controls across CC, Availability, Confidentiality, Processing Integrity, and Confidentiality & Availability"
+            secondary="AICPA Trust Services Criteria (2017) — 43 criteria across the Common Criteria (CC), Availability (A), Confidentiality (C) and Processing Integrity (PI) categories"
           />
           <Chip label="Active" size="small" color="success" />
         </ListItem>
@@ -21,7 +21,7 @@ const FrameworksSection: React.FC = () => (
         <ListItem>
           <ListItemText
             primary="ISO 27001"
-            secondary="Information security management — 47 controls across all 14 Annex A domains"
+            secondary="ISO/IEC 27001:2022 information security management — 93 Annex A controls across Organizational, People, Physical and Technological themes"
           />
           <Chip label="Active" size="small" color="success" />
         </ListItem>
