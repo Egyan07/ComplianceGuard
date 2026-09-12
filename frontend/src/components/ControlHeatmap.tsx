@@ -124,6 +124,12 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
   const titleFor = (id: string): string => controlResults?.[id]?.control_title || id;
   const meta = FRAMEWORK_META[selectedFramework] ?? FRAMEWORK_META[1];
   const assessedCount = controlResults ? Object.keys(controlResults).length : null;
+  // The ID column is one shared width sized to the longest id in the dataset
+  // (floored at the SOC 2-era 48px) so every framework aligns without overlap:
+  // ~48px for CC6.1, ~78px for 164.308.a.1, ~60px for A.5.1.
+  const idColumnWidth = controlResults
+    ? Math.max(48, ...Object.keys(controlResults).map(id => id.length * 7 + 8))
+    : 48;
 
   const c = (tone: Tone) => toneColors(theme, tone);
 
@@ -287,7 +293,9 @@ const ControlHeatmap: React.FC<ControlHeatmapProps> = ({
                             fontVariantNumeric: 'tabular-nums',
                             letterSpacing: '0.1px',
                             color: isFail ? 'error.main' : isPartial ? 'warning.main' : 'text.primary',
-                            width: 48,
+                            width: idColumnWidth,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
                             flexShrink: 0,
                           }}
                         >

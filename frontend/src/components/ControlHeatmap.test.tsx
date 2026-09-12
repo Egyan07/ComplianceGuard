@@ -187,4 +187,22 @@ describe('ControlHeatmap', () => {
     expect(screen.getByText('GDPR')).toBeInTheDocument();
     expect(screen.queryByText(/SOC 2/)).not.toBeInTheDocument();
   });
+
+  // ── ID column sizing (HIPAA overlap regression) ─────────────────────────
+  // Long HIPAA safeguard ids (164.308.a.1) once overflowed the fixed 48px id
+  // column and painted over the control title. The column must size to the
+  // longest id in the dataset, not a hardcoded SOC 2-era width.
+  const hipaaResults: Record<string, ControlResult> = {
+    '164.308.a.1': { status: 'non_compliant', score: 33, gaps: ['risk_assessment'], available_evidence: [], control_id: '164.308.a.1', control_title: 'Risk Analysis', control_category: '164.308' },
+    '164.308.a.4': { status: 'partial', score: 50, gaps: ['audit_logs'], available_evidence: ['audit_reports'], control_id: '164.308.a.4', control_title: 'Information System Activity Review', control_category: '164.308' },
+    '164.312.a.1': { status: 'compliant', score: 100, gaps: [], available_evidence: ['access_controls'], control_id: '164.312.a.1', control_title: 'Access Control', control_category: '164.312' },
+  };
+
+  it('renders full HIPAA safeguard ids without truncation (overlap regression)', () => {
+    wrap(<ControlHeatmap controlResults={hipaaResults} isElectron={false} isProTier selectedFramework={3} />);
+    expect(screen.getByText('164.308.a.1')).toBeInTheDocument();
+    expect(screen.getByText('164.312.a.1')).toBeInTheDocument();
+    expect(screen.getByText('Risk Analysis')).toBeInTheDocument();
+    expect(screen.getByText(/HIPAA Security Rule · 3 safeguards/)).toBeInTheDocument();
+  });
 });
