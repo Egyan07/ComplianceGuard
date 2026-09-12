@@ -28,6 +28,11 @@ def _load_soc2():
         return yaml.safe_load(fh)
 
 
+def _load_yaml(name):
+    with open(os.path.join(_SHARED_DIR, name), "r", encoding="utf-8") as fh:
+        return yaml.safe_load(fh)
+
+
 def _soc2_ids_by_category(data):
     ids = {}
     for control in data["controls"]:
@@ -194,8 +199,49 @@ class TestGeneratedCatalogConsistency:
         )
         with open(catalog_path, "r", encoding="utf-8") as fh:
             text = fh.read()
-        catalog_ids = sorted(re.findall(r'\{ id: "([^"]+)"', text))
+        # The catalog is generated per framework (SOC 2, ISO, HIPAA, GDPR).
+        # Slice out the SOC 2 block (from its const declaration up to the next
+        # framework's) so ids from the other frameworks don't pollute the set.
+        match = re.search(
+            r'export const SOC2_CONTROLS: FrameworkControlOption\[\] = \[(.*?)\n\];',
+            text,
+            re.DOTALL,
+        )
+        assert match, "evidenceCatalog.generated.ts is missing the SOC2_CONTROLS block"
+        catalog_ids = sorted(re.findall(r'\{ id: "([^"]+)"', match.group(1)))
         assert catalog_ids == yaml_ids, (
             "evidenceCatalog.generated.ts is stale — regenerate with "
             "`npm run generate:evidence`"
         )
+
+    def test_catalog_matches_every_canonical_framework(self):
+        """Drift guard for ALL four per-framework catalog blocks, not just SOC 2."""
+        catalog_path = os.path.join(
+            _REPO_ROOT, "frontend", "src", "components", "evidenceCatalog.generated.ts"
+        )
+        with open(catalog_path, "r", encoding="utf-8") as fh:
+            text = fh.read()
+        expected = {
+            "SOC2_CONTROLS": sorted(c["id"] for c in _load_soc2()["controls"]),
+            "ISO27001_CONTROLS": sorted(
+                c["id"] for c in _load_yaml("iso27001_controls.yaml")["controls"]
+            ),
+            "HIPAA_CONTROLS": sorted(
+                c["id"] for c in _load_yaml("hipaa_controls.yaml")["controls"]
+            ),
+            "GDPR_CONTROLS": sorted(
+                c["id"] for c in _load_yaml("gdpr_controls.yaml")["controls"]
+            ),
+        }
+        for const_name, yaml_ids in expected.items():
+            match = re.search(
+                rf'export const {const_name}: FrameworkControlOption\[\] = \[(.*?)\n\];',
+                text,
+                re.DOTALL,
+            )
+            assert match, f"evidenceCatalog.generated.ts is missing the {const_name} block"
+            catalog_ids = sorted(re.findall(r'\{ id: "([^"]+)"', match.group(1)))
+            assert catalog_ids == yaml_ids, (
+                f"{const_name} in evidenceCatalog.generated.ts is stale — "
+                "regenerate with `npm run generate:evidence`"
+            )

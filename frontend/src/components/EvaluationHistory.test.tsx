@@ -1,8 +1,34 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material';
+import { MemoryRouter } from 'react-router-dom';
 import EvaluationHistory from './EvaluationHistory';
-import { LicenseProvider } from '../contexts/LicenseContext';
+import { LicenseProvider, useLicense } from '../contexts/LicenseContext';
+
+vi.mock('../contexts/LicenseContext', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../contexts/LicenseContext')>();
+  return {
+    ...actual,
+    useLicense: vi.fn(() => ({
+      tier: 'free',
+      licenseInfo: { licenseId: null, email: null, maxMachines: null, expiresAt: null, daysRemaining: null, isExpired: false, isGracePeriod: false },
+      loading: false,
+      isFeatureAllowed: () => false,
+      activateLicense: vi.fn(),
+      deactivateLicense: vi.fn(),
+    })),
+  };
+});
+
+vi.mock('../services/api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../services/api')>();
+  return {
+    ...actual,
+    getScoreTrend: vi.fn().mockResolvedValue([]),
+  };
+});
+
+import { getScoreTrend } from '../services/api';
 
 const theme = createTheme();
 
@@ -47,9 +73,11 @@ const mockEvaluations = [
 const renderHistory = (props = {}) =>
   render(
     <ThemeProvider theme={theme}>
-      <LicenseProvider>
-        <EvaluationHistory {...props} />
-      </LicenseProvider>
+      <MemoryRouter>
+        <LicenseProvider>
+          <EvaluationHistory {...props} />
+        </LicenseProvider>
+      </MemoryRouter>
     </ThemeProvider>
   );
 
@@ -127,6 +155,32 @@ describe('EvaluationHistory', () => {
   describe('helper functions via rendered output', () => {
     it('renders without crashing with no props', () => {
       expect(() => renderHistory()).not.toThrow();
+    });
+
+    it('honours the ?fw= deep link — framework 4 trend is requested', async () => {
+      // Regression: History kept a local framework selector and ignored the
+      // URL, so the sidebar switcher / Dashboard deep links had no effect.
+      vi.mocked(useLicense).mockReturnValue({
+        tier: 'pro',
+        licenseInfo: { licenseId: 'CG-PRO-1', email: 'e@x.com', maxMachines: null, expiresAt: null, daysRemaining: null, isExpired: false, isGracePeriod: false },
+        loading: false,
+        isFeatureAllowed: () => true,
+        activateLicense: vi.fn(),
+        deactivateLicense: vi.fn(),
+      } as any);
+      vi.mocked(getScoreTrend).mockClear().mockResolvedValue([]);
+
+      render(
+        <ThemeProvider theme={theme}>
+          <MemoryRouter initialEntries={['/?fw=4']}>
+            <EvaluationHistory />
+          </MemoryRouter>
+        </ThemeProvider>
+      );
+
+      await waitFor(() => {
+        expect(getScoreTrend).toHaveBeenCalledWith(4);
+      });
     });
 
     it('renders without crashing with onNavigate prop', () => {

@@ -6,6 +6,54 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [4.2.2] — 2026-09-12
+
+### Fixed
+
+- **Manual evidence now files under the selected framework** — the Upload
+  Evidence dialog listed SOC 2 controls regardless of the active framework and
+  hardcoded `framework_id: 1` on submission, so GDPR/ISO/HIPAA evidence was
+  silently stored as SOC 2 evidence and never counted toward its framework's
+  evaluation. The dialog is now framework-aware (controls, canonical evidence
+  types, labels, and the submission framework id all follow the selection);
+  the underlying per-framework catalog ships for all four canonical frameworks
+  (221 controls) generated from `shared/frameworks/`.
+- **The Controls section follows the evaluated framework** — the heatmap no
+  longer hardcodes the SOC 2 taxonomy: groups, titles, and header derive from
+  the evaluation's own control results (GDPR articles, ISO A.5–A.8, HIPAA
+  164.x render with their canonical names), and one-click remediation is
+  offered only where a script genuinely exists (SOC 2). Both canonical engines
+  now emit `control_title`/`control_category` per result (Python/JS parity
+  tested), which also fixes non-SOC 2 PDF reports rendering empty control
+  titles and a leftover fabricated "Confidentiality & Availability" category
+  label in the report legend.
+- **PDF export follows the selected framework** — export used a hardcoded
+  framework id, so exporting with a non-SOC 2 framework selected produced a
+  SOC 2 report. PDF report status chips render canonical labels (Compliant /
+  Partial / Non-compliant / Not assessed) instead of raw engine values.
+- **Dark Mode toggle in Settings works** — the color-mode hook was local
+  `useState`, so the Settings toggle wrote its own private copy of the mode
+  and never changed the app theme (the Topbar moon button worked because App
+  owned the only state the ThemeProvider read). Mode state moved to a shared
+  provider with the same hook API; a regression test pins the cross-surface
+  sync.
+- **Switching frameworks no longer shows a stale evaluation** — the previous
+  framework's score/control list stayed on screen under a new selection until
+  the next evaluation; the evaluation now clears on an actual framework
+  change.
+- **Evaluation History honours the `?fw=` deep link** — the page kept a local
+  framework selector, so the sidebar framework switcher and Dashboard deep
+  links had no effect on it.
+- **Settings → Compliance Frameworks copy corrected** — it still advertised
+  the fabricated "Confidentiality & Availability" category and the old
+  54/47-control ISO 2013 structure; it now states the real taxonomies
+  (SOC 2 2017 TSC 43 criteria, ISO/IEC 27001:2022 93 Annex A controls).
+  Upgrade-dialog copy no longer claims "54 controls" or SOC 2-only evidence
+  mapping.
+- **CI: the generated-catalog drift test covers all four frameworks** and is
+  scoped per catalog block, so per-framework catalogs cannot drift from the
+  canonical YAMLs undetected.
+
 ## [4.2.1] — 2026-09-12
 
 ### Fixed

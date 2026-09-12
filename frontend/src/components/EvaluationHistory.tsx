@@ -27,6 +27,7 @@ import {
   Error as ErrorIcon,
   HelpOutlined,
 } from '@mui/icons-material';
+import { useSearchParams } from 'react-router-dom';
 
 import { useLicense } from '../contexts/LicenseContext';
 import ScoreTrend from './ScoreTrend';
@@ -79,9 +80,16 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
   const [evaluations, setEvaluations] = useState<EvaluationRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedFramework, setSelectedFramework] = useState<1 | 2 | 3 | 4>(1);
   const [trendPoints, setTrendPoints] = useState<TrendPoint[]>([]);
   const [trendLoading, setTrendLoading] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // The URL (?fw=) is the single source of truth for the selected framework —
+  // same convention as the Dashboard, so the sidebar's framework switcher and
+  // deep links carry over to the History page.
+  const urlFw = Number(searchParams.get('fw') || '1');
+  const selectedFramework: 1 | 2 | 3 | 4 = (urlFw === 2 || urlFw === 3 || urlFw === 4) ? (urlFw as 1 | 2 | 3 | 4) : 1;
+  const setSelectedFramework = (fw: 1 | 2 | 3 | 4) => setSearchParams({ fw: String(fw) }, { replace: true });
 
   const fetchHistory = async (frameworkId: 1 | 2 | 3 | 4) => {
     setLoading(true);
