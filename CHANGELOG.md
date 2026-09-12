@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [4.2.3] — 2026-09-12
+
+### Fixed
+
+- **HIPAA safeguard ids no longer overlap control titles** — the heatmap's
+  control-id column used a fixed width sized for short SOC 2 ids (`CC6.1`), so
+  long HIPAA ids (`164.308.a.1`) painted over the adjacent title. The column
+  now sizes to the longest id in the evaluation (floored at the SOC 2-era
+  width) with overflow clipping, keeping titles aligned for every framework.
+- **Dark mode no longer flashes white at launch** — the Electron window
+  hardcoded a white background, so dark-mode users saw a white flash before
+  the renderer mounted. The window now paints the dark canvas from the first
+  frame when the OS requests dark.
+- **About section shows the CG brand mark and no "Beta" chip** — the Settings
+  About header used a generic stock shield icon, and the beta label was stale
+  three stable releases in.
+- **Favicon shows the full CG monogram** — it previously rendered a lone "C".
+
+### Changed
+
+- **UI polish pass** — slim branded scrollbars (replacing chunky OS defaults),
+  a consistent keyboard focus ring on interactive elements, branded text
+  selection color, semantic status dots on history-row control counts, and a
+  soft tinted disc behind empty-state icons.
+
+---
+
 ## [4.2.2] — 2026-09-12
 
 ### Fixed
