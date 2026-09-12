@@ -6,7 +6,7 @@
   <a href="#quick-start"><img src="https://img.shields.io/badge/version-4.2.3-2563EB" alt="Version"></a>
   <img src="https://img.shields.io/badge/license-BSL%201.1-orange" alt="License">
   <a href="#compliance-frameworks"><img src="https://img.shields.io/badge/frameworks-SOC%202%20%7C%20ISO%2027001%20%7C%20HIPAA%20%7C%20GDPR-10B981" alt="Frameworks"></a>
-  <img src="https://img.shields.io/badge/tests-~1183%20total-10B981?logo=pytest&logoColor=white" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-~1266%20total-10B981?logo=pytest&logoColor=white" alt="Tests">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
   <a href="https://github.com/Egyan07/ComplianceGuard/actions"><img src="https://img.shields.io/github/actions/workflow/status/Egyan07/ComplianceGuard/ci.yml?label=CI&logo=githubactions&logoColor=white" alt="CI"></a>
 </p>
@@ -54,13 +54,13 @@ Your real-time evidence coverage score after a full evaluation, with one-click a
 
 ![Control Heatmap](assets/screenshots/ControlHeatmap.png)
 
-Every SOC 2 control at a glance: passing, partial, or failing, with per-control gap details and inline remediation scripts for automatable findings.
+Every control at a glance — the heatmap follows your selected framework (SOC 2 criteria, ISO Annex A, HIPAA safeguards, or GDPR articles): passing, partial, or failing, with per-control gap details and inline remediation scripts where a script genuinely exists.
 
-### Compliance Score Trend
+### Evidence Coverage Trend
 
 ![Score Trend](assets/screenshots/ScoreTrend.png)
 
-Track your readiness over time on the History screen, with compliance zone bands and per-framework tabs across SOC 2, ISO 27001, HIPAA, and GDPR.
+Track your readiness over time on the History screen, with evidence coverage zone bands and per-framework tabs across SOC 2, ISO 27001, HIPAA, and GDPR.
 
 ### Cloud Dashboard
 
@@ -523,7 +523,7 @@ Free tier to get started. Pro adds PDF evidence reports, trend history, and reme
 | **Price** | $0 forever | $149/mo | $599/mo flat |
 | **Billed annually** | — | $1,788/yr | $7,188/yr |
 | Evidence collection (all 8 categories) | ✅ | ✅ | ✅ |
-| SOC 2 controls scored | All 54 (overall score only) | All 54 + per-control breakdown | All 54 + per-control breakdown |
+| SOC 2 controls scored | All 43 (overall score only) | All 43 + per-control breakdown | All 43 + per-control breakdown |
 | Overall evidence coverage score | ✅ | ✅ | ✅ |
 | Per-control scoring + gap details | — | ✅ | ✅ |
 | Control heatmap + remediation scripts | — | ✅ | ✅ |
@@ -646,7 +646,7 @@ evaluation history, evaluate) and exits non-zero if p95 exceeds
 `--max-p95-ms` (default 500 ms), so it can gate CI performance regressions.
 The bench user is auto-created and promoted to a verified Pro account.
 
-CI runs all tests on every push via GitHub Actions, and the desktop (Electron) test suite gates releases. Backend: 384 unit + 42 integration + 8 e2e. Frontend: 236 Vitest unit. Electron: 504. Playwright e2e: 9.
+CI runs all tests on every push via GitHub Actions, and the desktop (Electron) test suite gates releases. Backend: 438 unit + 42 integration + 9 e2e. Frontend: 256 Vitest unit. Electron: 512. Playwright e2e: 9.
 
 ## Deployment
 
@@ -695,7 +695,7 @@ drills) live in [`docs/disaster-recovery.md`](docs/disaster-recovery.md):
 > No. It automates evidence collection and gives you a readiness score, but a formal SOC 2 audit still requires a licensed CPA firm. Think of ComplianceGuard as audit preparation, not audit replacement.
 
 ### Can I use the free tier for a real audit?
-> The free tier is useful for assessing your current posture. For an actual audit you will need Pro, which includes the full 54-control breakdown, gap details, remediation recommendations, and PDF exports that auditors expect.
+> The free tier is useful for assessing your current posture. For an actual audit you will need Pro, which includes the full 43-criteria breakdown, gap details, remediation recommendations, and PDF exports that auditors expect.
 
 ### What happens to my data if I stop using ComplianceGuard?
 > Your data is stored in a local SQLite file (Desktop mode) or your own PostgreSQL instance (Web mode). Uninstalling the app or deleting the database file removes all data permanently.
