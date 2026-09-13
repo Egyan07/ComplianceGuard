@@ -135,6 +135,9 @@ async def evaluate_from_evidence(
     try:
         evidence_summary = {"total_evidence": len(items)}
         evidence_summary["control_counts"] = _counts_from_totals(totals)
+        # Per-control results (score/status/gaps/assessment_mode) so web
+        # clients can render the ControlHeatmap without a second engine port.
+        evidence_summary["control_results"] = totals.get("control_results") or {}
         record = ComplianceEvaluationRecord(
             evaluation_id=f"eval-{uuid.uuid4().hex[:12]}",
             # Resolved from the canonical YAML (iso27001_v2022). Historical

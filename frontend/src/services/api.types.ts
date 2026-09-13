@@ -160,6 +160,8 @@ export interface HttpEvaluationResponse {
   partial_controls?: number;
   non_compliant_controls?: number;
   not_assessed_controls?: number;
+  /** Per-control scoring detail (ControlHeatmap data); null on legacy rows. */
+  control_results?: Record<string, ControlResult> | null;
   recommendations?: Recommendation[];
 }
 

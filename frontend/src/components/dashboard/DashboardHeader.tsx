@@ -7,8 +7,6 @@ import { useLicense } from '../../contexts/LicenseContext';
 import { ComplianceEvaluation } from '../../services/api';
 import { isElectronMode } from '../../services/electron';
 
-const isElectron = isElectronMode();
-
 interface Props {
   loading: boolean;
   evaluation: ComplianceEvaluation | null;
@@ -32,6 +30,8 @@ const DashboardHeader: React.FC<Props> = ({
   onExportPDF, onSyncCloud, onUploadClick, onUpgradePrompt,
 }) => {
   const { isFeatureAllowed } = useLicense();
+  // Call-time (not module import) so the header reflects the real environment.
+  const isElectron = isElectronMode();
 
   return (
     <Box sx={{ mb: 4 }}>

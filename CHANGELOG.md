@@ -6,6 +6,41 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Web mode: evidence uploads now actually score** — the `/evidence/upload`
+  endpoint bound its `evidence_type`/`title`/`control_id` parameters as query
+  parameters, so every multipart form field the web upload dialog sent was
+  silently ignored and all web uploads were stored as the non-scoring
+  `manual_upload` type. Form fields are now the primary contract (query
+  params remain supported for scripts). A web upload of a control's required
+  evidence type now moves that control's evaluation.
+- **Web mode: the ControlHeatmap renders after an evaluation** — per-control
+  results (score, status, gaps, assessment mode) were computed by the engine
+  but dropped from the persisted evaluation, so the web heatmap had no data.
+  They are now stored on the record and served by both the evaluate response
+  and evaluation history (additive; legacy rows serialize as null and are
+  never re-scored).
+- **Web mode: Evaluate works without the desktop app** — the API dispatcher
+  threw "requires the desktop application" in web mode; it now routes to the
+  backend evaluate endpoint, which runs the same canonical engine.
+- **Environment-variable boot blockers** — comma-separated list env vars
+  (`ALLOWED_FILE_TYPES`, `CORS_ORIGINS`, …) no longer crash pydantic-settings
+  when set at machine level; template placeholder AWS credentials
+  (`your-aws-secret-access-key`) are treated as unset instead of tripping the
+  key-pair validation; and a real credential pair declared in either field
+  order now validates correctly (the pairing check moved to a model
+  validator).
+
+### Changed
+
+- **Dashboard environment detection is call-time, not import-time** —
+  Dashboard, DashboardHeader, useDashboard and the api dispatcher evaluate
+  Electron availability per call, so the UI reflects the actual environment
+  (and behaves correctly under tests and HMR).
+
 ## [4.2.3] — 2026-09-12
 
 ### Fixed

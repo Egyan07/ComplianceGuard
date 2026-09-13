@@ -19,13 +19,14 @@ import { useDashboard } from '../hooks/useDashboard';
 import { useLicense } from '../contexts/LicenseContext';
 import { getElectronAPI, isElectronMode } from '../services/electron';
 
-const isElectron = isElectronMode();
-
 interface DashboardProps {
   onNavigate?: (page: string) => void;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
+  // Evaluated per render (not at module import) so the UI tracks the real
+  // environment — the same call-time contract EvidenceUpload uses.
+  const isElectron = isElectronMode();
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [upgradePrompt, setUpgradePrompt] = useState({ open: false, feature: '', description: '' });
 
@@ -124,14 +125,15 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         />
       </Box>
 
-      {isElectron && (
-        <EvidenceUpload
-          open={uploadDialogOpen}
-          onClose={() => setUploadDialogOpen(false)}
-          onSuccess={() => { clearMessage(); fetchDashboardData(); }}
-          frameworkId={selectedFramework}
-        />
-      )}
+      {/* Dual-mode dialog: Electron uses the IPC bridge, the browser posts to
+          the backend's /evidence/upload. Rendered in BOTH modes — the header's
+          Upload Evidence button opens it everywhere. */}
+      <EvidenceUpload
+        open={uploadDialogOpen}
+        onClose={() => setUploadDialogOpen(false)}
+        onSuccess={() => { clearMessage(); fetchDashboardData(); }}
+        frameworkId={selectedFramework}
+      />
 
       <UpgradePrompt
         feature={upgradePrompt.feature}

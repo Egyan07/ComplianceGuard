@@ -238,7 +238,7 @@ export async function evaluateComplianceWeb(frameworkId = 1): Promise<Compliance
     partial_controls: d.partial_controls ?? 0,
     not_assessed_controls: d.not_assessed_controls ?? 0,
     category_scores: null,
-    control_results: null,
+    control_results: d.control_results ?? null,
     recommendations: d.recommendations ?? [],
   };
 }

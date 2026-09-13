@@ -71,13 +71,27 @@ def client_and_token():
 
 
 def _upload(client, token, evidence_type, filename="evidence.pdf"):
-    # NOTE: evidence_type is a QUERY parameter (bare `str` in the endpoint
-    # signature), not a form field — the API contract the web client uses.
+    # Query-param contract (scripts/curl): ?evidence_type=... alongside the
+    # multipart file. The form-field contract has its own tests below.
     return client.post(
         "/api/v1/evidence/upload",
         headers={"Authorization": f"Bearer {token}"},
         params={"evidence_type": evidence_type},
         files={"file": (filename, io.BytesIO(b"%PDF-1.4 test"), "application/pdf")},
+    )
+
+
+def _upload_form(client, token, evidence_type, **fields):
+    """The WEB dialog's contract: multipart FORM fields via FormData.
+    Regression: bare-`str` endpoint params bound as QUERY parameters, so every
+    form field was silently ignored and all web uploads were stored as the
+    non-scoring 'manual_upload' type — they could never move a score."""
+    data = {"evidence_type": evidence_type, **fields}
+    return client.post(
+        "/api/v1/evidence/upload",
+        headers={"Authorization": f"Bearer {token}"},
+        data=data,
+        files={"file": ("evidence.pdf", io.BytesIO(b"%PDF-1.4 test"), "application/pdf")},
     )
 
 
@@ -89,9 +103,8 @@ def _evaluate(client, token):
 
 
 def _engine_control_status(evidence_types, control_id: str) -> dict:
-    """Control-level expectation from the SAME engine the API runs — the API
-    response exposes no per-control detail, so this asserts what the engine
-    (and therefore the API) evaluated for the uploaded types."""
+    """Control-level expectation from the SAME engine the API runs — used to
+    cross-check the API's per-control `control_results` payload."""
     result = evaluate_from_evidence_canonical("soc2", evidence_types)
     return result["control_results"][control_id]
 
@@ -183,3 +196,78 @@ class TestUploadToScore:
         client, token = client_and_token
         for t in ["manual_upload", "document", "text", "unknown"]:
             assert _upload(client, token, t).status_code == 201
+
+
+class TestWebFormContract:
+    """The browser dialog posts multipart FORM fields (FormData) — the endpoint
+    must bind them. The pre-fix bug bound every form field as a query param,
+    silently storing all web uploads as non-scoring 'manual_upload'."""
+
+    def test_form_field_evidence_type_is_bound_and_scores(self, client_and_token):
+        client, token = client_and_token
+        resp = _upload_form(client, token, "audit_reports", title="Board policy")
+        assert resp.status_code == 201
+        # The RESPONSE echoes the requested type — pre-fix it echoed the
+        # 'manual_upload' default because the form field never bound.
+        assert resp.json()["evidence_type"] == "audit_reports"
+
+        data = _evaluate(client, token).json()
+        expected = evaluate_from_evidence_canonical("soc2", ["audit_reports"])
+        assert data["overall_score"] == expected["overall_score"]
+        assert data["overall_score"] > 0, "web form upload must move the score"
+
+    def test_form_metadata_is_stored_on_the_item(self, client_and_token):
+        client, token = client_and_token
+        resp = _upload_form(
+            client, token, "system_configs",
+            title="Password policy",
+            description="Org baseline",
+            control_id="CC6.1",
+            framework_id="1",
+        )
+        assert resp.status_code == 201
+        from app.models.evidence import EvidenceItem as EvItem
+        db = TestSession()
+        try:
+            item = db.query(EvItem).order_by(EvItem.id.desc()).first()
+            assert item.data["title"] == "Password policy"
+            assert item.data["control_id"] == "CC6.1"
+            assert item.data["framework_id"] == "1"
+        finally:
+            db.close()
+
+    def test_query_params_still_work_alongside_form(self, client_and_token):
+        """Back-compat: the pre-web query-param contract keeps working."""
+        client, token = client_and_token
+        resp = client.post(
+            "/api/v1/evidence/upload",
+            headers={"Authorization": f"Bearer {token}"},
+            params={"evidence_type": "policy_document"},
+            files={"file": ("e.pdf", io.BytesIO(b"%PDF-1.4"), "application/pdf")},
+        )
+        assert resp.status_code == 201
+        assert resp.json()["evidence_type"] == "policy_document"
+
+    def test_evaluate_response_exposes_control_results(self, client_and_token):
+        """Web ControlHeatmap data: per-control results ride the response
+        (and history) — additive Phase-4 style metadata, null on legacy rows.
+        CC6.8 is automatable with [system_configs, event_logs], so uploading
+        both types must make it fully compliant."""
+        client, token = client_and_token
+        assert _upload_form(client, token, "system_configs").status_code == 201
+        assert _upload_form(client, token, "event_logs").status_code == 201
+        data = _evaluate(client, token).json()
+        cr = data.get("control_results") or {}
+        assert len(cr) == data["control_count"] == 43
+        cc68 = cr["CC6.8"]
+        assert cc68["status"] == "compliant"
+        assert cc68["score"] == 100
+        assert "assessment_mode" in cc68 and "manual_required" in cc68
+        # History serves the same detail (same serializer).
+        hist = client.get(
+            "/api/v1/compliance/evaluations/history",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert hist.status_code == 200
+        rows = hist.json()
+        assert rows and (rows[0].get("control_results") or {})["CC6.8"]["status"] == "compliant"

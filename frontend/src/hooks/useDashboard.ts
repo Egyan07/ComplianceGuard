@@ -13,8 +13,6 @@ import {
 import { getElectronAPI, isElectronMode } from '../services/electron';
 import { getErrorMessage } from '../lib/errors';
 
-const isElectron = isElectronMode();
-
 export const DASHBOARD_QUERY_KEYS = {
   summary: ['dashboard', 'summary'] as const,
   items: ['dashboard', 'items'] as const,
@@ -26,6 +24,9 @@ export interface DashboardState {
   successMessage: string | null;
 }export function useDashboard() {
   const queryClient = useQueryClient();
+  // Call-time (not module import) so hooks track the real environment — the
+  // same contract EvidenceUpload and the other dual-mode components use.
+  const isElectron = isElectronMode();
 
   // ── local UI state (selectedFramework needed by queries below) ────────────
   const [state, setState] = useState<DashboardState>({
@@ -165,7 +166,7 @@ export interface DashboardState {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       setEvaluating(false);
     }
-  }, [queryClient, selectedFramework]);
+  }, [queryClient, selectedFramework, isElectron]);
 
   const handleRescan = useCallback(async () => {
     setState(prev => ({ ...prev, error: null }));
@@ -186,7 +187,7 @@ export interface DashboardState {
     } else {
       await handleEvaluateCompliance();
     }
-  }, [selectedFramework, handleEvaluateCompliance, queryClient]);
+  }, [selectedFramework, handleEvaluateCompliance, queryClient, isElectron]);
 
   const handleExportPDF = useCallback(async () => {
     if (!isElectron) return;
@@ -207,7 +208,7 @@ export interface DashboardState {
     } finally {
       setExportingPDF(false);
     }
-  }, [selectedFramework]);
+  }, [selectedFramework, isElectron]);
 
   const handleSyncToCloud = useCallback(async () => {
     if (!isElectron) return;
@@ -245,7 +246,7 @@ export interface DashboardState {
     } finally {
       setSyncingCloud(false);
     }
-  }, [state.evaluation, summary]);
+  }, [state.evaluation, summary, isElectron]);
 
   const clearMessage = useCallback(() => {
     setState(prev => ({ ...prev, error: null, successMessage: null }));
@@ -256,7 +257,7 @@ export interface DashboardState {
       const api = getElectronAPI();
       api.cloudGetConfig().then((cfg) => setCloudConnected(!!cfg?.connected)).catch(() => setCloudConnected(false));
     }
-  }, []);
+  }, [isElectron]);
 
   return {
     // server state

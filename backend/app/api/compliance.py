@@ -145,6 +145,10 @@ class ComplianceEvaluationResponse(BaseModel):
     partial_controls: int = 0
     non_compliant_controls: int = 0
     not_assessed_controls: int = 0
+    # Per-control scoring detail (score/status/gaps/assessment_mode) for the
+    # web ControlHeatmap. Null for legacy rows that predate it — additive,
+    # never re-scored.
+    control_results: Optional[Dict[str, Any]] = None
     # Taxonomy identity of the framework data that produced this evaluation
     # (Phase 4 versioning). Null for legacy rows predating versioning — they
     # are serialized as null, never invented, and are never re-scored.
@@ -185,6 +189,7 @@ def _response_from_record(record: ComplianceEvaluationRecord) -> ComplianceEvalu
         partial_controls=counts.get("partial_controls", 0),
         non_compliant_controls=counts.get("non_compliant_controls", 0),
         not_assessed_controls=counts.get("not_assessed_controls", 0),
+        control_results=(record.evidence_summary or {}).get("control_results") or None,
         # Stored passthrough: null for legacy rows, live taxonomy identity for
         # new ones. Without emitting these here, FastAPI's response-model
         # filtering strips them from every web history/trend response.
@@ -322,6 +327,9 @@ async def evaluate_compliance(
         totals = evaluate_from_evidence_canonical("soc2", evidence_types)
         evidence_summary = dict(totals.get("evidence_summary") or {})
         evidence_summary["control_counts"] = _counts_from_totals(totals)
+        # Per-control results (score/status/gaps/assessment_mode) so web
+        # clients can render the ControlHeatmap without a second engine port.
+        evidence_summary["control_results"] = totals.get("control_results") or {}
         record = ComplianceEvaluationRecord(
             evaluation_id=f"eval-{uuid.uuid4().hex[:12]}",
             framework_id=totals["framework_id"],
@@ -589,6 +597,9 @@ async def evaluate_from_evidence(
     try:
         evidence_summary = dict(totals.get("evidence_summary") or {})
         evidence_summary["control_counts"] = _counts_from_totals(totals)
+        # Per-control results (score/status/gaps/assessment_mode) so web
+        # clients can render the ControlHeatmap without a second engine port.
+        evidence_summary["control_results"] = totals.get("control_results") or {}
         record = ComplianceEvaluationRecord(
             evaluation_id=f"eval-{uuid.uuid4().hex[:12]}",
             framework_id=totals["framework_id"],

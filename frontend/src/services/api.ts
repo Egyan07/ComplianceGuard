@@ -20,6 +20,7 @@ import {
   httpCollectEvidence,
   httpGetEvidenceItems,
   httpGetEvidenceSummary,
+  evaluateComplianceWeb,
   httpGetScoreTrend,
 } from './api.http';
 import type {
@@ -35,9 +36,6 @@ import type {
 export * from './api.types';
 export * from './api.http';
 
-// Detect if running inside Electron
-const isElectron = isElectronMode();
-
 // ---- Score Trend ----
 
 /**
@@ -46,6 +44,8 @@ const isElectron = isElectronMode();
  * Web: calls GET /api/v1/compliance/evaluations/history.
  */
 export async function getScoreTrend(frameworkId: 1 | 2 | 3 | 4 = 1): Promise<TrendPoint[]> {
+  // Call-time (not module import) so the dispatcher reflects the real environment.
+  const isElectron = isElectronMode();
   if (isElectron) {
     const api = getElectronAPI();
     const history = await api.getEvaluationHistory(frameworkId);
@@ -136,11 +136,13 @@ async function electronEvaluateCompliance(frameworkId = 1): Promise<ComplianceEv
 // ---- Public API (auto-selects electron vs http) ----
 
 export const getEvidenceSummary = async (frameworkId?: 1 | 2 | 3 | 4): Promise<EvidenceSummary> => {
+  const isElectron = isElectronMode();
   if (isElectron) return electronGetEvidenceSummary(frameworkId);
   return httpGetEvidenceSummary();
 };
 
 export const getEvidenceItems = async (status?: string, search?: string, frameworkId?: 1 | 2 | 3 | 4): Promise<EvidenceItem[]> => {
+  const isElectron = isElectronMode();
   if (isElectron) return electronGetEvidenceItems(frameworkId);
   return httpGetEvidenceItems(status, search);
 };
@@ -149,16 +151,21 @@ export const collectEvidence = async (
   request?: EvidenceCollectionRequest,
   frameworkId?: 1 | 2 | 3 | 4
 ): Promise<EvidenceCollectionResult> => {
+  const isElectron = isElectronMode();
   if (isElectron) return electronCollectEvidence(frameworkId);
   return httpCollectEvidence(request || {});
 };
 
 export const evaluateCompliance = async (frameworkId = 1): Promise<ComplianceEvaluation> => {
+  const isElectron = isElectronMode();
   if (isElectron) return electronEvaluateCompliance(frameworkId);
-  throw new Error('Compliance evaluation requires the desktop application');
+  // Web dispatch: the backend runs the SAME canonical engine over the user's
+  // stored evidence — evaluation is not desktop-only. (The old throw here is  // what made the web Evaluate button report "requires the desktop app".)
+  return evaluateComplianceWeb(frameworkId);
 };
 
 export const checkHealth = async (): Promise<Record<string, unknown>> => {
+  const isElectron = isElectronMode();
   if (isElectron) {
     const api = getElectronAPI();
     const info = await api.getSystemInfo();

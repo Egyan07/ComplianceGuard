@@ -11,7 +11,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict
@@ -446,11 +446,22 @@ class UploadEvidenceResponse(BaseModel):
 @router.post("/upload", response_model=UploadEvidenceResponse, status_code=status.HTTP_201_CREATED)
 async def upload_evidence_file(
     file: UploadFile = File(...),
-    evidence_type: str = "manual_upload",
-    title: Optional[str] = None,
-    description: Optional[str] = None,
-    control_id: Optional[str] = None,
-    framework_id: Optional[str] = None,
+    # Multipart FORM fields are the primary contract — the web upload dialog
+    # sends them via FormData. A bare `str` default would bind these as QUERY
+    # parameters and silently ignore every form field, storing all web uploads
+    # as the non-scoring "manual_upload" type (the bug this fixes).
+    evidence_type: Optional[str] = Form(None),
+    title: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    control_id: Optional[str] = Form(None),
+    framework_id: Optional[str] = Form(None),
+    # Query-param fallbacks preserve the pre-web contract (curl / scripted
+    # callers and the original regression tests pass ?evidence_type=...).
+    evidence_type_q: Optional[str] = Query(None, alias="evidence_type"),
+    title_q: Optional[str] = Query(None, alias="title"),
+    description_q: Optional[str] = Query(None, alias="description"),
+    control_id_q: Optional[str] = Query(None, alias="control_id"),
+    framework_id_q: Optional[str] = Query(None, alias="framework_id"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -468,6 +479,15 @@ async def upload_evidence_file(
     and never affect scoring — the canonical engine maps evidence via
     evidence_type only.
     """
+    # Form fields win; query params fill in whatever the form omitted. This
+    # keeps both callers working: browsers (multipart form) and scripts
+    # (query string).
+    evidence_type = evidence_type or evidence_type_q or "manual_upload"
+    title = title or title_q
+    description = description or description_q
+    control_id = control_id or control_id_q
+    framework_id = framework_id or framework_id_q
+
     filename = file.filename or "upload"
 
     # Validate the evidence type BEFORE storing anything — a dead type must
