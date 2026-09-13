@@ -29,7 +29,7 @@ vi.mock('../services/api', async (importOriginal) => {
   };
 });
 
-import { getScoreTrend, httpGetEvaluationHistory } from '../services/api';
+import { httpGetEvaluationHistory } from '../services/api';
 
 const theme = createTheme();
 
