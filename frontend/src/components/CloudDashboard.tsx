@@ -65,7 +65,7 @@ interface CloudDashboardProps {
   onNavigate?: (page: string) => void;
 }
 
-const CloudDashboard: React.FC<CloudDashboardProps> = () => {
+const CloudDashboard: React.FC<CloudDashboardProps> = ({ onNavigate }) => {
   const { tier } = useLicense();
   const [fleetStats, setFleetStats] = useState<FleetStats | null>(null);
   const [machines, setMachines] = useState<MachineRecord[]>([]);
@@ -97,7 +97,12 @@ const CloudDashboard: React.FC<CloudDashboardProps> = () => {
         <Paper sx={{ borderRadius: RADIUS.lg }}>
           <EmptyState
             title="Cloud Dashboard — Pro Feature"
-            description="Upgrade to Pro or Enterprise to access the Cloud Dashboard and fleet management."
+            description="Sync evidence from your machines to the cloud and track fleet-wide compliance status, scores, and stale machines in one place. Available with Pro or Enterprise."
+            action={
+              <Button variant="contained" onClick={() => onNavigate?.('settings')}>
+                Upgrade to Pro
+              </Button>
+            }
           />
         </Paper>
       </Container>

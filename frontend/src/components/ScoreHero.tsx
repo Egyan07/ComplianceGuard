@@ -102,6 +102,9 @@ const ScoreHero: React.FC<ScoreHeroProps> = ({
               <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem', textAlign: 'center' }}>
                 No evaluation yet.<br />Run an evaluation to see your evidence coverage.
               </Typography>
+              <Typography sx={{ color: 'text.secondary', fontSize: '0.75rem', textAlign: 'center', opacity: 0.85 }}>
+                1 · Upload or collect evidence&nbsp;&nbsp;&rarr;&nbsp;&nbsp;2 · Run "Evaluate Compliance"&nbsp;&nbsp;&rarr;&nbsp;&nbsp;3 · Watch coverage grow
+              </Typography>
             </Box>
           )}
           {evaluation && (

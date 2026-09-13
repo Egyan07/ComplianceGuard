@@ -41,6 +41,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Web-mode UX polish** — the Cloud page's free-tier empty state now
+  explains what fleet sync actually offers and carries an "Upgrade to Pro"
+  action (it previously had no action at all); the Dashboard's empty score
+  card shows a 3-step "upload → evaluate → track" hint for first-run users;
+  and the web Dashboard notes that OS-level collection, PDF export, and
+  cloud sync live in the desktop app instead of silently hiding those
+  buttons.
 - **Dashboard environment detection is call-time, not import-time** —
   Dashboard, DashboardHeader, useDashboard and the api dispatcher evaluate
   Electron availability per call, so the UI reflects the actual environment

@@ -1,8 +1,8 @@
 import React from 'react';
-import { Box, Button, ButtonGroup, CircularProgress } from '@mui/material';
+import { Box, Button, ButtonGroup, CircularProgress, Typography } from '@mui/material';
 import MotionButton from '../ui/MotionButton';
 import PageHeader from '../ui/PageHeader';
-import { Refresh, CloudUpload, Assessment, Upload, PictureAsPdf, CloudSync as CloudSyncIcon } from '@mui/icons-material';
+import { Refresh, CloudUpload, Assessment, Upload, PictureAsPdf, CloudSync as CloudSyncIcon, Computer as ComputerIcon } from '@mui/icons-material';
 import { useLicense } from '../../contexts/LicenseContext';
 import { ComplianceEvaluation } from '../../services/api';
 import { isElectronMode } from '../../services/electron';
@@ -116,6 +116,18 @@ const DashboardHeader: React.FC<Props> = ({
           </Box>
         }
       />
+
+      {/* Web mode: the hidden desktop-only actions (OS collection, PDF export,
+          cloud sync) otherwise look like missing features — say where they are. */}
+      {!isElectron && (
+        <Typography
+          variant="body2"
+          sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: -2, mb: 2, color: 'text.secondary', fontSize: '0.78rem' }}
+        >
+          <ComputerIcon sx={{ fontSize: '1rem' }} />
+          OS-level evidence collection, PDF reports, and cloud sync are available in the desktop app.
+        </Typography>
+      )}
     </Box>
   );
 };

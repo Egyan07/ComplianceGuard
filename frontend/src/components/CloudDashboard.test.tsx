@@ -97,4 +97,15 @@ describe('CloudDashboard', () => {
     await waitFor(() => expect(screen.getByText('STALE-PC')).toBeInTheDocument());
     expect(screen.getByText(/stale/i)).toBeInTheDocument();
   });
+
+  it('free-tier empty state explains the feature and offers the upgrade CTA', () => {
+    const onNavigate = vi.fn();
+    (useLicense as ReturnType<typeof vi.fn>).mockReturnValue({ tier: 'free' });
+    render(<CloudDashboard onNavigate={onNavigate} />);
+    // Feature description (what fleet sync actually gives you)
+    expect(screen.getByText(/fleet-wide compliance status/i)).toBeInTheDocument();
+    // Upgrade CTA wired to settings — previously the empty state had no action.
+    fireEvent.click(screen.getByRole('button', { name: 'Upgrade to Pro' }));
+    expect(onNavigate).toHaveBeenCalledWith('settings');
+  });
 });
