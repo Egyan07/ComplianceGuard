@@ -3,6 +3,19 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material';
 import FrameworkBrowser from './FrameworkBrowser';
 
+// The service layer is mocked at the dispatcher boundary so both the Electron
+// IPC path (window.electronAPI mocks below) and the web HTTP path (direct
+// dispatcher mocks at the bottom) are testable without a backend.
+vi.mock('../services/api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../services/api')>();
+  return {
+    ...actual,
+    getFrameworkControls: vi.fn(),
+  };
+});
+
+import { getFrameworkControls } from '../services/api';
+
 const theme = createTheme();
 
 const mockSoc2Data = {
@@ -92,6 +105,10 @@ describe('FrameworkBrowser', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (window as any).electronAPI = makeMockApi();
+    // Default the dispatcher to the Electron bridge; web-mode tests override.
+    (getFrameworkControls as ReturnType<typeof vi.fn>).mockImplementation(
+      (_id: number) => (window as any).electronAPI.getFrameworkControls(_id)
+    );
   });
 
   it('renders all three framework tabs', () => {
@@ -204,6 +221,55 @@ describe('FrameworkBrowser', () => {
 
     await waitFor(() => {
       expect(screen.getByText('required')).toBeInTheDocument();
+    });
+  });
+
+  // ---- Web mode (regression: the page previously showed "Electron API
+  // unavailable" in the browser because it only ever called IPC) ----
+
+  it('loads framework data via the dispatcher in web mode (no electronAPI)', async () => {
+    (window as any).electronAPI = undefined;
+    (getFrameworkControls as ReturnType<typeof vi.fn>).mockResolvedValue(mockSoc2Data);
+
+    renderBrowser();
+
+    await waitFor(() => {
+      expect(getFrameworkControls).toHaveBeenCalledWith(1);
+      expect(screen.getByText('CC (2)')).toBeInTheDocument();
+    });
+    // No error banner — the old web failure mode.
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('normalises web rows with missing optional fields', async () => {
+    (window as any).electronAPI = undefined;
+    (getFrameworkControls as ReturnType<typeof vi.fn>).mockResolvedValue({
+      frameworkId: 4,
+      name: 'GDPR',
+      controls: [
+        {
+          id: 'Art.5.1',
+          title: 'Lawful processing',
+          description: 'Data shall be processed lawfully.',
+          category: '5',
+          risk_level: 'medium' as const,
+          // control_objective/implementation_guidance omitted — the
+          // FrameworkBrowser must render the card without crashing.
+        },
+      ],
+    });
+
+    renderBrowser();
+
+    await waitFor(() => screen.getByText('5 (1)'));
+    fireEvent.click(screen.getByText('5 (1)'));
+    await waitFor(() => screen.getByText('Lawful processing'));
+    fireEvent.click(screen.getByText('Lawful processing'));
+
+    // Renders without crashing: description present, risk chip = MEDIUM.
+    await waitFor(() => {
+      expect(screen.getByText('Data shall be processed lawfully.')).toBeInTheDocument();
+      expect(screen.getByText('MEDIUM')).toBeInTheDocument();
     });
   });
 });

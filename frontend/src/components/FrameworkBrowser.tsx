@@ -24,6 +24,7 @@ import { useTheme } from '@mui/material/styles';
 import { ExpandMore, Search } from '@mui/icons-material';
 import PageHeader from './ui/PageHeader';
 import { RADIUS, toneColors } from '../theme';
+import { getFrameworkControls } from '../services/api';
 import type { FrameworkControl, FrameworkData, FrameworkDataError } from '../types/electron';
 
 type RiskFilter = 'all' | 'high' | 'medium' | 'low';
@@ -77,17 +78,14 @@ const FrameworkBrowser: React.FC = () => {
     addressable: chipFor('neutral'),
   };
 
-  const api = window.electronAPI;
   const currentFrameworkId = FRAMEWORKS[activeTab].id;
 
   useEffect(() => {
     if (frameworks[currentFrameworkId] !== undefined || loading[currentFrameworkId]) return;
-    if (!api?.getFrameworkControls) {
-      setFrameworks(prev => ({ ...prev, [currentFrameworkId]: { error: 'Electron API unavailable' } }));
-      return;
-    }
     setLoading(prev => ({ ...prev, [currentFrameworkId]: true }));
-    api.getFrameworkControls(currentFrameworkId)
+    // Dual-mode: Electron reads the shared YAMLs via IPC, the browser fetches
+    // the same canonical data from the backend's framework endpoints.
+    getFrameworkControls(currentFrameworkId)
       .then((data: FrameworkData | FrameworkDataError) => {
         setFrameworks(prev => ({ ...prev, [currentFrameworkId]: data }));
       })
@@ -97,7 +95,7 @@ const FrameworkBrowser: React.FC = () => {
       .finally(() => {
         setLoading(prev => ({ ...prev, [currentFrameworkId]: false }));
       });
-  // frameworks/loading/api are read only as gate conditions; excluding them prevents re-fetch loops
+  // frameworks/loading are read only as gate conditions; excluding them prevents re-fetch loops
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentFrameworkId]);
 

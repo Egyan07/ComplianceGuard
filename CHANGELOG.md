@@ -10,6 +10,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **Web mode: the Frameworks page works in the browser** — it only ever
+  called the Electron IPC bridge, so web users saw "Electron API unavailable".
+  It now fetches the same canonical framework data (SOC 2, ISO 27001, HIPAA,
+  GDPR) from the backend's public framework endpoints, normalised to the
+  desktop shape so both modes render identically.
 - **Web mode: evidence uploads now actually score** — the `/evidence/upload`
   endpoint bound its `evidence_type`/`title`/`control_id` parameters as query
   parameters, so every multipart form field the web upload dialog sent was

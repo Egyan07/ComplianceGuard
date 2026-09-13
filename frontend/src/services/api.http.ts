@@ -27,6 +27,7 @@ import {
   setAccessToken as setStoreToken,
   clearAccessToken as clearStoreToken,
 } from './tokenStore';
+import type { FrameworkControl, FrameworkData } from '../types/electron';
 
 // HTTP client for web/fallback mode
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
@@ -339,6 +340,59 @@ export async function uploadEvidenceFileWeb(req: WebEvidenceUploadRequest): Prom
     headers: { 'Content-Type': 'multipart/form-data' },
   });
   return response.data;
+}
+
+// ---- Framework reference browser (web mode) ----
+
+/**
+ * Web-mode framework reference data → GET /{framework}/framework/controls.
+ * Mirrors the desktop IPC handler (`get-framework-controls`): same canonical
+ * shared/frameworks YAMLs, read-only. Rows are normalised to the desktop
+ * FrameworkControl shape (defaults filled, unknown risk levels mapped) so the
+ * FrameworkBrowser renders identically in both modes.
+ */
+export async function httpGetFrameworkControls(frameworkId: 1 | 2 | 3 | 4): Promise<FrameworkData> {
+  const urls: Record<number, string> = {
+    1: '/compliance/framework/controls',
+    2: '/iso27001/framework/controls',
+    3: '/hipaa/framework/controls',
+    4: '/gdpr/framework/controls',
+  };
+  const names: Record<number, string> = {
+    1: 'SOC 2',
+    2: 'ISO 27001',
+    3: 'HIPAA',
+    4: 'GDPR',
+  };
+  const response = await apiClient.get<HttpFrameworkControlRow[]>(urls[frameworkId] ?? urls[1]);
+  const controls: FrameworkControl[] = response.data.map(row => ({
+    id: row.id,
+    title: row.title,
+    description: row.description,
+    category: row.category,
+    control_objective: row.control_objective ?? '',
+    implementation_guidance: row.implementation_guidance ?? '',
+    risk_level: row.risk_level === 'high' || row.risk_level === 'low' ? row.risk_level : 'medium',
+    ...(row.specification_type === 'required' || row.specification_type === 'addressable'
+      ? { specification_type: row.specification_type }
+      : {}),
+    ...(row.chapter !== undefined ? { chapter: row.chapter } : {}),
+    ...(row.related_controls !== undefined ? { related_controls: row.related_controls } : {}),
+  }));
+  return { frameworkId, name: names[frameworkId] ?? 'Framework', controls };
+}
+
+interface HttpFrameworkControlRow {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  control_objective?: string;
+  implementation_guidance?: string;
+  risk_level?: string;
+  specification_type?: string;
+  chapter?: string;
+  related_controls?: string[];
 }
 
 // ---- Web evaluation history (History page, web mode) ----

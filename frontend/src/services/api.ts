@@ -20,6 +20,7 @@ import {
   httpCollectEvidence,
   httpGetEvidenceItems,
   httpGetEvidenceSummary,
+  httpGetFrameworkControls,
   evaluateComplianceWeb,
   httpGetScoreTrend,
 } from './api.http';
@@ -32,6 +33,7 @@ import type {
   EvidenceSummary,
   TrendPoint,
 } from './api.types';
+import type { FrameworkData, FrameworkDataError } from '../types/electron';
 
 export * from './api.types';
 export * from './api.http';
@@ -162,6 +164,18 @@ export const evaluateCompliance = async (frameworkId = 1): Promise<ComplianceEva
   // Web dispatch: the backend runs the SAME canonical engine over the user's
   // stored evidence — evaluation is not desktop-only. (The old throw here is  // what made the web Evaluate button report "requires the desktop app".)
   return evaluateComplianceWeb(frameworkId);
+};
+
+export const getFrameworkControls = async (frameworkId: 1 | 2 | 3 | 4): Promise<FrameworkData | FrameworkDataError> => {
+  const isElectron = isElectronMode();
+  if (isElectron) {
+    const api = getElectronAPI();
+    if (!api.getFrameworkControls) {
+      return { error: 'Electron API unavailable' };
+    }
+    return api.getFrameworkControls(frameworkId);
+  }
+  return httpGetFrameworkControls(frameworkId);
 };
 
 export const checkHealth = async (): Promise<Record<string, unknown>> => {

@@ -68,6 +68,13 @@ export interface ComplianceEvaluation {
   recommendations: Array<Record<string, any>>;
 }
 
+/** Web framework-browser payload (GET /{framework}/framework/controls). */
+export interface HttpFrameworkData {
+  frameworkId: number;
+  name: string;
+  controls: Array<import('../types/electron').FrameworkControl>;
+}
+
 // ---- Score Trend ----
 
 export interface TrendPoint {
