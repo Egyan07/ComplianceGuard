@@ -2,6 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material';
 import EvidenceUpload from './EvidenceUpload';
+import { uploadEvidenceFileWeb } from '../services/api';
+
+vi.mock('../services/api', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  uploadEvidenceFileWeb: vi.fn().mockResolvedValue({ evidence_item_id: 1 }),
+}));
 
 const theme = createTheme();
 
@@ -63,9 +69,13 @@ describe('EvidenceUpload', () => {
       expect(screen.getByText('Enter Text')).toBeInTheDocument();
     });
 
-    it('shows file upload info alert in web mode', () => {
+    it('shows the browser file picker in web mode (not a desktop-only alert)', () => {
+      // Regression: the dialog used to say "File upload requires the desktop
+      // application" in web mode while the backend upload endpoint existed —
+      // leaving web users with no way to create evidence.
       renderUpload();
-      expect(screen.getByText('File upload requires the desktop application.')).toBeInTheDocument();
+      expect(screen.queryByText('File upload requires the desktop application.')).not.toBeInTheDocument();
+      expect(screen.getByText('Click to choose a file')).toBeInTheDocument();
     });
 
     it('shows Title field', () => {
@@ -90,7 +100,7 @@ describe('EvidenceUpload', () => {
       renderUpload();
       fireEvent.click(screen.getByText('Enter Text'));
       fireEvent.click(screen.getByText('Upload File'));
-      expect(screen.getByText('File upload requires the desktop application.')).toBeInTheDocument();
+      expect(screen.getByText('Click to choose a file')).toBeInTheDocument();
     });
 
     it('hides file alert in text mode', () => {
@@ -202,13 +212,14 @@ describe('EvidenceUpload', () => {
   it('files uploaded evidence under the SELECTED framework id, not always SOC 2', async () => {
     // Regression: the dialog previously called processManualEvidence with a
     // hardcoded 1, so GDPR evidence was silently stored as SOC 2 evidence and
-    // never counted toward the GDPR evaluation.
-    const processManualEvidence = vi.fn().mockResolvedValue({ id: 1 });
-    (window as any).electronAPI = { processManualEvidence };
+    // never counted toward the GDPR evaluation. Web mode now posts to the
+    // backend upload endpoint with the framework id as metadata.
+    const uploadEvidenceFileWebMock = vi.mocked(uploadEvidenceFileWeb);
+    uploadEvidenceFileWebMock.mockClear().mockResolvedValue({ evidence_item_id: 1 });
 
     renderUpload({ frameworkId: 4 });
 
-    // Text mode — file picking is desktop-only.
+    // Text mode — content rides the same multipart endpoint as a .txt file.
     fireEvent.click(screen.getByText('Enter Text'));
 
     // Two MUI comboboxes render: [0] = control, [1] = evidence type.
@@ -234,9 +245,42 @@ describe('EvidenceUpload', () => {
     fireEvent.click(submit);
 
     await waitFor(() => {
+      expect(uploadEvidenceFileWeb).toHaveBeenCalledTimes(1);
+    });
+    expect(uploadEvidenceFileWeb).toHaveBeenCalledWith(
+      expect.objectContaining({
+        controlId: expect.stringMatching(/^Art\./),
+        frameworkId: 4,
+      }),
+    );
+  });
+
+  it('desktop mode still routes through the Electron IPC bridge', async () => {
+    // Pin the desktop path: the web upload must not have replaced IPC.
+    const processManualEvidence = vi.fn().mockResolvedValue({ id: 1 });
+    (window as any).electronAPI = { processManualEvidence };
+
+    renderUpload({ frameworkId: 4 });
+
+    fireEvent.click(screen.getByText('Enter Text'));
+    const combo = () => screen.getAllByRole('combobox');
+    fireEvent.mouseDown(combo()[0]);
+    fireEvent.click(screen.getByRole('option', { name: /Art\.37\.1/ }));
+    fireEvent.mouseDown(combo()[1]);
+    fireEvent.click(screen.getByRole('option', { name: /Policy Document/i }));
+    fireEvent.change(screen.getByRole('textbox', { name: /title/i }), {
+      target: { value: 'DPO designation record' },
+    });
+    fireEvent.change(screen.getByRole('textbox', { name: /evidence content/i }), {
+      target: { value: 'DPO appointment document' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Upload Evidence/i }));
+
+    await waitFor(() => {
       expect(processManualEvidence).toHaveBeenCalledTimes(1);
     });
     expect(processManualEvidence).toHaveBeenCalledWith(expect.objectContaining({ controlId: expect.stringMatching(/^Art\./) }), 4);
+    expect(uploadEvidenceFileWeb).not.toHaveBeenCalled();
   });
 });
 });

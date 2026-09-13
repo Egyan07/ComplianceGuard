@@ -1,22 +1,25 @@
 """
-CG-H1 regression: the default EMAIL_ENABLED=false configuration must not
-dead-end registration.
+Email-verification gate semantics.
 
-With email delivery disabled the backend logs the verification link in
-non-production environments (app.core.email — deterministically covered in
-tests/unit/test_email_delivery.py). This test drives the REAL web flow
-without any is_verified=True fixture shortcut:
+The verification GATE is enforced only when the deployment actually sends
+email (EMAIL_ENABLED=true). With the shipped default (EMAIL_ENABLED=false)
+no verification message can ever arrive, so demanding verification would
+403 every request from every fresh account forever — the registration
+dead-end that made web mode unusable out of the box.
 
-    register (EMAIL_ENABLED=false)
-    -> 403 on a protected endpoint
-    -> verify-email with the persisted verification token
-       (the exact token the dev-mode logged link embeds)
-    -> the same access token now reaches the protected endpoint
+Correct invariants, both driven through the REAL flow (no is_verified=True
+fixture shortcut):
 
-The token is read from the persisted user record rather than parsed out of
-process logs: pytest's logging capture and app.core.observability's
-root-handler replacement (configure_logging) interact non-deterministically in
-a shared test session, while the log channel itself is already asserted
+  EMAIL_ENABLED=false  register -> protected endpoint 200 immediately;
+                       verification-status still reports False until the
+                       token flow completes.
+  EMAIL_ENABLED=true   register -> protected endpoint 403 -> verify-email
+                       with the captured token -> 200.
+
+The token is read from the captured email-layer call rather than parsed out
+of process logs: pytest's logging capture and app.core.observability's
+root-handler replacement (configure_logging) interact non-deterministically
+in a shared test session, while the log channel itself is asserted
 deterministically in the unit tests.
 """
 
@@ -99,26 +102,67 @@ def _current_verification_token(email: str, email_tokens=None) -> str:
 
 
 class TestRegistrationWithEmailDisabled:
-    def test_full_flow_register_verify_protected_endpoint(self, client, email_tokens):
+    def test_email_disabled_gate_is_not_enforced(self, client, email_tokens):
+        """EMAIL_ENABLED=false must not dead-end registration.
+
+        No verification email can ever be sent, so enforcing the gate would
+        403 every request from every fresh account forever. The endpoint must
+        work immediately; the verification flow itself stays available.
+        """
         # 1. Register (EMAIL_ENABLED=false — the shipped default).
         data = _register(client, "flow@test.com")
         token = data["access_token"]
         assert data["user"]["email"] == "flow@test.com"
 
-        # 2. Before verification every protected endpoint is 403.
+        # 2. The protected endpoint works immediately — no dead end.
         me = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
-        assert me.status_code == 403
-        assert "Email address not verified" in me.json()["detail"]
+        assert me.status_code == 200
+        assert me.json()["email"] == "flow@test.com"
 
-        # 3. Complete verification with the captured token.
+        # 3. The account is still honestly reported as unverified, and the
+        #    verification flow remains completable for when email is enabled.
+        status_res = client.get(
+            "/api/v1/auth/verification-status",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert status_res.status_code == 200
+        assert status_res.json()["is_verified"] is False
+
         v_token = _current_verification_token("flow@test.com", email_tokens)
         res = client.post("/api/v1/auth/verify-email", json={"token": v_token})
         assert res.status_code == 200, res.text
 
-        # 4. The same access token now reaches the protected endpoint.
-        me = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
-        assert me.status_code == 200
-        assert me.json()["email"] == "flow@test.com"
+        status_res = client.get(
+            "/api/v1/auth/verification-status",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert status_res.json()["is_verified"] is True
+
+
+class TestRegistrationWithEmailEnabled:
+    def test_email_enabled_gate_is_enforced(self, client, email_tokens):
+        """EMAIL_ENABLED=true keeps the pre-use gate: 403 until verified."""
+        settings.email_enabled = True
+        try:
+            data = _register(client, "gated@test.com")
+            token = data["access_token"]
+
+            # Before verification the protected endpoint is 403.
+            me = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
+            assert me.status_code == 403
+            assert "Email address not verified" in me.json()["detail"]
+
+            # Complete verification with the captured token.
+            v_token = _current_verification_token("gated@test.com", email_tokens)
+            res = client.post("/api/v1/auth/verify-email", json={"token": v_token})
+            assert res.status_code == 200, res.text
+
+            # The same access token now reaches the protected endpoint.
+            me = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
+            assert me.status_code == 200
+            assert me.json()["email"] == "gated@test.com"
+        finally:
+            settings.email_enabled = False
 
     def test_resend_verification_rotates_token_and_can_complete(self, client, email_tokens):
         data = _register(client, "resend@test.com")

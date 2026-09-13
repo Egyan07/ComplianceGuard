@@ -8,7 +8,7 @@ of the framework the user is evaluating, and files the evidence under that
 framework id so it counts toward that framework's evaluation.
 */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -35,6 +35,7 @@ import {
   Close
 } from '@mui/icons-material';
 import { getElectronAPI, isElectronMode } from '../services/electron';
+import { uploadEvidenceFileWeb } from '../services/api';
 import { getErrorMessage } from '../lib/errors';
 import {
   CONTROLS_BY_FRAMEWORK,
@@ -44,7 +45,9 @@ import {
   ManualEvidencePayload,
 } from './EvidenceUpload.data';
 
-const isElectron = isElectronMode();
+// Evaluated at RENDER time, not import time: tests (and hot reload) toggle
+// window.electronAPI after the module is first imported, and a snapshotted
+// value silently routes uploads through the wrong transport.
 
 interface EvidenceUploadProps {
   open: boolean;
@@ -60,6 +63,13 @@ interface SelectedFile {
   fileData: string; // base64
 }
 
+/** Browser-mode picked file: the raw File object rides the multipart body. */
+interface BrowserFile {
+  fileName: string;
+  fileSize: number;
+  file: File;
+}
+
 const EvidenceUpload: React.FC<EvidenceUploadProps> = ({ open, onClose, onSuccess, frameworkId = 1 }) => {
   const [controlId, setControlId] = useState('');
   const [evidenceType, setEvidenceType] = useState('');
@@ -67,6 +77,8 @@ const EvidenceUpload: React.FC<EvidenceUploadProps> = ({ open, onClose, onSucces
   const [description, setDescription] = useState('');
   const [textContent, setTextContent] = useState('');
   const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
+  const [browserFile, setBrowserFile] = useState<BrowserFile | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploadMode, setUploadMode] = useState<'file' | 'text'>('file');
@@ -89,6 +101,7 @@ const EvidenceUpload: React.FC<EvidenceUploadProps> = ({ open, onClose, onSucces
     setDescription('');
     setTextContent('');
     setSelectedFile(null);
+    setBrowserFile(null);
     setError(null);
     setUploadMode('file');
   };
@@ -99,7 +112,7 @@ const EvidenceUpload: React.FC<EvidenceUploadProps> = ({ open, onClose, onSucces
   };
 
   const handleSelectFile = async () => {
-    if (!isElectron) return;
+    if (!isElectronMode()) return;
 
     try {
       const api = getElectronAPI();
@@ -121,8 +134,13 @@ const EvidenceUpload: React.FC<EvidenceUploadProps> = ({ open, onClose, onSucces
       return;
     }
 
-    if (uploadMode === 'file' && !selectedFile) {
+    if (uploadMode === 'file' && isElectronMode() && !selectedFile) {
       setError('Please select a file to upload.');
+      return;
+    }
+
+    if (uploadMode === 'file' && !isElectronMode() && !browserFile) {
+      setError('Please choose a file to upload.');
       return;
     }
 
@@ -133,6 +151,41 @@ const EvidenceUpload: React.FC<EvidenceUploadProps> = ({ open, onClose, onSucces
 
     setUploading(true);
     setError(null);
+
+    // Web mode: multipart POST to the backend's /evidence/upload. The dialog
+    // previously rendered "File upload requires the desktop application" —
+    // while the backend endpoint existed all along — leaving web users with
+    // NO way to create evidence.
+    if (!isElectronMode()) {
+      try {
+        if (uploadMode === 'file' && browserFile) {
+          await uploadEvidenceFileWeb({
+            file: browserFile.file,
+            evidenceType,
+            title,
+            description,
+            controlId,
+            frameworkId,
+          });
+        } else {
+          await uploadEvidenceFileWeb({
+            textContent,
+            evidenceType,
+            title,
+            description,
+            controlId,
+            frameworkId,
+          });
+        }
+        handleClose();
+        onSuccess();
+      } catch (err) {
+        setError(getErrorMessage(err, 'Failed to upload evidence.'));
+      } finally {
+        setUploading(false);
+      }
+      return;
+    }
 
     try {
       const api = getElectronAPI();
@@ -279,7 +332,7 @@ const EvidenceUpload: React.FC<EvidenceUploadProps> = ({ open, onClose, onSucces
         {/* File Upload */}
         {uploadMode === 'file' && (
           <Box>
-            {isElectron ? (
+            {isElectronMode() ? (
               <Paper
                 variant="outlined"
                 sx={{
@@ -315,9 +368,58 @@ const EvidenceUpload: React.FC<EvidenceUploadProps> = ({ open, onClose, onSucces
                 )}
               </Paper>
             ) : (
-              <Alert severity="info">
-                File upload requires the desktop application.
-              </Alert>
+              <>
+                {/* Browser file picker: hidden input + click-through card, same
+                    visual contract as the Electron path above. */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  hidden
+                  accept=".pdf,.doc,.docx,.txt,.json,.csv,.xlsx,.png,.jpg,.jpeg"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) {
+                      setBrowserFile({ fileName: f.name, fileSize: f.size, file: f });
+                      if (!title) setTitle(f.name);
+                    }
+                    e.target.value = ''; // allow re-picking the same file
+                  }}
+                />
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    p: 3,
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    '&:hover': { backgroundColor: 'action.hover' },
+                    borderStyle: 'dashed'
+                  }}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {browserFile ? (
+                    <Box>
+                      <InsertDriveFile color="primary" sx={{ fontSize: 40, mb: 1 }} />
+                      <Typography variant="subtitle2">{browserFile.fileName}</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {formatFileSize(browserFile.fileSize)}
+                      </Typography>
+                      <Typography variant="caption" color="primary" sx={{ mt: 1, display: 'block' }}>
+                        Click to change file
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Box>
+                      <CloudUpload color="action" sx={{ fontSize: 40, mb: 1 }} />
+                      <Typography variant="body1" color="text.secondary">
+                        Click to choose a file
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        PDF, DOC, DOCX, TXT, CSV, JSON, XLSX, PNG, JPG
+                      </Typography>
+                    </Box>
+                  )}
+                </Paper>
+              </>
             )}
           </Box>
         )}

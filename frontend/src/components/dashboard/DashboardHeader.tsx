@@ -51,42 +51,49 @@ const DashboardHeader: React.FC<Props> = ({
             Refresh
           </Button>
 
+          {/* Upload + Evaluate work in BOTH modes: web uploads go to the
+              backend's POST /evidence/upload and evaluate hits
+              evaluate-from-evidence. PDF export, cloud sync and OS evidence
+              collection stay desktop-only — a browser tab cannot run the
+              OS-level collector or write files to disk. */}
+          <ButtonGroup variant="outlined" size="small" color="inherit">
+            <Button
+              startIcon={<Upload />}
+              onClick={() =>
+                isFeatureAllowed('evidence_upload')
+                  ? onUploadClick()
+                  : onUpgradePrompt('Upload Evidence', 'Manually upload policy documents, screenshots, and compliance evidence mapped to your selected framework\u2019s controls.')
+              }
+              sx={{ minWidth: 130, color: 'text.primary' }}
+            >
+              Upload Evidence
+            </Button>
+            <Button
+              startIcon={evaluating ? <CircularProgress size={14} /> : <Assessment />}
+              onClick={onEvaluate}
+              disabled={evaluating}
+              sx={{ minWidth: 160, color: 'text.primary' }}
+            >
+              {evaluating ? 'Evaluating...' : 'Evaluate Compliance'}
+            </Button>
+            {isElectron && (
+              <Button
+                startIcon={exportingPDF ? <CircularProgress size={14} /> : <PictureAsPdf />}
+                onClick={() =>
+                  isFeatureAllowed('pdf_reports')
+                    ? onExportPDF()
+                    : onUpgradePrompt('PDF Reports', 'Generate PDF readiness reports with evidence coverage, gaps, and recommendations.')
+                }
+                disabled={exportingPDF || (!evaluation && isFeatureAllowed('pdf_reports'))}
+                sx={{ minWidth: 110, color: 'text.primary' }}
+              >
+                {exportingPDF ? 'Exporting...' : 'Export PDF'}
+              </Button>
+            )}
+          </ButtonGroup>
+
           {isElectron && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <ButtonGroup variant="outlined" size="small" color="inherit">
-                <Button
-                  startIcon={<Upload />}
-                  onClick={() =>
-                    isFeatureAllowed('evidence_upload')
-                      ? onUploadClick()
-                      : onUpgradePrompt('Upload Evidence', 'Manually upload policy documents, screenshots, and compliance evidence mapped to your selected framework\u2019s controls.')
-                  }
-                  sx={{ minWidth: 130, color: 'text.primary' }}
-                >
-                  Upload Evidence
-                </Button>
-                <Button
-                  startIcon={evaluating ? <CircularProgress size={14} /> : <Assessment />}
-                  onClick={onEvaluate}
-                  disabled={evaluating}
-                  sx={{ minWidth: 160, color: 'text.primary' }}
-                >
-                  {evaluating ? 'Evaluating...' : 'Evaluate Compliance'}
-                </Button>
-                <Button
-                  startIcon={exportingPDF ? <CircularProgress size={14} /> : <PictureAsPdf />}
-                  onClick={() =>
-                    isFeatureAllowed('pdf_reports')
-                      ? onExportPDF()
-                      : onUpgradePrompt('PDF Reports', 'Generate PDF readiness reports with evidence coverage, gaps, and recommendations.')
-                  }
-                  disabled={exportingPDF || (!evaluation && isFeatureAllowed('pdf_reports'))}
-                  sx={{ minWidth: 110, color: 'text.primary' }}
-                >
-                  {exportingPDF ? 'Exporting...' : 'Export PDF'}
-                </Button>
-              </ButtonGroup>
-
               {cloudConnected && (
                 <Button
                   variant="outlined"
@@ -100,12 +107,12 @@ const DashboardHeader: React.FC<Props> = ({
                   {syncingCloud ? 'Syncing...' : 'Sync'}
                 </Button>
               )}
+
+              <MotionButton variant="contained" startIcon={<CloudUpload />} onClick={onCollect} disabled={collectingEvidence}>
+                {collectingEvidence ? 'Collecting...' : 'Collect Evidence'}
+              </MotionButton>
             </Box>
           )}
-
-          <MotionButton variant="contained" startIcon={<CloudUpload />} onClick={onCollect} disabled={collectingEvidence}>
-            {collectingEvidence ? 'Collecting...' : 'Collect Evidence'}
-          </MotionButton>
           </Box>
         }
       />

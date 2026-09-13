@@ -119,6 +119,14 @@ export interface HttpEvaluationRecord {
   status?: string;
   evaluation_date?: string;
   taxonomy_version?: string | null;
+  /** Canonical per-status counts (Phase 5 contract; defaults 0 on legacy rows). */
+  control_count?: number;
+  compliant_controls?: number;
+  partial_controls?: number;
+  non_compliant_controls?: number;
+  not_assessed_controls?: number;
+  /** Plain-text recommendation strings from the canonical engine. */
+  recommendations?: string[];
 }
 
 /** Web /evidence/items row. */

@@ -25,10 +25,11 @@ vi.mock('../services/api', async (importOriginal) => {
   return {
     ...actual,
     getScoreTrend: vi.fn().mockResolvedValue([]),
+    httpGetEvaluationHistory: vi.fn().mockResolvedValue([]),
   };
 });
 
-import { getScoreTrend } from '../services/api';
+import { getScoreTrend, httpGetEvaluationHistory } from '../services/api';
 
 const theme = createTheme();
 
@@ -157,9 +158,11 @@ describe('EvaluationHistory', () => {
       expect(() => renderHistory()).not.toThrow();
     });
 
-    it('honours the ?fw= deep link — framework 4 trend is requested', async () => {
-      // Regression: History kept a local framework selector and ignored the
+    it('honours the ?fw= deep link — framework 4 history is requested (web mode)', async () => {
+      // Regression 1: History kept a local framework selector and ignored the
       // URL, so the sidebar switcher / Dashboard deep links had no effect.
+      // Regression 2: web mode only fetched the trend; it now fetches the
+      // persisted evaluation records through httpGetEvaluationHistory too.
       vi.mocked(useLicense).mockReturnValue({
         tier: 'pro',
         licenseInfo: { licenseId: 'CG-PRO-1', email: 'e@x.com', maxMachines: null, expiresAt: null, daysRemaining: null, isExpired: false, isGracePeriod: false },
@@ -168,7 +171,20 @@ describe('EvaluationHistory', () => {
         activateLicense: vi.fn(),
         deactivateLicense: vi.fn(),
       } as any);
-      vi.mocked(getScoreTrend).mockClear().mockResolvedValue([]);
+      vi.mocked(httpGetEvaluationHistory).mockClear().mockResolvedValue([
+        {
+          framework_id: 'gdpr_2016_679',
+          overall_score: 40,
+          compliance_status: 'partial',
+          evaluation_date: '2026-09-12T10:00:00Z',
+          control_count: 38,
+          compliant_controls: 10,
+          partial_controls: 5,
+          non_compliant_controls: 2,
+          not_assessed_controls: 21,
+          recommendations: ['Collect Art.30 records of processing'],
+        },
+      ]);
 
       render(
         <ThemeProvider theme={theme}>
@@ -179,7 +195,11 @@ describe('EvaluationHistory', () => {
       );
 
       await waitFor(() => {
-        expect(getScoreTrend).toHaveBeenCalledWith(4);
+        expect(httpGetEvaluationHistory).toHaveBeenCalledWith(4);
+      });
+      // The fetched record renders as a history row, not just a trend point.
+      await waitFor(() => {
+        expect(screen.getByText(/All Evaluations \(1\)/)).toBeInTheDocument();
       });
     });
 

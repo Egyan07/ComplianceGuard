@@ -169,6 +169,24 @@ export async function httpGetEvidenceItems(status?: string, search?: string): Pr
   }));
 }
 
+// The backend persists framework IDs as taxonomy strings ('soc2_v2017',
+// 'iso27001_v2022', 'hipaa_security_rule', 'gdpr_2016_679') — NOT numbers.
+// Legacy numeric rows (1-4) from the earliest schema are mapped too.
+export const FRAMEWORK_ID_STRINGS: Record<1 | 2 | 3 | 4, string[]> = {
+  1: ['soc2'],
+  2: ['iso27001'],
+  3: ['hipaa'],
+  4: ['gdpr'],
+};
+
+export function frameworkIdMatches(recordId: string | number | null | undefined, frameworkId: 1 | 2 | 3 | 4): boolean {
+  const raw = String(recordId ?? '').toLowerCase();
+  if (!raw) return false;
+  if (FRAMEWORK_ID_STRINGS[frameworkId].some((prefix) => raw.startsWith(prefix))) return true;
+  const numeric = Number(recordId);
+  return Number.isFinite(numeric) && numeric === frameworkId;
+}
+
 export async function httpGetScoreTrend(frameworkId: 1 | 2 | 3 | 4): Promise<Array<{
   date: string;
   score: number;
@@ -177,7 +195,7 @@ export async function httpGetScoreTrend(frameworkId: 1 | 2 | 3 | 4): Promise<Arr
   const response = await apiClient.get<HttpEvaluationRecord[]>('/compliance/evaluations/history');
   const rows: HttpEvaluationRecord[] = response.data ?? [];
   return rows
-    .filter((r) => Number(r.framework_id) === frameworkId)
+    .filter((r) => frameworkIdMatches(r.framework_id, frameworkId))
     .map((r) => ({
       date: r.evaluation_date ?? '',
       // Canonical contract: overall_score is 0-100 on both web and desktop.
@@ -277,6 +295,62 @@ export async function resetPasswordHttp(token: string, newPassword: string): Pro
     new_password: newPassword,
   });
   return res.data;
+}
+
+// ---- Web manual evidence upload ----
+
+export interface WebEvidenceUploadRequest {
+  file?: File;
+  /** Text-evidence mode: raw content is wrapped into a .txt file client-side
+      so the backend keeps ONE upload/persistence path (multipart). */
+  textContent?: string;
+  evidenceType: string;
+  title: string;
+  description?: string;
+  controlId?: string;
+  frameworkId?: 1 | 2 | 3 | 4;
+}
+
+/**
+ * Web-mode manual evidence upload → POST /evidence/upload (multipart).
+ * Mirrors the desktop IPC payload: control mapping and framework ride along
+ * as metadata; scoring maps via evidence_type only (canonical contract).
+ */
+export async function uploadEvidenceFileWeb(req: WebEvidenceUploadRequest): Promise<{ evidence_item_id: number }> {
+  const form = new FormData();
+
+  if (req.file) {
+    form.append('file', req.file, req.file.name);
+  } else if (typeof req.textContent === 'string') {
+    const safeTitle = (req.title || 'evidence').replace(/[^A-Za-z0-9._-]/g, '_').slice(0, 64);
+    const blob = new Blob([req.textContent], { type: 'text/plain' });
+    form.append('file', blob, `${safeTitle || 'evidence'}.txt`);
+  } else {
+    throw new Error('No file or text content provided.');
+  }
+
+  form.append('evidence_type', req.evidenceType);
+  form.append('title', req.title);
+  if (req.description) form.append('description', req.description);
+  if (req.controlId) form.append('control_id', req.controlId);
+  if (req.frameworkId) form.append('framework_id', String(req.frameworkId));
+
+  const response = await apiClient.post('/evidence/upload', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+}
+
+// ---- Web evaluation history (History page, web mode) ----
+
+/**
+ * Fetch the user's persisted evaluation records for the History page in web
+ * mode. Rows are normalised into the same shape the Electron IPC history
+ * returns so EvaluationHistory renders one code path.
+ */
+export async function httpGetEvaluationHistory(frameworkId: 1 | 2 | 3 | 4): Promise<HttpEvaluationRecord[]> {
+  const response = await apiClient.get<HttpEvaluationRecord[]>('/compliance/evaluations/history');
+  return (response.data ?? []).filter((r) => frameworkIdMatches(r.framework_id, frameworkId));
 }
 
 // ---- Cloud Dashboard ----

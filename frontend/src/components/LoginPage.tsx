@@ -14,6 +14,36 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { getErrorMessage } from '../lib/errors';
 
+const PASSWORD_RULE = 'At least 8 characters, with an uppercase letter, a lowercase letter, a digit, and a special character.';
+
+/**
+ * Flatten any API error payload into a human-readable string.
+ *
+ * FastAPI request-validation failures (422) return `detail` as an ARRAY of
+ * issue objects — feeding that straight into an Alert renders "[object
+ * Object]" (or worse, crashes React on a non-node value). Route the value
+ * through here so every failure becomes readable text.
+ */
+function extractApiError(err: unknown, fallback: string): string {
+  const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail;
+  if (typeof detail === 'string' && detail.trim()) return detail;
+  if (Array.isArray(detail)) {
+    const parts = detail
+      .map((issue) => {
+        if (issue && typeof issue === 'object') {
+          const msg = (issue as { msg?: unknown }).msg;
+          const loc = (issue as { loc?: unknown[] }).loc;
+          const field = Array.isArray(loc) ? loc.filter((p) => p !== 'body').join('.') : '';
+          return field ? `${field}: ${String(msg ?? '')}` : String(msg ?? '');
+        }
+        return String(issue);
+      })
+      .filter(Boolean);
+    if (parts.length) return parts.join('; ');
+  }
+  return getErrorMessage(err, fallback);
+}
+
 export default function LoginPage() {
   const { login, register } = useAuth();
   const [tab, setTab] = useState(0); // 0 = login, 1 = register
@@ -36,10 +66,18 @@ export default function LoginPage() {
         await register(email, password, firstName, lastName);
       }
     } catch (err) {
-      // axios rejects with { response: { data: { detail } } } for API errors;
-      // fall back to the shared error-message extraction for everything else.
-      const apiDetail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      setError(apiDetail ?? getErrorMessage(err, 'Something went wrong'));
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      const message = extractApiError(err, 'Something went wrong');
+      if (status === 400 && message.includes('Unable to register')) {
+        // Product decision: say what actually happened. The generic wording
+        // was an anti-enumeration choice, but it left users who simply forgot
+        // they had an account stranded with no next step.
+        setError('An account with this email already exists. Sign in instead, or use a different email.');
+      } else if (status === 400 && message.startsWith('Password must contain')) {
+        setError(`${message}. ${PASSWORD_RULE}`);
+      } else {
+        setError(message);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -132,10 +170,15 @@ export default function LoginPage() {
               type="password"
               size="small"
               fullWidth
-              sx={{ mb: 3 }}
+              sx={{ mb: 1 }}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              helperText={
+                tab === 1
+                  ? PASSWORD_RULE
+                  : undefined
+              }
             />
 
             <Button
@@ -143,7 +186,7 @@ export default function LoginPage() {
               variant="contained"
               fullWidth
               disabled={submitting}
-              sx={{ height: 40 }}
+              sx={{ height: 40, mt: tab === 1 ? 1 : 3 }}
             >
               {submitting ? <CircularProgress size={22} color="inherit" /> : tab === 0 ? 'Sign In' : 'Create Account'}
             </Button>

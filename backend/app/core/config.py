@@ -6,9 +6,9 @@ handling environment variables, database configuration, and application settings
 """
 
 # Pydantic v2 only — never import from pydantic.v1 here.
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, SettingsConfigDict, NoDecode
 from pydantic import Field, field_validator, model_validator
-from typing import Optional, List
+from typing import Annotated, Optional, List
 import secrets
 import os
 from enum import Enum
@@ -43,14 +43,17 @@ class Settings(BaseSettings):
 
     # API settings
     api_v1_prefix: str = Field("/api/v1")
-    # NOTE: When set via env var, use JSON array format (pydantic-settings v2 requirement):
-    # CORS_ORIGINS=["http://localhost:5173","http://localhost:3000"]
-    cors_origins: List[str] = Field(
+    # List fields are annotated NoDecode so pydantic-settings hands the RAW env
+    # string to the comma-split validators below instead of JSON-decoding it
+    # first. Both forms therefore work: CORS_ORIGINS=["http://localhost:5173"]
+    # (JSON) and CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+    # (comma string). Without NoDecode, a comma string aborts settings
+    # construction with SettingsError before the validators ever run — which
+    # made the API unbootable on machines with Windows user-level env vars set.
+    cors_origins: Annotated[List[str], NoDecode] = Field(
         ["http://localhost:5173", "http://localhost:3000"]
     )
-    # NOTE: When set via env var, use JSON array format (pydantic-settings v2 requirement):
-    # ALLOWED_HOSTS=["localhost","127.0.0.1"]
-    allowed_hosts: List[str] = Field(
+    allowed_hosts: Annotated[List[str], NoDecode] = Field(
         ["localhost", "127.0.0.1"]
     )
 
@@ -138,18 +141,13 @@ class Settings(BaseSettings):
     # <evidence_storage_path>/evidence/<user_id>/<item_uuid>_<safe_name>. Must
     # be writable by the API process and included in any backup policy.
     evidence_storage_path: str = Field("./storage")
-    # NOTE: When set via env var, use JSON array format (pydantic-settings v2 requirement):
-    # ALLOWED_FILE_TYPES=[".pdf",".doc",".docx",".xls",".xlsx",".ppt",".pptx",".txt",".json",".csv"]
-    allowed_file_types: List[str] = Field(
+    # NoDecode: accepts ALLOWED_FILE_TYPES=.pdf,.doc (comma string) as well as
+    # the JSON array form — see the cors_origins note above.
+    allowed_file_types: Annotated[List[str], NoDecode] = Field(
         [".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".json", ".csv"]
     )
 
     # Compliance evaluation settings
-    # NOTE: When set via env var, use JSON array format (pydantic-settings v2 requirement):
-    # DEFAULT_EVALUATION_SCOPE=["CC","A","C","PI","CA"]
-    default_evaluation_scope: List[str] = Field(
-        ["CC", "A", "C", "PI", "CA"]
-    )
     compliance_score_threshold: float = Field(0.8)
     evaluation_history_limit: int = Field(50)
 
@@ -177,9 +175,19 @@ class Settings(BaseSettings):
     @field_validator("cors_origins", mode="before")
     @classmethod
     def parse_cors_origins(cls, v):
-        """Parse CORS origins from environment variable string."""
+        """Parse CORS origins from env string — JSON array or comma-separated."""
         if isinstance(v, str):
-            return [origin.strip() for origin in v.split(",")]
+            # Tolerate a JSON-array-shaped string: NoDecode bypasses the JSON
+            # decode, so ["a","b"] arrives here verbatim.
+            if v.startswith("["):
+                try:
+                    import json
+                    parsed = json.loads(v)
+                    if isinstance(parsed, list):
+                        return [str(origin).strip() for origin in parsed]
+                except Exception:
+                    pass
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
         return v
 
     @field_validator("allowed_hosts", mode="before")
@@ -193,17 +201,26 @@ class Settings(BaseSettings):
     @field_validator("allowed_file_types", mode="before")
     @classmethod
     def parse_allowed_file_types(cls, v):
-        """Parse allowed file types from environment variable string."""
-        if isinstance(v, str):
-            return [ftype.strip() for ftype in v.split(",")]
-        return v
+        """Parse allowed file types from environment variable string.
 
-    @field_validator("default_evaluation_scope", mode="before")
-    @classmethod
-    def parse_evaluation_scope(cls, v):
-        """Parse evaluation scope from environment variable string."""
+        Accepts the comma form (``pdf,docx``) and normalizes bare extensions to
+        dot-prefixed ones (``pdf`` -> ``.pdf``) so an operator-set Windows env
+        var like ``ALLOWED_FILE_TYPES=pdf,doc,docx`` yields extensions that
+        match the upload endpoint's ``os.path.splitext`` comparisons.
+        """
         if isinstance(v, str):
-            return [scope.strip() for scope in v.split(",")]
+            stripped = v.strip()
+            # JSON-array form stays supported for deployments that used it.
+            if stripped.startswith("["):
+                try:
+                    import json
+                    parsed = json.loads(stripped)
+                    if isinstance(parsed, list):
+                        return [str(t).strip() for t in parsed]
+                except Exception:
+                    pass
+            parsed = [ftype.strip() for ftype in stripped.split(",") if ftype.strip()]
+            return [t if t.startswith(".") else f".{t}" for t in parsed]
         return v
 
     @field_validator("database_url")
@@ -272,16 +289,33 @@ class Settings(BaseSettings):
     @field_validator("aws_access_key_id", "aws_secret_access_key")
     @classmethod
     def validate_aws_credentials(cls, v, info):
-        """Validate AWS credentials are set together."""
-        data = info.data
-        aws_key_id = data.get("aws_access_key_id")
-        aws_secret = data.get("aws_secret_access_key")
+        """Clean placeholder values from a single AWS credential field.
 
-        # If one is set, both should be set
-        if bool(aws_key_id) != bool(aws_secret):
+        Placeholder values (``your-aws-secret-access-key``-style, as found in
+        copied .env templates or stray machine-level env vars) are treated as
+        unset — otherwise a template placeholder aborts the entire settings
+        construction and the API cannot boot at all.
+
+        The set-together PAIRING check lives in the ``_validate_aws_pair``
+        model validator below: per-field validators run per field in
+        declaration order and the second field's ``info.data`` does not
+        reliably contain the first, so a REAL credential pair would have
+        tripped a false "must be set together" error here (latent boot
+        blocker this fix removes).
+        """
+        placeholders = {"your-aws-access-key-id", "your-aws-secret-access-key", "changeme", ""}
+
+        if v is None:
+            return None
+        cleaned = v.strip()
+        return None if cleaned.lower() in placeholders else cleaned
+
+    @model_validator(mode="after")
+    def _validate_aws_pair(self) -> "Settings":
+        """Enforce the both-keys-together invariant on the CLEANED values."""
+        if bool(self.aws_access_key_id) != bool(self.aws_secret_access_key):
             raise ValueError("Both AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must be set together")
-
-        return v
+        return self
 
     model_config = SettingsConfigDict(
         env_file=".env",

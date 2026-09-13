@@ -66,6 +66,7 @@ const EnterprisePanel: React.FC = () => {
   }, [hasEnterprise]);
 
   const refreshRemediation = async () => {
+    if (!isElectron) return; // remediation plans are stored in the desktop SQLite DB
     const api = getElectronAPI();
     const res = await api.getRemediationPlan(1);
     if (res && res.plan) {
@@ -75,6 +76,10 @@ const EnterprisePanel: React.FC = () => {
 
   const handleSaveRemediation = async () => {
     if (!remControl.trim()) return;
+    if (!isElectron) {
+      setRemMsg('Remediation planning requires the desktop application.');
+      return;
+    }
     setRemSaving(true);
     setRemMsg(null);
     try {

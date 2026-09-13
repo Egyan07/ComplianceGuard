@@ -1,6 +1,8 @@
-import React from 'react';
-import { AppBar, Box, Chip, IconButton, Toolbar, Tooltip, Typography } from '@mui/material';
-import { DarkMode, LightMode } from '@mui/icons-material';
+import React, { useState } from 'react';
+import {
+  AppBar, Box, Chip, Divider, IconButton, ListItemIcon, Menu, MenuItem, Toolbar, Tooltip, Typography,
+} from '@mui/material';
+import { DarkMode, LightMode, Logout } from '@mui/icons-material';
 import StatusChip from '../ui/StatusChip';
 import { Tone } from '../../theme';
 import { useLicense } from '../../contexts/LicenseContext';
@@ -23,6 +25,7 @@ const Topbar: React.FC<TopbarProps> = ({ mode = 'light', onToggleMode }) => {
   const { tier } = useLicense();
   const { user, logout } = useAuth();
   const isElectron = isElectronMode();
+  const [accountAnchor, setAccountAnchor] = useState<null | HTMLElement>(null);
 
   return (
     <AppBar
@@ -103,8 +106,15 @@ const Topbar: React.FC<TopbarProps> = ({ mode = 'light', onToggleMode }) => {
         />
 
         {!isElectron && user && (
-          <Tooltip title={`Sign out (${user.email})`}>
-            <IconButton size="small" onClick={logout} sx={{ p: 0.25 }} aria-label="Sign out">
+          <Tooltip title={`Account (${user.email})`}>
+            <IconButton
+              size="small"
+              onClick={(e) => setAccountAnchor(e.currentTarget)}
+              sx={{ p: 0.25 }}
+              aria-label="Account menu"
+              aria-haspopup="menu"
+              aria-expanded={!!accountAnchor}
+            >
               <Box
                 sx={{
                   width: 26,
@@ -124,6 +134,36 @@ const Topbar: React.FC<TopbarProps> = ({ mode = 'light', onToggleMode }) => {
             </IconButton>
           </Tooltip>
         )}
+
+        {/* Web-mode account menu. Previously the avatar was wired straight to
+            logout() with only a hover tooltip saying so — one click silently
+            ended the session and bounced the user to the login page, which
+            read as a crash. A menu with the identity visible makes the state
+            explicit and keeps destructive logout behind a second click. */}
+        <Menu
+          anchorEl={accountAnchor}
+          open={!!accountAnchor}
+          onClose={() => setAccountAnchor(null)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        >
+          <Box sx={{ px: 2, py: 1 }}>
+            <Typography sx={{ fontSize: '0.85rem', fontWeight: 600 }}>
+              {user?.first_name ? `${user.first_name} ${user.last_name ?? ''}`.trim() : null}
+            </Typography>
+            <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+              {user?.email}
+            </Typography>
+          </Box>
+          <Divider />
+          <MenuItem
+            onClick={() => { setAccountAnchor(null); logout(); }}
+            sx={{ fontSize: '0.85rem' }}
+          >
+            <ListItemIcon><Logout fontSize="small" /></ListItemIcon>
+            Sign out
+          </MenuItem>
+        </Menu>
       </Toolbar>
     </AppBar>
   );

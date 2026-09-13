@@ -33,8 +33,8 @@ import { useLicense } from '../contexts/LicenseContext';
 import ScoreTrend from './ScoreTrend';
 import PageHeader from './ui/PageHeader';
 import EmptyState from './ui/EmptyState';
-import { getScoreTrend, evaluationHistoryToTrend } from '../services/api';
-import type { TrendPoint } from '../services/api';
+import { evaluationHistoryToTrend, httpGetEvaluationHistory } from '../services/api';
+import type { TrendPoint, EvaluationHistoryEntry } from '../services/api';
 import type { Recommendation } from '../services/api.types';
 import { getElectronAPI, isElectronMode } from '../services/electron';
 import { getErrorMessage } from '../lib/errors';
@@ -111,8 +111,34 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
           setTrendPoints(evaluationHistoryToTrend(rows));
         }
       } else {
-        const trend = await getScoreTrend(frameworkId);
-        setTrendPoints(trend);
+        // Web mode: the backend persists evaluations server-side — fetch the
+        // records AND derive the trend from the same response. The old
+        // "requires the desktop application" claim was simply false: only the
+        // OS evidence collector is desktop-only, not the evaluation history.
+        const rows = await httpGetEvaluationHistory(frameworkId);
+        const normalised: EvaluationRecord[] = rows.map((r, i) => ({
+          id: i,
+          framework_id: 0,
+          evaluation_date: r.evaluation_date ?? '',
+          overall_score: Math.round(r.overall_score ?? 0),
+          status: r.compliance_status ?? r.status ?? 'not_assessed',
+          findings: {
+            overall_score: r.overall_score,
+            status: r.compliance_status ?? r.status,
+            total_controls: r.control_count,
+            compliant_controls: r.compliant_controls,
+            partial_controls: r.partial_controls,
+            non_compliant_controls: r.non_compliant_controls,
+            not_assessed_controls: r.not_assessed_controls,
+            recommendations: (r.recommendations ?? []).map((text, j) => ({
+              control_id: `rec-${i}-${j}`,
+              recommendation: text,
+              priority: 'medium',
+            })),
+          },
+        }));
+        setEvaluations(normalised);
+        setTrendPoints(evaluationHistoryToTrend(normalised as EvaluationHistoryEntry[]));
       }
     } catch (err) {
       setError(getErrorMessage(err));
@@ -178,11 +204,11 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
             selectedFramework={selectedFramework}
             onFrameworkChange={(fw) => setSelectedFramework(fw)}
           />
-          {!isElectron ? (
+          {!isElectron && evaluations.length === 0 ? (
             <Alert severity="info" sx={{ mt: 1 }}>
-              Evaluation history requires the desktop application.
+              Run an evaluation on the Dashboard (web) or the desktop app (with OS evidence collection) to build history.
             </Alert>
-          ) : evaluations.length === 0 ? (
+          ) : isElectron && evaluations.length === 0 ? (
             <Paper sx={{ borderRadius: RADIUS.lg }}>
               <EmptyState
                 icon={<Assessment sx={{ fontSize: 42 }} />}

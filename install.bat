@@ -222,9 +222,22 @@ echo echo  ============================================ >> start.bat
 echo echo. >> start.bat
 echo echo  Starting backend API and frontend server... >> start.bat
 echo echo. >> start.bat
-echo start "ComplianceGuard - Backend" cmd /k "cd /d "%%~dp0backend" && python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload" >> start.bat
-echo echo  Waiting for backend to start... >> start.bat
-echo timeout /t 3 ^>nul >> start.bat
+echo rem Local dev pins SQLite + WORKERS=1 explicitly: stray machine-level environment >> start.bat
+echo rem variables (DATABASE_URL pointing at a Postgres that is not running, or >> start.bat
+echo rem comma-separated list vars) previously crashed the API on boot and made web >> start.bat
+echo rem mode appear completely broken. >> start.bat
+echo start "ComplianceGuard - Backend" cmd /k "cd /d "%%~dp0backend" && set DATABASE_URL=sqlite:///./complianceguard.db&& set WORKERS=1&& python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload" >> start.bat
+echo echo  Waiting for the backend to become healthy... >> start.bat
+echo set /a tries=0 >> start.bat
+echo :waitbackend >> start.bat
+echo set /a tries+=1 >> start.bat
+echo curl -s -o nul http://127.0.0.1:8000/health >> start.bat
+echo if not errorlevel 1 goto backendup >> start.bat
+echo if %%tries%% geq 30 echo  WARNING: backend not healthy after 30 seconds - check the backend window. >> start.bat
+echo if %%tries%% geq 30 goto backendup >> start.bat
+echo timeout /t 1 ^>nul >> start.bat
+echo goto waitbackend >> start.bat
+echo :backendup >> start.bat
 echo start "ComplianceGuard - Frontend" cmd /k "cd /d "%%~dp0frontend" && npm run dev" >> start.bat
 echo echo  Waiting for frontend to start... >> start.bat
 echo timeout /t 5 ^>nul >> start.bat

@@ -41,9 +41,17 @@ async def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db),
 ) -> User:
-    """Validate JWT and return the authenticated, verified user."""
+    """Validate JWT and return the authenticated, verified user.
+
+    The verification gate is enforced only when the deployment actually sends
+    email (EMAIL_ENABLED=true). With email disabled there is no way to ever
+    become verified — enforcing the gate would 403 every request from every
+    account forever, making the web app unusable out of the box (registration
+    succeeded, then literally everything failed with "check your inbox" while
+    no inbox message could ever arrive).
+    """
     user = _resolve_user(token, db)
-    if user.is_verified is False:
+    if user.is_verified is False and settings.email_enabled:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Email address not verified. Check your inbox for a verification link.",

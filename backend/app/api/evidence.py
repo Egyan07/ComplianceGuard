@@ -447,6 +447,10 @@ class UploadEvidenceResponse(BaseModel):
 async def upload_evidence_file(
     file: UploadFile = File(...),
     evidence_type: str = "manual_upload",
+    title: Optional[str] = None,
+    description: Optional[str] = None,
+    control_id: Optional[str] = None,
+    framework_id: Optional[str] = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -457,6 +461,12 @@ async def upload_evidence_file(
     (MAX_FILE_SIZE_MB, ALLOWED_FILE_TYPES). The file bytes are streamed in
     1 MB chunks and rejected as soon as the running total exceeds the limit —
     avoiding loading multi-gigabyte uploads fully into memory before refusing.
+
+    ``title``/``description``/``control_id``/``framework_id`` are optional
+    metadata the web upload dialog sends alongside the file (mirroring what
+    the desktop IPC path stores). They are recorded on the item's JSON data
+    and never affect scoring — the canonical engine maps evidence via
+    evidence_type only.
     """
     filename = file.filename or "upload"
 
@@ -515,6 +525,11 @@ async def upload_evidence_file(
             "storage_path": stored_path,
             "uploaded_by": current_user.email,
             "uploaded_at": datetime.now(timezone.utc).isoformat(),
+            # Optional web-dialog metadata (never used by the scoring engine).
+            **({"title": title} if title else {}),
+            **({"description": description} if description else {}),
+            **({"control_id": control_id} if control_id else {}),
+            **({"framework_id": framework_id} if framework_id else {}),
         },
     )
     db.add(item)
