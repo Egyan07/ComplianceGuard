@@ -19,7 +19,7 @@ python-multipart>=0.0.9
 # `pip install` no longer requires a Rust toolchain on the install host.
 pydantic>=2.10,<3
 pydantic-settings>=2.6,<3
-python-dotenv>=1.0
+python-dotenv>=1.2.3
 
 # HTTP and API clients
 httpx>=0.26,<1
