@@ -15,17 +15,30 @@ import pytest
 from alembic import command
 from alembic.config import Config as AlembicConfig
 
-from app.core.database import create_database_engine
+from app.core.database import alembic_config_url, create_database_engine
 
 ALEMBIC_INI = os.path.join(os.path.dirname(__file__), "..", "..", "alembic.ini")
 BEFORE_IS_VERIFIED = "1a721f30b3f7"  # down_revision of 99f5c91a02f7
+
+
+def test_percent_escaped_url_survives_alembic_config():
+    """SQLAlchemy 2.1 encodes the in-memory URL; ConfigParser treats % as syntax.
+
+    Regression for the suite-wide ValueError: without the escaping, setting
+    ``sqlite:///%3Amemory%3A`` raises before a single test can run.
+    """
+    cfg = AlembicConfig()
+
+    cfg.set_main_option("sqlalchemy.url", alembic_config_url("sqlite:///%3Amemory%3A"))
+
+    assert cfg.get_main_option("sqlalchemy.url") == "sqlite:///%3Amemory%3A"
 
 
 @pytest.mark.skipif(not os.path.exists(ALEMBIC_INI), reason="alembic.ini not found")
 def test_is_verified_migration_on_populated_db():
     engine = create_database_engine(testing=True)
     cfg = AlembicConfig(ALEMBIC_INI)
-    cfg.set_main_option("sqlalchemy.url", str(engine.url))
+    cfg.set_main_option("sqlalchemy.url", alembic_config_url(engine.url))
 
     with engine.connect() as conn:
         cfg.attributes["connection"] = conn
