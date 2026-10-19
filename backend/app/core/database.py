@@ -13,6 +13,21 @@ from typing import Generator
 from app.core.config import get_database_url, settings
 
 
+def alembic_config_url(url: object) -> str:
+    """Return a database URL escaped for Alembic's ``ConfigParser``.
+
+    ``set_main_option`` goes through ``ConfigParser`` with ``%``-interpolation
+    enabled, so any URL that carries a percent escape raises
+    ``ValueError: invalid interpolation syntax``. SQLAlchemy 2.1 renders the
+    in-memory SQLite URL as ``sqlite:///%3Amemory%3A`` (2.0 rendered it as
+    ``sqlite:///:memory:``), which is what broke the suite on upgrade.
+
+    Doubling the percent signs survives interpolation and ``get_main_option``
+    un-escapes them again, so the URL Alembic receives is the original one.
+    """
+    return str(url).replace("%", "%%")
+
+
 # Database URL configuration
 def get_database_url_for_environment(testing: bool = False) -> str:
     """Get database URL based on environment and testing flag."""
@@ -128,7 +143,7 @@ def create_test_database():
     from alembic.config import Config as AlembicConfig
 
     alembic_cfg = AlembicConfig(alembic_ini)
-    alembic_cfg.set_main_option("sqlalchemy.url", str(test_engine.url))
+    alembic_cfg.set_main_option("sqlalchemy.url", alembic_config_url(test_engine.url))
     # Pin the same engine's connection so the migrations operate on the
     # in-memory DB pytest is using, not a fresh file-backed one.
     with test_engine.connect() as connection:
