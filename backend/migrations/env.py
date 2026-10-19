@@ -3,7 +3,7 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 from alembic import context
 
-from app.core.database import Base
+from app.core.database import Base, alembic_config_url
 from app.core.config import settings
 
 # Import all models so Base.metadata is populated
@@ -12,7 +12,7 @@ import app.models  # noqa: F401
 config = context.config
 
 # Set the database URL from app settings
-config.set_main_option("sqlalchemy.url", settings.database_url)
+config.set_main_option("sqlalchemy.url", alembic_config_url(settings.database_url))
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)

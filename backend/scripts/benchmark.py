@@ -120,17 +120,21 @@ async def main() -> int:
             f"{BASE}/auth/register",
             json={"email": EMAIL, "password": PASSWORD, "first_name": "Bench", "last_name": "User"},
         )
-        if reg.status_code >= 400 and "already exists" not in reg.text:
-            print(f"register failed: {reg.status_code} {reg.text[:200]}")
-            return 1
-        token = reg.json().get("access_token", "")
+        token = reg.json().get("access_token", "") if reg.status_code < 400 else ""
         if not token:
-            # Already registered — log in to get a fresh token.
+            # No token means the account exists already: this script runs twice
+            # per perf run (serial, then parallel), so the second pass always
+            # collides with the user the first pass created. Log in instead of
+            # matching on the error text, which the API is free to reword --
+            # "Unable to register with this email address" broke the old
+            # "already exists" check and failed every scheduled perf run.
             login = await client.post(
                 f"{BASE}/auth/login",
                 data={"username": EMAIL, "password": PASSWORD},
             )
             if login.status_code >= 400:
+                if reg.status_code >= 400:
+                    print(f"register failed: {reg.status_code} {reg.text[:200]}")
                 print(f"login failed: {login.status_code} {login.text[:200]}")
                 return 1
             token = login.json()["access_token"]
