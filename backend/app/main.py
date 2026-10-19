@@ -43,7 +43,7 @@ from app.api.evidence import router as evidence_router
 from app.api.machines import router as machines_router
 from app.core.config import settings
 from app.core.constants import VERSION
-from app.core.database import Base, engine, SessionLocal
+from app.core.database import Base, engine, SessionLocal, alembic_config_url
 from app.core.exceptions import ComplianceAppError
 from app.core.observability import (
     APP_INFO,
@@ -120,7 +120,7 @@ def run_migrations() -> None:
     alembic_ini = os.path.join(os.path.dirname(__file__), "..", "alembic.ini")
     if os.path.exists(alembic_ini):
         alembic_cfg = AlembicConfig(alembic_ini)
-        alembic_cfg.set_main_option("sqlalchemy.url", str(engine.url))
+        alembic_cfg.set_main_option("sqlalchemy.url", alembic_config_url(engine.url))
         alembic_command.upgrade(alembic_cfg, "head")
     else:
         # Fallback for environments without alembic.ini (e.g. ad-hoc scripts)
