@@ -22,7 +22,7 @@ boto3>=1.43.111
 botocore>=1.43.111
 sentry-sdk[fastapi]>=2.71.0
 aiosmtplib>=5.1.3
-cryptography>=50.0.1
+cryptography>=50.0.2
 PyYAML>=6.0,<7
 prometheus-client>=0.26.0,<1
 
