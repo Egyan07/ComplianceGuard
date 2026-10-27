@@ -56,3 +56,9 @@ Controls are defined in YAML (`shared/frameworks/*.yaml`) — the single source 
 ## Reporting Bugs / Security Issues
 
 Open a [GitHub issue](https://github.com/Egyan07/ComplianceGuard/issues) for bugs. For security vulnerabilities, follow [SECURITY.md](SECURITY.md) — do not open a public issue.
+
+## Contributions and Licence
+
+ComplianceGuard is licensed under the [Business Source License 1.1](LICENSE). By opening a pull request you agree that your contribution is your own work and is licensed to the project under those same terms.
+
+These terms cover framework definitions and documentation as well as code.
