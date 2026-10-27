@@ -67,6 +67,12 @@ def evaluate_from_evidence_canonical(
         "control_results": {
             cid: {
                 "control_id": c.control_id,
+                # Title and category travel with the result: the ControlHeatmap
+                # groups rows by control_category and labels them from
+                # control_title, so dropping them renders every row as
+                # "CC1.1 CC1.1" in one flat group.
+                "control_title": c.control_title,
+                "control_category": c.control_category,
                 "score": c.score,
                 "status": c.status,
                 "required_evidence": c.required_evidence,

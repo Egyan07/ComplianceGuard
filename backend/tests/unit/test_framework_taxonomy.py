@@ -163,6 +163,34 @@ class TestSoc2GoldenTaxonomy:
                     f"evidence alone would mark it compliant"
                 )
 
+    def test_hybrid_controls_require_both_collector_and_manual_types(self):
+        """A hybrid control must be partly satisfiable by endpoint telemetry
+        and provably not fully satisfiable by it. If every required type is
+        collector-produced the label is really automatable and a scan would
+        mark it compliant; if none is, the label is really manual_upload."""
+        with open(os.path.join(_SHARED_DIR, "evidence-vocabulary.json"), "r", encoding="utf-8") as fh:
+            vocab = json.load(fh)
+        collector_types = {
+            t["type"] for t in vocab["canonical_types"]
+            if any(p.endswith("_collector") for p in t.get("producers", []))
+        }
+        data = _load_soc2()
+        for control in data["controls"]:
+            if control.get("assessment_mode") != "hybrid":
+                continue
+            required = set(control.get("required_evidence", []))
+            assert required, f"{control['id']} hybrid must have requirements"
+            assert required & collector_types, (
+                f"{control['id']} is hybrid but no required type is "
+                f"collector-produced ({sorted(required)}) — nothing a scan "
+                f"produces would move it, so it is manual_upload"
+            )
+            assert required - collector_types, (
+                f"{control['id']} is hybrid but every required type is "
+                f"collector-produced ({sorted(required)}) — endpoint evidence "
+                f"alone would mark it compliant"
+            )
+
 
 class TestIsoGoldenTaxonomy:
     """ISO 27001 taxonomy invariants — tightened in the 2022 migration phase."""
