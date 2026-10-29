@@ -1,0 +1,503 @@
+# NIST Cybersecurity Framework (CSF) 2.0
+#
+# Canonical NIST CSF 2.0 definition. Read by the scoring engines
+# (backend canonical_evidence.py and electron/processing/canonical-engine.js),
+# the desktop framework browser, and the generated frontend evidence catalog.
+# Do not maintain a second copy.
+#
+# Scope (first batch):
+#   - Identify: ID.AM (7), ID.RA (10), ID.IM (4) = 21 subcategories.
+#   - Protect:  PR.AA (6), PR.AT (2), PR.DS (4), PR.PS (6), PR.IR (4) = 22.
+#   Total: 43 subcategories. Govern, Detect, Respond, and Recover are not
+#   yet included.
+#
+# Subcategory IDs follow the official CSF 2.0 Core and are intentionally
+# non-contiguous (e.g., ID.AM skips 06; PR.DS jumps 02 -> 10). Descriptions
+# are the verbatim CSF 2.0 subcategory statements. Titles are short labels.
+# `category` is the CSF category code (ID.AM, ID.RA, ...), the level at which
+# a subcategory lives; the function (ID, PR) is the first token of that code.
+#
+# assessment_mode (product classification, not part of the CSF Core):
+#   automatable   - every required evidence type is produced by the endpoint
+#                   collectors; the coverage engine may fully score it.
+#   hybrid        - at least one required type is collector-produced and at
+#                   least one is manual; endpoint evidence gives partial
+#                   coverage, full coverage needs uploaded manual evidence.
+#   manual_upload - no required type is collector-produced; only uploaded
+#                   manual evidence can satisfy it.
+#
+# risk_level (house judgment; CSF assigns none):
+#   high   - a failure directly enables unauthorized access or data exposure
+#            (the PR.AA and PR.DS categories).
+#   medium - everywhere else in this batch.
+#   (no `low` is used in this batch.)
+#
+framework:
+  id: nist_csf_v2
+  name: NIST Cybersecurity Framework 2.0
+  version: '2.0'
+  taxonomy: 'Cybersecurity Framework (CSF) 2.0 Core — Functions, Categories, Subcategories'
+  scope_note: >-
+    First batch: the Identify (ID.AM, ID.RA, ID.IM) and Protect (PR.AA, PR.AT,
+    PR.DS, PR.PS, PR.IR) functions — 43 subcategories. The Govern, Detect,
+    Respond, and Recover functions are not yet included.
+  status_vocabulary:
+    - compliant
+    - partial
+    - non_compliant
+    - not_assessed
+controls:
+  # ── ID.AM  Asset Management ─────────────────────────────────────────────────
+  - id: ID.AM-01
+    title: Hardware Inventory
+    description: Inventories of hardware managed by the organization are maintained.
+    category: ID.AM
+    control_objective: Maintain a complete, current inventory of organization-managed hardware assets.
+    implementation_guidance: Combine endpoint-collected hardware data with a maintained asset register that covers devices without an agent.
+    risk_level: medium
+    assessment_mode: hybrid
+    required_evidence:
+      - system_configs
+      - policy_document
+  - id: ID.AM-02
+    title: Software and Systems Inventory
+    description: Inventories of software, services, and systems managed by the organization are maintained.
+    category: ID.AM
+    control_objective: Maintain a current inventory of managed software, services, and systems.
+    implementation_guidance: Supplement collector-reported installed software and services with a register covering SaaS and unmonitored systems.
+    risk_level: medium
+    assessment_mode: hybrid
+    required_evidence:
+      - system_configs
+      - policy_document
+  - id: ID.AM-03
+    title: Network and Data Flow Mapping
+    description: Representations of the organization's authorized network communication and internal and external network data flows are maintained.
+    category: ID.AM
+    control_objective: Maintain representations of authorized network communications and internal and external data flows.
+    implementation_guidance: Use collected network configuration to inform topology; maintain authorized data-flow diagrams and documentation manually.
+    risk_level: medium
+    assessment_mode: hybrid
+    required_evidence:
+      - network_configs
+      - policy_document
+  - id: ID.AM-04
+    title: Supplier Services Inventory
+    description: Inventories of services provided by suppliers are maintained.
+    category: ID.AM
+    control_objective: Maintain an inventory of services provided by suppliers.
+    implementation_guidance: Keep a documented register of third-party and supplier services; no collector enumerates external suppliers.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: ID.AM-05
+    title: Asset Prioritization
+    description: Assets are prioritized based on classification, criticality, resources, and impact on the mission.
+    category: ID.AM
+    control_objective: Prioritize assets based on classification, criticality, resources, and mission impact.
+    implementation_guidance: Document classification and criticality decisions; these are business judgments not derivable from telemetry.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: ID.AM-07
+    title: Data Inventory
+    description: Inventories of data and corresponding metadata for designated data types are maintained.
+    category: ID.AM
+    control_objective: Maintain inventories of data and corresponding metadata for designated data types.
+    implementation_guidance: Maintain a data catalog manually; no collector produces a data inventory.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: ID.AM-08
+    title: Asset Lifecycle Management
+    description: Systems, hardware, software, services, and data are managed throughout their life cycles.
+    category: ID.AM
+    control_objective: Manage systems, hardware, software, services, and data throughout their life cycles.
+    implementation_guidance: Document lifecycle processes (procurement, maintenance, secure disposal); telemetry shows point-in-time state only, not lifecycle governance.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  # ── ID.RA  Risk Assessment ──────────────────────────────────────────────────
+  - id: ID.RA-01
+    title: Vulnerability Identification
+    description: Vulnerabilities in assets are identified, validated, and recorded.
+    category: ID.RA
+    control_objective: Identify, validate, and record vulnerabilities in assets.
+    implementation_guidance: Record vulnerability assessment results; no collector produces vulnerability-scan evidence in this vocabulary.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - audit_reports
+  - id: ID.RA-02
+    title: Threat Intelligence Intake
+    description: Cyber threat intelligence is received from information sharing forums and sources.
+    category: ID.RA
+    control_objective: Receive cyber threat intelligence from information-sharing forums and sources.
+    implementation_guidance: Document threat-intelligence sources and the intake process; not produced by any collector.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: ID.RA-03
+    title: Threat Identification
+    description: Internal and external threats to the organization are identified and recorded.
+    category: ID.RA
+    control_objective: Identify and record internal and external threats to the organization.
+    implementation_guidance: Document threat analysis; an analytical process not captured by telemetry.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: ID.RA-04
+    title: Impact and Likelihood Analysis
+    description: Potential impacts and likelihoods of threats exploiting vulnerabilities are identified and recorded.
+    category: ID.RA
+    control_objective: Identify and record potential impacts and likelihoods of threats exploiting vulnerabilities.
+    implementation_guidance: Document impact and likelihood assessments; human risk judgment not derivable from collected data.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: ID.RA-05
+    title: Inherent Risk Prioritization
+    description: Threats, vulnerabilities, likelihoods, and impacts are used to understand inherent risk and inform risk response prioritization.
+    category: ID.RA
+    control_objective: Use threats, vulnerabilities, likelihoods, and impacts to understand inherent risk and prioritize response.
+    implementation_guidance: Document inherent-risk determination and prioritization rationale; a judgment process.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: ID.RA-06
+    title: Risk Response Management
+    description: Risk responses are chosen, prioritized, planned, tracked, and communicated.
+    category: ID.RA
+    control_objective: Choose, prioritize, plan, track, and communicate risk responses.
+    implementation_guidance: Maintain a risk treatment register or plan; a documented process.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: ID.RA-07
+    title: Change and Exception Management
+    description: Changes and exceptions are managed, assessed for risk impact, recorded, and tracked.
+    category: ID.RA
+    control_objective: Manage, assess, record, and track changes and exceptions for risk impact.
+    implementation_guidance: Document change and exception approvals and their risk assessments; collectors do not capture approvals.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: ID.RA-08
+    title: Vulnerability Disclosure Handling
+    description: Processes for receiving, analyzing, and responding to vulnerability disclosures are established.
+    category: ID.RA
+    control_objective: Establish processes to receive, analyze, and respond to vulnerability disclosures.
+    implementation_guidance: Document the vulnerability-disclosure handling process.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: ID.RA-09
+    title: Supply Chain Integrity Assessment
+    description: The authenticity and integrity of hardware and software are assessed prior to acquisition and use.
+    category: ID.RA
+    control_objective: Assess the authenticity and integrity of hardware and software prior to acquisition and use.
+    implementation_guidance: Document pre-acquisition authenticity and integrity checks; a procurement process.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: ID.RA-10
+    title: Critical Supplier Assessment
+    description: Critical suppliers are assessed prior to acquisition.
+    category: ID.RA
+    control_objective: Assess critical suppliers prior to acquisition.
+    implementation_guidance: Retain completed supplier risk-assessment reports.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - audit_reports
+  # ── ID.IM  Improvement ──────────────────────────────────────────────────────
+  - id: ID.IM-01
+    title: Improvement from Evaluations
+    description: Improvements are identified from evaluations.
+    category: ID.IM
+    control_objective: Identify improvements from evaluations.
+    implementation_guidance: Capture improvement items in evaluation and assessment records.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - audit_reports
+  - id: ID.IM-02
+    title: Improvement from Tests and Exercises
+    description: Improvements are identified from security tests and exercises, including those done in coordination with suppliers and relevant third parties.
+    category: ID.IM
+    control_objective: Identify improvements from security tests and exercises, including those with suppliers and third parties.
+    implementation_guidance: Capture improvements in test reports and lessons-learned records.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - audit_reports
+  - id: ID.IM-03
+    title: Improvement from Operations
+    description: Improvements are identified from execution of operational processes, procedures, and activities.
+    category: ID.IM
+    control_objective: Identify improvements from execution of operational processes, procedures, and activities.
+    implementation_guidance: Document operational process-review outcomes.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: ID.IM-04
+    title: Response and Recovery Plan Management
+    description: Incident response plans and other cybersecurity plans that affect operations are established, communicated, maintained, and improved.
+    category: ID.IM
+    control_objective: Establish, communicate, maintain, and improve incident response and other cybersecurity plans that affect operations.
+    implementation_guidance: Maintain incident response and related cybersecurity plans as controlled documents.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  # ── PR.AA  Identity Management, Authentication, and Access Control ───────────
+  - id: PR.AA-01
+    title: Identity and Credential Management
+    description: Identities and credentials for authorized users, services, and hardware are managed by the organization.
+    category: PR.AA
+    control_objective: Manage identities and credentials for authorized users, services, and hardware.
+    implementation_guidance: Collect account inventory and MFA state; maintain the credential-management policy and non-collected service and hardware identities manually.
+    risk_level: high
+    assessment_mode: hybrid
+    required_evidence:
+      - user_provisioning
+      - policy_document
+  - id: PR.AA-02
+    title: Identity Proofing
+    description: Identities are proofed and bound to credentials based on the context of interactions.
+    category: PR.AA
+    control_objective: Proof identities and bind them to credentials based on the context of interactions.
+    implementation_guidance: Document the identity-proofing and verification process; not captured by collectors.
+    risk_level: high
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: PR.AA-03
+    title: Authentication
+    description: Users, services, and hardware are authenticated.
+    category: PR.AA
+    control_objective: Authenticate users, services, and hardware.
+    implementation_guidance: Verified from endpoint and identity collectors (MFA enforcement and authentication settings).
+    risk_level: high
+    assessment_mode: automatable
+    required_evidence:
+      - security_policies
+      - user_provisioning
+  - id: PR.AA-04
+    title: Identity Assertion Protection
+    description: Identity assertions are protected, conveyed, and verified.
+    category: PR.AA
+    control_objective: Protect, convey, and verify identity assertions.
+    implementation_guidance: Document protection of identity assertions (SSO and token mechanisms); not captured by current collectors.
+    risk_level: high
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: PR.AA-05
+    title: Access and Entitlement Management
+    description: Access permissions, entitlements, and authorizations are defined in a policy, managed, enforced, and reviewed, and incorporate the principles of least privilege and separation of duties.
+    category: PR.AA
+    control_objective: Define, manage, enforce, and review access permissions and entitlements under least privilege and separation of duties.
+    implementation_guidance: Collect entitlement, account, and access-review data; maintain the least-privilege and separation-of-duties policy and review sign-off manually.
+    risk_level: high
+    assessment_mode: hybrid
+    required_evidence:
+      - user_provisioning
+      - policy_document
+  - id: PR.AA-06
+    title: Physical Access Control
+    description: Physical access to assets is managed, monitored, and enforced commensurate with risk.
+    category: PR.AA
+    control_objective: Manage, monitor, and enforce physical access to assets commensurate with risk.
+    implementation_guidance: Document physical access controls (badges, locks, facility monitoring); outside collector scope.
+    risk_level: high
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  # ── PR.AT  Awareness and Training ───────────────────────────────────────────
+  - id: PR.AT-01
+    title: Security Awareness Training
+    description: Personnel are provided with awareness and training so that they possess the knowledge and skills to perform general tasks with cybersecurity risks in mind.
+    category: PR.AT
+    control_objective: Provide personnel with awareness and training to perform general tasks with cybersecurity risks in mind.
+    implementation_guidance: Evidenced by security awareness training completion records.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - training_records
+  - id: PR.AT-02
+    title: Role-Based Security Training
+    description: Individuals in specialized roles are provided with awareness and training so that they possess the knowledge and skills to perform relevant tasks with cybersecurity risks in mind.
+    category: PR.AT
+    control_objective: Provide individuals in specialized roles with awareness and training to perform relevant tasks with cybersecurity risks in mind.
+    implementation_guidance: Evidenced by role-based training records.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - training_records
+  # ── PR.DS  Data Security ────────────────────────────────────────────────────
+  - id: PR.DS-01
+    title: Data-at-Rest Protection
+    description: The confidentiality, integrity, and availability of data-at-rest are protected.
+    category: PR.DS
+    control_objective: Protect the confidentiality, integrity, and availability of data at rest.
+    implementation_guidance: Evidenced by the encryption policy and key management; encryption_policies has no collector in this vocabulary.
+    risk_level: high
+    assessment_mode: manual_upload
+    required_evidence:
+      - encryption_policies
+  - id: PR.DS-02
+    title: Data-in-Transit Protection
+    description: The confidentiality, integrity, and availability of data-in-transit are protected.
+    category: PR.DS
+    control_objective: Protect the confidentiality, integrity, and availability of data in transit.
+    implementation_guidance: Endpoint security configuration contributes partial coverage; the transit-encryption policy carries the encryption evidence and is manual.
+    risk_level: high
+    assessment_mode: hybrid
+    required_evidence:
+      - security_policies
+      - encryption_policies
+  - id: PR.DS-10
+    title: Data-in-Use Protection
+    description: The confidentiality, integrity, and availability of data-in-use are protected.
+    category: PR.DS
+    control_objective: Protect the confidentiality, integrity, and availability of data in use.
+    implementation_guidance: Document runtime and in-use data protection; not captured by collectors.
+    risk_level: high
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: PR.DS-11
+    title: Data Backup
+    description: Backups of data are created, protected, maintained, and tested.
+    category: PR.DS
+    control_objective: Create, protect, maintain, and test backups of data.
+    implementation_guidance: Evidenced by backup and restore records; no collector produces backup logs.
+    risk_level: high
+    assessment_mode: manual_upload
+    required_evidence:
+      - backup_logs
+  # ── PR.PS  Platform Security ────────────────────────────────────────────────
+  - id: PR.PS-01
+    title: Configuration Management
+    description: Configuration management practices are established and applied.
+    category: PR.PS
+    control_objective: Establish and apply configuration management practices.
+    implementation_guidance: Collect actual configuration and hardening state; maintain the configuration-management policy and baselines manually.
+    risk_level: medium
+    assessment_mode: hybrid
+    required_evidence:
+      - system_configs
+      - security_policies
+      - policy_document
+  - id: PR.PS-02
+    title: Software Maintenance
+    description: Software is maintained, replaced, and removed commensurate with risk.
+    category: PR.PS
+    control_objective: Maintain, replace, and remove software commensurate with risk.
+    implementation_guidance: Collect installed-software and patch state on monitored hosts; maintain the patch and maintenance process manually.
+    risk_level: medium
+    assessment_mode: hybrid
+    required_evidence:
+      - system_configs
+      - policy_document
+  - id: PR.PS-03
+    title: Hardware Maintenance
+    description: Hardware is maintained, replaced, and removed commensurate with risk.
+    category: PR.PS
+    control_objective: Maintain, replace, and remove hardware commensurate with risk.
+    implementation_guidance: Collect hardware state on monitored hosts; maintain the maintenance, replacement, and disposal process manually.
+    risk_level: medium
+    assessment_mode: hybrid
+    required_evidence:
+      - system_configs
+      - policy_document
+  - id: PR.PS-04
+    title: Log Generation and Availability
+    description: Log records are generated and made available for continuous monitoring.
+    category: PR.PS
+    control_objective: Generate log records and make them available for continuous monitoring.
+    implementation_guidance: Verified from collected logs and audit-policy configuration.
+    risk_level: medium
+    assessment_mode: automatable
+    required_evidence:
+      - event_logs
+      - security_policies
+  - id: PR.PS-05
+    title: Unauthorized Software Prevention
+    description: Installation and execution of unauthorized software are prevented.
+    category: PR.PS
+    control_objective: Prevent the installation and execution of unauthorized software.
+    implementation_guidance: Collect installed software and application-control settings; maintain the authorized-software baseline and policy manually.
+    risk_level: medium
+    assessment_mode: hybrid
+    required_evidence:
+      - system_configs
+      - security_policies
+      - policy_document
+  - id: PR.PS-06
+    title: Secure Software Development
+    description: Secure software development practices are integrated, and their performance is monitored throughout the software development life cycle.
+    category: PR.PS
+    control_objective: Integrate secure software development practices and monitor their performance throughout the software development life cycle.
+    implementation_guidance: Document secure SDLC practices; not captured by infrastructure collectors.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  # ── PR.IR  Technology Infrastructure Resilience ─────────────────────────────
+  - id: PR.IR-01
+    title: Network Protection
+    description: Networks and environments are protected from unauthorized logical access and usage.
+    category: PR.IR
+    control_objective: Protect networks and environments from unauthorized logical access and usage.
+    implementation_guidance: Verified from collected firewall rules, network segmentation, and access settings.
+    risk_level: medium
+    assessment_mode: automatable
+    required_evidence:
+      - firewall_configs
+      - network_configs
+      - security_policies
+  - id: PR.IR-02
+    title: Environmental Protection
+    description: The organization's technology assets are protected from environmental threats.
+    category: PR.IR
+    control_objective: Protect the organization's technology assets from environmental threats.
+    implementation_guidance: Document environmental controls (power, cooling, fire suppression, facilities); outside collector scope.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: PR.IR-03
+    title: Resilience Mechanisms
+    description: Mechanisms are implemented to achieve resilience requirements in normal and adverse situations.
+    category: PR.IR
+    control_objective: Implement mechanisms to achieve resilience requirements in normal and adverse situations.
+    implementation_guidance: Document resilience design (redundancy, failover, disaster recovery); not captured by collectors.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: PR.IR-04
+    title: Capacity Management
+    description: Adequate resource capacity to ensure availability is maintained.
+    category: PR.IR
+    control_objective: Maintain adequate resource capacity to ensure availability.
+    implementation_guidance: Document capacity planning; telemetry shows point-in-time utilization, not capacity governance.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
