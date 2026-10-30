@@ -1,9 +1,10 @@
 # NIST Cybersecurity Framework (CSF) 2.0
 #
-# Canonical NIST CSF 2.0 definition. Read by the scoring engines
-# (backend canonical_evidence.py and electron/processing/canonical-engine.js),
-# the desktop framework browser, and the generated frontend evidence catalog.
-# Do not maintain a second copy.
+# Canonical NIST CSF 2.0 definition. Intended as the single source for the
+# scoring engines (backend canonical_evidence.py and
+# electron/processing/canonical-engine.js), the desktop framework browser, and
+# the generated frontend evidence catalog. The loader is not yet pointed at this
+# file (follow-up), so nothing reads it yet. Do not maintain a second copy.
 #
 # Scope (first batch):
 #   - Identify: ID.AM (7), ID.RA (10), ID.IM (4) = 21 subcategories.
@@ -33,7 +34,7 @@
 #   (no `low` is used in this batch.)
 #
 framework:
-  id: nist_csf_v2
+  id: nist_csf_2_0
   name: NIST Cybersecurity Framework 2.0
   version: '2.0'
   taxonomy: 'Cybersecurity Framework (CSF) 2.0 Core — Functions, Categories, Subcategories'
