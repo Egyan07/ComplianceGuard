@@ -273,3 +273,145 @@ class TestGeneratedCatalogConsistency:
                 f"{const_name} in evidenceCatalog.generated.ts is stale — "
                 "regenerate with `npm run generate:evidence`"
             )
+
+
+class TestNistSchemaAndInvariants:
+    """Schema and invariant checks for the NIST CSF 2.0 definition.
+
+    These are derivable from the file plus the canonical vocabulary. They do
+    NOT assert the golden subcategory list (exact IDs, category membership,
+    counts) — that belongs in a golden class built independently from the
+    official CSF 2.0 Core, so the data and the assertions never share a source.
+    This suite guards the file's internal consistency: required fields, the
+    category/id relationship, the assessment_mode vocabulary, evidence-type
+    validity, and the three mode invariants — the same rules enforced for
+    SOC 2 in TestSoc2GoldenTaxonomy.
+
+    Fix on failure: the canonical definition is
+    shared/frameworks/nist_csf2_controls.yaml.
+    """
+
+    _NIST = "nist_csf2_controls.yaml"
+    _REQUIRED_FIELDS = (
+        "id",
+        "title",
+        "description",
+        "category",
+        "control_objective",
+        "implementation_guidance",
+        "risk_level",
+        "assessment_mode",
+        "required_evidence",
+    )
+
+    def test_every_control_has_all_required_fields(self):
+        """Every control must carry all nine schema fields, populated."""
+        data = _load_yaml(self._NIST)
+        for control in data["controls"]:
+            cid = control.get("id", "<missing id>")
+            for field in self._REQUIRED_FIELDS:
+                assert field in control and control[field] not in (None, "", []), (
+                    f"{cid} is missing or empty required field '{field}'"
+                )
+
+    def test_category_matches_id_prefix(self):
+        """category is the CSF category code: the subcategory id without its
+        trailing '-NN' (ID.AM-01 -> ID.AM, PR.DS-10 -> PR.DS)."""
+        data = _load_yaml(self._NIST)
+        for control in data["controls"]:
+            expected = control["id"].rsplit("-", 1)[0]
+            assert control["category"] == expected, (
+                f"{control['id']} has category '{control['category']}', "
+                f"expected '{expected}'"
+            )
+
+    def test_assessment_mode_vocabulary(self):
+        """assessment_mode must be one of the three ratified modes."""
+        data = _load_yaml(self._NIST)
+        for control in data["controls"]:
+            mode = control["assessment_mode"]
+            assert mode in {"automatable", "hybrid", "manual_upload"}, (
+                f"{control['id']} has invalid assessment_mode: {mode}"
+            )
+
+    def test_required_evidence_uses_canonical_vocabulary(self):
+        """Every required_evidence entry must exist in the canonical vocabulary
+        (directly or as a legacy alias) — otherwise the scoring engine can
+        never satisfy the control."""
+        with open(os.path.join(_SHARED_DIR, "evidence-vocabulary.json"), "r", encoding="utf-8") as fh:
+            vocab = json.load(fh)
+        canonical = {t["type"] for t in vocab["canonical_types"]}
+        aliases = {a for t in vocab["canonical_types"] for a in t.get("legacy_aliases", [])}
+        data = _load_yaml(self._NIST)
+        for control in data["controls"]:
+            for evidence_type in control.get("required_evidence", []):
+                assert evidence_type in canonical | aliases, (
+                    f"{control['id']} requires '{evidence_type}', which is not in "
+                    f"the canonical evidence vocabulary"
+                )
+
+    def test_automatable_controls_require_only_collector_produced_types(self):
+        """A control marked automatable must be fully satisfiable by
+        collector-produced evidence — that is what 'automatable' promises."""
+        with open(os.path.join(_SHARED_DIR, "evidence-vocabulary.json"), "r", encoding="utf-8") as fh:
+            vocab = json.load(fh)
+        collector_types = {
+            t["type"] for t in vocab["canonical_types"]
+            if any(p.endswith("_collector") for p in t.get("producers", []))
+        }
+        data = _load_yaml(self._NIST)
+        for control in data["controls"]:
+            if control.get("assessment_mode") == "automatable":
+                assert set(control["required_evidence"]) <= collector_types, (
+                    f"{control['id']} is automatable but requires manual-only types: "
+                    f"{set(control['required_evidence']) - collector_types}"
+                )
+
+    def test_manual_upload_controls_cannot_be_satisfied_by_collector_evidence(self):
+        """THE honesty invariant: a manual_upload control must require at least
+        one type that no endpoint collector can produce. Endpoint telemetry
+        alone must never mark an organizational control compliant."""
+        with open(os.path.join(_SHARED_DIR, "evidence-vocabulary.json"), "r", encoding="utf-8") as fh:
+            vocab = json.load(fh)
+        collector_types = {
+            t["type"] for t in vocab["canonical_types"]
+            if any(p.endswith("_collector") for p in t.get("producers", []))
+        }
+        data = _load_yaml(self._NIST)
+        for control in data["controls"]:
+            if control.get("assessment_mode") == "manual_upload":
+                required = set(control.get("required_evidence", []))
+                assert required, f"{control['id']} manual_upload must have requirements"
+                assert not required <= collector_types, (
+                    f"{control['id']} is manual_upload but every required type "
+                    f"({sorted(required)}) is collector-produced — endpoint "
+                    f"evidence alone would mark it compliant"
+                )
+
+    def test_hybrid_controls_require_both_collector_and_manual_types(self):
+        """A hybrid control must be partly satisfiable by endpoint telemetry
+        and provably not fully satisfiable by it. If every required type is
+        collector-produced the label is really automatable and a scan would
+        mark it compliant; if none is, the label is really manual_upload."""
+        with open(os.path.join(_SHARED_DIR, "evidence-vocabulary.json"), "r", encoding="utf-8") as fh:
+            vocab = json.load(fh)
+        collector_types = {
+            t["type"] for t in vocab["canonical_types"]
+            if any(p.endswith("_collector") for p in t.get("producers", []))
+        }
+        data = _load_yaml(self._NIST)
+        for control in data["controls"]:
+            if control.get("assessment_mode") != "hybrid":
+                continue
+            required = set(control.get("required_evidence", []))
+            assert required, f"{control['id']} hybrid must have requirements"
+            assert required & collector_types, (
+                f"{control['id']} is hybrid but no required type is "
+                f"collector-produced ({sorted(required)}) — nothing a scan "
+                f"produces would move it, so it is manual_upload"
+            )
+            assert required - collector_types, (
+                f"{control['id']} is hybrid but every required type is "
+                f"collector-produced ({sorted(required)}) — endpoint evidence "
+                f"alone would mark it compliant"
+            )
