@@ -33,6 +33,19 @@ def _load_yaml(name):
         return yaml.safe_load(fh)
 
 
+def _load_nist():
+    """Load the SHIPPED NIST CSF 2.0 table from shared/frameworks.
+
+    Asserts the file exists before parsing, so a deleted or moved table fails
+    loudly instead of skipping or silently passing on an empty set.
+    """
+    path = os.path.join(_SHARED_DIR, "nist_csf2_controls.yaml")
+    assert os.path.isfile(path), f"shipped NIST CSF 2.0 table missing: {path}"
+    data = _load_yaml("nist_csf2_controls.yaml")
+    assert data and data.get("controls"), "NIST CSF 2.0 table has no controls"
+    return data
+
+
 def _soc2_ids_by_category(data):
     ids = {}
     for control in data["controls"]:
@@ -306,7 +319,7 @@ class TestNistSchemaAndInvariants:
 
     def test_every_control_has_all_required_fields(self):
         """Every control must carry all nine schema fields, populated."""
-        data = _load_yaml(self._NIST)
+        data = _load_nist()
         for control in data["controls"]:
             cid = control.get("id", "<missing id>")
             for field in self._REQUIRED_FIELDS:
@@ -317,7 +330,7 @@ class TestNistSchemaAndInvariants:
     def test_category_matches_id_prefix(self):
         """category is the CSF category code: the subcategory id without its
         trailing '-NN' (ID.AM-01 -> ID.AM, PR.DS-10 -> PR.DS)."""
-        data = _load_yaml(self._NIST)
+        data = _load_nist()
         for control in data["controls"]:
             expected = control["id"].rsplit("-", 1)[0]
             assert control["category"] == expected, (
@@ -327,7 +340,7 @@ class TestNistSchemaAndInvariants:
 
     def test_assessment_mode_vocabulary(self):
         """assessment_mode must be one of the three ratified modes."""
-        data = _load_yaml(self._NIST)
+        data = _load_nist()
         for control in data["controls"]:
             mode = control["assessment_mode"]
             assert mode in {"automatable", "hybrid", "manual_upload"}, (
@@ -342,7 +355,7 @@ class TestNistSchemaAndInvariants:
             vocab = json.load(fh)
         canonical = {t["type"] for t in vocab["canonical_types"]}
         aliases = {a for t in vocab["canonical_types"] for a in t.get("legacy_aliases", [])}
-        data = _load_yaml(self._NIST)
+        data = _load_nist()
         for control in data["controls"]:
             for evidence_type in control.get("required_evidence", []):
                 assert evidence_type in canonical | aliases, (
@@ -359,7 +372,7 @@ class TestNistSchemaAndInvariants:
             t["type"] for t in vocab["canonical_types"]
             if any(p.endswith("_collector") for p in t.get("producers", []))
         }
-        data = _load_yaml(self._NIST)
+        data = _load_nist()
         for control in data["controls"]:
             if control.get("assessment_mode") == "automatable":
                 assert set(control["required_evidence"]) <= collector_types, (
@@ -377,7 +390,7 @@ class TestNistSchemaAndInvariants:
             t["type"] for t in vocab["canonical_types"]
             if any(p.endswith("_collector") for p in t.get("producers", []))
         }
-        data = _load_yaml(self._NIST)
+        data = _load_nist()
         for control in data["controls"]:
             if control.get("assessment_mode") == "manual_upload":
                 required = set(control.get("required_evidence", []))
@@ -399,7 +412,7 @@ class TestNistSchemaAndInvariants:
             t["type"] for t in vocab["canonical_types"]
             if any(p.endswith("_collector") for p in t.get("producers", []))
         }
-        data = _load_yaml(self._NIST)
+        data = _load_nist()
         for control in data["controls"]:
             if control.get("assessment_mode") != "hybrid":
                 continue
