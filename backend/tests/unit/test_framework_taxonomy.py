@@ -428,3 +428,58 @@ class TestNistSchemaAndInvariants:
                 f"collector-produced ({sorted(required)}) — endpoint evidence "
                 f"alone would mark it compliant"
             )
+
+
+# Frozen from the official NIST CSF 2.0 Core (NIST CSWP 29). Deliberately
+# hardcoded, NOT derived from nist_csf2_controls.yaml: if the test and the data
+# read the same file, the test agrees with itself and proves nothing. IDs are
+# intentionally non-contiguous (ID.AM skips 06; PR.DS jumps 02 -> 10).
+EXPECTED_NIST_IDS = {
+    "ID.AM": ["ID.AM-01", "ID.AM-02", "ID.AM-03", "ID.AM-04", "ID.AM-05",
+              "ID.AM-07", "ID.AM-08"],
+    "ID.RA": [f"ID.RA-{i:02d}" for i in range(1, 11)],
+    "ID.IM": [f"ID.IM-{i:02d}" for i in range(1, 5)],
+    "PR.AA": [f"PR.AA-{i:02d}" for i in range(1, 7)],
+    "PR.AT": ["PR.AT-01", "PR.AT-02"],
+    "PR.DS": ["PR.DS-01", "PR.DS-02", "PR.DS-10", "PR.DS-11"],
+    "PR.PS": [f"PR.PS-{i:02d}" for i in range(1, 7)],
+    "PR.IR": [f"PR.IR-{i:02d}" for i in range(1, 5)],
+}
+
+
+class TestNistGoldenTaxonomy:
+    """Golden subcategory list for the Identify + Protect batch.
+
+    Fix on failure: the canonical definition is
+    shared/frameworks/nist_csf2_controls.yaml. If a legitimate CSF 2.0
+    subcategory is missing, add it there; do not loosen these assertions.
+    """
+
+    def test_framework_metadata(self):
+        meta = _load_nist()["framework"]
+        assert meta["id"] == "nist_csf_2_0"
+        assert meta["version"] == "2.0"
+
+    def test_exact_subcategory_ids(self):
+        """Nothing missing, nothing extra, nothing fabricated."""
+        expected = sorted(i for ids in EXPECTED_NIST_IDS.values() for i in ids)
+        actual = sorted(c["id"] for c in _load_nist()["controls"])
+        assert actual == expected, (
+            f"missing: {sorted(set(expected) - set(actual))}; "
+            f"unexpected: {sorted(set(actual) - set(expected))}"
+        )
+
+    def test_exact_ids_per_category(self):
+        by_cat = {}
+        for c in _load_nist()["controls"]:
+            by_cat.setdefault(c["category"], []).append(c["id"])
+        assert set(by_cat) == set(EXPECTED_NIST_IDS)
+        for cat, expected in EXPECTED_NIST_IDS.items():
+            assert sorted(by_cat[cat]) == sorted(expected), f"{cat} drifted"
+
+    def test_no_duplicate_ids(self):
+        ids = [c["id"] for c in _load_nist()["controls"]]
+        assert len(ids) == len(set(ids))
+
+    def test_total_count(self):
+        assert len(_load_nist()["controls"]) == 43  # Identify 21 + Protect 22
