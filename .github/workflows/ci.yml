@@ -150,7 +150,13 @@ jobs:
 
   e2e-tests:
     name: Full-stack E2E
-    runs-on: ubuntu-latest
+    # Pinned to 24.04 on purpose. ubuntu-latest rolled forward to 26.04 while
+    # Playwright 1.59.1 in frontend/package.json ships no chromium build for it,
+    # so the browser install died before a single test ran:
+    #   "Playwright does not support chromium on ubuntu26.04-x64"
+    # Do not move this back to ubuntu-latest until the Playwright version here
+    # supports the newer image.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
