@@ -1,0 +1,363 @@
+framework,control_id,control_title,category,risk_level,assessment_mode,evidence_type
+SOC 2 Type II,CC1.1,Integrity and Ethical Values,CC,medium,manual_upload,policy_document
+SOC 2 Type II,CC1.1,Integrity and Ethical Values,CC,medium,manual_upload,training_records
+SOC 2 Type II,CC1.2,Board Oversight and Independence,CC,medium,manual_upload,policy_document
+SOC 2 Type II,CC1.2,Board Oversight and Independence,CC,medium,manual_upload,audit_reports
+SOC 2 Type II,CC1.3,Organizational Structure and Reporting Lines,CC,medium,manual_upload,policy_document
+SOC 2 Type II,CC1.4,Commitment to Competence,CC,medium,manual_upload,policy_document
+SOC 2 Type II,CC1.4,Commitment to Competence,CC,medium,manual_upload,training_records
+SOC 2 Type II,CC1.5,Individual Accountability,CC,medium,manual_upload,policy_document
+SOC 2 Type II,CC2.1,Quality of Information,CC,medium,manual_upload,policy_document
+SOC 2 Type II,CC2.2,Internal Communication,CC,medium,manual_upload,policy_document
+SOC 2 Type II,CC2.2,Internal Communication,CC,medium,manual_upload,training_records
+SOC 2 Type II,CC2.3,External Communication,CC,medium,manual_upload,policy_document
+SOC 2 Type II,CC3.1,Objectives Specification,CC,medium,manual_upload,policy_document
+SOC 2 Type II,CC3.1,Objectives Specification,CC,medium,manual_upload,audit_reports
+SOC 2 Type II,CC3.2,Risk Identification and Analysis,CC,medium,manual_upload,audit_reports
+SOC 2 Type II,CC3.2,Risk Identification and Analysis,CC,medium,manual_upload,policy_document
+SOC 2 Type II,CC3.3,Fraud Consideration,CC,medium,manual_upload,audit_reports
+SOC 2 Type II,CC3.3,Fraud Consideration,CC,medium,manual_upload,policy_document
+SOC 2 Type II,CC3.4,Change Risk Assessment,CC,medium,manual_upload,audit_reports
+SOC 2 Type II,CC3.4,Change Risk Assessment,CC,medium,manual_upload,policy_document
+SOC 2 Type II,CC4.1,Ongoing and Separate Evaluations,CC,medium,hybrid,event_logs
+SOC 2 Type II,CC4.1,Ongoing and Separate Evaluations,CC,medium,hybrid,audit_reports
+SOC 2 Type II,CC4.2,Evaluation and Communication of Deficiencies,CC,medium,manual_upload,audit_reports
+SOC 2 Type II,CC4.2,Evaluation and Communication of Deficiencies,CC,medium,manual_upload,incident_reports
+SOC 2 Type II,CC5.1,Selection of Control Activities,CC,medium,manual_upload,policy_document
+SOC 2 Type II,CC5.1,Selection of Control Activities,CC,medium,manual_upload,audit_reports
+SOC 2 Type II,CC5.2,General Controls over Technology,CC,medium,manual_upload,policy_document
+SOC 2 Type II,CC5.2,General Controls over Technology,CC,medium,manual_upload,audit_reports
+SOC 2 Type II,CC5.3,Deployment Through Policies and Procedures,CC,medium,manual_upload,policy_document
+SOC 2 Type II,CC6.1,Logical Access Security,CC,high,hybrid,system_configs
+SOC 2 Type II,CC6.1,Logical Access Security,CC,high,hybrid,security_policies
+SOC 2 Type II,CC6.1,Logical Access Security,CC,high,hybrid,policy_document
+SOC 2 Type II,CC6.2,User Registration and Credential Management,CC,high,hybrid,user_provisioning
+SOC 2 Type II,CC6.2,User Registration and Credential Management,CC,high,hybrid,policy_document
+SOC 2 Type II,CC6.3,Access Authorization and Modification,CC,high,hybrid,user_provisioning
+SOC 2 Type II,CC6.3,Access Authorization and Modification,CC,high,hybrid,policy_document
+SOC 2 Type II,CC6.4,Physical Access Restrictions,CC,medium,manual_upload,policy_document
+SOC 2 Type II,CC6.5,Disposal of Physical Assets,CC,medium,manual_upload,policy_document
+SOC 2 Type II,CC6.6,Protection Against External Threats,CC,high,automatable,firewall_configs
+SOC 2 Type II,CC6.6,Protection Against External Threats,CC,high,automatable,network_configs
+SOC 2 Type II,CC6.6,Protection Against External Threats,CC,high,automatable,system_configs
+SOC 2 Type II,CC6.7,Restriction of Information Transmission,CC,medium,hybrid,network_configs
+SOC 2 Type II,CC6.7,Restriction of Information Transmission,CC,medium,hybrid,encryption_policies
+SOC 2 Type II,CC6.8,Unauthorized and Malicious Software Controls,CC,high,automatable,system_configs
+SOC 2 Type II,CC6.8,Unauthorized and Malicious Software Controls,CC,high,automatable,event_logs
+SOC 2 Type II,CC7.1,Configuration and Vulnerability Detection,CC,medium,automatable,event_logs
+SOC 2 Type II,CC7.1,Configuration and Vulnerability Detection,CC,medium,automatable,system_configs
+SOC 2 Type II,CC7.2,Anomaly Monitoring,CC,high,hybrid,event_logs
+SOC 2 Type II,CC7.2,Anomaly Monitoring,CC,high,hybrid,audit_reports
+SOC 2 Type II,CC7.3,Security Event Evaluation,CC,medium,manual_upload,incident_reports
+SOC 2 Type II,CC7.3,Security Event Evaluation,CC,medium,manual_upload,audit_reports
+SOC 2 Type II,CC7.4,Incident Response,CC,high,manual_upload,incident_reports
+SOC 2 Type II,CC7.4,Incident Response,CC,high,manual_upload,policy_document
+SOC 2 Type II,CC7.5,Recovery from Security Incidents,CC,medium,manual_upload,backup_logs
+SOC 2 Type II,CC7.5,Recovery from Security Incidents,CC,medium,manual_upload,incident_reports
+SOC 2 Type II,CC8.1,Change Management,CC,medium,manual_upload,policy_document
+SOC 2 Type II,CC8.1,Change Management,CC,medium,manual_upload,audit_reports
+SOC 2 Type II,CC9.1,Business Disruption Risk Mitigation,CC,medium,manual_upload,backup_logs
+SOC 2 Type II,CC9.1,Business Disruption Risk Mitigation,CC,medium,manual_upload,policy_document
+SOC 2 Type II,CC9.2,Vendor and Business Partner Risk,CC,medium,manual_upload,policy_document
+SOC 2 Type II,CC9.2,Vendor and Business Partner Risk,CC,medium,manual_upload,audit_reports
+SOC 2 Type II,A1.1,Processing Capacity Management,A,medium,hybrid,system_configs
+SOC 2 Type II,A1.1,Processing Capacity Management,A,medium,hybrid,audit_reports
+SOC 2 Type II,A1.2,"Environmental Protections, Backup, and Recovery Infrastructure",A,medium,hybrid,backup_logs
+SOC 2 Type II,A1.2,"Environmental Protections, Backup, and Recovery Infrastructure",A,medium,hybrid,system_configs
+SOC 2 Type II,A1.3,Recovery Plan Testing,A,medium,manual_upload,backup_logs
+SOC 2 Type II,A1.3,Recovery Plan Testing,A,medium,manual_upload,audit_reports
+SOC 2 Type II,C1.1,Identification and Maintenance of Confidential Information,C,medium,manual_upload,policy_document
+SOC 2 Type II,C1.2,Disposal of Confidential Information,C,medium,manual_upload,policy_document
+SOC 2 Type II,C1.2,Disposal of Confidential Information,C,medium,manual_upload,audit_reports
+SOC 2 Type II,PI1.1,Processing Information Quality,PI,medium,manual_upload,policy_document
+SOC 2 Type II,PI1.1,Processing Information Quality,PI,medium,manual_upload,audit_reports
+SOC 2 Type II,PI1.2,Input Completeness and Accuracy,PI,medium,manual_upload,policy_document
+SOC 2 Type II,PI1.2,Input Completeness and Accuracy,PI,medium,manual_upload,audit_reports
+SOC 2 Type II,PI1.3,System Processing Controls,PI,medium,hybrid,event_logs
+SOC 2 Type II,PI1.3,System Processing Controls,PI,medium,hybrid,policy_document
+SOC 2 Type II,PI1.4,Output Delivery,PI,medium,manual_upload,policy_document
+SOC 2 Type II,PI1.4,Output Delivery,PI,medium,manual_upload,audit_reports
+SOC 2 Type II,PI1.5,Storage of Inputs and Outputs,PI,medium,manual_upload,policy_document
+SOC 2 Type II,PI1.5,Storage of Inputs and Outputs,PI,medium,manual_upload,audit_reports
+ISO/IEC 27001:2022,A.5.1,Policies for information security,A.5,high,manual_upload,policy_document
+ISO/IEC 27001:2022,A.5.2,Information security roles and responsibilities,A.5,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.5.3,Segregation of duties,A.5,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.5.4,Management responsibilities,A.5,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.5.5,Contact with authorities,A.5,low,manual_upload,policy_document
+ISO/IEC 27001:2022,A.5.6,Contact with special interest groups,A.5,low,manual_upload,policy_document
+ISO/IEC 27001:2022,A.5.7,Threat intelligence,A.5,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.5.8,Information security in project management,A.5,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.5.9,Inventory of information and other associated assets,A.5,medium,hybrid,system_configs
+ISO/IEC 27001:2022,A.5.9,Inventory of information and other associated assets,A.5,medium,hybrid,audit_reports
+ISO/IEC 27001:2022,A.5.10,Acceptable use of information and other associated assets,A.5,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.5.11,Return of assets,A.5,low,manual_upload,policy_document
+ISO/IEC 27001:2022,A.5.12,Classification of information,A.5,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.5.13,Labelling of information,A.5,low,manual_upload,policy_document
+ISO/IEC 27001:2022,A.5.14,Information transfer,A.5,medium,hybrid,network_configs
+ISO/IEC 27001:2022,A.5.14,Information transfer,A.5,medium,hybrid,policy_document
+ISO/IEC 27001:2022,A.5.15,Access control,A.5,high,hybrid,system_configs
+ISO/IEC 27001:2022,A.5.15,Access control,A.5,high,hybrid,policy_document
+ISO/IEC 27001:2022,A.5.16,Identity management,A.5,medium,hybrid,user_provisioning
+ISO/IEC 27001:2022,A.5.16,Identity management,A.5,medium,hybrid,policy_document
+ISO/IEC 27001:2022,A.5.17,Authentication information,A.5,high,hybrid,security_policies
+ISO/IEC 27001:2022,A.5.17,Authentication information,A.5,high,hybrid,policy_document
+ISO/IEC 27001:2022,A.5.18,Access rights,A.5,high,hybrid,user_provisioning
+ISO/IEC 27001:2022,A.5.18,Access rights,A.5,high,hybrid,policy_document
+ISO/IEC 27001:2022,A.5.19,Information security in supplier relationships,A.5,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.5.20,Addressing information security within supplier agreements,A.5,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.5.21,Managing information security in the ICT supply chain,A.5,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.5.22,"Monitoring, review and change management of supplier services",A.5,medium,manual_upload,audit_reports
+ISO/IEC 27001:2022,A.5.22,"Monitoring, review and change management of supplier services",A.5,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.5.23,Information security for use of cloud services,A.5,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.5.24,Information security incident management planning and preparation,A.5,high,manual_upload,policy_document
+ISO/IEC 27001:2022,A.5.25,Assessment and decision on information security events,A.5,medium,manual_upload,incident_reports
+ISO/IEC 27001:2022,A.5.26,Response to information security incidents,A.5,high,manual_upload,incident_reports
+ISO/IEC 27001:2022,A.5.27,Learning from information security incidents,A.5,medium,manual_upload,incident_reports
+ISO/IEC 27001:2022,A.5.28,Collection of evidence,A.5,low,manual_upload,policy_document
+ISO/IEC 27001:2022,A.5.29,Information security during disruption,A.5,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.5.30,ICT readiness for business continuity,A.5,medium,manual_upload,backup_logs
+ISO/IEC 27001:2022,A.5.30,ICT readiness for business continuity,A.5,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.5.31,"Identification of legal, statutory, regulatory and contractual requirements",A.5,high,manual_upload,policy_document
+ISO/IEC 27001:2022,A.5.32,Intellectual property rights,A.5,low,manual_upload,policy_document
+ISO/IEC 27001:2022,A.5.33,Protection of records,A.5,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.5.34,Privacy and protection of PII,A.5,high,manual_upload,policy_document
+ISO/IEC 27001:2022,A.5.35,Independent review of information security,A.5,medium,manual_upload,audit_reports
+ISO/IEC 27001:2022,A.5.36,Compliance with policies and standards for information security,A.5,medium,manual_upload,audit_reports
+ISO/IEC 27001:2022,A.5.37,Documented operating procedures,A.5,low,manual_upload,policy_document
+ISO/IEC 27001:2022,A.6.1,Screening,A.6,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.6.2,Terms and conditions of employment,A.6,low,manual_upload,policy_document
+ISO/IEC 27001:2022,A.6.3,"Information security awareness, education and training",A.6,medium,manual_upload,training_records
+ISO/IEC 27001:2022,A.6.3,"Information security awareness, education and training",A.6,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.6.4,Disciplinary process,A.6,low,manual_upload,policy_document
+ISO/IEC 27001:2022,A.6.5,Responsibilities after termination or change of employment,A.6,low,manual_upload,policy_document
+ISO/IEC 27001:2022,A.6.6,Confidentiality or non-disclosure agreements,A.6,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.6.7,Remote working,A.6,medium,hybrid,security_policies
+ISO/IEC 27001:2022,A.6.7,Remote working,A.6,medium,hybrid,policy_document
+ISO/IEC 27001:2022,A.6.8,Information security event reporting,A.6,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.7.1,Physical security perimeter,A.7,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.7.2,Physical entry controls,A.7,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.7.3,"Securing offices, rooms and facilities",A.7,low,manual_upload,policy_document
+ISO/IEC 27001:2022,A.7.4,Physical security monitoring,A.7,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.7.5,Protecting against physical and environmental threats,A.7,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.7.6,Working in secure areas,A.7,low,manual_upload,policy_document
+ISO/IEC 27001:2022,A.7.7,Clear desk and clear screen,A.7,low,hybrid,security_policies
+ISO/IEC 27001:2022,A.7.7,Clear desk and clear screen,A.7,low,hybrid,policy_document
+ISO/IEC 27001:2022,A.7.8,Equipment siting and protection,A.7,low,manual_upload,policy_document
+ISO/IEC 27001:2022,A.7.9,Security of assets off-premises,A.7,medium,hybrid,system_configs
+ISO/IEC 27001:2022,A.7.9,Security of assets off-premises,A.7,medium,hybrid,policy_document
+ISO/IEC 27001:2022,A.7.10,Storage media,A.7,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.7.11,Supporting utilities,A.7,low,manual_upload,policy_document
+ISO/IEC 27001:2022,A.7.12,Cabling security,A.7,low,manual_upload,policy_document
+ISO/IEC 27001:2022,A.7.13,Equipment maintenance,A.7,low,manual_upload,policy_document
+ISO/IEC 27001:2022,A.7.14,Secure disposal or re-use of equipment,A.7,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.8.1,User endpoint devices,A.8,high,hybrid,system_configs
+ISO/IEC 27001:2022,A.8.1,User endpoint devices,A.8,high,hybrid,security_policies
+ISO/IEC 27001:2022,A.8.1,User endpoint devices,A.8,high,hybrid,policy_document
+ISO/IEC 27001:2022,A.8.2,Privileged access rights,A.8,high,hybrid,user_provisioning
+ISO/IEC 27001:2022,A.8.2,Privileged access rights,A.8,high,hybrid,policy_document
+ISO/IEC 27001:2022,A.8.3,Information access restriction,A.8,high,manual_upload,policy_document
+ISO/IEC 27001:2022,A.8.4,Access to source code,A.8,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.8.5,Secure authentication,A.8,high,hybrid,security_policies
+ISO/IEC 27001:2022,A.8.5,Secure authentication,A.8,high,hybrid,system_configs
+ISO/IEC 27001:2022,A.8.5,Secure authentication,A.8,high,hybrid,policy_document
+ISO/IEC 27001:2022,A.8.6,Capacity management,A.8,low,hybrid,system_configs
+ISO/IEC 27001:2022,A.8.6,Capacity management,A.8,low,hybrid,audit_reports
+ISO/IEC 27001:2022,A.8.7,Protection against malware,A.8,high,automatable,system_configs
+ISO/IEC 27001:2022,A.8.7,Protection against malware,A.8,high,automatable,event_logs
+ISO/IEC 27001:2022,A.8.8,Management of technical vulnerabilities,A.8,high,hybrid,system_configs
+ISO/IEC 27001:2022,A.8.8,Management of technical vulnerabilities,A.8,high,hybrid,audit_reports
+ISO/IEC 27001:2022,A.8.9,Configuration management,A.8,high,automatable,system_configs
+ISO/IEC 27001:2022,A.8.10,Information deletion,A.8,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.8.11,Data masking,A.8,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.8.12,Data leakage prevention,A.8,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.8.13,Information backup,A.8,high,hybrid,backup_logs
+ISO/IEC 27001:2022,A.8.13,Information backup,A.8,high,hybrid,system_configs
+ISO/IEC 27001:2022,A.8.14,Redundancy of information processing facilities,A.8,medium,manual_upload,audit_reports
+ISO/IEC 27001:2022,A.8.14,Redundancy of information processing facilities,A.8,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.8.15,Logging,A.8,high,automatable,event_logs
+ISO/IEC 27001:2022,A.8.15,Logging,A.8,high,automatable,system_configs
+ISO/IEC 27001:2022,A.8.16,Monitoring activities,A.8,high,hybrid,event_logs
+ISO/IEC 27001:2022,A.8.16,Monitoring activities,A.8,high,hybrid,audit_reports
+ISO/IEC 27001:2022,A.8.17,Clock synchronisation,A.8,low,hybrid,system_configs
+ISO/IEC 27001:2022,A.8.17,Clock synchronisation,A.8,low,hybrid,event_logs
+ISO/IEC 27001:2022,A.8.18,Use of privileged utility programs,A.8,medium,hybrid,system_configs
+ISO/IEC 27001:2022,A.8.18,Use of privileged utility programs,A.8,medium,hybrid,policy_document
+ISO/IEC 27001:2022,A.8.19,Installation of software on operational systems,A.8,medium,hybrid,system_configs
+ISO/IEC 27001:2022,A.8.19,Installation of software on operational systems,A.8,medium,hybrid,policy_document
+ISO/IEC 27001:2022,A.8.20,Network security,A.8,high,automatable,firewall_configs
+ISO/IEC 27001:2022,A.8.20,Network security,A.8,high,automatable,network_configs
+ISO/IEC 27001:2022,A.8.21,Security of network services,A.8,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.8.22,Segregation of networks,A.8,medium,hybrid,network_configs
+ISO/IEC 27001:2022,A.8.22,Segregation of networks,A.8,medium,hybrid,policy_document
+ISO/IEC 27001:2022,A.8.23,Web filtering,A.8,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.8.24,Use of cryptography,A.8,high,hybrid,encryption_policies
+ISO/IEC 27001:2022,A.8.24,Use of cryptography,A.8,high,hybrid,system_configs
+ISO/IEC 27001:2022,A.8.25,Secure development life cycle,A.8,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.8.26,Application security requirements,A.8,low,manual_upload,policy_document
+ISO/IEC 27001:2022,A.8.27,Secure systems architecture and engineering principles,A.8,low,manual_upload,policy_document
+ISO/IEC 27001:2022,A.8.28,Secure coding,A.8,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.8.29,Security testing in development and acceptance,A.8,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.8.30,Outsourced development,A.8,low,manual_upload,policy_document
+ISO/IEC 27001:2022,A.8.31,"Separation of development, test and production environments",A.8,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.8.32,Change management,A.8,medium,manual_upload,policy_document
+ISO/IEC 27001:2022,A.8.32,Change management,A.8,medium,manual_upload,audit_reports
+ISO/IEC 27001:2022,A.8.33,Test information,A.8,low,manual_upload,policy_document
+ISO/IEC 27001:2022,A.8.34,Protection of information systems during audit testing,A.8,low,manual_upload,policy_document
+HIPAA Security Rule,164.308.a.1,Security Management Process,164.308,high,,policy_document
+HIPAA Security Rule,164.308.a.1,Security Management Process,164.308,high,,security_policies
+HIPAA Security Rule,164.308.a.1.ii.A,Risk Analysis,164.308,high,,audit_reports
+HIPAA Security Rule,164.308.a.1.ii.A,Risk Analysis,164.308,high,,security_policies
+HIPAA Security Rule,164.308.a.1.ii.A,Risk Analysis,164.308,high,,system_configs
+HIPAA Security Rule,164.308.a.1.ii.B,Risk Management,164.308,high,,audit_reports
+HIPAA Security Rule,164.308.a.1.ii.B,Risk Management,164.308,high,,security_policies
+HIPAA Security Rule,164.308.a.1.ii.C,Sanction Policy,164.308,medium,,policy_document
+HIPAA Security Rule,164.308.a.1.ii.C,Sanction Policy,164.308,medium,,security_policies
+HIPAA Security Rule,164.308.a.1.ii.D,Information System Activity Review,164.308,high,,audit_reports
+HIPAA Security Rule,164.308.a.1.ii.D,Information System Activity Review,164.308,high,,event_logs
+HIPAA Security Rule,164.308.a.2,Assigned Security Responsibility,164.308,high,,policy_document
+HIPAA Security Rule,164.308.a.2,Assigned Security Responsibility,164.308,high,,security_policies
+HIPAA Security Rule,164.308.a.3.i,Workforce Security,164.308,high,,security_policies
+HIPAA Security Rule,164.308.a.3.i,Workforce Security,164.308,high,,user_provisioning
+HIPAA Security Rule,164.308.a.3.ii.A,Authorization and Supervision,164.308,medium,,security_policies
+HIPAA Security Rule,164.308.a.3.ii.A,Authorization and Supervision,164.308,medium,,user_provisioning
+HIPAA Security Rule,164.308.a.3.ii.C,Termination Procedures,164.308,high,,security_policies
+HIPAA Security Rule,164.308.a.3.ii.C,Termination Procedures,164.308,high,,user_provisioning
+HIPAA Security Rule,164.308.a.4.ii.B,Access Authorization,164.308,high,,system_configs
+HIPAA Security Rule,164.308.a.4.ii.B,Access Authorization,164.308,high,,user_provisioning
+HIPAA Security Rule,164.308.a.4.ii.C,Access Establishment and Modification,164.308,high,,system_configs
+HIPAA Security Rule,164.308.a.4.ii.C,Access Establishment and Modification,164.308,high,,user_provisioning
+HIPAA Security Rule,164.308.a.5.ii.A,Security Reminders,164.308,medium,,security_policies
+HIPAA Security Rule,164.308.a.5.ii.A,Security Reminders,164.308,medium,,training_records
+HIPAA Security Rule,164.308.a.5.ii.B,Protection from Malicious Software,164.308,high,,security_policies
+HIPAA Security Rule,164.308.a.5.ii.B,Protection from Malicious Software,164.308,high,,training_records
+HIPAA Security Rule,164.308.a.5.ii.C,Log-in Monitoring,164.308,high,,security_policies
+HIPAA Security Rule,164.308.a.5.ii.C,Log-in Monitoring,164.308,high,,training_records
+HIPAA Security Rule,164.308.a.5.ii.D,Password Management,164.308,high,,security_policies
+HIPAA Security Rule,164.308.a.5.ii.D,Password Management,164.308,high,,training_records
+HIPAA Security Rule,164.308.a.6.ii,Response and Reporting,164.308,high,,incident_reports
+HIPAA Security Rule,164.308.a.6.ii,Response and Reporting,164.308,high,,policy_document
+HIPAA Security Rule,164.308.a.7.ii.A,Data Backup Plan,164.308,high,,audit_reports
+HIPAA Security Rule,164.308.a.7.ii.A,Data Backup Plan,164.308,high,,policy_document
+HIPAA Security Rule,164.308.a.7.ii.B,Disaster Recovery Plan,164.308,high,,audit_reports
+HIPAA Security Rule,164.308.a.7.ii.B,Disaster Recovery Plan,164.308,high,,policy_document
+HIPAA Security Rule,164.308.a.7.ii.C,Emergency Mode Operation Plan,164.308,high,,audit_reports
+HIPAA Security Rule,164.308.a.7.ii.C,Emergency Mode Operation Plan,164.308,high,,policy_document
+HIPAA Security Rule,164.308.a.8,Evaluation,164.308,high,,audit_reports
+HIPAA Security Rule,164.308.a.8,Evaluation,164.308,high,,policy_document
+HIPAA Security Rule,164.308.b.1,Business Associate Contracts,164.308,high,,audit_reports
+HIPAA Security Rule,164.308.b.1,Business Associate Contracts,164.308,high,,policy_document
+HIPAA Security Rule,164.310.a.2.i,Contingency Operations,164.310,medium,,audit_reports
+HIPAA Security Rule,164.310.a.2.i,Contingency Operations,164.310,medium,,policy_document
+HIPAA Security Rule,164.310.a.2.ii,Facility Security Plan,164.310,high,,audit_reports
+HIPAA Security Rule,164.310.a.2.ii,Facility Security Plan,164.310,high,,policy_document
+HIPAA Security Rule,164.310.a.2.iii,Access Control and Validation Procedures,164.310,high,,audit_reports
+HIPAA Security Rule,164.310.a.2.iii,Access Control and Validation Procedures,164.310,high,,policy_document
+HIPAA Security Rule,164.310.a.2.iv,Maintenance Records,164.310,low,,audit_reports
+HIPAA Security Rule,164.310.a.2.iv,Maintenance Records,164.310,low,,policy_document
+HIPAA Security Rule,164.310.b,Workstation Use,164.310,medium,,audit_reports
+HIPAA Security Rule,164.310.b,Workstation Use,164.310,medium,,policy_document
+HIPAA Security Rule,164.310.c,Workstation Security,164.310,high,,audit_reports
+HIPAA Security Rule,164.310.c,Workstation Security,164.310,high,,policy_document
+HIPAA Security Rule,164.310.d.2.i,Disposal,164.310,high,,audit_reports
+HIPAA Security Rule,164.310.d.2.i,Disposal,164.310,high,,policy_document
+HIPAA Security Rule,164.310.d.2.ii,Media Re-use,164.310,high,,audit_reports
+HIPAA Security Rule,164.310.d.2.ii,Media Re-use,164.310,high,,policy_document
+HIPAA Security Rule,164.310.d.2.iii,Accountability,164.310,medium,,audit_reports
+HIPAA Security Rule,164.310.d.2.iii,Accountability,164.310,medium,,policy_document
+HIPAA Security Rule,164.310.d.2.iv,Data Backup and Storage,164.310,medium,,audit_reports
+HIPAA Security Rule,164.310.d.2.iv,Data Backup and Storage,164.310,medium,,policy_document
+HIPAA Security Rule,164.312.a.2.i,Unique User Identification,164.312,high,,system_configs
+HIPAA Security Rule,164.312.a.2.i,Unique User Identification,164.312,high,,user_provisioning
+HIPAA Security Rule,164.312.a.2.ii,Emergency Access Procedure,164.312,high,,system_configs
+HIPAA Security Rule,164.312.a.2.ii,Emergency Access Procedure,164.312,high,,user_provisioning
+HIPAA Security Rule,164.312.a.2.iii,Automatic Logoff,164.312,medium,,system_configs
+HIPAA Security Rule,164.312.a.2.iii,Automatic Logoff,164.312,medium,,user_provisioning
+HIPAA Security Rule,164.312.a.2.iv,Encryption and Decryption,164.312,high,,system_configs
+HIPAA Security Rule,164.312.a.2.iv,Encryption and Decryption,164.312,high,,user_provisioning
+HIPAA Security Rule,164.312.b,Audit Controls,164.312,high,,audit_reports
+HIPAA Security Rule,164.312.b,Audit Controls,164.312,high,,event_logs
+HIPAA Security Rule,164.312.c.2,Mechanism to Authenticate ePHI,164.312,high,,audit_reports
+HIPAA Security Rule,164.312.c.2,Mechanism to Authenticate ePHI,164.312,high,,system_configs
+HIPAA Security Rule,164.312.d,Person or Entity Authentication,164.312,high,,security_policies
+HIPAA Security Rule,164.312.d,Person or Entity Authentication,164.312,high,,user_provisioning
+HIPAA Security Rule,164.312.e.2.i,Integrity Controls,164.312,high,,encryption_policies
+HIPAA Security Rule,164.312.e.2.i,Integrity Controls,164.312,high,,network_configs
+HIPAA Security Rule,164.312.e.2.ii,Encryption of ePHI in Transit,164.312,high,,encryption_policies
+HIPAA Security Rule,164.312.e.2.ii,Encryption of ePHI in Transit,164.312,high,,network_configs
+HIPAA Security Rule,164.314.a.1,Business Associate Contracts — Organizational Requirements,164.314,high,,audit_reports
+HIPAA Security Rule,164.314.a.1,Business Associate Contracts — Organizational Requirements,164.314,high,,policy_document
+HIPAA Security Rule,164.314.b.1,Requirements for Group Health Plans,164.314,medium,,audit_reports
+HIPAA Security Rule,164.314.b.1,Requirements for Group Health Plans,164.314,medium,,policy_document
+HIPAA Security Rule,164.316.a,Policies and Procedures,164.316,high,,audit_reports
+HIPAA Security Rule,164.316.a,Policies and Procedures,164.316,high,,policy_document
+HIPAA Security Rule,164.316.b.1,Documentation,164.316,medium,,audit_reports
+HIPAA Security Rule,164.316.b.1,Documentation,164.316,medium,,policy_document
+HIPAA Security Rule,164.316.b.2.i,Time Limit,164.316,medium,,audit_reports
+HIPAA Security Rule,164.316.b.2.i,Time Limit,164.316,medium,,policy_document
+HIPAA Security Rule,164.316.b.2.ii,Availability,164.316,low,,audit_reports
+HIPAA Security Rule,164.316.b.2.ii,Availability,164.316,low,,policy_document
+HIPAA Security Rule,164.316.b.2.iii,Updates,164.316,medium,,audit_reports
+HIPAA Security Rule,164.316.b.2.iii,Updates,164.316,medium,,policy_document
+GDPR,Art.5.1,Principles Relating to Processing of Personal Data,5,high,manual_upload,policy_document
+GDPR,Art.5.2,Accountability,5,high,manual_upload,audit_reports
+GDPR,Art.5.2,Accountability,5,high,manual_upload,policy_document
+GDPR,Art.6.1,Lawfulness of Processing,6,high,manual_upload,policy_document
+GDPR,Art.6.4,Compatibility of Further Processing,6,medium,manual_upload,policy_document
+GDPR,Art.7.1,Conditions for Consent,7,high,manual_upload,policy_document
+GDPR,Art.7.2,Clear Withdrawal of Consent,7,medium,manual_upload,policy_document
+GDPR,Art.8.1,Child's Consent,8,high,manual_upload,policy_document
+GDPR,Art.9.1,Prohibition of Special Category Processing,9,high,manual_upload,policy_document
+GDPR,Art.9.2,Exceptions to the Special Category Prohibition,9,high,manual_upload,policy_document
+GDPR,Art.12.1,Transparent Information and Communication,12,medium,manual_upload,policy_document
+GDPR,Art.12.2,Facilitating the Exercise of Data Subject Rights,12,medium,manual_upload,audit_reports
+GDPR,Art.12.2,Facilitating the Exercise of Data Subject Rights,12,medium,manual_upload,policy_document
+GDPR,Art.12.3,Timely Response to Requests,12,medium,manual_upload,audit_reports
+GDPR,Art.12.3,Timely Response to Requests,12,medium,manual_upload,policy_document
+GDPR,Art.13,Information to be Provided at Collection,13,high,manual_upload,policy_document
+GDPR,Art.14,Information Where Data is Not Obtained from the Data Subject,14,medium,manual_upload,policy_document
+GDPR,Art.15.1,Right of Access,15,high,manual_upload,policy_document
+GDPR,Art.15.1,Right of Access,15,high,manual_upload,audit_reports
+GDPR,Art.15.3,Provision of a Copy of Personal Data,15,low,manual_upload,audit_reports
+GDPR,Art.15.3,Provision of a Copy of Personal Data,15,low,manual_upload,policy_document
+GDPR,Art.16,Right to Rectification,16,medium,manual_upload,audit_reports
+GDPR,Art.16,Right to Rectification,16,medium,manual_upload,policy_document
+GDPR,Art.17.1,Right to Erasure (Right to be Forgotten),17,high,manual_upload,audit_reports
+GDPR,Art.17.1,Right to Erasure (Right to be Forgotten),17,high,manual_upload,policy_document
+GDPR,Art.18.1,Right to Restriction of Processing,18,medium,manual_upload,audit_reports
+GDPR,Art.18.1,Right to Restriction of Processing,18,medium,manual_upload,policy_document
+GDPR,Art.20.1,Right to Data Portability,20,medium,manual_upload,audit_reports
+GDPR,Art.20.1,Right to Data Portability,20,medium,manual_upload,policy_document
+GDPR,Art.21.1,Right to Object,21,medium,manual_upload,policy_document
+GDPR,Art.22.1,Automated Individual Decision-Making,22,high,manual_upload,policy_document
+GDPR,Art.24.1,Responsibility of the Controller,24,high,manual_upload,audit_reports
+GDPR,Art.24.1,Responsibility of the Controller,24,high,manual_upload,policy_document
+GDPR,Art.25.1,Data Protection by Design,25,high,hybrid,encryption_policies
+GDPR,Art.25.1,Data Protection by Design,25,high,hybrid,security_policies
+GDPR,Art.25.1,Data Protection by Design,25,high,hybrid,system_configs
+GDPR,Art.25.2,Data Protection by Default,25,medium,automatable,security_policies
+GDPR,Art.25.2,Data Protection by Default,25,medium,automatable,system_configs
+GDPR,Art.28.1,Processor Relationship,28,high,manual_upload,policy_document
+GDPR,Art.28.3,Processor Contract Requirements,28,high,manual_upload,policy_document
+GDPR,Art.30.1,Records of Processing Activities,30,high,manual_upload,audit_reports
+GDPR,Art.30.1,Records of Processing Activities,30,high,manual_upload,policy_document
+GDPR,Art.31,Cooperation with Supervisory Authority,31,medium,manual_upload,audit_reports
+GDPR,Art.31,Cooperation with Supervisory Authority,31,medium,manual_upload,policy_document
+GDPR,Art.32.1,Security of Processing,32,high,hybrid,access_logs
+GDPR,Art.32.1,Security of Processing,32,high,hybrid,backup_logs
+GDPR,Art.32.1,Security of Processing,32,high,hybrid,encryption_policies
+GDPR,Art.32.1,Security of Processing,32,high,hybrid,event_logs
+GDPR,Art.32.1,Security of Processing,32,high,hybrid,firewall_configs
+GDPR,Art.32.1,Security of Processing,32,high,hybrid,network_configs
+GDPR,Art.32.1,Security of Processing,32,high,hybrid,system_configs
+GDPR,Art.33.1,Notification of a Personal Data Breach to the Supervisory Authority,33,high,hybrid,event_logs
+GDPR,Art.33.1,Notification of a Personal Data Breach to the Supervisory Authority,33,high,hybrid,incident_reports
+GDPR,Art.34.1,Communication of a Breach to Data Subjects,34,high,manual_upload,incident_reports
+GDPR,Art.34.1,Communication of a Breach to Data Subjects,34,high,manual_upload,policy_document
+GDPR,Art.35.1,Data Protection Impact Assessment,35,high,manual_upload,audit_reports
+GDPR,Art.35.1,Data Protection Impact Assessment,35,high,manual_upload,policy_document
+GDPR,Art.36.1,Prior Consultation with the Supervisory Authority,36,medium,manual_upload,audit_reports
+GDPR,Art.36.1,Prior Consultation with the Supervisory Authority,36,medium,manual_upload,policy_document
+GDPR,Art.37.1,Designation of a Data Protection Officer,37,high,manual_upload,policy_document
+GDPR,Art.44,General Principle for Transfers,44,high,manual_upload,policy_document
+GDPR,Art.46.2,Transfers Subject to Appropriate Safeguards,46,high,manual_upload,policy_document
+GDPR,Art.47.1,Binding Corporate Rules,47,low,manual_upload,policy_document
