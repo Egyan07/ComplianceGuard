@@ -6,17 +6,19 @@
 # the generated frontend evidence catalog. The loader is not yet pointed at this
 # file (follow-up), so nothing reads it yet. Do not maintain a second copy.
 #
-# Scope (first batch):
+# Scope (batches so far):
+#   - Govern:   GV.OC (5), GV.RM (7), GV.RR (4), GV.PO (2), GV.OV (3),
+#               GV.SC (10) = 31 subcategories.
 #   - Identify: ID.AM (7), ID.RA (10), ID.IM (4) = 21 subcategories.
 #   - Protect:  PR.AA (6), PR.AT (2), PR.DS (4), PR.PS (6), PR.IR (4) = 22.
-#   Total: 43 subcategories. Govern, Detect, Respond, and Recover are not
-#   yet included.
+#   Total: 74 subcategories. Detect, Respond, and Recover are not yet
+#   included.
 #
 # Subcategory IDs follow the official CSF 2.0 Core and are intentionally
 # non-contiguous (e.g., ID.AM skips 06; PR.DS jumps 02 -> 10). Descriptions
 # are the verbatim CSF 2.0 subcategory statements. Titles are short labels.
 # `category` is the CSF category code (ID.AM, ID.RA, ...), the level at which
-# a subcategory lives; the function (ID, PR) is the first token of that code.
+# a subcategory lives; the function (GV, ID, PR) is the first token of that code.
 #
 # assessment_mode (product classification, not part of the CSF Core):
 #   automatable   - every required evidence type is produced by the endpoint
@@ -30,8 +32,8 @@
 # risk_level (house judgment; CSF assigns none):
 #   high   - a failure directly enables unauthorized access or data exposure
 #            (the PR.AA and PR.DS categories).
-#   medium - everywhere else in this batch.
-#   (no `low` is used in this batch.)
+#   medium - everywhere else, including all of Govern.
+#   (no `low` is used so far.)
 #
 framework:
   id: nist_csf_2_0
@@ -39,15 +41,345 @@ framework:
   version: '2.0'
   taxonomy: 'Cybersecurity Framework (CSF) 2.0 Core — Functions, Categories, Subcategories'
   scope_note: >-
-    First batch: the Identify (ID.AM, ID.RA, ID.IM) and Protect (PR.AA, PR.AT,
-    PR.DS, PR.PS, PR.IR) functions — 43 subcategories. The Govern, Detect,
-    Respond, and Recover functions are not yet included.
+    Batches so far: the Govern (GV.OC, GV.RM, GV.RR, GV.PO, GV.OV, GV.SC),
+    Identify (ID.AM, ID.RA, ID.IM), and Protect (PR.AA, PR.AT, PR.DS, PR.PS,
+    PR.IR) functions — 74 subcategories. The Detect, Respond, and Recover
+    functions are not yet included.
   status_vocabulary:
     - compliant
     - partial
     - non_compliant
     - not_assessed
 controls:
+  # Govern is organizational by nature: no endpoint collector can show a mission,
+  # a policy, or a supplier decision, so every GV row is manual_upload and nothing
+  # here is marked automatable or hybrid.
+  # ── GV.OC  Organizational Context ───────────────────────────────────────────
+  - id: GV.OC-01
+    title: Mission Informs Risk Management
+    description: The organizational mission is understood and informs cybersecurity risk management.
+    category: GV.OC
+    control_objective: Understand the organizational mission and use it to inform cybersecurity risk management.
+    implementation_guidance: Document how the mission and business priorities shape cybersecurity risk decisions; no collector observes organizational strategy.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: GV.OC-02
+    title: Stakeholder Needs and Expectations
+    description: Internal and external stakeholders are understood, and their needs and expectations regarding cybersecurity risk management are understood and considered.
+    category: GV.OC
+    control_objective: Understand internal and external stakeholders and consider their cybersecurity risk management needs and expectations.
+    implementation_guidance: Maintain a stakeholder register recording each party's cybersecurity expectations and how they are considered.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: GV.OC-03
+    title: Legal, Regulatory, and Contractual Requirements
+    description: Legal, regulatory, and contractual requirements regarding cybersecurity — including privacy and civil liberties obligations — are understood and managed.
+    category: GV.OC
+    control_objective: Understand and manage cybersecurity legal, regulatory, and contractual requirements, including privacy and civil liberties obligations.
+    implementation_guidance: Keep a requirements register with named owners; compliance reviews and assessments show the obligations are managed.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+      - audit_reports
+  - id: GV.OC-04
+    title: Services Stakeholders Depend On
+    description: Critical objectives, capabilities, and services that external stakeholders depend on or expect from the organization are understood and communicated.
+    category: GV.OC
+    control_objective: Understand and communicate the critical objectives, capabilities, and services that external stakeholders depend on or expect.
+    implementation_guidance: Document critical services and the expectations placed on them, and show they have been communicated to stakeholders.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: GV.OC-05
+    title: Organizational Dependencies
+    description: Outcomes, capabilities, and services that the organization depends on are understood and communicated.
+    category: GV.OC
+    control_objective: Understand and communicate the outcomes, capabilities, and services the organization depends on.
+    implementation_guidance: Document upstream dependencies such as suppliers, utilities, and platforms, and communicate them to those who plan for disruption.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  # ── GV.RM  Risk Management Strategy ─────────────────────────────────────────
+  - id: GV.RM-01
+    title: Risk Management Objectives
+    description: Risk management objectives are established and agreed to by organizational stakeholders.
+    category: GV.RM
+    control_objective: Establish risk management objectives and obtain agreement from organizational stakeholders.
+    implementation_guidance: Record approved risk management objectives with stakeholder sign-off.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: GV.RM-02
+    title: Risk Appetite and Tolerance
+    description: Risk appetite and risk tolerance statements are established, communicated, and maintained.
+    category: GV.RM
+    control_objective: Establish, communicate, and maintain risk appetite and risk tolerance statements.
+    implementation_guidance: Maintain approved risk appetite and tolerance statements and show they are communicated and periodically refreshed.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: GV.RM-03
+    title: Enterprise Risk Management Integration
+    description: Cybersecurity risk management activities and outcomes are included in enterprise risk management processes.
+    category: GV.RM
+    control_objective: Include cybersecurity risk management activities and outcomes in enterprise risk management processes.
+    implementation_guidance: Show cybersecurity risks and outcomes feeding the enterprise risk register and its reporting.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: GV.RM-04
+    title: Risk Response Strategy
+    description: Strategic direction that describes appropriate risk response options is established and communicated.
+    category: GV.RM
+    control_objective: Establish and communicate strategic direction that describes appropriate risk response options.
+    implementation_guidance: Document the accepted response options (accept, mitigate, transfer, avoid) and when each applies.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: GV.RM-05
+    title: Risk Communication Channels
+    description: Lines of communication across the organization are established for cybersecurity risks, including risks from suppliers and other third parties.
+    category: GV.RM
+    control_objective: Establish lines of communication across the organization for cybersecurity risks, including risks from suppliers and other third parties.
+    implementation_guidance: Document escalation and reporting paths for cybersecurity risks, including third-party risks.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: GV.RM-06
+    title: Standardized Risk Method
+    description: A standardized method for calculating, documenting, categorizing, and prioritizing cybersecurity risks is established and communicated.
+    category: GV.RM
+    control_objective: Establish and communicate a standardized method for calculating, documenting, categorizing, and prioritizing cybersecurity risks.
+    implementation_guidance: Maintain a documented risk methodology (scales, scoring, categories) applied consistently across assessments.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: GV.RM-07
+    title: Strategic Opportunities
+    description: Strategic opportunities (i.e., positive risks) are characterized and are included in organizational cybersecurity risk discussions.
+    category: GV.RM
+    control_objective: Characterize strategic opportunities (positive risks) and include them in organizational cybersecurity risk discussions.
+    implementation_guidance: Record how opportunities are identified and weighed alongside threats in risk discussions.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  # ── GV.RR  Roles, Responsibilities, and Authorities ─────────────────────────
+  - id: GV.RR-01
+    title: Leadership Accountability and Culture
+    description: Organizational leadership is responsible and accountable for cybersecurity risk and fosters a culture that is risk-aware, ethical, and continually improving.
+    category: GV.RR
+    control_objective: Hold organizational leadership responsible and accountable for cybersecurity risk and foster a risk-aware, ethical, and continually improving culture.
+    implementation_guidance: Document leadership accountability for cybersecurity risk; training and awareness records show the culture is reinforced.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+      - training_records
+  - id: GV.RR-02
+    title: Roles, Responsibilities, and Authorities
+    description: Roles, responsibilities, and authorities related to cybersecurity risk management are established, communicated, understood, and enforced.
+    category: GV.RR
+    control_objective: Establish, communicate, and enforce cybersecurity risk management roles, responsibilities, and authorities, and make sure they are understood.
+    implementation_guidance: Maintain a role and authority matrix and show it is communicated and enforced.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: GV.RR-03
+    title: Resource Allocation
+    description: Adequate resources are allocated commensurate with the cybersecurity risk strategy, roles, responsibilities, and policies.
+    category: GV.RR
+    control_objective: Allocate adequate resources commensurate with the cybersecurity risk strategy, roles, responsibilities, and policies.
+    implementation_guidance: Document budget and staffing decisions tied to the cybersecurity risk strategy.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: GV.RR-04
+    title: Cybersecurity in HR Practices
+    description: Cybersecurity is included in human resources practices.
+    category: GV.RR
+    control_objective: Include cybersecurity in human resources practices.
+    implementation_guidance: Show security in hiring, onboarding, role changes, and offboarding; training records evidence it is applied.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+      - training_records
+  # ── GV.PO  Policy ───────────────────────────────────────────────────────────
+  - id: GV.PO-01
+    title: Cybersecurity Risk Policy
+    description: Policy for managing cybersecurity risks is established based on organizational context, cybersecurity strategy, and priorities and is communicated and enforced.
+    category: GV.PO
+    control_objective: Establish a policy for managing cybersecurity risks based on organizational context, strategy, and priorities, and communicate and enforce it.
+    implementation_guidance: Maintain an approved risk management policy with evidence that it is communicated and enforced.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: GV.PO-02
+    title: Policy Review and Update
+    description: Policy for managing cybersecurity risks is reviewed, updated, communicated, and enforced to reflect changes in requirements, threats, technology, and organizational mission.
+    category: GV.PO
+    control_objective: Review, update, communicate, and enforce the risk management policy to reflect changes in requirements, threats, technology, and organizational mission.
+    implementation_guidance: Keep dated review history and change records for the policy.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+      - audit_reports
+  # ── GV.OV  Oversight ────────────────────────────────────────────────────────
+  - id: GV.OV-01
+    title: Strategy Outcome Review
+    description: Cybersecurity risk management strategy outcomes are reviewed to inform and adjust strategy and direction.
+    category: GV.OV
+    control_objective: Review risk management strategy outcomes to inform and adjust strategy and direction.
+    implementation_guidance: Keep records of periodic reviews of strategy outcomes and the adjustments that followed.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - audit_reports
+      - policy_document
+  - id: GV.OV-02
+    title: Strategy Coverage Review
+    description: The cybersecurity risk management strategy is reviewed and adjusted to ensure coverage of organizational requirements and risks.
+    category: GV.OV
+    control_objective: Review and adjust the risk management strategy to ensure it covers organizational requirements and risks.
+    implementation_guidance: Keep records showing the strategy was checked against current requirements and risks and then updated.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - audit_reports
+      - policy_document
+  - id: GV.OV-03
+    title: Performance Evaluation
+    description: Organizational cybersecurity risk management performance is evaluated and reviewed for adjustments needed.
+    category: GV.OV
+    control_objective: Evaluate and review organizational cybersecurity risk management performance for needed adjustments.
+    implementation_guidance: Keep performance metrics, review reports, and the decisions that came out of them.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - audit_reports
+  # ── GV.SC  Cybersecurity Supply Chain Risk Management ───────────────────────
+  - id: GV.SC-01
+    title: Supply Chain Risk Management Program
+    description: A cybersecurity supply chain risk management program, strategy, objectives, policies, and processes are established and agreed to by organizational stakeholders.
+    category: GV.SC
+    control_objective: Establish a supply chain risk management program, strategy, objectives, policies, and processes, agreed to by organizational stakeholders.
+    implementation_guidance: Maintain an approved supply chain risk management program and policy.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: GV.SC-02
+    title: Supplier and Partner Roles
+    description: Cybersecurity roles and responsibilities for suppliers, customers, and partners are established, communicated, and coordinated internally and externally.
+    category: GV.SC
+    control_objective: Establish, communicate, and coordinate cybersecurity roles and responsibilities for suppliers, customers, and partners.
+    implementation_guidance: Document who is responsible for what with each external party and how it is coordinated internally and externally.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: GV.SC-03
+    title: Supply Chain Risk Integration
+    description: Cybersecurity supply chain risk management is integrated into cybersecurity and enterprise risk management, risk assessment, and improvement processes.
+    category: GV.SC
+    control_objective: Integrate supply chain risk management into cybersecurity and enterprise risk management, risk assessment, and improvement processes.
+    implementation_guidance: Show supplier risks appearing in the enterprise risk register and in improvement plans.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: GV.SC-04
+    title: Supplier Criticality
+    description: Suppliers are known and prioritized by criticality.
+    category: GV.SC
+    control_objective: Know suppliers and prioritize them by criticality.
+    implementation_guidance: Maintain a supplier register with criticality ratings; no collector enumerates external suppliers.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: GV.SC-05
+    title: Supplier Contract Requirements
+    description: Requirements to address cybersecurity risks in supply chains are established, prioritized, and integrated into contracts and other types of agreements with suppliers and other relevant third parties.
+    category: GV.SC
+    control_objective: Establish and prioritize supply chain cybersecurity requirements and integrate them into contracts and other agreements with suppliers and third parties.
+    implementation_guidance: Keep contract clauses, security schedules, or addenda that carry the requirements.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+  - id: GV.SC-06
+    title: Supplier Due Diligence
+    description: Planning and due diligence are performed to reduce risks before entering into formal supplier or other third-party relationships.
+    category: GV.SC
+    control_objective: Perform planning and due diligence to reduce risk before entering formal supplier or other third-party relationships.
+    implementation_guidance: Keep pre-engagement assessment records and approvals.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+      - audit_reports
+  - id: GV.SC-07
+    title: Supplier Risk Monitoring
+    description: The risks posed by a supplier, their products and services, and other third parties are understood, recorded, prioritized, assessed, responded to, and monitored over the course of the relationship.
+    category: GV.SC
+    control_objective: Understand, record, prioritize, assess, respond to, and monitor the risks posed by suppliers, their products and services, and other third parties over the course of the relationship.
+    implementation_guidance: Keep supplier risk assessments, monitoring reviews, and responses across the life of each relationship.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - audit_reports
+      - policy_document
+  - id: GV.SC-08
+    title: Suppliers in Incident Planning
+    description: Relevant suppliers and other third parties are included in incident planning, response, and recovery activities.
+    category: GV.SC
+    control_objective: Include relevant suppliers and other third parties in incident planning, response, and recovery activities.
+    implementation_guidance: Show suppliers in incident response plans and in exercise or real-incident records.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+      - incident_reports
+  - id: GV.SC-09
+    title: Supply Chain Security Practices
+    description: Supply chain security practices are integrated into cybersecurity and enterprise risk management programs, and their performance is monitored throughout the technology product and service life cycle.
+    category: GV.SC
+    control_objective: Integrate supply chain security practices into cybersecurity and enterprise risk management programs and monitor their performance throughout the technology product and service life cycle.
+    implementation_guidance: Keep program documentation and periodic performance reviews.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+      - audit_reports
+  - id: GV.SC-10
+    title: Post-Relationship Provisions
+    description: Cybersecurity supply chain risk management plans include provisions for activities that occur after the conclusion of a partnership or service agreement.
+    category: GV.SC
+    control_objective: Include provisions in supply chain risk management plans for activities that occur after a partnership or service agreement concludes.
+    implementation_guidance: Document offboarding steps (access revocation, data return or deletion, transition) and contract exit terms.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
   # ── ID.AM  Asset Management ─────────────────────────────────────────────────
   - id: ID.AM-01
     title: Hardware Inventory
