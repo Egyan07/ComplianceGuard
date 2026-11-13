@@ -13,11 +13,12 @@ import {
   GDPR_CONTROLS,
   HIPAA_CONTROLS,
   ISO27001_CONTROLS,
+  NIST_CONTROLS,
   SOC2_CONTROLS,
   type FrameworkControlOption,
 } from './evidenceCatalog.generated';
 
-export type FrameworkId = 1 | 2 | 3 | 4;
+export type FrameworkId = 1 | 2 | 3 | 4 | 5;
 
 export { CANONICAL_EVIDENCE_TYPES, getCategoryForType } from './evidenceCatalog.generated';
 export type { CanonicalEvidenceType, FrameworkControlOption } from './evidenceCatalog.generated';
@@ -28,6 +29,7 @@ export const CONTROLS_BY_FRAMEWORK: Record<FrameworkId, FrameworkControlOption[]
   2: ISO27001_CONTROLS,
   3: HIPAA_CONTROLS,
   4: GDPR_CONTROLS,
+  5: NIST_CONTROLS,
 };
 
 export const FRAMEWORK_LABELS: Record<FrameworkId, string> = {
@@ -35,6 +37,7 @@ export const FRAMEWORK_LABELS: Record<FrameworkId, string> = {
   2: 'ISO 27001',
   3: 'HIPAA',
   4: 'GDPR',
+  5: 'NIST CSF 2.0',
 };
 
 /** Unit used in framework UI copy ("criteria", "controls", "obligations"). */
@@ -43,6 +46,7 @@ export const FRAMEWORK_CONTROL_UNIT: Record<FrameworkId, string> = {
   2: 'controls',
   3: 'safeguards',
   4: 'obligations',
+  5: 'subcategories',
 };
 
 /** Manual-evidence payload sent to the main process (file mode). */

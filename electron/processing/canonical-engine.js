@@ -35,6 +35,7 @@ const FRAMEWORK_KEYS = {
   2: 'iso27001',
   3: 'hipaa',
   4: 'gdpr',
+  5: 'nist',
 };
 
 const FRAMEWORK_NAMES = {
@@ -243,7 +244,7 @@ class CanonicalEngine {
    * Evaluate + persist, returning the legacy Electron evaluation shape so the
    * IPC layer, evaluation history, and report generator keep working unchanged.
    *
-   * @param {number} frameworkId desktop numeric id (1-4)
+   * @param {number} frameworkId desktop numeric id (1-5)
    * @param {string[]} evidenceTypes canonical or legacy evidence types
    * @param {object} db ComplianceGuardDatabase (needs createEvaluation)
    */

@@ -88,10 +88,10 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ onNavigate }) => 
   // same convention as the Dashboard, so the sidebar's framework switcher and
   // deep links carry over to the History page.
   const urlFw = Number(searchParams.get('fw') || '1');
-  const selectedFramework: 1 | 2 | 3 | 4 = (urlFw === 2 || urlFw === 3 || urlFw === 4) ? (urlFw as 1 | 2 | 3 | 4) : 1;
-  const setSelectedFramework = (fw: 1 | 2 | 3 | 4) => setSearchParams({ fw: String(fw) }, { replace: true });
+  const selectedFramework: 1 | 2 | 3 | 4 | 5 = (urlFw >= 2 && urlFw <= 5) ? (urlFw as 1 | 2 | 3 | 4 | 5) : 1;
+  const setSelectedFramework = (fw: 1 | 2 | 3 | 4 | 5) => setSearchParams({ fw: String(fw) }, { replace: true });
 
-  const fetchHistory = async (frameworkId: 1 | 2 | 3 | 4) => {
+  const fetchHistory = async (frameworkId: 1 | 2 | 3 | 4 | 5) => {
     setLoading(true);
     setTrendLoading(true);
     setError(null);

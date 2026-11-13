@@ -45,7 +45,7 @@ export * from './api.http';
  * Electron: reads local SQLite via IPC.
  * Web: calls GET /api/v1/compliance/evaluations/history.
  */
-export async function getScoreTrend(frameworkId: 1 | 2 | 3 | 4 = 1): Promise<TrendPoint[]> {
+export async function getScoreTrend(frameworkId: 1 | 2 | 3 | 4 | 5 = 1): Promise<TrendPoint[]> {
   // Call-time (not module import) so the dispatcher reflects the real environment.
   const isElectron = isElectronMode();
   if (isElectron) {
@@ -88,7 +88,7 @@ export function normaliseStatus(raw: string | undefined): TrendPoint['status'] {
 
 // ---- Electron IPC implementation ----
 
-async function electronGetEvidenceSummary(frameworkId: 1 | 2 | 3 | 4 = 1): Promise<EvidenceSummary> {
+async function electronGetEvidenceSummary(frameworkId: 1 | 2 | 3 | 4 | 5 = 1): Promise<EvidenceSummary> {
   const api = getElectronAPI();
   const summary = await api.getEvidenceSummary(frameworkId);
 
@@ -106,7 +106,7 @@ async function electronGetEvidenceSummary(frameworkId: 1 | 2 | 3 | 4 = 1): Promi
   };
 }
 
-async function electronGetEvidenceItems(frameworkId: 1 | 2 | 3 | 4 = 1): Promise<EvidenceItem[]> {
+async function electronGetEvidenceItems(frameworkId: 1 | 2 | 3 | 4 | 5 = 1): Promise<EvidenceItem[]> {
   const api = getElectronAPI();
   const items = await api.getEvidenceList(frameworkId);
 
@@ -123,7 +123,7 @@ async function electronGetEvidenceItems(frameworkId: 1 | 2 | 3 | 4 = 1): Promise
   }));
 }
 
-async function electronCollectEvidence(frameworkId: 1 | 2 | 3 | 4 = 1): Promise<EvidenceCollectionResult> {
+async function electronCollectEvidence(frameworkId: 1 | 2 | 3 | 4 | 5 = 1): Promise<EvidenceCollectionResult> {
   const api = getElectronAPI();
   return await api.collectWindowsEvidence(frameworkId);
 }
@@ -137,13 +137,13 @@ async function electronEvaluateCompliance(frameworkId = 1): Promise<ComplianceEv
 
 // ---- Public API (auto-selects electron vs http) ----
 
-export const getEvidenceSummary = async (frameworkId?: 1 | 2 | 3 | 4): Promise<EvidenceSummary> => {
+export const getEvidenceSummary = async (frameworkId?: 1 | 2 | 3 | 4 | 5): Promise<EvidenceSummary> => {
   const isElectron = isElectronMode();
   if (isElectron) return electronGetEvidenceSummary(frameworkId);
   return httpGetEvidenceSummary();
 };
 
-export const getEvidenceItems = async (status?: string, search?: string, frameworkId?: 1 | 2 | 3 | 4): Promise<EvidenceItem[]> => {
+export const getEvidenceItems = async (status?: string, search?: string, frameworkId?: 1 | 2 | 3 | 4 | 5): Promise<EvidenceItem[]> => {
   const isElectron = isElectronMode();
   if (isElectron) return electronGetEvidenceItems(frameworkId);
   return httpGetEvidenceItems(status, search);
@@ -151,7 +151,7 @@ export const getEvidenceItems = async (status?: string, search?: string, framewo
 
 export const collectEvidence = async (
   request?: EvidenceCollectionRequest,
-  frameworkId?: 1 | 2 | 3 | 4
+  frameworkId?: 1 | 2 | 3 | 4 | 5
 ): Promise<EvidenceCollectionResult> => {
   const isElectron = isElectronMode();
   if (isElectron) return electronCollectEvidence(frameworkId);

@@ -45,7 +45,7 @@ function AppContent({ mode, onToggleMode }: AppContentProps) {
   const isElectron = isElectronMode();
   const [searchParams] = useSearchParams();
   const location = useLocation();
-  const selectedFramework = Math.max(1, Math.min(4, Number(searchParams.get('fw') || '1'))) as 1 | 2 | 3 | 4;
+  const selectedFramework = Math.max(1, Math.min(5, Number(searchParams.get('fw') || '1'))) as 1 | 2 | 3 | 4 | 5;
 
   // Public, no-auth pages reached from email links — must render before the
   // login gate (the recipient is not signed in).

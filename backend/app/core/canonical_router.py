@@ -1,7 +1,7 @@
 """
 Shared adapter between the canonical scoring engine and the framework routers.
 
-Single conversion path for all four evaluate-from-evidence endpoints. The
+Single conversion path for all five evaluate-from-evidence endpoints. The
 response contract is the canonical one: overall_score 0-100 and the canonical
 status vocabulary (compliant / partial / non_compliant / not_assessed).
 """

@@ -18,6 +18,7 @@ const FRAMEWORKS = [
   { id: 2, label: 'ISO 27001' },
   { id: 3, label: 'HIPAA' },
   { id: 4, label: 'GDPR' },
+  { id: 5, label: 'NIST CSF 2.0' },
 ];
 
 const ScoreHero: React.FC<ScoreHeroProps> = ({

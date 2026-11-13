@@ -173,14 +173,15 @@ export async function httpGetEvidenceItems(status?: string, search?: string): Pr
 // The backend persists framework IDs as taxonomy strings ('soc2_v2017',
 // 'iso27001_v2022', 'hipaa_security_rule', 'gdpr_2016_679') — NOT numbers.
 // Legacy numeric rows (1-4) from the earliest schema are mapped too.
-export const FRAMEWORK_ID_STRINGS: Record<1 | 2 | 3 | 4, string[]> = {
+export const FRAMEWORK_ID_STRINGS: Record<1 | 2 | 3 | 4 | 5, string[]> = {
   1: ['soc2'],
   2: ['iso27001'],
   3: ['hipaa'],
   4: ['gdpr'],
+  5: ['nist'],
 };
 
-export function frameworkIdMatches(recordId: string | number | null | undefined, frameworkId: 1 | 2 | 3 | 4): boolean {
+export function frameworkIdMatches(recordId: string | number | null | undefined, frameworkId: 1 | 2 | 3 | 4 | 5): boolean {
   const raw = String(recordId ?? '').toLowerCase();
   if (!raw) return false;
   if (FRAMEWORK_ID_STRINGS[frameworkId].some((prefix) => raw.startsWith(prefix))) return true;
@@ -188,7 +189,7 @@ export function frameworkIdMatches(recordId: string | number | null | undefined,
   return Number.isFinite(numeric) && numeric === frameworkId;
 }
 
-export async function httpGetScoreTrend(frameworkId: 1 | 2 | 3 | 4): Promise<Array<{
+export async function httpGetScoreTrend(frameworkId: 1 | 2 | 3 | 4 | 5): Promise<Array<{
   date: string;
   score: number;
   status: 'compliant' | 'partial' | 'non_compliant' | 'not_assessed';
@@ -214,12 +215,14 @@ export async function evaluateComplianceWeb(frameworkId = 1): Promise<Compliance
     2: '/iso27001/evaluate-from-evidence',
     3: '/hipaa/evaluate-from-evidence',
     4: '/gdpr/evaluate-from-evidence',
+    5: '/nist/evaluate-from-evidence',
   };
   const frameworkNames: Record<number, string> = {
     1: 'SOC 2 Type II',
     2: 'ISO/IEC 27001:2022',
     3: 'HIPAA Security Rule',
     4: 'GDPR',
+    5: 'NIST CSF 2.0',
   };
   const response = await apiClient.post<HttpEvaluationResponse>(urls[frameworkId] ?? urls[1]);
   const d = response.data;
@@ -309,7 +312,7 @@ export interface WebEvidenceUploadRequest {
   title: string;
   description?: string;
   controlId?: string;
-  frameworkId?: 1 | 2 | 3 | 4;
+  frameworkId?: 1 | 2 | 3 | 4 | 5;
 }
 
 /**
@@ -404,7 +407,7 @@ interface HttpFrameworkControlRow {
  * mode. Rows are normalised into the same shape the Electron IPC history
  * returns so EvaluationHistory renders one code path.
  */
-export async function httpGetEvaluationHistory(frameworkId: 1 | 2 | 3 | 4): Promise<HttpEvaluationRecord[]> {
+export async function httpGetEvaluationHistory(frameworkId: 1 | 2 | 3 | 4 | 5): Promise<HttpEvaluationRecord[]> {
   const response = await apiClient.get<HttpEvaluationRecord[]>('/compliance/evaluations/history');
   return (response.data ?? []).filter((r) => frameworkIdMatches(r.framework_id, frameworkId));
 }

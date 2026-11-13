@@ -9,11 +9,12 @@ import { RADIUS, SCORE_BAND_GOOD, SCORE_BAND_ON_TRACK, SCORE_BAND_LABEL, scoreBa
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
-const FRAMEWORKS: { id: 1 | 2 | 3 | 4; label: string }[] = [
+const FRAMEWORKS: { id: 1 | 2 | 3 | 4 | 5; label: string }[] = [
   { id: 1, label: 'SOC 2' },
   { id: 2, label: 'ISO 27001' },
   { id: 3, label: 'HIPAA' },
   { id: 4, label: 'GDPR' },
+  { id: 5, label: 'NIST CSF 2.0' },
 ];
 
 const W = 820, H = 120, PAD = 40;
@@ -395,8 +396,8 @@ const EvaluationTable: React.FC<{ pts: TrendDisplayPoint[]; pal: ChartPalette }>
 export interface ScoreTrendProps {
   evaluations: TrendPoint[];
   loading?: boolean;
-  selectedFramework: 1 | 2 | 3 | 4;
-  onFrameworkChange: (fw: 1 | 2 | 3 | 4) => void;
+  selectedFramework: 1 | 2 | 3 | 4 | 5;
+  onFrameworkChange: (fw: 1 | 2 | 3 | 4 | 5) => void;
 }
 
 const ScoreTrend: React.FC<ScoreTrendProps> = ({ evaluations, loading = false, selectedFramework, onFrameworkChange }) => {
@@ -433,7 +434,7 @@ const ScoreTrend: React.FC<ScoreTrendProps> = ({ evaluations, loading = false, s
         <Segmented
           options={FRAMEWORKS.map(f => ({ value: f.id, label: f.label }))}
           value={selectedFramework}
-          onChange={(fw) => onFrameworkChange(fw as 1 | 2 | 3 | 4)}
+          onChange={(fw) => onFrameworkChange(fw as 1 | 2 | 3 | 4 | 5)}
         />
       </Box>
       {loading ? (

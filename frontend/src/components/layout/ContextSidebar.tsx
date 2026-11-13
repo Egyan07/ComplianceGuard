@@ -31,6 +31,7 @@ const FRAMEWORKS = [
   { label: 'ISO 27001', key: 'iso27001', id: 2 },
   { label: 'HIPAA',     key: 'hipaa',    id: 3 },
   { label: 'GDPR',      key: 'gdpr',     id: 4 },
+  { label: 'NIST CSF 2.0', key: 'nist',  id: 5 },
 ];
 
 interface ContextSidebarProps {

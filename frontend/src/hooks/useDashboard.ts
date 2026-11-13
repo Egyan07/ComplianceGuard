@@ -36,12 +36,12 @@ export interface DashboardState {
   });
   const [collectingEvidence, setCollectingEvidence] = useState(false);
   const [evaluating, setEvaluating] = useState(false);
-  const [selectedFramework, setSelectedFrameworkState] = useState<1 | 2 | 3 | 4>(1);
+  const [selectedFramework, setSelectedFrameworkState] = useState<1 | 2 | 3 | 4 | 5>(1);
 
   // Switching frameworks must drop the previous framework's evaluation — a
   // SOC 2 score/control list rendered under a GDPR selection is exactly the
   // mismatch class the Controls-section bug came from.
-  const setSelectedFramework = useCallback((fw: 1 | 2 | 3 | 4) => {
+  const setSelectedFramework = useCallback((fw: 1 | 2 | 3 | 4 | 5) => {
     setSelectedFrameworkState(prev => {
       if (prev !== fw) setState(prevState => ({ ...prevState, evaluation: null }));
       return fw;
