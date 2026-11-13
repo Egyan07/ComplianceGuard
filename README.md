@@ -5,7 +5,7 @@
 <p align="center">
   <a href="#quick-start"><img src="https://img.shields.io/badge/version-4.2.4-2563EB" alt="Version"></a>
   <img src="https://img.shields.io/badge/license-BSL%201.1-orange" alt="License">
-  <a href="#compliance-frameworks"><img src="https://img.shields.io/badge/frameworks-SOC%202%20%7C%20ISO%2027001%20%7C%20HIPAA%20%7C%20GDPR-10B981" alt="Frameworks"></a>
+  <a href="#compliance-frameworks"><img src="https://img.shields.io/badge/frameworks-SOC%202%20%7C%20ISO%2027001%20%7C%20HIPAA%20%7C%20GDPR%20%7C%20NIST%20CSF%202.0-10B981" alt="Frameworks"></a>
   <img src="https://img.shields.io/badge/tests-~1274%20total-10B981?logo=pytest&logoColor=white" alt="Tests">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Web%20%7C%20Docker-6B7280" alt="Platform">
   <a href="https://github.com/Egyan07/ComplianceGuard/actions"><img src="https://img.shields.io/github/actions/workflow/status/Egyan07/ComplianceGuard/ci.yml?label=CI&logo=githubactions&logoColor=white" alt="CI"></a>
@@ -76,7 +76,7 @@ Browse the full control library offline: SOC 2 Type II (43 criteria), ISO/IEC 27
 
 ## Who Is This For?
 
-- Security and IT teams preparing for SOC 2, ISO 27001, HIPAA, or GDPR audits
+- Security and IT teams preparing for SOC 2, ISO 27001, HIPAA, GDPR or NIST CSF 2.0 audits
 - Companies that need endpoint-level evidence, not just cloud infrastructure scanning
 - Teams requiring self-hosting, air-gapped deployment, or strict data residency
 
@@ -294,7 +294,7 @@ each control scores as the share of its required evidence types that are present
 `not_assessed`. The overall 0–100 score is the mean over **all** controls;
 `not_assessed` controls count as 0, so a sparse evidence set honestly reflects
 evidence coverage rather than inflating readiness. The same model applies to ISO
-27001, HIPAA, and GDPR: framework differences are data, not separate scoring
+27001, HIPAA, GDPR and NIST CSF 2.0: framework differences are data, not separate scoring
 logic.
 
 <details>
@@ -403,7 +403,7 @@ ComplianceGuard runs in two modes: Desktop (Electron + SQLite) for offline use, 
 │                                                               │
 │  ┌─────────────────┐  ┌───────────────────────────────────┐  │
 │  │ Evidence        │  │ Compliance Engine                  │  │
-│  │ Processor       │  │ SOC 2 / ISO 27001 / HIPAA / GDPR scoring  │  │
+│  │ Processor       │  │ SOC 2 / ISO / HIPAA / GDPR / NIST scoring │  │
 │  │ Collect · Store │  │ gap analysis · recommendations     │  │
 │  └────────┬────────┘  └───────────────┬───────────────────┘  │
 │           └──────────┬────────────────┘                       │

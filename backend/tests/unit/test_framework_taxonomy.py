@@ -256,7 +256,7 @@ class TestGeneratedCatalogConsistency:
         )
 
     def test_catalog_matches_every_canonical_framework(self):
-        """Drift guard for ALL four per-framework catalog blocks, not just SOC 2."""
+        """Drift guard for ALL five per-framework catalog blocks, not just SOC 2."""
         catalog_path = os.path.join(
             _REPO_ROOT, "frontend", "src", "components", "evidenceCatalog.generated.ts"
         )
@@ -272,6 +272,9 @@ class TestGeneratedCatalogConsistency:
             ),
             "GDPR_CONTROLS": sorted(
                 c["id"] for c in _load_yaml("gdpr_controls.yaml")["controls"]
+            ),
+            "NIST_CONTROLS": sorted(
+                c["id"] for c in _load_yaml("nist_csf2_controls.yaml")["controls"]
             ),
         }
         for const_name, yaml_ids in expected.items():
