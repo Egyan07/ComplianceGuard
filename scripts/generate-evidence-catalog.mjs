@@ -9,8 +9,7 @@
  * Output:
  *   - frontend/src/components/evidenceCatalog.generated.ts
  *
- * Emits a catalog for EVERY canonical framework (SOC 2, ISO 27001, HIPAA,
- * GDPR) so framework-aware UIs (e.g. the evidence upload dialog) list the
+ * Emits a catalog for EVERY canonical framework (SOC 2, ISO 27001, HIPAA, GDPR, NIST CSF 2.0) so framework-aware UIs (e.g. the evidence upload dialog) list the
  * controls and evidence types of the framework the user actually selected.
  *
  * The generated module is the ONLY catalog the upload UI may expose. Every type
@@ -68,6 +67,7 @@ const FRAMEWORKS = [
   { id: 2, yaml: 'iso27001_controls.yaml', constName: 'ISO27001_CONTROLS' },
   { id: 3, yaml: 'hipaa_controls.yaml', constName: 'HIPAA_CONTROLS' },
   { id: 4, yaml: 'gdpr_controls.yaml', constName: 'GDPR_CONTROLS' },
+  { id: 5, yaml: 'nist_csf2_controls.yaml', constName: 'NIST_CONTROLS' },
 ];
 
 function main() {

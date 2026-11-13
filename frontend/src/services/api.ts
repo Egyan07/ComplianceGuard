@@ -166,7 +166,7 @@ export const evaluateCompliance = async (frameworkId = 1): Promise<ComplianceEva
   return evaluateComplianceWeb(frameworkId);
 };
 
-export const getFrameworkControls = async (frameworkId: 1 | 2 | 3 | 4): Promise<FrameworkData | FrameworkDataError> => {
+export const getFrameworkControls = async (frameworkId: 1 | 2 | 3 | 4 | 5): Promise<FrameworkData | FrameworkDataError> => {
   const isElectron = isElectronMode();
   if (isElectron) {
     const api = getElectronAPI();

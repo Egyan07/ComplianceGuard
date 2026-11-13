@@ -5,12 +5,13 @@ import { CanonicalEngine } from '../processing/canonical-engine';
 // Same mocked ipcMain object the module under test registers handlers on.
 const { ipcMain } = require('../../__mocks__/electron.js');
 
-// Browser framework ids (1-4) -> canonical engine keys.
+// Browser framework ids (1-5) -> canonical engine keys.
 const FRAMEWORK_MAP = {
   1: 'soc2',
   2: 'iso27001',
   3: 'hipaa',
   4: 'gdpr',
+  5: 'nist',
 };
 
 function register() {

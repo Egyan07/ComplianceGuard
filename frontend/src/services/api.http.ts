@@ -351,18 +351,20 @@ export async function uploadEvidenceFileWeb(req: WebEvidenceUploadRequest): Prom
  * FrameworkControl shape (defaults filled, unknown risk levels mapped) so the
  * FrameworkBrowser renders identically in both modes.
  */
-export async function httpGetFrameworkControls(frameworkId: 1 | 2 | 3 | 4): Promise<FrameworkData> {
+export async function httpGetFrameworkControls(frameworkId: 1 | 2 | 3 | 4 | 5): Promise<FrameworkData> {
   const urls: Record<number, string> = {
     1: '/compliance/framework/controls',
     2: '/iso27001/framework/controls',
     3: '/hipaa/framework/controls',
     4: '/gdpr/framework/controls',
+    5: '/nist/framework/controls',
   };
   const names: Record<number, string> = {
     1: 'SOC 2',
     2: 'ISO 27001',
     3: 'HIPAA',
     4: 'GDPR',
+    5: 'NIST CSF 2.0',
   };
   const response = await apiClient.get<HttpFrameworkControlRow[]>(urls[frameworkId] ?? urls[1]);
   const controls: FrameworkControl[] = response.data.map(row => ({

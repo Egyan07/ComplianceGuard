@@ -5,6 +5,7 @@ import {
   getCategoryForType,
   HIPAA_CONTROLS,
   ISO27001_CONTROLS,
+  NIST_CONTROLS,
   SOC2_CONTROLS,
 } from './evidenceCatalog.generated';
 
@@ -18,15 +19,17 @@ describe('evidence catalog (generated from canonical shared data)', () => {
 
   it('covers every canonical framework with the exact taxonomy counts', () => {
     // Locked to the canonical taxonomies: SOC 2 2017 TSC (43), ISO/IEC
-    // 27001:2022 Annex A (93), HIPAA Security Rule (47), GDPR (38).
+    // 27001:2022 Annex A (93), HIPAA Security Rule (47), GDPR (38) and NIST
+    // CSF 2.0 (74 of the 106 subcategories).
     expect(SOC2_CONTROLS.length).toBe(43);
     expect(ISO27001_CONTROLS.length).toBe(93);
     expect(HIPAA_CONTROLS.length).toBe(47);
     expect(GDPR_CONTROLS.length).toBe(38);
+    expect(NIST_CONTROLS.length).toBe(74);
   });
 
   it('has unique control ids within each framework', () => {
-    for (const controls of [SOC2_CONTROLS, ISO27001_CONTROLS, HIPAA_CONTROLS, GDPR_CONTROLS]) {
+    for (const controls of [SOC2_CONTROLS, ISO27001_CONTROLS, HIPAA_CONTROLS, GDPR_CONTROLS, NIST_CONTROLS]) {
       const ids = new Set(controls.map((c) => c.id));
       expect(ids.size).toBe(controls.length);
     }
@@ -57,7 +60,7 @@ describe('evidence catalog (generated from canonical shared data)', () => {
     // The removed fabricated SOC 2 taxonomy must never reappear in any
     // upload catalog (guards the bug class found in the Settings panel).
     const fabricated = ['A3.2', 'C3.2', 'PI3.2', 'CA1.1'];
-    const allIds = [SOC2_CONTROLS, ISO27001_CONTROLS, HIPAA_CONTROLS, GDPR_CONTROLS]
+    const allIds = [SOC2_CONTROLS, ISO27001_CONTROLS, HIPAA_CONTROLS, GDPR_CONTROLS, NIST_CONTROLS]
       .flatMap((cs) => cs.map((c) => c.id));
     for (const id of fabricated) {
       expect(allIds).not.toContain(id);
@@ -65,7 +68,7 @@ describe('evidence catalog (generated from canonical shared data)', () => {
   });
 
   it('every non-SOC 2 control also exposes only canonical evidence types', () => {
-    for (const controls of [ISO27001_CONTROLS, HIPAA_CONTROLS, GDPR_CONTROLS]) {
+    for (const controls of [ISO27001_CONTROLS, HIPAA_CONTROLS, GDPR_CONTROLS, NIST_CONTROLS]) {
       for (const control of controls) {
         expect(control.types.length).toBeGreaterThan(0);
         for (const type of control.types) {

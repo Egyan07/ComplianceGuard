@@ -34,6 +34,7 @@ from app.api.aws_credentials import router as aws_credentials_router
 from app.api.iso27001 import router as iso27001_router
 from app.api.hipaa import router as hipaa_router
 from app.api.gdpr import router as gdpr_router
+from app.api.nist import router as nist_router
 from app.api.enterprise.audit import router as enterprise_audit_router
 from app.api.enterprise.branding import router as enterprise_branding_router
 from app.api.enterprise.export import router as enterprise_export_router
@@ -352,6 +353,7 @@ app.include_router(aws_credentials_router, prefix="/api/v1")
 app.include_router(iso27001_router, prefix="/api/v1")
 app.include_router(hipaa_router, prefix="/api/v1")
 app.include_router(gdpr_router, prefix="/api/v1")
+app.include_router(nist_router, prefix="/api/v1")
 app.include_router(enterprise_audit_router, prefix="/api/v1")
 app.include_router(enterprise_branding_router, prefix="/api/v1")
 app.include_router(enterprise_export_router, prefix="/api/v1")

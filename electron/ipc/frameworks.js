@@ -15,6 +15,7 @@ const FRAMEWORK_FILES = {
   2: { name: 'ISO 27001', file: 'iso27001_controls.yaml' },
   3: { name: 'HIPAA', file: 'hipaa_controls.yaml' },
   4: { name: 'GDPR', file: 'gdpr_controls.yaml' },
+  5: { name: 'NIST CSF 2.0', file: 'nist_csf2_controls.yaml' },
 };
 
 function sharedDir() {
