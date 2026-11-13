@@ -3,8 +3,11 @@
 # Canonical NIST CSF 2.0 definition. Intended as the single source for the
 # scoring engines (backend canonical_evidence.py and
 # electron/processing/canonical-engine.js), the desktop framework browser, and
-# the generated frontend evidence catalog. The loader is not yet pointed at this
-# file (follow-up), so nothing reads it yet. Do not maintain a second copy.
+# the generated frontend evidence catalog. Both scoring engines read it under
+# the `nist` framework key (backend/app/core/canonical_evidence.py and
+# electron/processing/canonical-engine.js). The desktop framework browser tab
+# and the generated frontend evidence catalog are still to be pointed at it.
+# Do not maintain a second copy.
 #
 # Scope (batches so far):
 #   - Govern:   GV.OC (5), GV.RM (7), GV.RR (4), GV.PO (2), GV.OV (3),

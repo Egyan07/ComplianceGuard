@@ -19,7 +19,7 @@ import { CanonicalEngine } from './canonical-engine.js';
 
 const execFileP = promisify(execFile);
 
-const FRAMEWORKS = ['soc2', 'iso27001', 'hipaa', 'gdpr'];
+const FRAMEWORKS = ['soc2', 'iso27001', 'hipaa', 'gdpr', 'nist'];
 
 // Canonical + legacy vocabulary (union used in the fixture generator).
 const TYPES = [

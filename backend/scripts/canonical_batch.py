@@ -3,7 +3,7 @@ Batch runner for the canonical engine — used by the cross-engine equivalence
 harness (electron/processing/canonical-equivalence.test.js).
 
 Reads a JSON list of fixtures from argv (or stdin when piped), scores each
-fixture across all four frameworks with the Python canonical engine, and
+fixture across all five frameworks with the Python canonical engine, and
 prints the results as JSON on stdout.
 
 Usage:
@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from app.core.canonical_evidence import get_canonical_engine  # noqa: E402
 
-FRAMEWORKS = ["soc2", "iso27001", "hipaa", "gdpr"]
+FRAMEWORKS = ["soc2", "iso27001", "hipaa", "gdpr", "nist"]
 
 
 def main() -> None:

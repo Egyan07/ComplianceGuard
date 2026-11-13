@@ -26,6 +26,7 @@ const FRAMEWORK_IDS = {
   iso27001: 'iso27001_v2022',
   hipaa: 'hipaa_security_rule',
   gdpr: 'gdpr_2016_679',
+  nist: 'nist_csf_2_0',
 };
 
 // Desktop numeric framework ids (the compliance_frameworks table) -> canonical key.
@@ -41,6 +42,7 @@ const FRAMEWORK_NAMES = {
   iso27001: 'ISO/IEC 27001:2022',
   hipaa: 'HIPAA Security Rule',
   gdpr: 'GDPR',
+  nist: 'NIST CSF 2.0',
 };
 
 const FRAMEWORK_FILES = {
@@ -48,6 +50,7 @@ const FRAMEWORK_FILES = {
   iso27001: 'iso27001_controls.yaml',
   hipaa: 'hipaa_controls.yaml',
   gdpr: 'gdpr_controls.yaml',
+  nist: 'nist_csf2_controls.yaml',
 };
 
 const STATUS = {

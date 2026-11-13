@@ -14,7 +14,7 @@
 
 Cloud-first compliance platforms like Vanta, Drata, and Sprinto automate evidence through SaaS, cloud, identity, and MDM/EDR integrations (Intune, Jamf, Okta, CrowdStrike, and similar). That is useful, but it misses what happens **on the machines themselves**. Password policies, firewall rules, event logs, running services, and local user accounts live on the endpoint, not in AWS, and most MDM integrations only scratch that surface.
 
-ComplianceGuard lives on the endpoint too. It collects evidence directly from Windows, macOS, and Linux, scores it against SOC 2 Type II, ISO/IEC 27001:2022, HIPAA Security Rule, and GDPR controls, and tells you exactly where the gaps are, across all four frameworks in a single collection pass. Run it as a desktop app or deploy the web version with Docker: self-hosted, your organization controls the infrastructure and data access; managed, your evidence stays on the endpoints until you choose to sync.
+ComplianceGuard lives on the endpoint too. It collects evidence directly from Windows, macOS, and Linux, scores it against SOC 2 Type II, ISO/IEC 27001:2022, HIPAA Security Rule, GDPR and NIST CSF 2.0 controls, and tells you exactly where the gaps are, across all five frameworks in a single collection pass. Run it as a desktop app or deploy the web version with Docker: self-hosted, your organization controls the infrastructure and data access; managed, your evidence stays on the endpoints until you choose to sync.
 
 How it works: the desktop app collects OS-level evidence → maps it to compliance controls → scores your readiness → optionally syncs to a multi-machine cloud dashboard.
 
@@ -72,7 +72,7 @@ Monitor every machine from one centralized web dashboard: evidence coverage scor
 
 ![Framework Browser](assets/screenshots/FrameworkBrowser.png)
 
-Browse the full control library offline: SOC 2 Type II (43 criteria), ISO/IEC 27001:2022 (93 controls), HIPAA (47), and GDPR (38), with control objectives and implementation guidance.
+Browse the full control library offline: SOC 2 Type II (43 criteria), ISO/IEC 27001:2022 (93 controls), HIPAA (47), GDPR (38) and NIST CSF 2.0 (74 of 106 subcategories), with control objectives and implementation guidance.
 
 ## Who Is This For?
 
@@ -255,7 +255,7 @@ npm run package:linux   # Linux (AppImage + .deb) → dist/
 | **Self-hosted option** | ✅ Full control | Vendor-hosted; some offer self-hosted for select plans |
 | **Air-gapped networks** | Desktop works completely offline | Requires internet connectivity |
 | **Cost** | Free tier available, Pro from $149/mo | $8k to $10k/year |
-| **Compliance frameworks** | SOC 2 (43 criteria), ISO/IEC 27001:2022 (93), HIPAA (47), GDPR (38) | Broad multi-framework coverage (SOC 2, ISO 27001, HIPAA, PCI DSS, GDPR and more; varies by plan) |
+| **Compliance frameworks** | SOC 2 (43 criteria), ISO/IEC 27001:2022 (93), HIPAA (47), GDPR (38), NIST CSF 2.0 (74) | Broad multi-framework coverage (SOC 2, ISO 27001, HIPAA, PCI DSS, GDPR and more; varies by plan) |
 | **Source-available** | ✅ BSL 1.1 (not OSI open source) | ❌ Closed source |
 
 Cloud-first platforms automate evidence through SaaS, cloud, identity, and MDM integrations. ComplianceGuard collects evidence directly from endpoints and can run fully offline or self-hosted. Use both and you have covered the full stack.
@@ -510,7 +510,7 @@ ComplianceGuard supports Windows, macOS, and Linux endpoints. The following limi
 - **Scheduled collection requires the desktop app running:** Daily or Weekly schedules fire only while the desktop app is open — there is no OS-level/background scheduler yet. Configure in Settings → Automatic Collection.
 - **Per-machine view in desktop mode:** the Electron app shows one machine at a time. Use web mode (self-hosted or managed) with the Cloud Dashboard to monitor multiple machines centrally.
 - **AWS only for cloud evidence:** the web backend collects S3 and IAM evidence from AWS. GCP and Azure are not yet implemented.
-- **PCI DSS not yet implemented:** SOC 2 Type II (43 criteria), ISO/IEC 27001:2022 (93 controls), HIPAA Security Rule (47 safeguards), and GDPR (38 obligations) are all available. PCI DSS is planned.
+- **PCI DSS not yet implemented:** SOC 2 Type II (43 criteria), ISO/IEC 27001:2022 (93 controls), HIPAA Security Rule (47 safeguards), GDPR (38 obligations) and NIST CSF 2.0 (74 of 106 subcategories) are all available. PCI DSS is planned.
 - **Evidence coverage is not a compliance determination:** scores measure whether required evidence types were collected. Many SOC 2, ISO, and GDPR criteria require organizational or manual evidence that endpoint scans cannot establish, and a certification or audit opinion always requires an independent assessor.
 - **Single machine in free tier:** the free tier is limited to one machine. Pro supports up to 10, Enterprise is unlimited.
 - **No real-time monitoring:** ComplianceGuard takes point-in-time snapshots, not continuous streams.
@@ -739,7 +739,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 - Evidence collection across 8 categories: event logs, registry, services, firewall, users, network, software, file permissions
 - Native Linux support: systemd/journald, iproute2, ufw/iptables/nftables, dpkg/rpm/pacman; AppImage + .deb distribution
 - Native macOS support on Intel and Apple Silicon (unsigned DMG with Gatekeeper bypass)
-- Four compliance frameworks: SOC 2 Type II (43 criteria), ISO/IEC 27001:2022 (93), HIPAA Security Rule (47), GDPR (38)
+- Five compliance frameworks: SOC 2 Type II (43 criteria), ISO/IEC 27001:2022 (93), HIPAA Security Rule (47), GDPR (38) and NIST CSF 2.0 (74 of 106 subcategories)
 - Scheduled evidence collection (Daily/Weekly while the desktop app is running)
 - Control Heatmap with per-control scores, gap details, and inline remediation scripts
 - Evidence coverage trend with per-framework history

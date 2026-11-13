@@ -44,6 +44,7 @@ _FRAMEWORK_FILES = {
     "iso27001": "iso27001_controls.yaml",
     "hipaa": "hipaa_controls.yaml",
     "gdpr": "gdpr_controls.yaml",
+    "nist": "nist_csf2_controls.yaml",
 }
 
 # Framework key -> canonical framework id (matches legacy ids for the response
@@ -57,6 +58,8 @@ FRAMEWORK_IDS = {
     "iso27001": "iso27001_v2022",
     "hipaa": "hipaa_security_rule",
     "gdpr": "gdpr_2016_679",
+    # NIST CSF 2.0, Govern + Identify + Protect so far (74 of 106 subcategories).
+    "nist": "nist_csf_2_0",
 }
 
 STATUS_COMPLIANT = "compliant"
@@ -234,7 +237,7 @@ class CanonicalEngine:
         """Score a framework against a set of evidence types (canonical or legacy).
 
         Args:
-            framework_key: 'soc2' | 'iso27001' | 'hipaa' | 'gdpr'
+            framework_key: 'soc2' | 'iso27001' | 'hipaa' | 'gdpr' | 'nist'
             evidence_types: evidence_type strings (canonical vocabulary or
                 legacy aliases, which are translated).
 
