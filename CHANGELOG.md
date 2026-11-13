@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [4.3.0] — 2026-11-14
+
+### Added
+
+- **NIST CSF 2.0 as a fifth framework** — 74 subcategories covering Govern,
+  Identify, Protect, Detect, Respond and Recover ship in
+  `shared/frameworks/nist_csf2_controls.yaml`, load in the desktop framework
+  browser and the web Frameworks page, and appear in the evidence upload dialog.
+- **NIST evaluations** — `POST /api/v1/nist/evaluate-from-evidence` scores the
+  framework from stored evidence exactly like the other four, and the desktop
+  canonical engine accepts framework id 5, so NIST scores in web and desktop mode.
+- **NIST in the dashboard and history** — the score hero, trend chart, sidebar
+  and evaluation history all offer NIST, including `?fw=5` deep links.
+- Schema, invariant and golden subcategory-ID test suites for the NIST table,
+  plus a control-to-evidence mapping document.
+
+### Fixed
+
+- Web-mode ControlHeatmap now shows control titles and categories, and the
+  hybrid assessment-mode invariant is enforced.
+- Percent signs are escaped when handing database URLs to Alembic.
+- The Playwright E2E job is pinned to ubuntu-24.04 so Chromium installs.
+
+### Changed
+
+- Dependency bumps: electron is unchanged, but aiosmtplib 5.1.3,
+  boto3/botocore 1.43.111, sentry-sdk, python-dotenv, psycopg2-binary,
+  framer-motion 13.2.0, @types/node 26.5.1 and gitleaks-action v3.
+- The BSL Licensed Work section now states its change-date range and the
+  contribution terms.
+
 ## [4.2.4] — 2026-09-13
 
 ### Fixed
