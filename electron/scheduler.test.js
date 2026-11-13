@@ -118,6 +118,9 @@ describe('checkAndRun', () => {
       expect.any(String),
       expect.objectContaining({ success: true }),
     );
+    // NIST must be collected too, otherwise its evaluation has no evidence.
+    expect(processor.processWindowsEvidence).toHaveBeenCalledTimes(5);
+    expect(processor.processWindowsEvidence.mock.calls.map(c => c[1])).toEqual([1, 2, 3, 4, 5]);
     // End-to-end through several await hops; under a loaded CI runner the
     // default 5s timeout is too tight (the flake fired three times in one
     // day). The assertions are unchanged, only the budget grows.

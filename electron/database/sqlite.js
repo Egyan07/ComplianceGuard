@@ -337,6 +337,11 @@ class ComplianceGuardDatabase {
        VALUES (4, 'GDPR', '2018', 'EU General Data Protection Regulation (EU) 2016/679')`
     ).run();
 
+    this.db.prepare(
+      `INSERT OR IGNORE INTO compliance_frameworks (id, name, version, description)
+       VALUES (5, 'NIST CSF 2.0', '2.0', 'NIST Cybersecurity Framework 2.0')`
+    ).run();
+
     return Promise.resolve();
   }
 

@@ -5,7 +5,10 @@ const log = require('./logger');
 // non-Windows runs.
 const { collectEvidence } = require('./system/collector');
 
-const FRAMEWORKS = [1, 2, 3, 4];
+// Every framework the canonical engine can score. NIST is included here even
+// though scheduled runs do not open the dashboard: the evidence rows are what
+// its evaluation reads later, and evidence is stored per framework_id.
+const FRAMEWORKS = [1, 2, 3, 4, 5];
 const CHECK_INTERVAL_MS = 60_000;
 
 let _db = null;
@@ -69,7 +72,7 @@ async function runCollection() {
     if (Notification.isSupported()) {
       new Notification({
         title: 'Evidence Collection Complete',
-        body: `${evidenceCount} items collected across 4 frameworks`,
+        body: `${evidenceCount} items collected across ${FRAMEWORKS.length} frameworks`,
       }).show();
     }
 

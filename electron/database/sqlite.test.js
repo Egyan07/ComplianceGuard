@@ -56,6 +56,31 @@ describe('ComplianceGuardDatabase', () => {
       expect(row.version).toBe('2018');
     });
 
+    it('seeds NIST CSF 2.0 framework row with id=5', async () => {
+      const row = await db.get(
+        'SELECT * FROM compliance_frameworks WHERE id = 5'
+      );
+      expect(row).toBeDefined();
+      expect(row.name).toBe('NIST CSF 2.0');
+      expect(row.version).toBe('2.0');
+    });
+
+    it('stores evidence for framework 5 past the framework foreign key', async () => {
+      const id = await db.addEvidence({
+        framework_id: 5,
+        control_id: null,
+        evidence_type: 'system_configs',
+        title: 'NIST system info',
+        description: '',
+        file_path: null,
+        file_hash: null,
+        metadata: {}
+      });
+      expect(id).toBeDefined();
+      const rows = await db.getEvidenceByFramework(5);
+      expect(rows.some(r => r.evidence_type === 'system_configs')).toBe(true);
+    });
+
     it('seed is idempotent — re-initializing does not throw', async () => {
       await expect(db.seedInitialData()).resolves.not.toThrow();
     });
@@ -176,7 +201,7 @@ describe('ComplianceGuardDatabase', () => {
       const restored = new Database(backupPath, { readonly: true });
       try {
         const frameworks = restored.prepare('SELECT COUNT(*) AS n FROM compliance_frameworks').get();
-        expect(frameworks.n).toBe(4); // SOC 2 + ISO 27001 + HIPAA + GDPR seeded rows
+        expect(frameworks.n).toBe(5); // SOC 2 + ISO 27001 + HIPAA + GDPR + NIST seeded rows
         const row = restored
           .prepare('SELECT title FROM evidence_items WHERE title = ?')
           .get('Old evidence');
