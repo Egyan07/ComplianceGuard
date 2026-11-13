@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [4.3.1] — 2026-11-14
+
+### Fixed
+
+- **Scheduled collection now writes NIST evidence** — the scheduler processed
+  frameworks 1-4 only, so a NIST evaluation on the desktop had no evidence to
+  score. It now processes framework id 5 as well, seeds the
+  `compliance_frameworks` row the evidence foreign key requires, and the
+  completion notification reports the framework count instead of a hardcoded
+  four.
+
 ## [4.3.0] — 2026-11-14
 
 ### Added
