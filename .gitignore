@@ -88,6 +88,9 @@ logs/
 # Investor documents (local only, never push to public repo)
 investor-doc/
 
+# Local agent skills (never push)
+.claude/
+
 docs/superpowers/
 docs/internal/
 docs/private/
