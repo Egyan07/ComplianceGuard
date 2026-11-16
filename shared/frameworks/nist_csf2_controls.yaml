@@ -14,14 +14,15 @@
 #               GV.SC (10) = 31 subcategories.
 #   - Identify: ID.AM (7), ID.RA (10), ID.IM (4) = 21 subcategories.
 #   - Protect:  PR.AA (6), PR.AT (2), PR.DS (4), PR.PS (6), PR.IR (4) = 22.
-#   Total: 74 subcategories. Detect, Respond, and Recover are not yet
-#   included.
+#   - Detect:   DE.CM (5), DE.AE (6) = 11 subcategories.
+#   Total: 85 subcategories. Respond and Recover are not yet included.
 #
 # Subcategory IDs follow the official CSF 2.0 Core and are intentionally
-# non-contiguous (e.g., ID.AM skips 06; PR.DS jumps 02 -> 10). Descriptions
+# non-contiguous (e.g., ID.AM skips 06; PR.DS jumps 02 -> 10; DE.CM jumps
+# 03 -> 06 -> 09; DE.AE starts at 02). Descriptions
 # are the verbatim CSF 2.0 subcategory statements. Titles are short labels.
 # `category` is the CSF category code (ID.AM, ID.RA, ...), the level at which
-# a subcategory lives; the function (GV, ID, PR) is the first token of that code.
+# a subcategory lives; the function (GV, ID, PR, DE) is the first token of that code.
 #
 # assessment_mode (product classification, not part of the CSF Core):
 #   automatable   - every required evidence type is produced by the endpoint
@@ -35,7 +36,7 @@
 # risk_level (house judgment; CSF assigns none):
 #   high   - a failure directly enables unauthorized access or data exposure
 #            (the PR.AA and PR.DS categories).
-#   medium - everywhere else, including all of Govern.
+#   medium - everywhere else, including all of Govern and Detect.
 #   (no `low` is used so far.)
 #
 framework:
@@ -45,9 +46,9 @@ framework:
   taxonomy: 'Cybersecurity Framework (CSF) 2.0 Core — Functions, Categories, Subcategories'
   scope_note: >-
     Batches so far: the Govern (GV.OC, GV.RM, GV.RR, GV.PO, GV.OV, GV.SC),
-    Identify (ID.AM, ID.RA, ID.IM), and Protect (PR.AA, PR.AT, PR.DS, PR.PS,
-    PR.IR) functions — 74 subcategories. The Detect, Respond, and Recover
-    functions are not yet included.
+    Identify (ID.AM, ID.RA, ID.IM), Protect (PR.AA, PR.AT, PR.DS, PR.PS,
+    PR.IR), and Detect (DE.CM, DE.AE) functions — 85 subcategories. The
+    Respond and Recover functions are not yet included.
   status_vocabulary:
     - compliant
     - partial
@@ -836,4 +837,138 @@ controls:
     risk_level: medium
     assessment_mode: manual_upload
     required_evidence:
+      - policy_document
+  # Detect: DE.CM rows with real endpoint evidence behind them (events, firewall,
+  # network, system and security-policy data, accounts) are hybrid, because the
+  # collector shows part of the picture and a documented process completes it.
+  # DE.AE rows are manual_upload: a detection firing is not an assessment ending,
+  # so telemetry existing does not make analysis, correlation, or incident
+  # declaration automatable. Nothing in Detect is marked automatable.
+  # ── DE.CM  Continuous Monitoring ────────────────────────────────────────────
+  - id: DE.CM-01
+    title: Network Monitoring
+    description: Networks and network services are monitored to find potentially adverse events.
+    category: DE.CM
+    control_objective: Monitor networks and network services to find potentially adverse events.
+    implementation_guidance: Collected firewall, network, and event-log data show part of the picture; a documented network monitoring process (tools, coverage, alert handling) completes it.
+    risk_level: medium
+    assessment_mode: hybrid
+    required_evidence:
+      - firewall_configs
+      - network_configs
+      - event_logs
+      - policy_document
+  - id: DE.CM-02
+    title: Physical Environment Monitoring
+    description: The physical environment is monitored to find potentially adverse events.
+    category: DE.CM
+    control_objective: Monitor the physical environment to find potentially adverse events.
+    implementation_guidance: Document physical monitoring (access control, cameras, alarms) and keep review records; no endpoint collector observes the physical environment.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+      - audit_reports
+  - id: DE.CM-03
+    title: Personnel Activity and Technology Usage Monitoring
+    description: Personnel activity and technology usage are monitored to find potentially adverse events.
+    category: DE.CM
+    control_objective: Monitor personnel activity and technology usage to find potentially adverse events.
+    implementation_guidance: Collected event logs and account data show technology usage on endpoints; a documented monitoring policy covers what is monitored and how personnel are informed.
+    risk_level: medium
+    assessment_mode: hybrid
+    required_evidence:
+      - event_logs
+      - user_provisioning
+      - policy_document
+  - id: DE.CM-06
+    title: External Service Provider Monitoring
+    description: External service provider activities and services are monitored to find potentially adverse events.
+    category: DE.CM
+    control_objective: Monitor external service provider activities and services to find potentially adverse events.
+    implementation_guidance: Keep provider monitoring records (service reviews, provider log or alert reviews); endpoint collectors do not observe third-party services.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+      - audit_reports
+  - id: DE.CM-09
+    title: Computing Hardware, Software, and Runtime Monitoring
+    description: Computing hardware and software, runtime environments, and their data are monitored to find potentially adverse events.
+    category: DE.CM
+    control_objective: Monitor computing hardware and software, runtime environments, and their data to find potentially adverse events.
+    implementation_guidance: Combine collected event logs, system configuration, and security policy data with a documented process for reviewing monitoring output.
+    risk_level: medium
+    assessment_mode: hybrid
+    required_evidence:
+      - event_logs
+      - system_configs
+      - security_policies
+      - policy_document
+  # ── DE.AE  Adverse Event Analysis ───────────────────────────────────────────
+  - id: DE.AE-02
+    title: Adverse Event Analysis
+    description: Potentially adverse events are analyzed to better understand associated activities.
+    category: DE.AE
+    control_objective: Analyze potentially adverse events to better understand associated activities.
+    implementation_guidance: Keep analysis records such as triage notes and investigation write-ups; a detection firing is an input to analysis, not evidence that analysis happened.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - incident_reports
+      - policy_document
+  - id: DE.AE-03
+    title: Multi-Source Correlation
+    description: Information is correlated from multiple sources.
+    category: DE.AE
+    control_objective: Correlate information from multiple sources.
+    implementation_guidance: Document the correlation approach (for example SIEM rules or analyst procedures) and review it; telemetry from one endpoint does not show correlation.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+      - audit_reports
+  - id: DE.AE-04
+    title: Impact and Scope Estimation
+    description: The estimated impact and scope of adverse events are understood.
+    category: DE.AE
+    control_objective: Understand the estimated impact and scope of adverse events.
+    implementation_guidance: Keep impact and scope assessments from past events or exercises.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - incident_reports
+      - policy_document
+  - id: DE.AE-06
+    title: Adverse Event Notification
+    description: Information on adverse events is provided to authorized staff and tools.
+    category: DE.AE
+    control_objective: Provide information on adverse events to authorized staff and tools.
+    implementation_guidance: Document who and what receives event information (on-call, ticketing, SIEM) and keep records showing it was delivered.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+      - incident_reports
+  - id: DE.AE-07
+    title: Threat Intelligence in Analysis
+    description: Cyber threat intelligence and other contextual information are integrated into the analysis.
+    category: DE.AE
+    control_objective: Integrate cyber threat intelligence and other contextual information into the analysis.
+    implementation_guidance: Document threat intelligence sources and show how they feed event analysis.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+      - audit_reports
+  - id: DE.AE-08
+    title: Incident Declaration
+    description: Incidents are declared when adverse events meet the defined incident criteria.
+    category: DE.AE
+    control_objective: Declare incidents when adverse events meet the defined incident criteria.
+    implementation_guidance: Maintain defined incident criteria and records of incidents declared against them.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - incident_reports
       - policy_document

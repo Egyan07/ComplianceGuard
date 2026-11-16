@@ -436,7 +436,8 @@ class TestNistSchemaAndInvariants:
 # Frozen from the official NIST CSF 2.0 Core (NIST CSWP 29). Deliberately
 # hardcoded, NOT derived from nist_csf2_controls.yaml: if the test and the data
 # read the same file, the test agrees with itself and proves nothing. IDs are
-# intentionally non-contiguous (ID.AM skips 06; PR.DS jumps 02 -> 10).
+# intentionally non-contiguous (ID.AM skips 06; PR.DS jumps 02 -> 10; DE.CM
+# jumps 03 -> 06 -> 09; DE.AE starts at 02).
 EXPECTED_NIST_IDS = {
     "GV.OC": [f"GV.OC-{i:02d}" for i in range(1, 6)],
     "GV.RM": [f"GV.RM-{i:02d}" for i in range(1, 8)],
@@ -453,11 +454,14 @@ EXPECTED_NIST_IDS = {
     "PR.DS": ["PR.DS-01", "PR.DS-02", "PR.DS-10", "PR.DS-11"],
     "PR.PS": [f"PR.PS-{i:02d}" for i in range(1, 7)],
     "PR.IR": [f"PR.IR-{i:02d}" for i in range(1, 5)],
+    "DE.CM": ["DE.CM-01", "DE.CM-02", "DE.CM-03", "DE.CM-06", "DE.CM-09"],
+    "DE.AE": ["DE.AE-02", "DE.AE-03", "DE.AE-04", "DE.AE-06", "DE.AE-07",
+              "DE.AE-08"],
 }
 
 
 class TestNistGoldenTaxonomy:
-    """Golden subcategory list for the Govern + Identify + Protect batches.
+    """Golden subcategory list for the Govern, Identify, Protect and Detect batches.
 
     Fix on failure: the canonical definition is
     shared/frameworks/nist_csf2_controls.yaml. If a legitimate CSF 2.0
@@ -491,4 +495,4 @@ class TestNistGoldenTaxonomy:
         assert len(ids) == len(set(ids))
 
     def test_total_count(self):
-        assert len(_load_nist()["controls"]) == 74  # Govern 31 + Identify 21 + Protect 22
+        assert len(_load_nist()["controls"]) == 85  # Govern 31 + Identify 21 + Protect 22 + Detect 11

@@ -20,12 +20,12 @@ describe('evidence catalog (generated from canonical shared data)', () => {
   it('covers every canonical framework with the exact taxonomy counts', () => {
     // Locked to the canonical taxonomies: SOC 2 2017 TSC (43), ISO/IEC
     // 27001:2022 Annex A (93), HIPAA Security Rule (47), GDPR (38) and NIST
-    // CSF 2.0 (74 of the 106 subcategories).
+    // CSF 2.0 (85 of the 106 subcategories).
     expect(SOC2_CONTROLS.length).toBe(43);
     expect(ISO27001_CONTROLS.length).toBe(93);
     expect(HIPAA_CONTROLS.length).toBe(47);
     expect(GDPR_CONTROLS.length).toBe(38);
-    expect(NIST_CONTROLS.length).toBe(74);
+    expect(NIST_CONTROLS.length).toBe(85);
   });
 
   it('has unique control ids within each framework', () => {
