@@ -317,6 +317,17 @@ export const NIST_CONTROLS: FrameworkControlOption[] = [
   { id: "PR.IR-02", title: "PR.IR-02 - Environmental Protection", types: ["policy_document"] },
   { id: "PR.IR-03", title: "PR.IR-03 - Resilience Mechanisms", types: ["policy_document"] },
   { id: "PR.IR-04", title: "PR.IR-04 - Capacity Management", types: ["policy_document"] },
+  { id: "DE.CM-01", title: "DE.CM-01 - Network Monitoring", types: ["event_logs","firewall_configs","network_configs","policy_document"] },
+  { id: "DE.CM-02", title: "DE.CM-02 - Physical Environment Monitoring", types: ["audit_reports","policy_document"] },
+  { id: "DE.CM-03", title: "DE.CM-03 - Personnel Activity and Technology Usage Monitoring", types: ["event_logs","policy_document","user_provisioning"] },
+  { id: "DE.CM-06", title: "DE.CM-06 - External Service Provider Monitoring", types: ["audit_reports","policy_document"] },
+  { id: "DE.CM-09", title: "DE.CM-09 - Computing Hardware, Software, and Runtime Monitoring", types: ["event_logs","policy_document","security_policies","system_configs"] },
+  { id: "DE.AE-02", title: "DE.AE-02 - Adverse Event Analysis", types: ["incident_reports","policy_document"] },
+  { id: "DE.AE-03", title: "DE.AE-03 - Multi-Source Correlation", types: ["audit_reports","policy_document"] },
+  { id: "DE.AE-04", title: "DE.AE-04 - Impact and Scope Estimation", types: ["incident_reports","policy_document"] },
+  { id: "DE.AE-06", title: "DE.AE-06 - Adverse Event Notification", types: ["incident_reports","policy_document"] },
+  { id: "DE.AE-07", title: "DE.AE-07 - Threat Intelligence in Analysis", types: ["audit_reports","policy_document"] },
+  { id: "DE.AE-08", title: "DE.AE-08 - Incident Declaration", types: ["incident_reports","policy_document"] },
 ];
 
 export interface CanonicalEvidenceType {
