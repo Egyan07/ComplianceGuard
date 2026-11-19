@@ -328,6 +328,19 @@ export const NIST_CONTROLS: FrameworkControlOption[] = [
   { id: "DE.AE-06", title: "DE.AE-06 - Adverse Event Notification", types: ["incident_reports","policy_document"] },
   { id: "DE.AE-07", title: "DE.AE-07 - Threat Intelligence in Analysis", types: ["audit_reports","policy_document"] },
   { id: "DE.AE-08", title: "DE.AE-08 - Incident Declaration", types: ["incident_reports","policy_document"] },
+  { id: "RS.MA-01", title: "RS.MA-01 - Incident Response Plan Execution", types: ["incident_reports","policy_document"] },
+  { id: "RS.MA-02", title: "RS.MA-02 - Incident Triage and Validation", types: ["incident_reports","policy_document"] },
+  { id: "RS.MA-03", title: "RS.MA-03 - Incident Categorization and Prioritization", types: ["incident_reports","policy_document"] },
+  { id: "RS.MA-04", title: "RS.MA-04 - Incident Escalation", types: ["incident_reports","policy_document"] },
+  { id: "RS.MA-05", title: "RS.MA-05 - Incident Recovery Initiation Criteria", types: ["incident_reports","policy_document"] },
+  { id: "RS.AN-03", title: "RS.AN-03 - Incident Analysis and Root Cause", types: ["audit_reports","incident_reports"] },
+  { id: "RS.AN-06", title: "RS.AN-06 - Investigation Action Records", types: ["incident_reports","policy_document"] },
+  { id: "RS.AN-07", title: "RS.AN-07 - Incident Data and Metadata Collection", types: ["event_logs","incident_reports","policy_document"] },
+  { id: "RS.AN-08", title: "RS.AN-08 - Incident Magnitude Estimation", types: ["incident_reports","policy_document"] },
+  { id: "RS.CO-02", title: "RS.CO-02 - Incident Stakeholder Notification", types: ["incident_reports","policy_document"] },
+  { id: "RS.CO-03", title: "RS.CO-03 - Incident Information Sharing", types: ["incident_reports","policy_document"] },
+  { id: "RS.MI-01", title: "RS.MI-01 - Incident Containment", types: ["incident_reports","policy_document"] },
+  { id: "RS.MI-02", title: "RS.MI-02 - Incident Eradication", types: ["incident_reports","policy_document"] },
 ];
 
 export interface CanonicalEvidenceType {
