@@ -15,14 +15,16 @@
 #   - Identify: ID.AM (7), ID.RA (10), ID.IM (4) = 21 subcategories.
 #   - Protect:  PR.AA (6), PR.AT (2), PR.DS (4), PR.PS (6), PR.IR (4) = 22.
 #   - Detect:   DE.CM (5), DE.AE (6) = 11 subcategories.
-#   Total: 85 subcategories. Respond and Recover are not yet included.
+#   - Respond:  RS.MA (5), RS.AN (4), RS.CO (2), RS.MI (2) = 13 subcategories.
+#   Total: 98 subcategories. Recover is not yet included.
 #
 # Subcategory IDs follow the official CSF 2.0 Core and are intentionally
 # non-contiguous (e.g., ID.AM skips 06; PR.DS jumps 02 -> 10; DE.CM jumps
-# 03 -> 06 -> 09; DE.AE starts at 02). Descriptions
+# 03 -> 06 -> 09; DE.AE starts at 02; RS.AN skips 01, 02, 04, 05; RS.CO
+# starts at 02). Descriptions
 # are the verbatim CSF 2.0 subcategory statements. Titles are short labels.
 # `category` is the CSF category code (ID.AM, ID.RA, ...), the level at which
-# a subcategory lives; the function (GV, ID, PR, DE) is the first token of that code.
+# a subcategory lives; the function (GV, ID, PR, DE, RS) is the first token of that code.
 #
 # assessment_mode (product classification, not part of the CSF Core):
 #   automatable   - every required evidence type is produced by the endpoint
@@ -36,7 +38,7 @@
 # risk_level (house judgment; CSF assigns none):
 #   high   - a failure directly enables unauthorized access or data exposure
 #            (the PR.AA and PR.DS categories).
-#   medium - everywhere else, including all of Govern and Detect.
+#   medium - everywhere else, including all of Govern, Detect, and Respond.
 #   (no `low` is used so far.)
 #
 framework:
@@ -47,8 +49,8 @@ framework:
   scope_note: >-
     Batches so far: the Govern (GV.OC, GV.RM, GV.RR, GV.PO, GV.OV, GV.SC),
     Identify (ID.AM, ID.RA, ID.IM), Protect (PR.AA, PR.AT, PR.DS, PR.PS,
-    PR.IR), and Detect (DE.CM, DE.AE) functions — 85 subcategories. The
-    Respond and Recover functions are not yet included.
+    PR.IR), Detect (DE.CM, DE.AE), and Respond (RS.MA, RS.AN, RS.CO, RS.MI)
+    functions — 98 subcategories. The Recover function is not yet included.
   status_vocabulary:
     - compliant
     - partial
@@ -972,3 +974,157 @@ controls:
     required_evidence:
       - incident_reports
       - policy_document
+  # Respond: every row is manual_upload except RS.AN-07. Incident response is
+  # people and process, so records (plans, triage notes, investigation reports,
+  # notices) are the evidence and no endpoint collector can show that a response
+  # step was carried out. RS.AN-07 is hybrid because collected event logs are real
+  # raw incident data, while preserving integrity and provenance still needs a
+  # documented procedure. Nothing in Respond is marked automatable.
+  # ── RS.MA  Incident Management ──────────────────────────────────────────────
+  - id: RS.MA-01
+    title: Incident Response Plan Execution
+    description: The incident response plan is executed in coordination with relevant third parties once an incident is declared.
+    category: RS.MA
+    control_objective: Execute the incident response plan, in coordination with relevant third parties, once an incident is declared.
+    implementation_guidance: Keep the incident response plan and records showing it was followed for real incidents or exercises, including coordination with third parties; no endpoint collector observes plan execution.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+      - incident_reports
+  - id: RS.MA-02
+    title: Incident Triage and Validation
+    description: Incident reports are triaged and validated.
+    category: RS.MA
+    control_objective: Triage and validate incident reports.
+    implementation_guidance: Keep triage records (intake, validation outcome, who decided); a detection firing is an input to triage, not evidence that triage happened.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - incident_reports
+      - policy_document
+  - id: RS.MA-03
+    title: Incident Categorization and Prioritization
+    description: Incidents are categorized and prioritized.
+    category: RS.MA
+    control_objective: Categorize and prioritize incidents.
+    implementation_guidance: Document the categorization and priority scheme and keep incident records showing it was applied.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+      - incident_reports
+  - id: RS.MA-04
+    title: Incident Escalation
+    description: Incidents are escalated or elevated as needed.
+    category: RS.MA
+    control_objective: Escalate or elevate incidents as needed.
+    implementation_guidance: Document escalation criteria and paths and keep records of incidents that were escalated.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+      - incident_reports
+  - id: RS.MA-05
+    title: Incident Recovery Initiation Criteria
+    description: The criteria for initiating incident recovery are applied.
+    category: RS.MA
+    control_objective: Apply the criteria for initiating incident recovery.
+    implementation_guidance: Document the criteria for starting recovery and keep records showing they were applied to an incident.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+      - incident_reports
+  # ── RS.AN  Incident Analysis ────────────────────────────────────────────────
+  - id: RS.AN-03
+    title: Incident Analysis and Root Cause
+    description: Analysis is performed to establish what has taken place during an incident and the root cause of the incident.
+    category: RS.AN
+    control_objective: Perform analysis to establish what has taken place during an incident and the root cause of the incident.
+    implementation_guidance: Keep investigation reports and root cause analyses; endpoint logs can inform an investigation but do not show that the analysis was performed.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - incident_reports
+      - audit_reports
+  - id: RS.AN-06
+    title: Investigation Action Records
+    description: Actions performed during an investigation are recorded, and the records’ integrity and provenance are preserved.
+    category: RS.AN
+    control_objective: Record actions performed during an investigation and preserve the records' integrity and provenance.
+    implementation_guidance: Keep investigation logs or case notes and a documented procedure for protecting them; no endpoint collector sees what investigators did.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - incident_reports
+      - policy_document
+  - id: RS.AN-07
+    title: Incident Data and Metadata Collection
+    description: Incident data and metadata are collected, and their integrity and provenance are preserved.
+    category: RS.AN
+    control_objective: Collect incident data and metadata and preserve their integrity and provenance.
+    implementation_guidance: Collected event logs show the raw endpoint data available for an incident; a documented evidence-handling procedure and incident records show it was collected and preserved with integrity and provenance.
+    risk_level: medium
+    assessment_mode: hybrid
+    required_evidence:
+      - event_logs
+      - incident_reports
+      - policy_document
+  - id: RS.AN-08
+    title: Incident Magnitude Estimation
+    description: An incident’s magnitude is estimated and validated.
+    category: RS.AN
+    control_objective: Estimate and validate an incident's magnitude.
+    implementation_guidance: Keep impact and magnitude assessments from past incidents or exercises, including how they were validated.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - incident_reports
+      - policy_document
+  # ── RS.CO  Incident Response Reporting and Communication ────────────────────
+  - id: RS.CO-02
+    title: Incident Stakeholder Notification
+    description: Internal and external stakeholders are notified of incidents.
+    category: RS.CO
+    control_objective: Notify internal and external stakeholders of incidents.
+    implementation_guidance: Document notification requirements and keep copies of notices sent to stakeholders, such as management, customers, and regulators.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+      - incident_reports
+  - id: RS.CO-03
+    title: Incident Information Sharing
+    description: Information is shared with designated internal and external stakeholders.
+    category: RS.CO
+    control_objective: Share information with designated internal and external stakeholders.
+    implementation_guidance: Document who information is shared with and under what rules, and keep records of what was shared.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+      - incident_reports
+  # ── RS.MI  Incident Mitigation ──────────────────────────────────────────────
+  - id: RS.MI-01
+    title: Incident Containment
+    description: Incidents are contained.
+    category: RS.MI
+    control_objective: Contain incidents.
+    implementation_guidance: Document containment procedures and keep incident records showing containment actions; firewall or system settings show capability, not that an incident was contained.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+      - incident_reports
+  - id: RS.MI-02
+    title: Incident Eradication
+    description: Incidents are eradicated.
+    category: RS.MI
+    control_objective: Eradicate incidents.
+    implementation_guidance: Document eradication procedures and keep incident records showing the cause was removed and verified.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+      - incident_reports

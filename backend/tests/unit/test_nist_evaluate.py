@@ -112,9 +112,9 @@ def test_evaluate_returns_200_with_score(with_evidence):
     data = resp.json()
     assert 0.0 < data["overall_score"] <= 100.0
     assert data["framework_id"] == "nist_csf_2_0"
-    assert data["control_count"] == 85
+    assert data["control_count"] == 98
     assert data["compliance_status"] in {"compliant", "partial", "non_compliant", "not_assessed"}
-    assert data["not_assessed_controls"] < 85
+    assert data["not_assessed_controls"] < 98
 
 
 def test_evaluate_no_evidence_returns_zero(without_evidence):
@@ -127,7 +127,7 @@ def test_evaluate_no_evidence_returns_zero(without_evidence):
     data = resp.json()
     assert data["overall_score"] == 0.0
     assert data["compliance_status"] == "not_assessed"
-    assert data["not_assessed_controls"] == 85
+    assert data["not_assessed_controls"] == 98
 
 
 def test_evaluate_unauthorized():
