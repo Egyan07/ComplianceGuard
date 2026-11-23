@@ -1050,7 +1050,7 @@ controls:
       - audit_reports
   - id: RS.AN-06
     title: Investigation Action Records
-    description: Actions performed during an investigation are recorded, and the records’ integrity and provenance are preserved.
+    description: Actions performed during an investigation are recorded, and the records' integrity and provenance are preserved.
     category: RS.AN
     control_objective: Record actions performed during an investigation and preserve the records' integrity and provenance.
     implementation_guidance: Keep investigation logs or case notes and a documented procedure for protecting them; no endpoint collector sees what investigators did.
@@ -1073,7 +1073,7 @@ controls:
       - policy_document
   - id: RS.AN-08
     title: Incident Magnitude Estimation
-    description: An incident’s magnitude is estimated and validated.
+    description: An incident's magnitude is estimated and validated.
     category: RS.AN
     control_objective: Estimate and validate an incident's magnitude.
     implementation_guidance: Keep impact and magnitude assessments from past incidents or exercises, including how they were validated.
