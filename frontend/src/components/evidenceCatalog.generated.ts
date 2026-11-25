@@ -341,6 +341,14 @@ export const NIST_CONTROLS: FrameworkControlOption[] = [
   { id: "RS.CO-03", title: "RS.CO-03 - Incident Information Sharing", types: ["incident_reports","policy_document"] },
   { id: "RS.MI-01", title: "RS.MI-01 - Incident Containment", types: ["incident_reports","policy_document"] },
   { id: "RS.MI-02", title: "RS.MI-02 - Incident Eradication", types: ["incident_reports","policy_document"] },
+  { id: "RC.RP-01", title: "RC.RP-01 - Recovery Plan Execution", types: ["incident_reports","policy_document"] },
+  { id: "RC.RP-02", title: "RC.RP-02 - Recovery Action Selection and Performance", types: ["incident_reports","policy_document"] },
+  { id: "RC.RP-03", title: "RC.RP-03 - Backup and Restoration Asset Integrity", types: ["backup_logs","policy_document"] },
+  { id: "RC.RP-04", title: "RC.RP-04 - Post-Incident Operational Norms", types: ["audit_reports","policy_document"] },
+  { id: "RC.RP-05", title: "RC.RP-05 - Restored Asset Verification", types: ["audit_reports","incident_reports"] },
+  { id: "RC.RP-06", title: "RC.RP-06 - Recovery Completion Declaration", types: ["incident_reports","policy_document"] },
+  { id: "RC.CO-03", title: "RC.CO-03 - Recovery Progress Communication", types: ["incident_reports","policy_document"] },
+  { id: "RC.CO-04", title: "RC.CO-04 - Public Recovery Updates", types: ["incident_reports","policy_document"] },
 ];
 
 export interface CanonicalEvidenceType {
