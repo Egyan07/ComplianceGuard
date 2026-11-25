@@ -1,0 +1,14 @@
+name = "complianceguard-install-ping"
+main = "index.js"
+compatibility_date = "2026-11-01"
+
+# KV namespace for install records and counters.
+# Create it once, then paste the id below:
+#   npx wrangler kv namespace create INSTALLS
+[[kv_namespaces]]
+binding = "INSTALLS"
+id = "PASTE_KV_NAMESPACE_ID_HERE"
+
+# Optional: set to any long random string to enable GET /stats?token=...
+#   npx wrangler secret put STATS_TOKEN
+# Without it, /stats returns 403 and only the write path works.
