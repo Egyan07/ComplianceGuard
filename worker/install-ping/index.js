@@ -89,6 +89,9 @@ export default {
         JSON.stringify({ ...record, firstSeen: now.toISOString(), lastSeen: now.toISOString(), lastDay: day })
       );
       await bump(env.INSTALLS, 'meta:installs');
+      // A first ping is also that install's first active day. Without this the
+      // daily number misses every new install until its second day.
+      await bump(env.INSTALLS, `meta:day:${day}`);
     } else {
       await env.INSTALLS.put(
         key,

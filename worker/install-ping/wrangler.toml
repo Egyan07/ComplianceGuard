@@ -7,7 +7,7 @@ compatibility_date = "2026-11-01"
 #   npx wrangler kv namespace create INSTALLS
 [[kv_namespaces]]
 binding = "INSTALLS"
-id = "PASTE_KV_NAMESPACE_ID_HERE"
+id = "21c076aa0b48444fb93d7c02858d7dea"
 
 # Optional: set to any long random string to enable GET /stats?token=...
 #   npx wrangler secret put STATS_TOKEN

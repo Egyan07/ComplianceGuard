@@ -71,3 +71,39 @@ was measured.
 `npx vitest run --config vitest.config.electron.cjs electron/install-ping.test.js`
 covers the opt-in gate, the https-only rule, id stability, payload shape (no
 hostname or username in it), daily throttling, and the failure paths.
+
+## Deployment record (2026-11-26)
+
+Live and verified, not just configured:
+
+- Worker: `https://complianceguard-install-ping.cguard.workers.dev`
+- KV namespace `INSTALLS`: `21c076aa0b48444fb93d7c02858d7dea`
+- Secret `STATS_TOKEN` is set on the worker. The value is NOT in this repo; it is
+  kept by the operator.
+- Read the counters:
+  `curl "https://complianceguard-install-ping.cguard.workers.dev/stats?token=<STATS_TOKEN>"`
+
+Checked on the day of deployment: a valid ping returns 202; the same install id
+sent twice does not double count; a malformed id returns 400; a body carrying
+`hostname` and `username` is accepted but those fields are ignored and never
+stored; `/stats` returns 403 without the token; a fresh install increments both
+`installs` and `dau`. The real client module was run against the live worker and
+returned `sent`, then `throttled` on the second call, then `disabled` with no
+flag, which is the whole contract in three calls.
+
+A first-ping bug was found here and fixed in `f0123dbe`: a brand new install was
+counted in `installs` but not in `dau`, because only repeat pings bumped the
+daily counter.
+
+## Still open: nobody reports yet
+
+The flag is off by default, so an installed release sends nothing until the
+operator sets `CG_TELEMETRY_ENABLED=1`. That is the right default for a privacy
+tool, but it means the counter stays at zero until either:
+
+1. release builds bake in `CG_TELEMETRY_URL` and ship enabled with a visible
+   disclosure and an off switch, or
+2. installs are told, in the README and the installer, how to opt in.
+
+Until one of those happens, "0 installs" means "0 people opted in", not "nobody
+uses it". Do not put this number in a post either way.
