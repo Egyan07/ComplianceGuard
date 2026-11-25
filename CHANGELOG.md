@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [4.3.2] — 2026-11-26
+
+### Added
+
+- Anonymous install count. Release builds send one ping a day carrying a random install id, the app
+  version, the platform and the architecture, so the install number can be measured instead of inferred
+  from download counts. It carries no hostname, username, IP address or evidence data. A first-run notice
+  says so, `CG_TELEMETRY_ENABLED=0` stops it permanently, and enterprise licences never report. See
+  `docs/install-telemetry.md`.
+
 ## [4.3.1] — 2026-11-14
 
 ### Fixed
