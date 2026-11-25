@@ -16,15 +16,16 @@
 #   - Protect:  PR.AA (6), PR.AT (2), PR.DS (4), PR.PS (6), PR.IR (4) = 22.
 #   - Detect:   DE.CM (5), DE.AE (6) = 11 subcategories.
 #   - Respond:  RS.MA (5), RS.AN (4), RS.CO (2), RS.MI (2) = 13 subcategories.
-#   Total: 98 subcategories. Recover is not yet included.
+#   - Recover:  RC.RP (6), RC.CO (2) = 8 subcategories.
+#   Total: 106 subcategories. All six CSF 2.0 functions are included.
 #
 # Subcategory IDs follow the official CSF 2.0 Core and are intentionally
 # non-contiguous (e.g., ID.AM skips 06; PR.DS jumps 02 -> 10; DE.CM jumps
 # 03 -> 06 -> 09; DE.AE starts at 02; RS.AN skips 01, 02, 04, 05; RS.CO
-# starts at 02). Descriptions
+# starts at 02; RC.CO has only 03 and 04). Descriptions
 # are the verbatim CSF 2.0 subcategory statements. Titles are short labels.
 # `category` is the CSF category code (ID.AM, ID.RA, ...), the level at which
-# a subcategory lives; the function (GV, ID, PR, DE, RS) is the first token of that code.
+# a subcategory lives; the function (GV, ID, PR, DE, RS, RC) is the first token of that code.
 #
 # assessment_mode (product classification, not part of the CSF Core):
 #   automatable   - every required evidence type is produced by the endpoint
@@ -38,7 +39,8 @@
 # risk_level (house judgment; CSF assigns none):
 #   high   - a failure directly enables unauthorized access or data exposure
 #            (the PR.AA and PR.DS categories).
-#   medium - everywhere else, including all of Govern, Detect, and Respond.
+#   medium - everywhere else, including all of Govern, Detect, Respond, and
+#   Recover.
 #   (no `low` is used so far.)
 #
 framework:
@@ -49,8 +51,9 @@ framework:
   scope_note: >-
     Batches so far: the Govern (GV.OC, GV.RM, GV.RR, GV.PO, GV.OV, GV.SC),
     Identify (ID.AM, ID.RA, ID.IM), Protect (PR.AA, PR.AT, PR.DS, PR.PS,
-    PR.IR), Detect (DE.CM, DE.AE), and Respond (RS.MA, RS.AN, RS.CO, RS.MI)
-    functions — 98 subcategories. The Recover function is not yet included.
+    PR.IR), Detect (DE.CM, DE.AE), Respond (RS.MA, RS.AN, RS.CO, RS.MI), and
+    Recover (RC.RP, RC.CO) functions — 106 subcategories, the complete CSF 2.0
+    Core.
   status_vocabulary:
     - compliant
     - partial
@@ -1123,6 +1126,101 @@ controls:
     category: RS.MI
     control_objective: Eradicate incidents.
     implementation_guidance: Document eradication procedures and keep incident records showing the cause was removed and verified.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+      - incident_reports
+  # Recover: all rows are manual_upload. Recovery is people and process, so
+  # records (recovery plans, backup verification, declarations, stakeholder
+  # updates) are the evidence. The endpoint collector can show that a machine is
+  # running again, not that backups were verified or recovery was declared
+  # complete. Nothing in Recover is marked automatable or hybrid.
+  # ── RC.RP  Incident Recovery Plan Execution ─────────────────────────────────
+  - id: RC.RP-01
+    title: Recovery Plan Execution
+    description: The recovery portion of the incident response plan is executed once initiated from the incident response process.
+    category: RC.RP
+    control_objective: Execute the recovery portion of the incident response plan once it is initiated from the incident response process.
+    implementation_guidance: Keep the recovery plan and records showing it was started from the incident response process and followed in a real incident or exercise; no endpoint collector observes plan execution.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+      - incident_reports
+  - id: RC.RP-02
+    title: Recovery Action Selection and Performance
+    description: Recovery actions are selected, scoped, prioritized, and performed.
+    category: RC.RP
+    control_objective: Select, scope, prioritize, and perform recovery actions.
+    implementation_guidance: Keep recovery records showing which actions were chosen, how they were scoped and prioritized, and that they were carried out.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - incident_reports
+      - policy_document
+  - id: RC.RP-03
+    title: Backup and Restoration Asset Integrity
+    description: The integrity of backups and other restoration assets is verified before using them for restoration.
+    category: RC.RP
+    control_objective: Verify the integrity of backups and other restoration assets before using them for restoration.
+    implementation_guidance: Keep backup logs and verification records (checksums, test restores) and a documented procedure for verifying backups before use; backup data is not gathered by the endpoint collector.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - backup_logs
+      - policy_document
+  - id: RC.RP-04
+    title: Post-Incident Operational Norms
+    description: Critical mission functions and cybersecurity risk management are considered to establish post-incident operational norms.
+    category: RC.RP
+    control_objective: Consider critical mission functions and cybersecurity risk management to establish post-incident operational norms.
+    implementation_guidance: Document how mission-critical functions and risk management inform the operating state after an incident, and keep review records.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - policy_document
+      - audit_reports
+  - id: RC.RP-05
+    title: Restored Asset Verification
+    description: The integrity of restored assets is verified, systems and services are restored, and normal operating status is confirmed.
+    category: RC.RP
+    control_objective: Verify the integrity of restored assets, restore systems and services, and confirm normal operating status.
+    implementation_guidance: Keep records showing restored assets were verified and normal operation was confirmed; a system running again is not evidence that anyone verified it.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - incident_reports
+      - audit_reports
+  - id: RC.RP-06
+    title: Recovery Completion Declaration
+    description: The end of incident recovery is declared based on criteria, and incident-related documentation is completed.
+    category: RC.RP
+    control_objective: Declare the end of incident recovery based on criteria and complete incident-related documentation.
+    implementation_guidance: Maintain defined criteria for ending recovery and records of recovery declared closed against them, with the incident documentation completed.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - incident_reports
+      - policy_document
+  # ── RC.CO  Incident Recovery Communication ──────────────────────────────────
+  - id: RC.CO-03
+    title: Recovery Progress Communication
+    description: Recovery activities and progress in restoring operational capabilities are communicated to designated internal and external stakeholders.
+    category: RC.CO
+    control_objective: Communicate recovery activities and progress in restoring operational capabilities to designated internal and external stakeholders.
+    implementation_guidance: Keep copies of recovery status updates sent to designated stakeholders and a record of who they were sent to.
+    risk_level: medium
+    assessment_mode: manual_upload
+    required_evidence:
+      - incident_reports
+      - policy_document
+  - id: RC.CO-04
+    title: Public Recovery Updates
+    description: Public updates on incident recovery are shared using approved methods and messaging.
+    category: RC.CO
+    control_objective: Share public updates on incident recovery using approved methods and messaging.
+    implementation_guidance: Document approved channels and messaging for public updates and keep copies of updates that were published.
     risk_level: medium
     assessment_mode: manual_upload
     required_evidence:
