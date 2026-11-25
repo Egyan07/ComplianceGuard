@@ -279,6 +279,14 @@ ComplianceGuard pulls 8 categories of evidence from Windows, macOS, and Linux:
 
 Each evidence item is SHA-256 hashed for integrity and stored with full audit logging.
 
+### The install count, and how to turn it off
+
+Release builds send one anonymous ping a day so the install number can be measured instead of guessed. It carries five fields: a random id generated on your machine, the app version, the platform, the architecture, and whether this is the first ping. It carries no hostname, no username, no IP address, no evidence, no control results and no organisation name, and the id it sends cannot be traced back to you.
+
+That is on by default, which is a choice made deliberately: a counter nobody opts into counts nothing. If you would rather not, set `CG_TELEMETRY_ENABLED=0` and it stops for good. Enterprise licences never report at all, regardless of this setting.
+
+Exact payload, the collector's code and the tests that hold this to account: [`docs/install-telemetry.md`](docs/install-telemetry.md).
+
 ## Compliance Frameworks
 
 ### SOC 2 Controls

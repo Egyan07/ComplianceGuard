@@ -7,7 +7,9 @@ import {
   getInstallId,
   isEnabled,
   maybePing,
+  noticePending,
   readState,
+  resolveConfig,
   send,
 } from './install-ping.js';
 
@@ -86,10 +88,10 @@ describe('payload', () => {
 });
 
 describe('maybePing', () => {
-  it('sends nothing when disabled, and never calls fetch', async () => {
+  it('sends nothing when there is no endpoint anywhere, and never calls fetch', async () => {
     const fetchImpl = okFetch();
     const res = await maybePing({ dir, env: {}, fetchImpl, appVersion: '4.3.1' });
-    expect(res).toEqual({ sent: false, reason: 'disabled' });
+    expect(res).toEqual({ sent: false, reason: 'no-https-endpoint' });
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 
@@ -134,6 +136,69 @@ describe('maybePing', () => {
     });
     const res = await maybePing({ dir, env: ENV, fetchImpl });
     expect(res.sent).toBe(false);
+  });
+});
+
+describe('build-time default', () => {
+  const BAKED = { url: 'https://baked.test/ping', defaultEnabled: true };
+
+  it('is on with no environment at all', () => {
+    expect(resolveConfig({}, BAKED)).toEqual({ enabled: true, endpoint: BAKED.url, reason: 'default' });
+  });
+
+  it('is off when the build does not enable it', () => {
+    expect(resolveConfig({}, { url: BAKED.url, defaultEnabled: false }).enabled).toBe(false);
+    expect(resolveConfig({}, {}).reason).toBe('no-https-endpoint');
+  });
+
+  it('lets the user turn it off, and that beats the build default', () => {
+    expect(resolveConfig({ CG_TELEMETRY_ENABLED: '0' }, BAKED)).toEqual({
+      enabled: false,
+      endpoint: BAKED.url,
+      reason: 'opted-out',
+    });
+  });
+
+  it('lets an environment URL replace the baked one', () => {
+    const config = resolveConfig({ CG_TELEMETRY_URL: 'https://mine.test/x' }, BAKED);
+    expect(config.endpoint).toBe('https://mine.test/x');
+    expect(config.enabled).toBe(true);
+  });
+
+  it('refuses to downgrade to cleartext, keeping the https baked endpoint', () => {
+    const config = resolveConfig({ CG_TELEMETRY_URL: 'http://mine.test/x' }, BAKED);
+    expect(config.endpoint).toBe(BAKED.url);
+  });
+
+  it('stays off when even the baked endpoint is not https', () => {
+    expect(resolveConfig({}, { url: 'http://baked.test', defaultEnabled: true }).enabled).toBe(false);
+  });
+
+  it('sends with no environment at all when the build enables it', async () => {
+    const fetchImpl = okFetch();
+    const res = await maybePing({ dir, env: {}, baked: BAKED, fetchImpl, appVersion: '4.3.1' });
+    expect(res).toEqual({ sent: true, reason: 'sent' });
+    expect(fetchImpl.mock.calls[0][0]).toBe(BAKED.url);
+  });
+
+  it('sends nothing for an enterprise install, because the caller passes the build default off', async () => {
+    const fetchImpl = okFetch();
+    const res = await maybePing({
+      dir,
+      env: { CG_TELEMETRY_URL: BAKED.url },
+      baked: { url: BAKED.url, defaultEnabled: false },
+      fetchImpl,
+    });
+    expect(res.sent).toBe(false);
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+});
+
+describe('first-run notice', () => {
+  it('is pending exactly once', () => {
+    expect(noticePending(dir)).toBe(true);
+    expect(noticePending(dir)).toBe(false);
+    expect(noticePending(dir)).toBe(false);
   });
 });
 

@@ -26,23 +26,27 @@ No hostname, no username, no IP, no MAC, no serial, no file paths, no evidence
 data, no control results, no organisation name. The worker does not log request
 headers and does not store the caller's address.
 
-## Turning it on
+## Policy: on by default, off on request
 
-Off by default. Both of these have to be set, and the URL must be https:
+Release builds report by default. `electron/telemetry-config.js` holds the baked
+endpoint and `defaultEnabled: true`, and `electron/main.js` fires the ping after
+the licence loads.
 
-```
-CG_TELEMETRY_ENABLED=1
-CG_TELEMETRY_URL=https://<worker>.<account>.workers.dev/
-```
+- `CG_TELEMETRY_ENABLED=0` stops it permanently. That wins over the build default.
+- `CG_TELEMETRY_ENABLED=1` plus `CG_TELEMETRY_URL` points a build at another
+  collector, which is how the endpoint is tested.
+- A cleartext URL is ignored rather than used, so a mistake cannot quietly
+  downgrade the channel. If the baked endpoint itself is not https, nothing is
+  sent.
+- Enterprise licences never report: `main.js` skips the ping entirely when
+  `licenseManager.getTier() === 'enterprise'`, matching the
+  `enterprise_no_telemetry` gate in `shared/constants.json`.
+- The first run shows a notification saying the count is on, what it sends, and
+  how to stop it. `noticePending()` records that it was shown, so it never nags.
 
-A cleartext URL is refused rather than downgraded, so a misconfiguration fails
-closed. The ping is fired without `await` during startup and every failure is
-swallowed, because this tool is expected to run on hosts with no outbound
-network at all.
-
-Enterprise installations must stay off: the `enterprise_no_telemetry` gate in
-`shared/constants.json` already says telemetry is not part of what an
-enterprise customer receives.
+Why default-on: the alternative is a counter that stays at zero and a number
+nobody can defend. The cost of default-on is that it must be disclosed, so it is
+disclosed in the README, in this file, and in the app itself on first run.
 
 ## Deploying the collector
 
@@ -95,15 +99,10 @@ A first-ping bug was found here and fixed in `f0123dbe`: a brand new install was
 counted in `installs` but not in `dau`, because only repeat pings bumped the
 daily counter.
 
-## Still open: nobody reports yet
+## What the number still cannot tell you
 
-The flag is off by default, so an installed release sends nothing until the
-operator sets `CG_TELEMETRY_ENABLED=1`. That is the right default for a privacy
-tool, but it means the counter stays at zero until either:
-
-1. release builds bake in `CG_TELEMETRY_URL` and ship enabled with a visible
-   disclosure and an off switch, or
-2. installs are told, in the README and the installer, how to opt in.
-
-Until one of those happens, "0 installs" means "0 people opted in", not "nobody
-uses it". Do not put this number in a post either way.
+Installs already shipped at the time of writing predate this code, so they never
+report. Only builds cut from this commit onward count. A machine that blocks
+outbound traffic never reports either. So the figure is a floor for the period
+after the first release that includes this code, and it is worth nothing as a
+measure of the past.

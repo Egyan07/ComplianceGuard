@@ -12,6 +12,7 @@ const ReportGenerator = require('./processing/report-generator');
 const LicenseManager = require('./licensing/license-manager');
 const UpdateManager = require('./update-manager');
 const installPing = require('./install-ping');
+const telemetryConfig = require('./telemetry-config');
 const scheduler = require('./scheduler');
 const registerIpcHandlers = require('./ipc');
 
@@ -155,12 +156,28 @@ app.whenReady().then(async () => {
     updateManager = new UpdateManager({ notify: showNotification });
     updateManager.start();
 
-    // Anonymous install count. Off unless CG_TELEMETRY_ENABLED=1 and an https
-    // CG_TELEMETRY_URL is set, and at most one ping per day. Deliberately not
-    // awaited: a slow or offline collector must never delay the window.
-    installPing
-      .maybePing({ dir: app.getPath('userData'), appVersion: app.getVersion() })
-      .catch(() => {});
+    // Anonymous install count: one ping a day, on by default in release builds,
+    // off for enterprise licences and for anyone who sets
+    // CG_TELEMETRY_ENABLED=0. The first run says so and says how to stop it.
+    // Deliberately not awaited: a slow or offline collector must never delay
+    // the window.
+    const userDataDir = app.getPath('userData');
+    const telemetryAllowed = licenseManager.getTier() !== 'enterprise';
+    if (telemetryAllowed && installPing.isEnabled(process.env, telemetryConfig)) {
+      if (installPing.noticePending(userDataDir)) {
+        showNotification(
+          'Anonymous install count is on',
+          'ComplianceGuard sends one anonymous ping a day: a random id, the version and the platform. No hostname, no username, no evidence data. Set CG_TELEMETRY_ENABLED=0 to stop it.'
+        );
+      }
+      installPing
+        .maybePing({
+          dir: userDataDir,
+          appVersion: app.getVersion(),
+          baked: telemetryConfig,
+        })
+        .catch(() => {});
+    }
 
     evidenceProcessor = new LocalEvidenceProcessor(database, app.getPath('userData'));
     canonicalEngine = new CanonicalEngine();
